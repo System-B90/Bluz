@@ -81,6 +81,9 @@ export const test = baseTest.extend<{ serverStateIsolation: undefined }>({
             const iterationsBefore = new Set(
                 await listIterationIds(request).catch(() => []),
             );
+            const personalSettingsBefore = await getPersonalSettings(
+                request,
+            ).catch(() => undefined);
             const collectionsBefore = new Map<string, Set<string>>();
             for (const collection of SWEPT_COLLECTIONS) {
                 collectionsBefore.set(
@@ -98,6 +101,7 @@ export const test = baseTest.extend<{ serverStateIsolation: undefined }>({
             try {
                 // Order matters: see restoreIteration.
                 await restoreIteration(request, originalIteration);
+                await restorePersonalSettings(request, personalSettingsBefore);
 
                 // After the restore above, so a temp iteration is no longer
                 // current -- the API refuses to delete the active one.
@@ -648,6 +652,36 @@ async function listCurriculumIds(
  * but not a crash or a hard timeout -- and a long list of leftovers is itself
  * a failure cause, since both specs locate their row by scanning the list.
  */
+/**
+ * Personal settings are global per user and are read by other specs -- the
+ * header and calendar filter by "my groups" and "my instructors" -- so a spec
+ * that adds a group and fails before removing it changes what later specs see.
+ * settings.spec.ts adds/removes groups, instructors and the theme as the last
+ * statement of a straight-line flow, so any earlier failure leaks them.
+ *
+ * These are settings rather than entities, so the id-diffing sweep cannot
+ * catch them; POST replaces the whole document, which makes an exact
+ * snapshot/restore possible instead.
+ */
+async function getPersonalSettings(
+    request: APIRequestContext,
+): Promise<unknown | undefined> {
+    const response = await request.get("/api/personal-settings");
+    if (!response.ok()) return undefined;
+    const body = (await response.json()) as { data?: unknown };
+    return body.data;
+}
+
+async function restorePersonalSettings(
+    request: APIRequestContext,
+    original: unknown | undefined,
+): Promise<void> {
+    if (original === undefined || original === null) return;
+    const current = await getPersonalSettings(request);
+    if (JSON.stringify(current) === JSON.stringify(original)) return;
+    await request.post("/api/personal-settings", { data: original });
+}
+
 async function listIterationIds(
     request: APIRequestContext,
 ): Promise<Array<string>> {
