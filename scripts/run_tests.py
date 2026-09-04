@@ -457,6 +457,17 @@ def main(
         timeout=120,
     )
 
+    # Gantt populate (Postgres side). Separate from the Mongo seed above: it
+    # talks to the curriculum database, and without it every curriculum-shaped
+    # spec skips itself for want of seeded data.
+    subprocess.run(
+        "npx tsx scripts/demo/populate_demo_gantt.ts",
+        env=test_env,
+        shell=True,
+        check=True,
+        timeout=120,
+    )
+
     typer.secho(
         "Database setup and seeding completed successfully.", fg=typer.colors.GREEN
     )

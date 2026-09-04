@@ -186,21 +186,6 @@ async function getTimelineEventRow(
     return eventRow;
 }
 
-/** Drags the row's staged/anchor block by a few px within its own cell, to trigger a map-to-day drop. */
-async function dragBlockWithinItsCell(page: Page, block: Locator): Promise<void> {
-    const box = await block.boundingBox();
-    if (!box) throw new Error("Gantt block not found for drag");
-
-    const startX = box.x + box.width / 2;
-    const startY = box.y + box.height / 2;
-
-    await page.mouse.move(startX, startY);
-    await page.mouse.down();
-    await page.mouse.move(startX + 20, startY, { steps: 8 });
-    await page.mouse.up();
-    await page.waitForTimeout(500);
-}
-
 /** Drags `block` onto the row's first (label/remove) column, to trigger a remove drop. */
 async function dragBlockToRemoveColumn(
     page: Page,
@@ -225,11 +210,18 @@ async function dragBlockToRemoveColumn(
     await page.waitForTimeout(500);
 }
 
-/** Maps `eventTitle`'s recurring event to the first week/day, satisfying its recurrence. */
+/**
+ * Maps `eventTitle`'s recurring event to the first week/day, satisfying its
+ * recurrence.
+ *
+ * Drops on the week cell's centre rather than nudging the block a few pixels
+ * sideways. The layout is RTL, so a "small nudge right" walks *towards* the
+ * sticky label column, and on a stack whose days are wide enough the nudge
+ * landed on `drop-remove-event-…` instead of the day — leaving the event
+ * unmapped and every later assertion looking at an empty grid.
+ */
 async function mapEventToFirstWeek(page: Page, eventRow: Locator): Promise<void> {
-    const stagedBlock = eventRow.locator('[id^="block-event-"]');
-    await expect(stagedBlock).toBeVisible({ timeout: 10_000 });
-    await dragBlockWithinItsCell(page, stagedBlock);
+    await mapEventToWeek(page, eventRow, 0);
 }
 
 /** Drags an unmapped event's staged block onto `weekIndex`'s cell in the row (weekly view). */
@@ -315,8 +307,8 @@ test.describe("Gantt Recurring Events (#111)", () => {
         await expect(stagedBlock).toBeVisible({ timeout: 10_000 });
         await expect(eventRow.locator("[data-gantt-recurrence]")).toHaveCount(0);
 
-        // Map it — a small drag within the same (first-week) cell.
-        await dragBlockWithinItsCell(page, stagedBlock);
+        // Map it onto the first week's cell.
+        await mapEventToWeek(page, eventRow, 0);
 
         // Now mapped in week 1 ⇒ recurrence satisfied ⇒ a repeat echo appears
         // in every later week (we added 2 weeks total, so exactly one echo).
@@ -520,7 +512,13 @@ test.describe("Gantt Recurring Events (#111)", () => {
 
         await zoomIntoWeek(page, 0);
 
-        const moduleBlock = page.locator('[id^="block-module-"]').first();
+        // Every curriculum carries an auto-seeded "הפסקות" module, and it
+        // sorts first — `.first()` alone grabs that one, which is not the
+        // module this test mapped and is still draggable.
+        const moduleBlock = page
+            .locator('[id^="block-module-"]')
+            .filter({ hasNotText: "הפסקות" })
+            .first();
         await expect(moduleBlock).toBeVisible({ timeout: 10_000 });
         await expect(moduleBlock).toHaveCSS("cursor", "default");
 
@@ -540,8 +538,12 @@ test.describe("Gantt Recurring Events (#111)", () => {
         const boxAfter = await moduleBlock.boundingBox();
         expect(boxAfter?.x).toBeCloseTo(boxBefore.x, 0);
 
-        // The event block in the same zoomed week stays draggable.
-        const eventBlock = page.locator('[id^="block-event-"]').first();
+        // The event block in the same zoomed week stays draggable. Scoped to
+        // this test's own row for the same reason as the module block above:
+        // the seeded meal events have blocks too.
+        const eventBlock = (await getTimelineEventRow(page, lectureTitle))
+            .locator('[id^="block-event-"]')
+            .first();
         await expect(eventBlock).toBeVisible({ timeout: 10_000 });
         await expect(eventBlock).not.toHaveCSS("cursor", "default");
     });

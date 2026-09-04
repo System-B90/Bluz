@@ -141,18 +141,30 @@ async function getTimelineEventRow(
     return eventRow;
 }
 
-async function dragBlockWithinItsCell(
+/** Drops `block` on the centre of `weekIndex`'s cell in its own row. */
+async function dragBlockToWeekCell(
     page: Page,
     block: Locator,
+    row: Locator,
+    weekIndex: number,
 ): Promise<void> {
-    const box = await block.boundingBox();
-    if (!box) throw new Error("Gantt block not found for drag");
+    const blockBox = await block.boundingBox();
+    // Column 0 is the sticky label cell; week columns follow in order.
+    const cellBox = await row.locator("td").nth(weekIndex + 1).boundingBox();
+    if (!blockBox || !cellBox) {
+        throw new Error("Block or week cell not found for drag");
+    }
 
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.move(
+        blockBox.x + blockBox.width / 2,
+        blockBox.y + blockBox.height / 2,
+    );
     await page.mouse.down();
-    await page.mouse.move(box.x + box.width / 2 + 20, box.y + box.height / 2, {
-        steps: 8,
-    });
+    await page.mouse.move(
+        cellBox.x + cellBox.width / 2,
+        cellBox.y + cellBox.height / 2,
+        { steps: 10 },
+    );
     await page.mouse.up();
     await page.waitForTimeout(500);
 }
@@ -188,7 +200,10 @@ async function mapEventToFirstWeek(
 ): Promise<void> {
     const stagedBlock = eventRow.locator('[id^="block-event-"]');
     await expect(stagedBlock).toBeVisible({ timeout: 10_000 });
-    await dragBlockWithinItsCell(page, stagedBlock);
+    // Dropping on the cell's centre, not a few pixels sideways: the layout is
+    // RTL, so a small nudge right walks towards the sticky label column and
+    // can land on the remove target instead of the day.
+    await dragBlockToWeekCell(page, stagedBlock, eventRow, 0);
 }
 
 async function openTimeline(page: Page): Promise<void> {

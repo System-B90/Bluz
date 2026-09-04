@@ -4,10 +4,11 @@ This directory contains a complete database seeding suite that populates both th
 
 ## Core Architecture
 
-Seeding is decoupled into two cohesive steps:
+Seeding is decoupled into three cohesive steps:
 
 1. **Hive Seeding (`populate_demo_hive.py`)**: An interactive Python script using OIDC browser SSO to authenticate against the Hive API. It clears and generates user-groups, mock users, subjects, and modules. At the end, it dumps the generated resource IDs into a local mapping file: `hive_data.json`.
-2. **Bluz Seeding (`populate_demo_bluz.ts`)**: A TypeScript script that connects directly to the MongoDB instance configured in the `.env` file. It reads `hive_data.json` to acquire valid references for subjects, modules, rooms, and segel instructors. It drops existing collections and inserts 1 main course, 3 sub-courses (with randomly assigned instructors), and a full week's worth of calendar events of all types.
+2. **Bluz Seeding (`populate_demo_bluz.ts`)**: A TypeScript script that connects directly to the MongoDB instance configured in the `.env` file. It reads `hive_data.json` to acquire valid references for subjects, modules, rooms, and segel instructors. It drops existing collections and inserts 1 main course, 3 sub-courses (with randomly assigned instructors), a full week's worth of calendar events of all types, and three custom event colours (in the `bluz_meta` database, where the colour picker reads them from).
+3. **Gantt Seeding (`populate_demo_gantt.ts`)**: A TypeScript script that fills the *curriculum* (Postgres) side over raw SQL. Everything above lives in Mongo and describes the schedule; without this step the gantt is empty, and every curriculum-shaped e2e assertion skips itself for want of data.
 
 ## Prerequisites
 
@@ -32,11 +33,34 @@ python scripts/demo/populate_demo_hive.py
 
 _Note: This will open your web browser to perform SSO verification against the configured Hive URL._
 
-### Step 2: Seed Bluz (TypeScript)
+### Step 2: Seed Bluz schedule (TypeScript, MongoDB)
 
 ```bash
 npx tsx scripts/demo/populate_demo_bluz.ts
 ```
+
+### Step 3: Seed the gantt (TypeScript, Postgres)
+
+```bash
+npx tsx scripts/demo/populate_demo_gantt.ts
+```
+
+Reads `DATABASE_URL`; when that names the compose service (`bluz-curriculum-db`), it falls back to the published endpoint the same way the Mongo seeder does, honouring `POSTGRES_HOST` / `TEST_POSTGRES_PORT`.
+
+## Gantt Structure
+
+Two curriculums, sharing one syllabus between them:
+
+```
+מחזור הדגמה א׳ ─┬─ סילבוס משותף ── מערך פתיחה ─┬─ הרצאת פתיחה  (week 1, Sunday)
+                │                              └─ תרגול פתיחה  (week 1, Monday)
+                └─ סילבוס מחזור א׳ ── מערך ליבה ── הרצאת ליבה  (week 2, Sunday, weekly recurrence)
+מחזור הדגמה ב׳ ─── סילבוס משותף                 (the same syllabus row)
+```
+
+Each curriculum gets two weeks of seven days (9h Sun–Thu, 5h Friday, Shabbat closed). The shared syllabus is deliberate: `curriculumIds` is a list because a syllabus can hang off several curriculums, and a single-parent seed never exercised that.
+
+Ids are stable (`c_demo_*`, `s_demo_*`, …), so re-running replaces the same rows rather than piling up copies.
 
 ## Calendar Event Structure
 

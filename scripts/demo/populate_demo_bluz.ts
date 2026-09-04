@@ -523,6 +523,25 @@ async function main() {
             `Successfully created ${eventsList.length} calendar events in MongoDB.`,
         );
 
+        // Custom event colours live in the meta database, not the iteration's
+        // own. Without at least one, the event dialog's colour picker offers
+        // only "ברירת מחדל" and the e2e case that overrides an event's colour
+        // skips itself ("No selectable colors are seeded in this
+        // environment").
+        const metaDb = client.db(
+            process.env.MONGO_META_DB_NAME || "bluz_meta",
+        );
+        await metaDb.collection("customColors").deleteMany({});
+        const customColors = [
+            { id: "demo-color-indigo", name: "אינדיגו", hex: "#4f46e5" },
+            { id: "demo-color-teal", name: "טורקיז", hex: "#06b6d4" },
+            { id: "demo-color-amber", name: "ענבר", hex: "#f59e0b" },
+        ];
+        await metaDb.collection("customColors").insertMany(customColors);
+        console.log(
+            `Successfully created ${customColors.length} custom colors in MongoDB.`,
+        );
+
         console.log("Database seeding completed successfully!");
     } catch (err) {
         console.error("An error occurred during database seeding:", err);
