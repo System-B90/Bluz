@@ -92,6 +92,20 @@ test.describe("File exports", () => {
             await expect(page.getByText("הגאנט שלי").first()).toBeVisible({
                 timeout: 10_000,
             });
+
+            // Creating a draft selects it and closes the FAB popover, so the
+            // list this test goes on to read is no longer mounted. Reopen it.
+            //
+            // This branch used to be near-dead: other specs left curricula
+            // lying around, so the list was rarely empty. Now that each test
+            // cleans up after itself (fixtures.ts) it runs every time, which
+            // is what turned this spec flaky -- the isolation did not break
+            // it, it exposed a path that was never really exercised.
+            await fab.click();
+            await page
+                .locator(".MuiSkeleton-root")
+                .waitFor({ state: "hidden", timeout: 10_000 })
+                .catch(() => {});
         }
 
         // Select a curriculum: export is gated on `sourceCurriculum` being set

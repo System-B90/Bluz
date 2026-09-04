@@ -257,18 +257,24 @@ async function mapEventToWeek(
 
 /** Clicks `weekIndex`'s column in the timeline header, zooming into its day view (#445). */
 async function zoomIntoWeek(page: Page, weekIndex: number): Promise<void> {
-    // Visible-only, for the same reason as visibleEditEventTrigger: tabs the
-    // test has already visited stay mounted behind `display: none`, and their
-    // tables have a `thead` too. Taking the first match unfiltered picked up a
-    // hidden tab's header and then spun on scrollIntoViewIfNeeded until the
-    // test timed out (#495).
-    const headerRow = page
-        .locator("thead")
+    // Anchor on the table that actually holds the gantt rows, rather than "the
+    // first visible thead on the page". Visible-only was necessary -- tabs the
+    // test has already visited stay mounted behind `display: none` and their
+    // tables have a thead too (#495) -- but it is not sufficient: the timeline
+    // tab renders more than one visible table, so `.first()` could take a
+    // header belonging to a different one and then click a column that is not
+    // the week asked for. That is why zooming to week 2 left week 1's event in
+    // the sidebar: the zoom never moved.
+    const timelineTable = page
+        .locator("table")
+        .filter({ has: page.locator('[id^="gantt-row-"]') })
         .filter({ visible: true })
-        .first()
-        .locator("tr")
         .first();
-    const weekHeader = headerRow.locator("th, td").nth(weekIndex + 1);
+    const weekHeader = timelineTable
+        .locator("thead tr")
+        .first()
+        .locator("th, td")
+        .nth(weekIndex + 1);
     // The timeline scrolls horizontally: a later week's header can resolve
     // while sitting outside the viewport (#585).
     await weekHeader.scrollIntoViewIfNeeded();
