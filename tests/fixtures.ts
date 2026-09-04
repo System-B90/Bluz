@@ -325,6 +325,23 @@ export async function waitForHydration(page: Page): Promise<void> {
 }
 
 /**
+ * Waits for the browser to actually establish its realtime session.
+ *
+ * The client retries a failed connection on a backoff forever and says nothing
+ * a spec can see, so a stack where the WebSocket never connects looks exactly
+ * like a healthy one — the whole client-side realtime layer was down in every
+ * e2e run for months while the suite stayed green (#636). `RealtimeStatus`
+ * publishes the socket state into the DOM; this is what turns "dead" into a
+ * failure with a message.
+ */
+export async function waitForRealtimeConnection(page: Page): Promise<void> {
+    await expect(
+        page.locator("[data-testid='realtime-status']"),
+        "the browser never opened its WebSocket to the session server: the realtime layer is dead, so any live-update assertion below would be meaningless",
+    ).toHaveAttribute("data-realtime-state", "open", { timeout: 30_000 });
+}
+
+/**
  * Switches the calendar to day view.
  */
 export async function switchToDayView(page: Page): Promise<void> {

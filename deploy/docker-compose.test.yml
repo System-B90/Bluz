@@ -42,6 +42,20 @@ services:
             - MONGO_CONNECTION_STRING=mongodb://mongo_admin:${TEST_MONGO_PASSWORD:-${MONGO_ROOT_PASSWORD}}@mongodb:27017/
             - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@curriculum-db:5432/${POSTGRES_DB}
             - NEXTAUTH_URL=https://${BLUZ_APP_HOST:-bluz.dev}:${TEST_PROXY_PORT_HTTPS:-8443}
+            # The browser opens its WebSocket at the address rendered into the
+            # page from these two (ui/src/app/layout.tsx), and it reaches the
+            # session server through the proxy's /ws/ location — so it must be
+            # the proxy's *published* port, not the in-container 443.
+            #
+            # Without the port override the client computed `wss://bluz.dev/ws/`
+            # (443 collapses the port suffix to empty), and nothing listens
+            # there in a test stack: the proxy is published on the dynamic port
+            # run_tests.py allocates. Every browser silently failed to connect
+            # and retried on a backoff forever, so the entire client-side
+            # realtime layer was dead in e2e while the suite stayed green
+            # (#636).
+            - WEBSOCKET_SESSION_SERVER_HOST=${BLUZ_APP_HOST:-bluz.dev}
+            - WEBSOCKET_SESSION_SERVER_PORT=${TEST_PROXY_PORT_HTTPS:-8443}
             - HIVE_CLIENT_ID=${TEST_HIVE_CLIENT_ID}
             - HIVE_CLIENT_SECRET=${TEST_HIVE_CLIENT_SECRET}
             - NEXT_PUBLIC_HIVE_URL=${NEXT_PUBLIC_HIVE_URL}

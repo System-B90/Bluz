@@ -6,6 +6,7 @@ import {
     test,
     testId,
     waitForAppLoad,
+    waitForRealtimeConnection,
 } from "./fixtures";
 
 /**
@@ -31,6 +32,19 @@ import {
  * whole chain — API route, session server, browser client, reducer, DOM —
  * is actually wired together end to end.
  */
+
+/**
+ * The gate for everything below, and for every other spec that quietly assumes
+ * broadcasts arrive. It is deliberately outside the skipped describe: whatever
+ * happens to the two-user specs, a stack whose browsers cannot reach the
+ * session server must fail loudly rather than pass in silence (#636).
+ */
+test("the browser establishes its realtime session", async ({ page }) => {
+    await gotoAppHome(page);
+    await waitForAppLoad(page);
+
+    await waitForRealtimeConnection(page);
+});
 
 // Skipped: these two were written without a working local e2e stack and have
 // never passed. Their first run (33798617692) died in the shared
