@@ -45,6 +45,11 @@ export type OpenEventDialog = (
 ) => void;
 export type CloseEventDialog = () => void;
 
+/** Query param carrying the gantt event id to jump to — both the deep link
+ * (e.g. from the schedule event dialog's "cut from" link, #576) and the
+ * event dialog's own refresh-persistence share this single param. */
+export const GANTT_EVENT_DEEP_LINK_PARAM = "ge";
+
 /**
  * Reveals a module/event row in the רצף זמן timeline: expands its ancestors,
  * scrolls it into view and flash-highlights it. The actual behavior is
@@ -124,10 +129,15 @@ function ModuleDialogManager({
 
     const closeEventDialog: CloseEventDialog = useCallback(() => setEventDialogOpen(false), []);
 
-    // Restore the event dialog from the URL on load/refresh.
+    // Restore both dialogs from the URL on load/refresh (or a deep link
+    // landing on an already-mounted page, #576): opens the module dialog
+    // first and the event dialog on top, same as clicking the event from
+    // inside an open module.
     useEffect(() =>
     {
-        const urlEventId = searchParams.get("eventId") as GanttEventId | null;
+        const urlEventId = searchParams.get(
+            GANTT_EVENT_DEEP_LINK_PARAM,
+        ) as GanttEventId | null;
         if (!urlEventId) return;
 
         const event = state.events[ urlEventId ];
@@ -138,6 +148,11 @@ function ModuleDialogManager({
 
         queueMicrotask(() =>
         {
+            setCurrentSyllabusId(ganttModule.syllabusId);
+            setCurrentModuleId(event.moduleId);
+            setCurrentEventId(urlEventId);
+            setModuleDialogOpen(true);
+
             setEventDialogSyllabusId(ganttModule.syllabusId);
             setEventDialogModuleId(event.moduleId);
             setEventDialogEventId(urlEventId);
@@ -153,13 +168,13 @@ function ModuleDialogManager({
         if (typeof window === "undefined") return;
 
         const nextParams = new URLSearchParams(window.location.search);
-        const currentUrlEventId = nextParams.get("eventId");
+        const currentUrlEventId = nextParams.get(GANTT_EVENT_DEEP_LINK_PARAM);
         const nextEventId = eventDialogOpen ? eventDialogEventId : null;
 
         if (currentUrlEventId === nextEventId) return;
 
-        if (nextEventId) nextParams.set("eventId", nextEventId);
-        else nextParams.delete("eventId");
+        if (nextEventId) nextParams.set(GANTT_EVENT_DEEP_LINK_PARAM, nextEventId);
+        else nextParams.delete(GANTT_EVENT_DEEP_LINK_PARAM);
 
         const hash = window.location.hash;
         const nextSearch = nextParams.toString();
