@@ -51,18 +51,20 @@ test("the browser establishes its realtime session", async ({ page }) => {
     await waitForRealtimeConnection(page);
 });
 
-// Skipped: these two were written without a working local e2e stack and have
-// never passed. Their first run (33798617692) died in the shared
-// `selectCalendarTimeRange` helper -- the event dialog never opened -- so they
-// assert nothing about broadcasts and, worse, a spec that fails mid-suite with
-// a modal still open is a plausible source of pollution for whatever runs
-// after it. Three previously-green specs went red in that same run and ruling
-// this out is step one.
+// These two were written without a working local e2e stack and had never
+// passed, so they stayed skipped rather than de-flaked. Their first run
+// (33798617692) died in the shared `selectCalendarTimeRange` helper -- the
+// event dialog never opened -- before ever asserting on the broadcast. Both
+// users now gate on the `data-realtime-host` marker asserted by
+// `waitForRealtimeConnection` before either dialog interaction begins, so a
+// dropped or misdirected socket fails loudly on the gate instead of flaking
+// on a downstream assertion.
 //
 // The delivery guarantees they were written for are covered meanwhile by
 // tests/backend/ws-two-session-updates.test.ts, which is hermetic, runs in
-// under a second and does pass. #582 stays open for the end-to-end half.
-test.describe.skip("Live updates between two users (#582)", () => {
+// under a second and does pass. #582 stays open until this spec has run
+// green a few times in a row in the real suite.
+test.describe("Live updates between two users (#582)", () => {
     // Two full app loads plus an SSO-authenticated second context, before the
     // assertion even begins.
     test.describe.configure({ timeout: 120_000 });
@@ -75,6 +77,7 @@ test.describe.skip("Live updates between two users (#582)", () => {
 
         await gotoAppHome(page);
         await waitForAppLoad(page);
+        await waitForRealtimeConnection(page);
 
         const { context: secondContext, page: secondPage } =
             await openSecondUserSession(browser);
@@ -82,6 +85,7 @@ test.describe.skip("Live updates between two users (#582)", () => {
         try {
             await gotoAppHome(secondPage);
             await waitForAppLoad(secondPage);
+            await waitForRealtimeConnection(secondPage);
 
             // Baseline: B is not already showing the event, so a pass cannot
             // come from stale state or a name collision with seeded data.
@@ -117,6 +121,7 @@ test.describe.skip("Live updates between two users (#582)", () => {
 
         await gotoAppHome(page);
         await waitForAppLoad(page);
+        await waitForRealtimeConnection(page);
 
         await selectCalendarTimeRange(page);
         const dialog = page.getByRole("dialog").filter({ hasText: "עריכת מופע" });
@@ -131,6 +136,7 @@ test.describe.skip("Live updates between two users (#582)", () => {
         try {
             await gotoAppHome(secondPage);
             await waitForAppLoad(secondPage);
+            await waitForRealtimeConnection(secondPage);
 
             // B loads with the event present (it was saved before B connected),
             // so the assertion below is about the *removal* broadcast only.
