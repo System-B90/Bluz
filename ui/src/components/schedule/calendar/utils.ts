@@ -1,4 +1,4 @@
-import moment from "moment";
+import { Dayjs } from "dayjs";
 import { DateRange } from "react-big-calendar";
 
 import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
@@ -17,22 +17,30 @@ export function isWeekendInAppTimezone(date: Date): boolean {
     return WEEKEND_DAY_INDEXES.includes(dayjs(date).tz(APP_TIMEZONE).day());
 }
 
+/**
+ * The instants a view spans, for range-scoped fetches and the ICS export.
+ *
+ * Computed in Israel time rather than the browser's zone (#613): the grid's
+ * columns are pinned there, so a range derived locally disagrees with what is
+ * on screen for any viewer outside Israel — a Thursday-end computed in UTC is
+ * already Friday in Jerusalem, which is exactly what #611 is about.
+ */
 export function getRangeForView(newDate: Date, view: string): DateRange {
-    const mDate = moment(newDate);
+    const date = dayjs(newDate).tz(APP_TIMEZONE);
 
-    let start: Date;
-    let end: Date;
+    let start: Dayjs;
+    let end: Dayjs;
 
     switch (view) {
     case "month":
-        start = mDate.clone().startOf("month").toDate();
-        end = mDate.clone().endOf("month").toDate();
+        start = date.startOf("month");
+        end = date.endOf("month");
         break;
 
     case "week":
-        // moment's startOf('week') respects the locale set in moment.locale()
-        start = mDate.clone().startOf("week").toDate();
-        end = mDate.clone().endOf("week").toDate();
+        // dayjs weeks start on Sunday, which is the Israeli week.
+        start = date.startOf("week");
+        end = date.endOf("week");
         break;
 
     case "work_week":
@@ -40,25 +48,24 @@ export function getRangeForView(newDate: Date, view: string): DateRange {
         // end at Thursday rather than spanning the full Sun–Sat week (#611).
         // Otherwise range-scoped fetches and the ICS export pull in Fri/Sat
         // events that are never shown on screen.
-        start = mDate.clone().startOf("week").toDate();
-        end = mDate.clone().startOf("week").add(4, "days").endOf("day").toDate();
+        start = date.startOf("week");
+        end = date.startOf("week").add(4, "days").endOf("day");
         break;
 
     case "day":
-        start = mDate.clone().startOf("day").toDate();
-        end = mDate.clone().endOf("day").toDate();
+        start = date.startOf("day");
+        end = date.endOf("day");
         break;
 
     case "agenda":
         // Agenda usually defaults to a 30-day window from the current date
-        start = mDate.clone().startOf("day").toDate();
-        end = mDate.clone().add(30, "days").endOf("day").toDate();
+        start = date.startOf("day");
+        end = date.add(30, "days").endOf("day");
         break;
 
     default:
-        start = newDate;
-        end = newDate;
+        return { start: newDate, end: newDate };
     }
 
-    return { start, end };
+    return { start: start.toDate(), end: end.toDate() };
 }
