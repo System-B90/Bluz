@@ -100,7 +100,7 @@ export function EventDialog({
     // is currently viewing (`?it=`), so it rides along on the current URL
     // instead. Omitted (not "") when absent: the gantt page treats a missing
     // `it` as "current iteration", same as navigating there directly.
-    const iterationId = useSearchParams().get(ITERATION_QUERY_PARAM);
+    const iterationId = useSearchParams()?.get(ITERATION_QUERY_PARAM) ?? null;
     const ganttEventLink = buildGanttEventLink(event, iterationId);
 
     return (
