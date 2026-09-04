@@ -120,12 +120,28 @@ function GanttPageInner()
     const [ error, setError ] = useState<null | string>(null);
     const [ isLoadingCurriculums, setIsLoadingCurriculums ] = useState(true);
 
+    // Tracks the `cid` this component itself last wrote to the URL, so an
+    // *external* URL change (a deep link landing on an already-mounted page —
+    // Next keeps this component alive across soft back/forward navigation, so
+    // the `useState` initializer above only ever runs once) is told apart from
+    // our own state->URL echo below and adopted instead of clobbered back.
+    const lastSyncedCidRef = useRef(currentCurriculum);
+
     useEffect(() =>
     {
         const urlCid = searchParams.get(CURRICULUM_QUERY_PARAM);
         const currentCid = currentCurriculum ?? null;
 
         if (urlCid === currentCid) return;
+
+        if (urlCid !== lastSyncedCidRef.current)
+        {
+            // The URL moved out from under us — a deep link, not our own
+            // write. Follow it instead of overwriting it back.
+            lastSyncedCidRef.current = urlCid as GanttCurriculumId | null;
+            setCurrentCurriculum(urlCid as GanttCurriculumId | null);
+            return;
+        }
 
         const nextParams = new URLSearchParams(searchParams.toString());
         if (currentCid)
@@ -136,6 +152,7 @@ function GanttPageInner()
             nextParams.delete(CURRICULUM_QUERY_PARAM);
         }
 
+        lastSyncedCidRef.current = currentCid;
         const nextSearch = nextParams.toString();
         router.replace(nextSearch ? `${pathname}?${nextSearch}` : pathname);
     }, [ currentCurriculum, pathname, router, searchParams ]);
