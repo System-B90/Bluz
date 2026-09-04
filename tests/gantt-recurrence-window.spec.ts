@@ -196,6 +196,22 @@ async function openTimeline(page: Page): Promise<void> {
     await page.waitForTimeout(500);
 }
 
+/**
+ * "YYYY-MM-DD" `offsetDays` from today, in local time.
+ *
+ * Not `toISOString().slice(0, 10)`: that converts to UTC first, and the app
+ * runs in Asia/Jerusalem while CI's clock is UTC, so near midnight the two
+ * disagree by a day -- which for this spec means the window lands exactly on
+ * an echo boundary instead of between two. Same class of bug as #567.
+ */
+function dateInAppTimezone(offsetDays: number): string {
+    const d = new Date();
+    d.setDate(d.getDate() + offsetDays);
+    const month = `${d.getMonth() + 1}`.padStart(2, "0");
+    const day = `${d.getDate()}`.padStart(2, "0");
+    return `${d.getFullYear()}-${month}-${day}`;
+}
+
 test.describe("Gantt recurrence window and skipped occurrences (#468, #469)", () => {
     test.describe.configure({ timeout: 60_000 });
 
@@ -203,6 +219,30 @@ test.describe("Gantt recurrence window and skipped occurrences (#468, #469)", ()
         await page.goto("/gantt");
         await waitForAppLoad(page);
         await createAndSelectCurriculum(page);
+
+        // Give the curriculum a real start date before anything relies on the
+        // recurrence window.
+        //
+        // A new draft has `startDate: null`, so its days carry no calendar
+        // date, and `isDayInRecurrenceWindow` (api-shared/gantt/recurrence.ts)
+        // treats an unresolvable date as "inside the window" by design -- the
+        // window is a restriction on top of the echo, not a second source of
+        // truth for it. The upshot is that on a dateless curriculum the window
+        // is silently a no-op, so "a recurrence end date stops the echo early"
+        // could never pass here: it asserted 1 echo and always saw 2. The
+        // test's premise that "the curriculum starts today" was simply never
+        // true.
+        const curriculumId = new URL(page.url()).searchParams.get("cid");
+        expect(curriculumId, "curriculum id must be in the URL").toBeTruthy();
+        const startDate = dateInAppTimezone(0);
+        const patched = await page.request.patch(
+            `/api/gantt/curriculums/${curriculumId}`,
+            { data: { startDate } },
+        );
+        expect(patched.ok(), "curriculum start date must be set").toBeTruthy();
+        await page.reload();
+        await waitForAppLoad(page);
+
         // Three weeks: two echo targets, so a window can cut exactly one.
         await addWeeks(page, 3);
     });
@@ -251,12 +291,11 @@ test.describe("Gantt recurrence window and skipped occurrences (#468, #469)", ()
 
         // A window that ends before the timeline does removes the later echo.
         // The curriculum starts today, so "a week from now" keeps exactly one.
-        const endDate = new Date();
-        endDate.setDate(endDate.getDate() + 8);
+
         await page.getByRole("tab", { name: "סילבוסים" }).click();
         await configureRecurrence(page, eventTitle, {
             recurrenceLabel: "שבועי",
-            endDate: endDate.toISOString().slice(0, 10),
+            endDate: dateInAppTimezone(8),
         });
 
         await openTimeline(page);

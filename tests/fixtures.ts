@@ -783,6 +783,19 @@ export async function ensureModuleDialogOpen(
     // all" must not hinge on whether one title matched.
     if ((await visibleEditEventTrigger(page).count()) > 0) return;
 
+    // Getting here means no usable trigger is on screen -- but a dialog may
+    // still be open (a different module's, or one whose content did not
+    // render). MUI marks everything behind an open modal `aria-hidden`, so the
+    // tab below is not merely covered, it is absent from the accessibility
+    // tree and `getByRole("tab", ...)` waits for it until the test times out.
+    // That is the failure behind gantt-recurrence.spec.ts:459, which spent
+    // its whole 60s budget on `waiting for getByRole('tab', ...)`.
+    const openDialog = page.locator(".MuiDialog-root:visible");
+    if ((await openDialog.count()) > 0) {
+        await page.keyboard.press("Escape");
+        await expect(openDialog).toHaveCount(0, { timeout: 10_000 });
+    }
+
     await page.getByRole("tab", { name: "סילבוסים" }).click();
 
     // Tooltip+IconButton: MUI puts the label on the button, or on a wrapping
