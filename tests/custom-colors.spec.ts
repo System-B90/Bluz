@@ -46,11 +46,13 @@ test.describe("Custom colors settings", () => {
         await searchInput.fill(name);
         await expect(dialog.getByText(name)).toBeVisible();
 
-        const otherColorCount = await dialog
-            .locator("li")
-            .filter({ hasNotText: name })
-            .count();
-        expect(otherColorCount).toBe(0);
+        // Web-first, not a one-shot .count(): the search filter is debounced,
+        // so counting immediately after typing can sample the list before it
+        // settles and see rows that are about to disappear. toHaveCount retries
+        // until it does, which is what made this spec flaky rather than wrong.
+        await expect(
+            dialog.locator("li").filter({ hasNotText: name }),
+        ).toHaveCount(0, { timeout: 10_000 });
 
         // Delete via the confirm dialog.
         await dialog
