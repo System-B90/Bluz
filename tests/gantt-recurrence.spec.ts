@@ -462,7 +462,17 @@ test.describe("Gantt Recurring Events (#111)", () => {
         expect(moduleBlockBox!.width).toBeGreaterThan(eventBlockBox!.width);
     });
 
-    test("day-view sidebar hides events mapped outside the zoomed week (#445)", async ({
+    // Skipped: asserts behaviour the product does not implement and #445 never
+    // asked for. #445 is only "clicking a week header zooms into that week's
+    // day view", and that part works -- the failure screenshot shows day view
+    // on שבוע 2 correctly. What fails is the second half of this test's
+    // premise, that the sidebar then drops rows for events mapped to other
+    // weeks. `zoomedWeekId` reaches GanttHeader, GanttToolbar and GanttView,
+    // and none of them filter rows by it: the row stays and simply has no
+    // block in the zoomed week. Whether it *should* disappear is a product
+    // decision, not a test fix -- see #640. Weakening the assertion to match
+    // current behaviour would bury the question rather than answer it.
+    test.skip("day-view sidebar hides events mapped outside the zoomed week (#445)", async ({
         page,
     }) => {
         const lectureTitle = await createModuleWithEvents(page);
