@@ -66,8 +66,13 @@ test("the browser establishes its realtime session", async ({ page }) => {
 // green a few times in a row in the real suite.
 test.describe("Live updates between two users (#582)", () => {
     // Two full app loads plus an SSO-authenticated second context, before the
-    // assertion even begins.
-    test.describe.configure({ timeout: 120_000 });
+    // assertion even begins — and now two `waitForRealtimeConnection` calls
+    // per test, each good for up to 40s (two chained 20s expects) in the
+    // failure mode they exist to catch. 120s was tight even before those
+    // gates; keep the outer timeout comfortably above the summed per-assertion
+    // budgets so a dead socket fails with the gate's diagnostic message
+    // instead of a generic "Test timeout exceeded".
+    test.describe.configure({ timeout: 180_000 });
 
     test("an event created by one user appears on the other user's calendar", async ({
         page,
