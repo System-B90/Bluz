@@ -16,7 +16,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  * lock UI only warns about but never prevents.
  */
 
-const { fakeController, fakeEvents, fakeHistory } = vi.hoisted(() => {
+const { fakeController, fakeEvents, fakeHistory, store } = vi.hoisted(() => {
     const store = new Map<string, Record<string, unknown>>();
     const events = {
         findOne: vi.fn(async ({ id }: { id: string }) => store.get(id) ?? null),
@@ -38,6 +38,7 @@ const { fakeController, fakeEvents, fakeHistory } = vi.hoisted(() => {
         fakeController: { dbName: "bluz_test", events, eventHistory: history },
         fakeEvents: events,
         fakeHistory: history,
+        store,
     };
 });
 
@@ -88,6 +89,7 @@ function makeDocument(overrides: Partial<DbEventDocument> = {}): DbEventDocument
 beforeEach(async () => {
     vi.clearAllMocks();
     sentBroadcasts.length = 0;
+    store.clear();
     await fakeEvents.insertOne(makeDocument());
 });
 
@@ -135,6 +137,9 @@ describe("DbEvent.set under concurrent edits (no server-side lock enforcement)",
         // so the loser's session has no way to know its edit was discarded.
         expect(stored?.name).toBe(resultB.name);
         expect(fakeEvents.updateOne).toHaveBeenCalledTimes(2);
+        // Both writes record their history entry from the pre-race `before`
+        // document, since neither read saw the other's write.
+        expect(fakeHistory.insertOne).toHaveBeenCalledTimes(2);
 
         // Both writes also broadcast EVENT_DATA_UPDATE, so a client applying
         // the two updates in issue-order (rather than in whatever order the
