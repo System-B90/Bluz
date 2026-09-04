@@ -121,12 +121,20 @@ test.describe("Gantt collection API - parent ids", () => {
         >;
         test.skip(entries.length === 0, "no syllabuses seeded");
 
-        const [syllabusId, entry] = entries[0];
-        const originalParents = entry.curriculumIds;
-        test.skip(
-            originalParents.length === 0,
-            "seed syllabus has no curriculum to compare against",
+        // Pick a syllabus that actually has a parent rather than whichever one
+        // the map happens to list first: a stack that has run the suite a few
+        // times accumulates orphan syllabuses from other specs, and taking
+        // entries[0] blindly skipped this test on exactly those.
+        const parented = entries.find(
+            ([, candidate]) => (candidate.curriculumIds ?? []).length > 0,
         );
+        test.skip(
+            !parented,
+            "no syllabus is linked to a curriculum to compare against",
+        );
+
+        const [syllabusId, entry] = parented!;
+        const originalParents = entry.curriculumIds;
 
         // Find a curriculum this syllabus is *not* already linked to.
         const curriculumsResponse = await request.get("/api/gantt/curriculums");

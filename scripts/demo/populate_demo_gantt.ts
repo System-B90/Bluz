@@ -11,6 +11,7 @@
  *             │                              └─ תרגול פתיחה   (mapped, week 1)
  *             └─ סילבוס מחזור א׳ ── מערך ליבה ── הרצאת ליבה   (mapped, week 2)
  *   מחזור ב׳ ─── סילבוס משותף (the same syllabus — shared across curriculums)
+ *   מחזור ג׳ ─── (empty: somewhere to link a syllabus into that is not already a parent)
  *
  * The shared syllabus is the point of the second curriculum: `curriculumIds`
  * is a list precisely because a syllabus can hang off several curriculums
@@ -55,6 +56,13 @@ function resolveDatabaseUrl(): string {
 const IDS = {
     curriculumA: "c_demo_main",
     curriculumB: "c_demo_second",
+    /**
+     * Deliberately holds no syllabus: the API contract test links a shared
+     * syllabus into a curriculum it is *not* already under, and with only the
+     * two curriculums above — both already parents of the shared syllabus —
+     * it had nowhere to share into and skipped itself.
+     */
+    curriculumSpare: "c_demo_spare",
     sharedSyllabus: "s_demo_shared",
     ownSyllabus: "s_demo_main_only",
     openingModule: "m_demo_opening",
@@ -91,17 +99,23 @@ async function main(): Promise<void> {
         await sql.begin(async (tx) => {
             // Cascades clear the junctions, mappings and configurations that
             // hang off these rows, so a reseed is a clean replace.
-            await tx`DELETE FROM c WHERE id IN (${IDS.curriculumA}, ${IDS.curriculumB})`;
+            await tx`DELETE FROM c WHERE id IN (${IDS.curriculumA}, ${IDS.curriculumB}, ${IDS.curriculumSpare})`;
             await tx`DELETE FROM s WHERE id IN (${IDS.sharedSyllabus}, ${IDS.ownSyllabus})`;
             await tx`DELETE FROM m WHERE id IN (${IDS.openingModule}, ${IDS.coreModule})`;
             await tx`DELETE FROM e WHERE id IN (${IDS.openingLecture}, ${IDS.openingExercise}, ${IDS.coreLecture})`;
+            // Weeks and days hang off the curriculum through junctions, so
+            // deleting the curriculum drops the links but leaves the rows
+            // themselves behind — and a reseed then collides on their ids.
+            await tx`DELETE FROM w WHERE id LIKE 'w_demo_%'`;
+            await tx`DELETE FROM d WHERE id LIKE 'd_demo_%'`;
 
             const startDate = upcomingSunday();
             await tx`
                 INSERT INTO c (id, title, description, start_date, draft, archived)
                 VALUES
                     (${IDS.curriculumA}, ${'מחזור הדגמה א׳'}, ${"גאנט הדגמה מלא"}, ${startDate}, false, false),
-                    (${IDS.curriculumB}, ${'מחזור הדגמה ב׳'}, ${"גאנט הדגמה שני, חולק סילבוס עם הראשון"}, ${startDate}, true, false)
+                    (${IDS.curriculumB}, ${'מחזור הדגמה ב׳'}, ${"גאנט הדגמה שני, חולק סילבוס עם הראשון"}, ${startDate}, true, false),
+                    (${IDS.curriculumSpare}, ${'מחזור הדגמה ג׳'}, ${"גאנט ריק — יעד לשיוך סילבוס"}, ${startDate}, true, false)
             `;
 
             await tx`
