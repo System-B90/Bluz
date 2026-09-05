@@ -20,6 +20,7 @@ import {
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { useCurriculumCommands } from "@/components/app-commands/use-curriculum-commands";
+import { GANTT_ANCHORS } from "@/components/app-onboarding/anchors";
 import { useCurriculumSyncRef } from "@/components/gantt/curriculum-fab/curriculum-sync-context";
 import { CurriculumActionItems } from "@/components/gantt/curriculum-fab/CurriculumActionItems";
 import { CurriculumListItems } from "@/components/gantt/curriculum-fab/CurriculumListItems";
@@ -28,6 +29,7 @@ import {
     flattenCurriculumGroups,
     groupCurriculumsByStatus,
 } from "@/components/gantt/curriculum-fab/utils";
+import { useTourAnchor } from "@/components/onboarding";
 
 export type CurriculumDrawerProps = {
     open?: boolean;
@@ -52,6 +54,9 @@ export function CurriculumFab({
     const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
     const hasInitializedSelection = useRef(false);
     const syncRef = useCurriculumSyncRef();
+    const curriculumFabAnchor = useTourAnchor<HTMLButtonElement>(
+        GANTT_ANCHORS.curriculumFab,
+    );
 
     useEffect(() => {
         let isMounted = true;
@@ -166,6 +171,7 @@ export function CurriculumFab({
                 aria-label="גאנטים"
                 color="primary"
                 onClick={handleTogglePanel}
+                ref={curriculumFabAnchor}
                 sx={{
                     position: "fixed",
                     insetInlineEnd: 16,

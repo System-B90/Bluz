@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { GanttContentCommands } from "@/components/app-commands/GanttContentCommands";
+import { GanttOnboarding } from "@/components/app-onboarding/gantt/GanttOnboarding";
 import { CurriculumViewSidebar } from "@/components/gantt/curriculum-view/components/sidebars";
 import { GanttSearchNavProvider } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
 import { CurriculumViewTabs } from "@/components/gantt/curriculum-view/tabs";
@@ -54,6 +55,9 @@ export function CurriculumView({
         <GanttSearchNavProvider>
             {/* Needs both the curriculum state and the search-nav context. */}
             <GanttContentCommands />
+
+            {/* The tour drives the tabs, so it is registered by their owner. */}
+            <GanttOnboarding setSelectedTabIndex={setSelectedTabIndex} />
 
             <Box
                 alignItems={"flex-start"}

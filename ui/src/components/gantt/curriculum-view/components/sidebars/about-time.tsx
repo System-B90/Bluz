@@ -1,9 +1,11 @@
 import Box from "@mui/material/Box";
 
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { GANTT_ANCHORS } from "@/components/app-onboarding/anchors";
 import { CurriculumAboutCard } from "@/components/gantt/curriculum-view/components/curriculum-about-card";
 import { HoursCard } from "@/components/gantt/curriculum-view/components/HoursCard";
 import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
+import { useTourAnchor } from "@/components/onboarding";
 
 export function AboutTimeCurriculumViewSidebar({
     curriculumId,
@@ -11,6 +13,7 @@ export function AboutTimeCurriculumViewSidebar({
     curriculumId: GanttCurriculumId | null;
 }) {
     const curriculum = useCurriculum(curriculumId ?? "");
+    const sidebarAnchor = useTourAnchor<HTMLDivElement>(GANTT_ANCHORS.sidebar);
 
     return (
         <Box
@@ -24,6 +27,7 @@ export function AboutTimeCurriculumViewSidebar({
             overflow={"hidden"}
             pb={1}
             px={1}
+            ref={sidebarAnchor}
         >
             <CurriculumAboutCard
                 curriculum={curriculum}

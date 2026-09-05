@@ -7,6 +7,7 @@ import React from "react";
 
 import { AiAssistant } from "@/components/ai/AiAssistant";
 import { BluzCommandPalette } from "@/components/app-commands/BluzCommandPalette";
+import { BluzOnboarding } from "@/components/app-onboarding/BluzOnboarding";
 import { CoursesProvider } from "@/components/base/CoursesProvider";
 import { CustomColorsProvider } from "@/components/base/CustomColorsProvider";
 import { HiveLessonsProvider } from "@/components/base/HiveLessonsProvider";
@@ -30,69 +31,71 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
     return (
         <BluzCommandPalette>
-            <Box
-                bgcolor="background.default"
-                display="flex"
-                flexDirection="column"
-                height="100vh"
-                overflow={"hidden"}
-                sx={{ p: 0 }}
-                width="100vw"
-            >
-                <ScheduleAppBar openSettingsDialog={openDialog} />
-
+            <BluzOnboarding>
                 <Box
-                    height="calc(100vh - 56px)"
-                    sx={{
-                        position: "relative",
-                    }}
+                    bgcolor="background.default"
+                    display="flex"
+                    flexDirection="column"
+                    height="100vh"
+                    overflow={"hidden"}
+                    sx={{ p: 0 }}
+                    width="100vw"
                 >
-                    {children}
-                </Box>
+                    <ScheduleAppBar openSettingsDialog={openDialog} />
 
-                {offlineMode ? (
-                    <Tooltip placement="right" title="מצב עריכה לוקלי פעיל">
-                        <Fab
-                            aria-label="offline-status"
-                            color="warning"
-                            sx={{
-                                position: "fixed",
-                                bottom: 24,
-                                insetInlineStart: 24,
-                                zIndex: 1000,
-                                background:
-                                    "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
-                                color: "white",
-                                boxShadow: "0px 6px 20px rgba(217, 119, 6, 0.4)",
-                                transition: "all 0.2s ease-in-out",
-                                "&:hover": {
+                    <Box
+                        height="calc(100vh - 56px)"
+                        sx={{
+                            position: "relative",
+                        }}
+                    >
+                        {children}
+                    </Box>
+
+                    {offlineMode ? (
+                        <Tooltip placement="right" title="מצב עריכה לוקלי פעיל">
+                            <Fab
+                                aria-label="offline-status"
+                                color="warning"
+                                sx={{
+                                    position: "fixed",
+                                    bottom: 24,
+                                    insetInlineStart: 24,
+                                    zIndex: 1000,
                                     background:
-                                        "linear-gradient(135deg, #d97706 0%, #b45309 100%)",
-                                    boxShadow:
-                                        "0px 8px 24px rgba(217, 119, 6, 0.6)",
-                                    scale: "1.05",
-                                },
-                                "&:active": {
-                                    scale: "0.95",
-                                },
-                            }}
-                        >
-                            <WifiTetheringOffIcon className="text-[1.3rem]" />
-                        </Fab>
-                    </Tooltip>
-                ) : null}
+                                        "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+                                    color: "white",
+                                    boxShadow: "0px 6px 20px rgba(217, 119, 6, 0.4)",
+                                    transition: "all 0.2s ease-in-out",
+                                    "&:hover": {
+                                        background:
+                                            "linear-gradient(135deg, #d97706 0%, #b45309 100%)",
+                                        boxShadow:
+                                            "0px 8px 24px rgba(217, 119, 6, 0.6)",
+                                        scale: "1.05",
+                                    },
+                                    "&:active": {
+                                        scale: "0.95",
+                                    },
+                                }}
+                            >
+                                <WifiTetheringOffIcon className="text-[1.3rem]" />
+                            </Fab>
+                        </Tooltip>
+                    ) : null}
 
-                {/*
-                  * `AiAssistant` reads `?cid=` to know which gantt is open,
-                  * and `useSearchParams` suspends during prerender.
-                  */}
-                <React.Suspense fallback={null}>
-                    <AiAssistant />
-                </React.Suspense>
+                    {/*
+                      * `AiAssistant` reads `?cid=` to know which gantt is open,
+                      * and `useSearchParams` suspends during prerender.
+                      */}
+                    <React.Suspense fallback={null}>
+                        <AiAssistant />
+                    </React.Suspense>
 
-                <SettingsDialogUrl />
-                <NoIterationPrompt />
-            </Box>
+                    <SettingsDialogUrl />
+                    <NoIterationPrompt />
+                </Box>
+            </BluzOnboarding>
         </BluzCommandPalette>
     );
 }
