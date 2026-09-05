@@ -23,22 +23,26 @@ function Anchor({ id }: { id: string }) {
     return <div ref={useTourAnchor<HTMLDivElement>(id)}>{id}</div>;
 }
 
+const ALL_ANCHORS: ReadonlyArray<string> = [
+    APP_ANCHORS.help,
+    GANTT_ANCHORS.curriculumFab,
+    GANTT_ANCHORS.search,
+    GANTT_ANCHORS.sidebar,
+    GANTT_ANCHORS.tabs,
+];
+
 function GanttScreen({
+    anchors,
     setSelectedTabIndex,
 }: {
+    anchors: ReadonlyArray<string>;
     setSelectedTabIndex: Dispatch<SetStateAction<number>>;
 }) {
     const { openHelp } = useOnboarding();
 
     return (
         <div>
-            {[
-                APP_ANCHORS.help,
-                GANTT_ANCHORS.curriculumFab,
-                GANTT_ANCHORS.search,
-                GANTT_ANCHORS.sidebar,
-                GANTT_ANCHORS.tabs,
-            ].map((id) => (
+            {anchors.map((id) => (
                 <Anchor id={id} key={id} />
             ))}
 
@@ -49,14 +53,17 @@ function GanttScreen({
     );
 }
 
-function renderGanttScreen() {
+function renderGanttScreen(anchors: ReadonlyArray<string> = ALL_ANCHORS) {
     const setSelectedTabIndex = vi.fn();
     render(
         <OnboardingProvider
             labels={ONBOARDING_LABELS}
             storageNamespace="bluz-test"
         >
-            <GanttScreen setSelectedTabIndex={setSelectedTabIndex} />
+            <GanttScreen
+                anchors={anchors}
+                setSelectedTabIndex={setSelectedTabIndex}
+            />
         </OnboardingProvider>,
     );
     return { setSelectedTabIndex };
@@ -126,6 +133,27 @@ describe("gantt onboarding tour", () => {
 
         expect(screen.getByText(/לא מוחקת ולא דורסת/)).toBeDefined();
         expect(screen.getByText(/משיכה חזרה/)).toBeDefined();
+    });
+
+    it("speaks in Bluz's voice, not the package's default wording", async () => {
+        renderGanttScreen();
+
+        await seeStep("ברוכים הבאים לגאנט");
+
+        expect(screen.getByRole("button", { name: "אולי אחר כך" })).toBeDefined();
+        expect(screen.queryByRole("button", { name: "דילוג" })).toBeNull();
+    });
+
+    it("skips the steps whose UI is not on this screen", async () => {
+        // A planner who never opened the syllabuses tab has no search field and
+        // no hours sidebar; those steps drop out instead of pointing at nothing.
+        renderGanttScreen([GANTT_ANCHORS.curriculumFab, GANTT_ANCHORS.tabs]);
+
+        await seeStep("ברוכים הבאים לגאנט");
+        await advanceTo(/מה באמת קורה/);
+
+        expect(screen.queryByText("חיפוש בתוך הגאנט")).toBeNull();
+        expect(screen.queryByText("שבועות ומכסת שעות")).toBeNull();
     });
 
     it("leaves the same explanations behind in the help panel", async () => {

@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ReactNode, useMemo } from "react";
@@ -224,6 +225,76 @@ describe("guided tour", () => {
 
         await waitFor(() => expect(screen.queryByText("Step one")).toBeNull());
         expect(storedCompletions().demo.reason).toBe("dismissed");
+    });
+});
+
+describe("keyboard navigation", () => {
+    const KEYBOARD_TOUR = buildTour({
+        steps: [
+            { id: "one", title: "Step one", body: "First", placement: "center" },
+            { id: "two", title: "Step two", body: "Second", placement: "center" },
+        ],
+    });
+
+    function ThemedHarness({ direction }: { direction: "ltr" | "rtl" }) {
+        return (
+            <ThemeProvider theme={createTheme({ direction })}>
+                <Harness tour={KEYBOARD_TOUR} withAnchor={false} />
+            </ThemeProvider>
+        );
+    }
+
+    it("advances on Enter", async () => {
+        render(<ThemedHarness direction="ltr" />);
+
+        await seeStep("Step one");
+        await userEvent.keyboard("{Enter}");
+
+        await seeStep("Step two");
+    });
+
+    it("moves with the arrows in the reading direction of the theme", async () => {
+        // Hebrew reads right-to-left, so "forward" is the right arrow.
+        render(<ThemedHarness direction="rtl" />);
+
+        await seeStep("Step one");
+        await userEvent.keyboard("{ArrowRight}");
+        await seeStep("Step two");
+
+        await userEvent.keyboard("{ArrowLeft}");
+        await seeStep("Step one");
+    });
+
+    it("mirrors those arrows under a left-to-right theme", async () => {
+        render(<ThemedHarness direction="ltr" />);
+
+        await seeStep("Step one");
+        await userEvent.keyboard("{ArrowLeft}");
+        await seeStep("Step two");
+
+        await userEvent.keyboard("{ArrowRight}");
+        await seeStep("Step one");
+    });
+});
+
+describe("an anchor that goes away mid-step", () => {
+    it("keeps the card up instead of tearing it down", async () => {
+        // Regression: deciding the layout from the measured rect swapped the
+        // card's subtree the moment the anchor vanished — and swallowed any
+        // click the user had already started on it.
+        const tour = buildTour({
+            steps: [{ id: "anchored", title: "Step two", body: "Second", anchor: "target" }],
+        });
+        const { rerender } = render(<Harness tour={tour} />);
+
+        await seeStep("Step two");
+        const card = screen.getByRole("dialog");
+
+        rerender(<Harness tour={tour} withAnchor={false} />);
+
+        await waitFor(() => expect(screen.queryByText("Target")).toBeNull());
+        expect(screen.getByRole("dialog")).toBe(card);
+        expect(screen.getByText("Step two")).toBeDefined();
     });
 });
 

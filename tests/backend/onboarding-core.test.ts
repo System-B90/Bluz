@@ -119,6 +119,12 @@ describe("step selection", () => {
         expect(stepProgress(steps, 0, canShow)).toEqual({ current: 1, total: 2 });
         expect(stepProgress(steps, 2, canShow)).toEqual({ current: 2, total: 2 });
     });
+
+    it("counts the step being shown even when it would not be picked", () => {
+        // A required step can be showing with its anchor already gone; the
+        // counter must not renumber the tour out from under the user.
+        expect(stepProgress(steps, 1, canShow)).toEqual({ current: 2, total: 3 });
+    });
 });
 
 describe("spotlight geometry", () => {
@@ -145,6 +151,21 @@ describe("spotlight geometry", () => {
             left: 0,
             width: 54,
             height: 300,
+        });
+    });
+
+    it("collapses an anchor scrolled fully out of view", () => {
+        const element = attach();
+        element.getBoundingClientRect = () =>
+            ({ top: 900, left: 10, right: 90, bottom: 980 }) as DOMRect;
+
+        // No negative geometry: the cutout is empty, and the card falls back to
+        // the centre of the viewport.
+        expect(toSpotlightRect(element, 0, { width: 400, height: 300 })).toEqual({
+            top: 300,
+            left: 10,
+            width: 80,
+            height: 0,
         });
     });
 

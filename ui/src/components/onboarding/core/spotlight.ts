@@ -9,6 +9,10 @@ export type SpotlightRect = {
 
 export const DEFAULT_SPOTLIGHT_PADDING = 8;
 
+function clamp(value: number, min: number, max: number): number {
+    return Math.min(Math.max(value, min), max);
+}
+
 /**
  * The anchor's viewport box, grown by `padding` and clipped to the viewport so
  * a partially off-screen anchor still produces a cutout that is on screen.
@@ -20,10 +24,13 @@ export function toSpotlightRect(
 ): SpotlightRect {
     const box = element.getBoundingClientRect();
 
-    const top = Math.max(0, box.top - padding);
-    const left = Math.max(0, box.left - padding);
-    const right = Math.min(viewport.width, box.right + padding);
-    const bottom = Math.min(viewport.height, box.bottom + padding);
+    // Both edges are clamped, not just the near one: an anchor scrolled fully
+    // past the fold would otherwise put the cutout — and the card that tracks
+    // it — off in space instead of collapsing it against the viewport edge.
+    const top = clamp(box.top - padding, 0, viewport.height);
+    const left = clamp(box.left - padding, 0, viewport.width);
+    const right = clamp(box.right + padding, 0, viewport.width);
+    const bottom = clamp(box.bottom + padding, 0, viewport.height);
 
     return {
         top,
