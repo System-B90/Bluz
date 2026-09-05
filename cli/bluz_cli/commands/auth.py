@@ -30,6 +30,11 @@ from bluz_cli.output import success, warn
 
 app = typer.Typer(help="Authentication and CLI configuration.", no_args_is_help=True)
 
+# How long the callback server keeps listening after the login has succeeded,
+# so a browser navigation that repeats the handoff code still lands on the
+# success page rather than a connection error (#660).
+POST_SUCCESS_GRACE_SECONDS = 2.0
+
 
 class AuthHTTPServer(ThreadingHTTPServer):
     """
@@ -48,6 +53,12 @@ class AuthHTTPServer(ThreadingHTTPServer):
         super().__init__(*args, **kwargs)
         self.token: str | None = None
         self.token_received = threading.Event()
+        # Handoff codes already exchanged for a token, so a repeat callback
+        # carrying the same code is answered from here instead of re-redeeming
+        # it (#660). Handoff codes are strictly single-use server-side, so
+        # without this the second delivery of the *same* login always fails.
+        self.redeemed: dict[str, str] = {}
+        self.redeemed_lock = threading.Lock()
 
 
 _RESULT_PAGE = """<!doctype html>
@@ -196,8 +207,16 @@ def _run_callback_server(url: str, *, insecure: bool = False) -> str | None:
             )
             body = html_body if html else json_body
             self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
-            self.wfile.write(body)
+            try:
+                self.end_headers()
+                self.wfile.write(body)
+            except OSError:
+                # The page's fetch() aborts on its own timeout, which closes
+                # this socket mid-response. The login itself is already decided
+                # by the time we get here, so a dead socket is not a failure --
+                # swallowing it keeps the handler from unwinding past the code
+                # that reports the result (#660).
+                pass
 
         def do_OPTIONS(self) -> None:
             self.send_response(204)
@@ -231,25 +250,45 @@ def _run_callback_server(url: str, *, insecure: bool = False) -> str | None:
                 )
                 return
 
-            # Redeem the handoff code for the real session token over HTTPS.
-            # The browser never sent us the token itself (#520).
-            try:
-                token = _redeem_handoff_code(url, handoff_list[0], insecure=insecure)
-            except Exception:
-                self._respond(
-                    400,
-                    json_body=b'{"status":"error","error":"redeem_failed"}',
-                    html_body=_result_page(ok=False),
-                )
-                return
+            handoff_code = handoff_list[0]
+            server: AuthHTTPServer = self.server  # type: ignore[assignment]
 
-            self.server.token = token  # type: ignore[attr-defined]
+            # The same handoff code routinely arrives twice: the page's fetch()
+            # is aborted (its own 3s timeout, or Chrome's Local Network Access
+            # check killing the response) *after* this server already redeemed
+            # it, and the page then falls back to a plain navigation carrying
+            # that same code. Redeeming is single-use server-side, so the
+            # second delivery used to fail and land the user on "לא התקבל קוד
+            # התחברות" even though the login had in fact succeeded (#660).
+            # Replaying the first result makes the callback idempotent.
+            with server.redeemed_lock:
+                token = server.redeemed.get(handoff_code)
+
+            if token is None:
+                # Redeem the handoff code for the real session token over
+                # HTTPS. The browser never sent us the token itself (#520).
+                try:
+                    token = _redeem_handoff_code(url, handoff_code, insecure=insecure)
+                except Exception:
+                    self._respond(
+                        400,
+                        json_body=b'{"status":"error","error":"redeem_failed"}',
+                        html_body=_result_page(ok=False),
+                    )
+                    return
+                with server.redeemed_lock:
+                    token = server.redeemed.setdefault(handoff_code, token)
+
+            # Record the result *before* answering: writing the response can
+            # fail on a socket the browser already abandoned, and the login
+            # must not be lost to that (#660).
+            server.token = token
+            server.token_received.set()
             self._respond(
                 200,
                 json_body=b'{"status":"success"}',
                 html_body=_result_page(ok=True),
             )
-            self.server.token_received.set()  # type: ignore[attr-defined]
 
     server = None
     for p in range(52400, 52411):
@@ -304,6 +343,13 @@ def _run_callback_server(url: str, *, insecure: bool = False) -> str | None:
                     pbar.update(int(elapsed - last_elapsed))
                     last_elapsed = elapsed
     finally:
+        # Stay up briefly after succeeding. The page may still be about to
+        # deliver the same handoff code by navigation (its fetch() having been
+        # aborted or blocked); with the server already gone that navigation
+        # lands on a connection error instead of the success page. The callback
+        # is idempotent, so the late arrival costs nothing (#660).
+        if server.token_received.is_set():
+            time.sleep(POST_SUCCESS_GRACE_SECONDS)
         server.shutdown()
         serve_thread.join(timeout=5)
         server.server_close()

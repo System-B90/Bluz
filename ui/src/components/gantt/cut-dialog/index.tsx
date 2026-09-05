@@ -174,6 +174,17 @@ function CutSuccessContent({ result }: { result: ApiCurriculumCutResponse }) {
                     ידנית בלו&quot;ז.
                 </Alert>
             )}
+            {/* The cut wrote real events, but a Hive hiccup left some of them
+                without a subject — which the schedule renders with no colour.
+                A reload repairs them, so say so instead of leaving the user to
+                notice the missing colours on their own (#662). */}
+            {!!result.hiveSubjectsUnavailable && (
+                <Alert severity="warning">
+                    לא ניתן היה לטעון את נושאי Hive בזמן הגזירה, וחלק מהאירועים
+                    נוצרו ללא נושא (וללא צבע). יש להריץ &quot;עדכון הלו&quot;ז
+                    לפי הגאנט&quot; לאחר שההתחברות ל-Hive תשוב לפעול.
+                </Alert>
+            )}
         </Stack>
     );
 }

@@ -76,6 +76,13 @@ export type ApiCurriculumCutResponse = {
     spills: Array<CutSpillDetail>;
     /** הפסקה events the break post-pass created. */
     insertedBreaks: number;
+    /**
+     * True when Hive could not be reached for the module → subject map during
+     * this cut and events were written without their subject (and so without
+     * their colour) because of it (#662). The cut itself succeeded; running
+     * "עדכון הלו״ז לפי הגאנט" once Hive is reachable repairs those events.
+     */
+    hiveSubjectsUnavailable: boolean;
 };
 
 /**

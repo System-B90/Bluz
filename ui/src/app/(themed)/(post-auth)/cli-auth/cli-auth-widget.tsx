@@ -45,10 +45,17 @@ export function CliAuthWidget({ port, code, handoffCode }: CliAuthWidgetProps) {
         }
 
         const controller = new AbortController();
+        // Longer than the CLI's own 10s redeem timeout. The CLI answers this
+        // request only after exchanging the handoff code with the server, so a
+        // shorter deadline aborted a call that was still succeeding — burning
+        // the single-use code, then handing the user a fallback that could only
+        // ever fail with "לא התקבל קוד התחברות" (#660). A blocked request (no
+        // Local Network Access permission) rejects immediately and does not
+        // wait this out.
         const timeoutId = setTimeout(() => {
             controller.abort();
             setStatus("handoff");
-        }, 3000);
+        }, 12000);
 
         fetch(callbackUrl(port, code, handoffCode), {
             method: "GET",

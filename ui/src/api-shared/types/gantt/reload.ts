@@ -100,6 +100,12 @@ export type ApiCurriculumReloadResponse = {
     skippedConflicts: number;
     /** Courses newly created for shuffles introduced since the cut. */
     createdCourses: Array<{ id: string; name: string }>;
+    /**
+     * True when Hive could not supply the module → subject map for this run and
+     * events were left without their subject (and colour) as a result (#662).
+     * A later reload, once Hive is reachable, repairs them.
+     */
+    hiveSubjectsUnavailable: boolean;
 };
 
 /** Structured error codes returned when a reload is rejected without writing. */

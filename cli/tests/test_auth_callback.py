@@ -287,3 +287,64 @@ def test_result_page_is_valid_utf8_html() -> None:
         assert 'dir="rtl"' in page.decode("utf-8")
 
     assert ok != failed
+
+
+def test_the_same_handoff_code_can_be_delivered_twice() -> None:
+    """The page routinely delivers one handoff code twice (#660).
+
+    Its fetch() is aborted -- by its own timeout, or by Chrome refusing to let
+    an HTTPS page read a 127.0.0.1 response -- *after* this server already
+    redeemed the code, and it then falls back to a plain navigation carrying
+    that same code. Handoff codes are single-use server-side, so re-redeeming
+    fails; the second delivery must replay the first result instead, or the
+    user is shown "לא התקבל קוד התחברות" for a login that actually succeeded.
+    """
+    captured: dict[str, Any] = {}
+    redeemed: list[str] = []
+
+    def single_use_redeem(url: str, handoff_code: str, *, insecure: bool) -> str:
+        if handoff_code in redeemed:
+            raise BluzApiError("ClientApiError", "Invalid or already-used code.")
+        redeemed.append(handoff_code)
+        return f"redeemed:{handoff_code}"
+
+    def call(port: int, code: str) -> None:
+        path = f"/callback?code={code}&handoff=HANDOFF-1"
+        captured["fetch"] = _get(port, path, FETCH_ACCEPT)
+        captured["navigation"] = _get(port, path, NAVIGATION_ACCEPT)
+
+    token, _ = _drive(call, redeem=single_use_redeem)
+
+    assert token == "redeemed:HANDOFF-1"
+    # The server exchanged the code exactly once.
+    assert redeemed == ["HANDOFF-1"]
+    assert captured["fetch"][0] == 200
+    # The repeat navigation lands on the success page, not the failure page.
+    status, headers, body = captured["navigation"]
+    assert status == 200
+    assert headers["Content-Type"] == "text/html; charset=utf-8"
+    assert "ההתחברות הושלמה בהצלחה".encode() in body
+
+
+def test_a_dead_socket_does_not_lose_a_completed_login() -> None:
+    """The browser can abandon the connection mid-response.
+
+    The result is recorded before the response is written, so a socket the
+    client already closed cannot cost the CLI a login it has already
+    completed (#660).
+    """
+
+    def call(port: int, code: str) -> None:
+        conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+        conn.request(
+            "GET", f"/callback?code={code}&handoff=HANDOFF-1", headers=FETCH_ACCEPT
+        )
+        # Walk away without reading the response, exactly as an aborted
+        # fetch() does.
+        conn.close()
+
+    token, elapsed = _drive(call)
+
+    assert token == "redeemed:HANDOFF-1"
+    # Returned on the callback rather than running out the 60s clock.
+    assert elapsed < 15

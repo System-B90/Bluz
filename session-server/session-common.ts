@@ -41,6 +41,16 @@ export enum MessageTypes {
     OUTSIDERS_UPDATE = "ou",
     CUSTOM_COLORS_UPDATE = "ccu",
 
+    /**
+     * The current iteration changed (Settings → Iterations → "make current").
+     * Every per-iteration collection provider resolves its data against
+     * whichever iteration is current *at request time*, so a switch invalidates
+     * every already-mounted provider at once (#663). Deliberately unscoped: the
+     * clients that need to hear it are exactly the ones still pointed at the
+     * iteration that just stopped being current.
+     */
+    CURRENT_ITERATION_CHANGED = "cic",
+
     // Period locking: broadcast that a user has started/finished editing an event
     EVENT_LOCK = "el",
     EVENT_UNLOCK = "eu",
