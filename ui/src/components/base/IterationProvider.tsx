@@ -20,7 +20,10 @@ import {
     Iteration,
     IterationId,
 } from "@/api-shared/types/iteration";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
+import { MessageHandlerType } from "@/components/SessionWs";
+import { MessageTypes } from "@/settings";
 
 export type IterationScopeState = {
     /** Active iteration. `undefined` ⇒ the current (writable) run. */
@@ -58,6 +61,7 @@ export const IterationProvider = ({
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const { enqueueSnackbar } = useSnackbar();
+    const { addMessageHandler } = useAuth();
 
     const [iterationId, setIterationIdState] = useState<
         IterationId | undefined
@@ -72,12 +76,9 @@ export const IterationProvider = ({
     }, [iterationId]);
 
     const [iterations, setIterations] = useState<Array<Iteration>>([]);
-    useEffect(() => {
-        let mounted = true;
+    const loadIterations = useCallback(() => {
         apiListIterations()
-            .then((list) => {
-                if (mounted) setIterations(list);
-            })
+            .then(setIterations)
             .catch((error) =>
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
@@ -85,13 +86,21 @@ export const IterationProvider = ({
                     error,
                 ),
             );
-        return () => {
-            mounted = false;
-        };
     }, [enqueueSnackbar]);
+    useEffect(() => {
+        loadIterations();
+    }, [loadIterations]);
+
     const currentIterationId = iterations.find(
         (iteration) => iteration.isCurrent,
     )?.id;
+    // Read inside the websocket handler, which must compare against whichever
+    // iteration was current when the message arrived rather than the value
+    // captured when the handler was built.
+    const currentIterationIdRef = useRef(currentIterationId);
+    useEffect(() => {
+        currentIterationIdRef.current = currentIterationId;
+    }, [currentIterationId]);
 
     // Reacts to back/forward navigation and links carrying a different param.
     const paramValue = searchParams.get(ITERATION_QUERY_PARAM) || undefined;
@@ -127,6 +136,31 @@ export const IterationProvider = ({
             },
             [pathname, router],
         );
+
+    // The current iteration changed (here or in another session). Two things
+    // have to happen, or the whole tree keeps working against the iteration
+    // that was current at mount time (#663): the list has to be refetched,
+    // since `currentIterationId` is what decides read-only mode, and a scope
+    // that was following "the current run" has to follow the switch instead of
+    // silently becoming a read-only view of the demoted iteration. A scope
+    // deliberately pointed at some *other* past iteration is left alone.
+    const onIterationChanged: MessageHandlerType = useCallback(
+        (messageType: MessageTypes, data: unknown) => {
+            if (messageType !== MessageTypes.CURRENT_ITERATION_CHANGED) return;
+            loadIterations();
+            const nextId = (data as { iterationId?: string } | null)
+                ?.iterationId;
+            const scoped = iterationIdRef.current;
+            if (!nextId || nextId === scoped) return;
+            if (scoped && scoped !== currentIterationIdRef.current) return;
+            setIterationId(nextId as IterationId);
+        },
+        [loadIterations, setIterationId],
+    );
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        return addMessageHandler(onIterationChanged);
+    }, [addMessageHandler, onIterationChanged]);
 
     // Backfills a missing `?it=` param with the current iteration once the
     // list has loaded, so the URL always names an iteration explicitly (never

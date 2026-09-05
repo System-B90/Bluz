@@ -1,5 +1,7 @@
 import { randomUUID } from "crypto";
 
+import { Filter } from "mongodb";
+
 import { isDuplicateKeyError } from "@/api-server/common";
 import { DbCourses } from "@/api-server/db-courses";
 import {
@@ -543,23 +545,57 @@ export function buildGeneratedBreakEvent(
     };
 }
 
+/** Attempts (and backoff between them) for the Hive module fetch below. */
+const HIVE_MODULES_ATTEMPTS = 3;
+const HIVE_MODULES_RETRY_DELAYS_MS = [250, 1000];
+
+/** The Hive module → subject map, plus whether Hive refused to supply it. */
+type HiveModuleSubjectLookup = {
+    byModuleId: Map<number, number>;
+    /** True when every attempt failed, so the map is empty by accident. */
+    unavailable: boolean;
+};
+
 /**
  * Maps every Hive module id to its parent subject id, used to resolve the
  * subject for events that only carry a module-level Hive link (#hiveIds set
- * on the Gantt module, not on the event itself). Best-effort: a Hive failure
- * must not block the cut, it just leaves the fallback empty.
+ * on the Gantt module, not on the event itself).
+ *
+ * Still best-effort — a Hive outage must not block the cut — but no longer
+ * silently so (#662). `createHiveClient` does session/token setup on the first
+ * call against a given `hiveUrl`, which is exactly when a cold/slow Hive is
+ * most likely to fail; one blip used to stamp every module-linked event
+ * `subject: 0` permanently, visible only as missing colours. So: retry with
+ * backoff, and report the failure to the caller so it can be surfaced instead
+ * of buried in a log line.
  */
 async function buildHiveModuleSubjectMap(
     hiveUrl?: string,
-): Promise<Map<number, number>> {
-    try {
-        const hive = await createHiveClient(hiveUrl);
-        const modules = await hive.getModules();
-        return new Map(modules.map((m) => [Number(m.id), m.parent_subject]));
-    } catch (e) {
-        logger.error({ err: e }, "Failed to load Hive modules for cut subject fallback");
-        return new Map();
+): Promise<HiveModuleSubjectLookup> {
+    for (let attempt = 0; attempt < HIVE_MODULES_ATTEMPTS; attempt++) {
+        try {
+            const hive = await createHiveClient(hiveUrl);
+            const modules = await hive.getModules();
+            return {
+                byModuleId: new Map(
+                    modules.map((m) => [Number(m.id), m.parent_subject]),
+                ),
+                unavailable: false,
+            };
+        } catch (e) {
+            // A retried attempt is not yet a failure — only the last one is.
+            const delay = HIVE_MODULES_RETRY_DELAYS_MS[attempt];
+            const log = delay === undefined ? logger.error : logger.warn;
+            log.call(
+                logger,
+                { attempt: attempt + 1, err: e, willRetry: delay !== undefined },
+                "Failed to load Hive modules for cut subject fallback",
+            );
+            if (delay === undefined) break;
+            await new Promise((resolve) => setTimeout(resolve, delay));
+        }
     }
+    return { byModuleId: new Map(), unavailable: true };
 }
 
 /**
@@ -696,16 +732,81 @@ export async function previewCurriculumCut(
     };
 }
 
-/** Count of already-cut, live events in the target iteration DB. */
-async function countCutEvents(
-    controller: DatabaseController,
-): Promise<number> {
-    // Cut events always store a string `ganttEventId`; `$exists` alone
-    // identifies them. Archived (soft-deleted) events do not count.
-    return await controller.events.countDocuments({
+/**
+ * Matches the live (non-archived) schedule events produced by cutting
+ * `curriculumId`. Cut events always store a string `ganttEventId`, so that
+ * `$exists` is what separates them from hand-made events.
+ *
+ * Scoping to the curriculum matters when an iteration is relinked from one
+ * curriculum to another — a duplicate of the original, say. "This iteration
+ * holds cut events" was the old test, which reported a never-cut curriculum as
+ * already cut and refused to cut it, purely because the curriculum that used
+ * to be linked had left its events behind (#661).
+ *
+ * Events cut before `ganttCurriculumId` was stamped on them carry no curriculum
+ * at all. They still belong to whichever curriculum the iteration is linked to,
+ * so they are matched too — dropping them would make an old cut invisible to
+ * the gate and let it be cut a second time on top of itself.
+ */
+export function cutEventFilter(
+    curriculumId: GanttCurriculumId,
+): Filter<DbEventDocument> {
+    return {
         ganttEventId: { $exists: true },
         archived: { $ne: true },
+        // "Not a string" is missing *and* explicitly null in one clause — both
+        // shapes exist in databases written before the field was introduced.
+        $or: [
+            { ganttCurriculumId: curriculumId },
+            { ganttCurriculumId: { $not: { $type: "string" } } },
+        ],
+    };
+}
+
+/** Count of already-cut, live events belonging to this curriculum. */
+async function countCutEvents(
+    controller: DatabaseController,
+    curriculumId: GanttCurriculumId,
+): Promise<number> {
+    return await controller.events.countDocuments(cutEventFilter(curriculumId));
+}
+
+/**
+ * Live cut events in this iteration that belong to a *different* curriculum.
+ *
+ * Scoping the gate to the target curriculum (#661) is what stops a legitimate
+ * duplicate being refused — but on its own it would let the duplicate be cut
+ * on top of the other curriculum's still-live schedule. The calendar is scoped
+ * to the iteration and does not filter by curriculum, so the result is one
+ * schedule showing both cuts overlaid, and neither curriculum's pull-back can
+ * clear the other's half. Detected here so the cut can refuse with a reason
+ * the user can act on instead of quietly producing that.
+ *
+ * @returns How many such events exist and one owning curriculum id, or null
+ * when the iteration holds no foreign cut.
+ */
+async function findForeignCut(
+    controller: DatabaseController,
+    curriculumId: GanttCurriculumId,
+): Promise<{ count: number; curriculumId: string } | null> {
+    const filter: Filter<DbEventDocument> = {
+        ganttEventId: { $exists: true },
+        archived: { $ne: true },
+        // A string that is not ours. Legacy events carry no curriculum at all
+        // and are deliberately excluded — `cutEventFilter` already treats those
+        // as the linked curriculum's own.
+        ganttCurriculumId: { $type: "string", $ne: curriculumId },
+    };
+    const count = await controller.events.countDocuments(filter);
+    if (count === 0) return null;
+
+    const sample = await controller.events.findOne(filter, {
+        projection: { ganttCurriculumId: 1, _id: 0 },
     });
+    return {
+        count,
+        curriculumId: sample?.ganttCurriculumId ?? "",
+    };
 }
 
 /** The documents a plan materializes into, plus what producing them created. */
@@ -715,6 +816,13 @@ export type MaterializationOutcome =
           ok: true;
           documents: Array<DbEventDocument>;
           createdCourses: Array<{ id: string; name: string }>;
+          /**
+           * True when Hive could not supply the module → subject map and at
+           * least one event was left subject-less because of it (#662). The
+           * events are still written; the caller is expected to tell the user
+           * a reload will fix their colours.
+           */
+          hiveSubjectsUnavailable: boolean;
           overlaps: number;
           /** What the balancer, break pass and constraint solver did. */
           report: CutPlanReport;
@@ -770,9 +878,8 @@ export async function materializeCurriculumEvents(
 
     const { eventsById, syllabusTitleByEvent, moduleHiveIdsByEvent } =
         indexCurriculumEvents(curriculum);
-    const hiveModuleSubjectById = await buildHiveModuleSubjectMap(
-        iteration.hiveUrl,
-    );
+    const hiveModules = await buildHiveModuleSubjectMap(iteration.hiveUrl);
+    const hiveModuleSubjectById = hiveModules.byModuleId;
 
     const planInput = buildCutPlanInput({
         curriculum,
@@ -877,10 +984,20 @@ export async function materializeCurriculumEvents(
         );
     }
 
+    // Only report the Hive failure when it actually cost something: an event
+    // that carries a module link but came out with no subject is one that would
+    // have resolved a subject had the map loaded (#662). Events with no Hive
+    // linkage at all are legitimately `subject: 0` and are not evidence.
+    const subjectlessLinkedEvents = hiveModules.unavailable
+        ? documents.filter((doc) => doc.subject === 0 && doc.hiveModule !== 0)
+            .length
+        : 0;
+
     return {
         ok: true,
         createdCourses,
         documents,
+        hiveSubjectsUnavailable: subjectlessLinkedEvents > 0,
         overlaps: countOverlappingOccurrences(plan.occurrences),
         report: plan.report,
     };
@@ -984,8 +1101,10 @@ export async function cutCurriculumToSchedule(
 
     const controller = getDatabaseController(iteration.dbName);
 
-    // One-shot guard: refuse if this iteration already holds cut events.
-    const existingCut = await countCutEvents(controller);
+    // One-shot guard: refuse if *this curriculum* already holds cut events in
+    // the iteration. Events left behind by a different curriculum linked to the
+    // same iteration are not this curriculum's cut and must not block it (#661).
+    const existingCut = await countCutEvents(controller, curriculumId);
     if (existingCut > 0) {
         return {
             ok: false,
@@ -993,6 +1112,25 @@ export async function cutCurriculumToSchedule(
                 code: "already-cut",
                 count: existingCut,
                 message: `הגאנט כבר נגזר ללו"ז (${existingCut} אירועים קיימים)`,
+            },
+        };
+    }
+
+    // This curriculum is uncut, but another curriculum's cut is still live in
+    // the same iteration. Cutting on top of it would overlay two schedules that
+    // neither curriculum's pull-back could separate again, so refuse with a
+    // reason that names the fix (#661).
+    const foreign = await findForeignCut(controller, curriculumId);
+    if (foreign) {
+        return {
+            ok: false,
+            error: {
+                code: "foreign-cut",
+                count: foreign.count,
+                foreignCurriculumId: foreign.curriculumId,
+                message:
+                    `המחזור מכיל כבר לו"ז שנגזר מתוכנית לימודים אחרת ` +
+                    `(${foreign.count} אירועים). יש למשוך אותו חזרה לפני גזירת תוכנית זו`,
             },
         };
     }
@@ -1013,7 +1151,13 @@ export async function cutCurriculumToSchedule(
             },
         };
     }
-    const { createdCourses, documents, overlaps, report } = materialized;
+    const {
+        createdCourses,
+        documents,
+        hiveSubjectsUnavailable,
+        overlaps,
+        report,
+    } = materialized;
 
     // Idempotency: claim the cut through the ledger's unique index before
     // writing. A second check-then-insert recheck could not deliver the
@@ -1027,7 +1171,7 @@ export async function cutCurriculumToSchedule(
         });
     } catch (error) {
         if (!isDuplicateKeyError(error)) throw error;
-        const claimed = await countCutEvents(controller);
+        const claimed = await countCutEvents(controller, curriculumId);
         return {
             ok: false,
             error: {
@@ -1083,6 +1227,7 @@ export async function cutCurriculumToSchedule(
         result: {
             createdEvents: documents.length,
             createdCourses,
+            hiveSubjectsUnavailable,
             overlaps,
             spilledEvents: report.spills.length,
             spills: report.spills,
@@ -1103,7 +1248,7 @@ export async function getCutStatus(
     if (!iteration) return { cut: false, count: 0 };
 
     const controller = getDatabaseController(iteration.dbName);
-    const count = await countCutEvents(controller);
+    const count = await countCutEvents(controller, curriculumId);
     return { cut: count > 0, count };
 }
 
@@ -1134,11 +1279,13 @@ export async function pullBackCutSchedule(
     // Only the ids are used (the archive is an updateMany, the history rows key
     // off eventId), so do not drag every full document over the wire (#538
     // item 8).
+    // Scoped to this curriculum's own cut events — pulling back a curriculum
+    // must not archive the events another curriculum cut into the same
+    // iteration (#661).
     const liveCutEvents = await controller.events
-        .find(
-            { ganttEventId: { $exists: true }, archived: { $ne: true } },
-            { projection: { id: 1, _id: 0 } },
-        )
+        .find(cutEventFilter(curriculumId), {
+            projection: { id: 1, _id: 0 },
+        })
         .toArray();
 
     if (liveCutEvents.length === 0) {
@@ -1151,10 +1298,9 @@ export async function pullBackCutSchedule(
         };
     }
 
-    await controller.events.updateMany(
-        { ganttEventId: { $exists: true }, archived: { $ne: true } },
-        { $set: { archived: true } },
-    );
+    await controller.events.updateMany(cutEventFilter(curriculumId), {
+        $set: { archived: true },
+    });
 
     // Pulling back is what makes the curriculum cuttable again, so the one-shot
     // claim has to be released with the events (#515).

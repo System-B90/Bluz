@@ -328,6 +328,14 @@ export function createCollectionProvider<T, TId, TCreate>(
 
         const onWebSocketMessage: MessageHandlerType = useCallback(
             (messageType: MessageTypes, data: any) => {
+                // The current iteration changed under us. Every item in this
+                // store was resolved against the *previous* iteration, so
+                // nothing here can be patched incrementally — drop it all and
+                // refetch against the new current iteration (#663).
+                if (messageType === MessageTypes.CURRENT_ITERATION_CHANGED) {
+                    load();
+                    return;
+                }
                 if (messageType !== websocket.messageType) return;
 
                 const incremental =

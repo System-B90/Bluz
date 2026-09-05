@@ -1,6 +1,9 @@
 import { DbEventHistory, resolveActor } from "@/api-server/db-event-history";
 import { DbIterations } from "@/api-server/db-iterations";
-import { materializeCurriculumEvents } from "@/api-server/gantt/cut";
+import {
+    cutEventFilter,
+    materializeCurriculumEvents,
+} from "@/api-server/gantt/cut";
 import { DbCurriculum } from "@/api-server/gantt/db-curriculum";
 import { syncEventToInstructorsGoogleCalendars } from "@/api-server/google/google-calendar-sync";
 import {
@@ -51,21 +54,20 @@ export type ReloadOptions = {
 };
 
 /**
- * Every live (non-archived) cut event in the iteration.
+ * Every live (non-archived) event this curriculum's cut produced.
  *
  * Deliberately *not* filtered by the curriculum's current gantt event ids: an
  * event deleted from the gantt since the cut would then be invisible here and
- * its schedule event would survive forever as an orphan. An iteration holds
- * the cut of exactly one curriculum — the same assumption `countCutEvents` and
- * the pull-back already make — so "cut event in this iteration" is the right
- * scope.
+ * its schedule event would survive forever as an orphan. It *is* filtered by
+ * curriculum (`cutEventFilter`), because an iteration can be relinked from one
+ * curriculum to another and reloading one must not adopt — or archive — the
+ * events belonging to the other (#661).
  */
 async function loadLiveCutEvents(
     controller: DatabaseController,
+    curriculumId: GanttCurriculumId,
 ): Promise<Array<DbEventDocument>> {
-    return await controller.events
-        .find({ archived: { $ne: true }, ganttEventId: { $exists: true } })
-        .toArray();
+    return await controller.events.find(cutEventFilter(curriculumId)).toArray();
 }
 
 /**
@@ -178,7 +180,7 @@ export async function reloadCurriculumSchedule(
     }
 
     const controller = getDatabaseController(iteration.dbName);
-    const actual = await loadLiveCutEvents(controller);
+    const actual = await loadLiveCutEvents(controller, curriculumId);
     if (actual.length === 0) {
         return {
             ok: false,
@@ -231,6 +233,7 @@ export async function reloadCurriculumSchedule(
                 applied: false,
                 createdCourses: [],
                 diff,
+                hiveSubjectsUnavailable: materialized.hiveSubjectsUnavailable,
                 removedEvents: 0,
                 skippedConflicts: diff.conflicts.length,
                 updatedEvents: 0,
@@ -366,6 +369,7 @@ export async function reloadCurriculumSchedule(
             applied: true,
             createdCourses: materialized.createdCourses,
             diff,
+            hiveSubjectsUnavailable: materialized.hiveSubjectsUnavailable,
             removedEvents: removalIds.length,
             skippedConflicts: diff.conflicts.length,
             updatedEvents: updated.length,

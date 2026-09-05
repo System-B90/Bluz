@@ -46,6 +46,19 @@ vi.mock("notistack", () => ({
     useSnackbar: () => ({ enqueueSnackbar }),
 }));
 
+// The provider subscribes to the session websocket so a "make current" switch
+// made elsewhere reaches it (#663). Capture the handler the tests drive.
+let messageHandler: ((type: string, data: unknown) => void) | null = null;
+const removeMessageHandler = vi.fn();
+vi.mock("@/components/auth/AuthProvider", () => ({
+    useAuth: () => ({
+        addMessageHandler: (handler: (type: string, data: unknown) => void) => {
+            messageHandler = handler;
+            return removeMessageHandler;
+        },
+    }),
+}));
+
 let searchParam: string | null = null;
 const replace = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -74,7 +87,17 @@ afterEach(() => {
     cleanup();
     vi.clearAllMocks();
     searchParam = null;
+    messageHandler = null;
+    iterations[0].isCurrent = true;
+    iterations[1].isCurrent = false;
 });
+
+/** Flip which iteration the (mocked) API reports as current. */
+function makeCurrent(id: string) {
+    iterations.forEach((iteration) => {
+        iteration.isCurrent = iteration.id === id;
+    });
+}
 
 describe("IterationProvider — read-only scoping", () => {
     it("is not read-only for the current run (no param)", async () => {
@@ -135,5 +158,56 @@ describe("IterationProvider — read-only scoping", () => {
         // rather than silently granting write access.
         expect(result.current.currentIterationId).toBeUndefined();
         expect(result.current.isReadOnlyIteration).toBe(true);
+    });
+});
+
+/**
+ * Switching the current iteration used to leave every already-mounted provider
+ * pointed at the previous one until a full page reload (#663). The provider now
+ * refetches — and follows the switch — on a CURRENT_ITERATION_CHANGED
+ * broadcast.
+ */
+describe("IterationProvider — current-iteration switch", () => {
+    it("follows the switch when scoped to the run that was current", async () => {
+        searchParam = null;
+        const { result } = renderScope();
+        await waitFor(() => expect(result.current.iterationId).toBe("2026a"));
+
+        makeCurrent("2025b");
+        act(() => messageHandler?.("cic", { iterationId: "2025b" }));
+
+        await waitFor(() =>
+            expect(result.current.currentIterationId).toBe("2025b"),
+        );
+        // Followed the switch rather than becoming a read-only view of the
+        // iteration that was just demoted.
+        expect(result.current.iterationId).toBe("2025b");
+        expect(result.current.isReadOnlyIteration).toBe(false);
+    });
+
+    it("leaves a deliberately past scope alone", async () => {
+        searchParam = "2025b";
+        const { result } = renderScope();
+        await waitFor(() =>
+            expect(result.current.currentIterationId).toBe("2026a"),
+        );
+
+        // A third iteration becomes current; the user is reading 2025b on
+        // purpose and must not be yanked out of it.
+        act(() => messageHandler?.("cic", { iterationId: "2026a" }));
+
+        await waitFor(() => expect(apiListIterations).toHaveBeenCalledTimes(2));
+        expect(result.current.iterationId).toBe("2025b");
+        expect(result.current.isReadOnlyIteration).toBe(true);
+    });
+
+    it("ignores unrelated websocket messages", async () => {
+        searchParam = null;
+        const { result } = renderScope();
+        await waitFor(() => expect(result.current.iterationId).toBe("2026a"));
+
+        act(() => messageHandler?.("cu", {}));
+
+        expect(apiListIterations).toHaveBeenCalledTimes(1);
     });
 });

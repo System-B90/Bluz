@@ -27,11 +27,13 @@ type RouteContext = {
 };
 
 // Coded gating failures map to a 4xx that nothing was written for. State
-// conflicts (draft / unlinked / already-cut) are 409; an invalid plan is a 400.
+// conflicts (draft / unlinked / already-cut / another curriculum's cut still
+// live in the iteration) are 409; an invalid plan is a 400.
 const STATUS_BY_CODE: Record<CurriculumCutErrorCode, number> = {
     draft: 409,
     "no-iteration": 409,
     "already-cut": 409,
+    "foreign-cut": 409,
     "invalid-plan": 400,
 };
 

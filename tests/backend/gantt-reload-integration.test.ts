@@ -528,7 +528,7 @@ describe("reload — reconciliation", () => {
         );
     });
 
-    it("scopes the read to live cut events in the iteration", async () => {
+    it("scopes the read to this curriculum's own live cut events", async () => {
         arrange({
             actual: [
                 makeCutEvent({
@@ -544,9 +544,16 @@ describe("reload — reconciliation", () => {
 
         await reloadCurriculumSchedule("c1");
 
+        // Curriculum-scoped (#661): another curriculum's events cut into the
+        // same iteration are not this curriculum's schedule. Events predating
+        // the `ganttCurriculumId` field carry none and still belong here.
         expect(fakeEvents.find).toHaveBeenCalledWith({
             archived: { $ne: true },
             ganttEventId: { $exists: true },
+            $or: [
+                { ganttCurriculumId: "c1" },
+                { ganttCurriculumId: { $not: { $type: "string" } } },
+            ],
         });
     });
 });

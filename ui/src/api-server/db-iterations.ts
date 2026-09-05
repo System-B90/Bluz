@@ -7,6 +7,7 @@ import {
     setCurrentIterationDbName,
 } from "@/api-server/mongo-db-controller";
 import { withOptionalTransaction } from "@/api-server/mongo-transactions";
+import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { ClientApiError } from "@/api-shared/errors";
 import {
     HiveIterationCache,
@@ -16,6 +17,7 @@ import {
     PatchIterationPayload,
     RegisterIterationPayload,
 } from "@/api-shared/types/iteration";
+import { MessageTypes } from "@/settings";
 
 function stripMongoId(iteration: any): Iteration {
     const { _id: _ignored, ...rest } = iteration ?? {};
@@ -253,6 +255,17 @@ async function patchIteration(
         );
         // Update in-process cache only after the transaction commits.
         setCurrentIterationDbName(existing.dbName);
+        // Every per-iteration collection (courses, rooms, outsiders, custom
+        // colors, ...) resolves against whatever iteration is current when its
+        // request runs, and those providers load once on mount. Without this
+        // broadcast an open app keeps serving — and writing against — the
+        // iteration that was current at mount time until a full page reload
+        // (#663). Unscoped on purpose: the clients that must react are the ones
+        // still listening on the *previous* iteration's sync id.
+        SendServerRequestToSessionServer(
+            MessageTypes.CURRENT_ITERATION_CHANGED,
+            { iterationId: id },
+        );
     } else {
         await meta.iterations.updateOne(
             { id },

@@ -115,19 +115,35 @@ function ResultSummary({ result }: { result: ApiCurriculumReloadResponse }) {
         removedEvents === 0 &&
         diff.conflicts.length === 0;
 
+    // Reload is the repair path for a cut that lost its subjects to a Hive
+    // blip — so it has to say when it just hit the same failure itself,
+    // otherwise the user walks away believing the colours were fixed (#662).
+    const hiveWarning = result.hiveSubjectsUnavailable ? (
+        <Alert severity="warning">
+            לא ניתן היה לטעון את נושאי Hive — אירועים ללא נושא לא תוקנו. יש
+            לנסות שוב לאחר שההתחברות ל-Hive תשוב לפעול.
+        </Alert>
+    ) : null;
+
     if (nothingChanged) {
         return (
-            <Alert severity="info">
-                הלו&quot;ז כבר תואם לגאנט — לא בוצע שינוי.
-            </Alert>
+            <Stack gap={1}>
+                <Alert severity="info">
+                    הלו&quot;ז כבר תואם לגאנט — לא בוצע שינוי.
+                </Alert>
+                {hiveWarning}
+            </Stack>
         );
     }
 
     return (
-        <Alert severity="success">
-            הלו&quot;ז עודכן: {addedEvents} מופעים נוספו, {updatedEvents} עודכנו,{" "}
-            {removedEvents} הוסרו.
-        </Alert>
+        <Stack gap={1}>
+            <Alert severity="success">
+                הלו&quot;ז עודכן: {addedEvents} מופעים נוספו, {updatedEvents}{" "}
+                עודכנו, {removedEvents} הוסרו.
+            </Alert>
+            {hiveWarning}
+        </Stack>
     );
 }
 
