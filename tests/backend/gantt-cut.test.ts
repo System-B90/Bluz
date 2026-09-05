@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const fakeEvents = {
     countDocuments: vi.fn(async () => 0),
+    findOne: vi.fn(async () => null as any),
     insertMany: vi.fn(async () => ({ insertedCount: 0 })),
     find: vi.fn(() => ({ toArray: async () => [] as Array<any> })),
     updateMany: vi.fn(async () => ({ matchedCount: 0, modifiedCount: 0 })),
@@ -193,6 +194,7 @@ const occ = (over: Partial<PlannedOccurrence>): PlannedOccurrence => ({
 beforeEach(() => {
     vi.clearAllMocks();
     fakeEvents.countDocuments.mockResolvedValue(0);
+    fakeEvents.findOne.mockResolvedValue(null);
     fakeEvents.find.mockReturnValue({ toArray: async () => [] as Array<any> });
     fakeEvents.updateMany.mockResolvedValue({ matchedCount: 0, modifiedCount: 0 });
     vi.mocked(DbSettings.get).mockResolvedValue({ dayStartTime: "08:00" } as ScheduleSettings);
@@ -390,6 +392,28 @@ describe("cutCurriculumToSchedule", () => {
         if (outcome.ok) return;
         expect(outcome.error.code).toBe("already-cut");
         expect(outcome.error.count).toBe(3);
+        expect(fakeEvents.insertMany).not.toHaveBeenCalled();
+    });
+
+    it("refuses when another curriculum's cut is still live in the iteration", async () => {
+        // Curriculum-scoped gating must not let a second curriculum be cut on
+        // top of the first's live schedule — the calendar is iteration-scoped,
+        // so the two would overlay and neither pull-back could separate them.
+        vi.mocked(DbCurriculum.getItem).mockResolvedValue(makeCurriculum([makeEvent({ id: "e1" })]));
+        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(makeIteration());
+        // Nothing of ours; 312 of somebody else's.
+        fakeEvents.countDocuments
+            .mockResolvedValueOnce(0)
+            .mockResolvedValueOnce(312);
+        fakeEvents.findOne.mockResolvedValue({ ganttCurriculumId: "c-other" });
+
+        const outcome = await cutCurriculumToSchedule("c1");
+
+        expect(outcome.ok).toBe(false);
+        if (outcome.ok) return;
+        expect(outcome.error.code).toBe("foreign-cut");
+        expect(outcome.error.count).toBe(312);
+        expect(outcome.error.foreignCurriculumId).toBe("c-other");
         expect(fakeEvents.insertMany).not.toHaveBeenCalled();
     });
 

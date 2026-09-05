@@ -517,8 +517,10 @@ def cut_curriculum(
     `report.decisions` back through --accepted-constraint-moves and
     --week-overflow-resolutions.
 
-    Gating failures come back coded — `draft`, `no-iteration`, `already-cut`
-    (409) or `invalid-plan` (400) — and nothing is written when they fire.
+    Gating failures come back coded — `draft`, `no-iteration`, `already-cut`,
+    `foreign-cut` (409) or `invalid-plan` (400) — and nothing is written when
+    they fire. `foreign-cut` means the linked iteration still holds a live cut
+    of a *different* curriculum; pull that one back first.
     """
     if not yes:
         typer.confirm(

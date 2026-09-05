@@ -166,6 +166,7 @@ export type ApiCurriculumPullBackResponse = {
 export type CurriculumCutErrorCode =
     | "already-cut"
     | "draft"
+    | "foreign-cut"
     | "invalid-plan"
     | "no-iteration";
 
@@ -182,8 +183,13 @@ export type ApiCurriculumCutError = {
     code: CurriculumCutErrorCode;
     /** Present for `invalid-plan`: the pure planner's collected validation errors. */
     errors?: Array<CutValidationError>;
-    /** Present for `already-cut`: how many cut events already exist in the iteration. */
+    /**
+     * Present for `already-cut` (this curriculum's own live cut events) and for
+     * `foreign-cut` (another curriculum's, still live in the same iteration).
+     */
     count?: number;
+    /** Present for `foreign-cut`: the curriculum whose cut is occupying the iteration. */
+    foreignCurriculumId?: string;
     /** Human-readable Hebrew message describing the rejection. */
     message?: string;
 };
@@ -202,6 +208,7 @@ export class CurriculumCutError
     readonly code: CurriculumCutErrorCode;
     readonly errors?: Array<CutValidationError>;
     readonly count?: number;
+    readonly foreignCurriculumId?: string;
 
     constructor(payload: ApiCurriculumCutError) {
         super(payload.message ?? 'גזירת הגאנט ללו"ז נכשלה');
@@ -209,6 +216,7 @@ export class CurriculumCutError
         this.code = payload.code;
         this.errors = payload.errors;
         this.count = payload.count;
+        this.foreignCurriculumId = payload.foreignCurriculumId;
     }
 }
 
@@ -221,7 +229,7 @@ export class CurriculumCutError
  */
 const CURRICULUM_CUT_ERROR_CODES: ReadonlySet<string> = new Set<
     CurriculumCutErrorCode
->(["already-cut", "draft", "invalid-plan", "no-iteration"]);
+>(["already-cut", "draft", "foreign-cut", "invalid-plan", "no-iteration"]);
 
 /** Narrows a caught {@link ClientApiError} to one carrying a cut error code. */
 export function isCurriculumCutErrorPayload(

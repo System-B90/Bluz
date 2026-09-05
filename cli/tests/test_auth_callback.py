@@ -40,6 +40,7 @@ def _drive(
     (covered separately by the API route's own unit tests).
     """
     started = threading.Event()
+    browser_threads: list[threading.Thread] = []
 
     def fake_open(url: str) -> None:
         query = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
@@ -50,7 +51,9 @@ def _drive(
             started.set()
             on_port(port, code)
 
-        threading.Thread(target=run, daemon=True).start()
+        thread = threading.Thread(target=run, daemon=True)
+        browser_threads.append(thread)
+        thread.start()
 
     def fake_redeem(url: str, handoff_code: str, *, insecure: bool) -> str:
         return f"redeemed:{handoff_code}"
@@ -62,7 +65,13 @@ def _drive(
     try:
         start = time.monotonic()
         token = auth._run_callback_server("https://bluz.dev")
-        return token, time.monotonic() - start
+        elapsed = time.monotonic() - start
+        # The server records the token *before* writing the response (#660), so
+        # `_run_callback_server` can return while the stub browser is still
+        # reading it. Join before asserting on what the stub captured.
+        for thread in browser_threads:
+            thread.join(timeout=10)
+        return token, elapsed
     finally:
         auth.webbrowser.open = original_open  # type: ignore[assignment]
         auth._redeem_handoff_code = original_redeem  # type: ignore[assignment]
@@ -340,7 +349,10 @@ def test_a_dead_socket_does_not_lose_a_completed_login() -> None:
             "GET", f"/callback?code={code}&handoff=HANDOFF-1", headers=FETCH_ACCEPT
         )
         # Walk away without reading the response, exactly as an aborted
-        # fetch() does.
+        # fetch() does. The brief wait is what makes this deterministic:
+        # closing the instant after `request()` can reset the connection
+        # before the server has read it at all, which tests nothing.
+        time.sleep(0.5)
         conn.close()
 
     token, elapsed = _drive(call)

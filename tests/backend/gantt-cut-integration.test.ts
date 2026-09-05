@@ -12,8 +12,22 @@ import { venueHour, venueMinute } from "./helpers/venue-time";
 
 // ---- DB mocks (no Mongo / Postgres needed) --------------------------------
 
+// The cut asks two different count questions of this collection: "how many
+// live cut events are this curriculum's own" (an `$or` over ganttCurriculumId)
+// and "how many belong to some *other* curriculum" (#661). They are answered
+// separately so a test can set one without silently consuming the other's
+// mocked value.
+const ownCutCount = vi.fn(async () => 0);
+const foreignCutCount = vi.fn(async () => 0);
+const isForeignCutFilter = (filter: any) =>
+    filter?.ganttCurriculumId?.$type === "string";
 const fakeEvents = {
-    countDocuments: vi.fn(async () => 0),
+    countDocuments: vi.fn(async (filter: any) =>
+        isForeignCutFilter(filter)
+            ? await foreignCutCount()
+            : await ownCutCount(),
+    ),
+    findOne: vi.fn(async () => null as any),
     insertMany: vi.fn(async () => ({ insertedCount: 0 })),
 };
 const fakeController = {
@@ -202,7 +216,9 @@ function insertedDocs(): Array<DbEventDocument> {
 
 beforeEach(() => {
     vi.clearAllMocks();
-    fakeEvents.countDocuments.mockResolvedValue(0);
+    ownCutCount.mockResolvedValue(0);
+    foreignCutCount.mockResolvedValue(0);
+    fakeEvents.findOne.mockResolvedValue(null);
     vi.mocked(DbSettings.get).mockResolvedValue({
         dayStartTime: "08:00",
     } as Awaited<ReturnType<typeof DbSettings.get>>);
@@ -394,9 +410,8 @@ describe("cut — idempotency guard", () => {
         fakeController.curriculumCuts.insertOne.mockRejectedValueOnce(
             Object.assign(new Error("E11000 duplicate key"), { code: 11000 }),
         );
-        fakeEvents.countDocuments
-            .mockResolvedValueOnce(0)
-            .mockResolvedValueOnce(2);
+        // Gate sees nothing; the post-claim recount sees the winner's events.
+        ownCutCount.mockResolvedValueOnce(0).mockResolvedValueOnce(2);
 
         const outcome = await cutCurriculumToSchedule("c1");
         expect(outcome.ok).toBe(false);

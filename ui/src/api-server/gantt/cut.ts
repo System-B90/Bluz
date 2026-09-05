@@ -583,8 +583,11 @@ async function buildHiveModuleSubjectMap(
                 unavailable: false,
             };
         } catch (e) {
+            // A retried attempt is not yet a failure — only the last one is.
             const delay = HIVE_MODULES_RETRY_DELAYS_MS[attempt];
-            logger.error(
+            const log = delay === undefined ? logger.error : logger.warn;
+            log.call(
+                logger,
                 { attempt: attempt + 1, err: e, willRetry: delay !== undefined },
                 "Failed to load Hive modules for cut subject fallback",
             );
@@ -766,6 +769,44 @@ async function countCutEvents(
     curriculumId: GanttCurriculumId,
 ): Promise<number> {
     return await controller.events.countDocuments(cutEventFilter(curriculumId));
+}
+
+/**
+ * Live cut events in this iteration that belong to a *different* curriculum.
+ *
+ * Scoping the gate to the target curriculum (#661) is what stops a legitimate
+ * duplicate being refused — but on its own it would let the duplicate be cut
+ * on top of the other curriculum's still-live schedule. The calendar is scoped
+ * to the iteration and does not filter by curriculum, so the result is one
+ * schedule showing both cuts overlaid, and neither curriculum's pull-back can
+ * clear the other's half. Detected here so the cut can refuse with a reason
+ * the user can act on instead of quietly producing that.
+ *
+ * @returns How many such events exist and one owning curriculum id, or null
+ * when the iteration holds no foreign cut.
+ */
+async function findForeignCut(
+    controller: DatabaseController,
+    curriculumId: GanttCurriculumId,
+): Promise<{ count: number; curriculumId: string } | null> {
+    const filter: Filter<DbEventDocument> = {
+        ganttEventId: { $exists: true },
+        archived: { $ne: true },
+        // A string that is not ours. Legacy events carry no curriculum at all
+        // and are deliberately excluded — `cutEventFilter` already treats those
+        // as the linked curriculum's own.
+        ganttCurriculumId: { $type: "string", $ne: curriculumId },
+    };
+    const count = await controller.events.countDocuments(filter);
+    if (count === 0) return null;
+
+    const sample = await controller.events.findOne(filter, {
+        projection: { ganttCurriculumId: 1, _id: 0 },
+    });
+    return {
+        count,
+        curriculumId: sample?.ganttCurriculumId ?? "",
+    };
 }
 
 /** The documents a plan materializes into, plus what producing them created. */
@@ -1071,6 +1112,25 @@ export async function cutCurriculumToSchedule(
                 code: "already-cut",
                 count: existingCut,
                 message: `הגאנט כבר נגזר ללו"ז (${existingCut} אירועים קיימים)`,
+            },
+        };
+    }
+
+    // This curriculum is uncut, but another curriculum's cut is still live in
+    // the same iteration. Cutting on top of it would overlay two schedules that
+    // neither curriculum's pull-back could separate again, so refuse with a
+    // reason that names the fix (#661).
+    const foreign = await findForeignCut(controller, curriculumId);
+    if (foreign) {
+        return {
+            ok: false,
+            error: {
+                code: "foreign-cut",
+                count: foreign.count,
+                foreignCurriculumId: foreign.curriculumId,
+                message:
+                    `המחזור מכיל כבר לו"ז שנגזר מתוכנית לימודים אחרת ` +
+                    `(${foreign.count} אירועים). יש למשוך אותו חזרה לפני גזירת תוכנית זו`,
             },
         };
     }

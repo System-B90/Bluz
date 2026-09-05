@@ -107,6 +107,18 @@ function CutErrorContent({ error }: { error: CurriculumCutError }) {
                     . כדי לגזור מחדש יש למחוק תחילה את האירועים שנוצרו.
             </Alert>
         );
+    case "foreign-cut":
+        // This curriculum was never cut — a *different* one still owns the
+        // iteration's schedule. Cutting anyway would overlay the two (#661).
+        return (
+            <Alert severity="warning">
+                    המחזור מכיל כבר לו&quot;ז שנגזר מתוכנית לימודים אחרת
+                {typeof error.count === "number"
+                    ? ` (${error.count} אירועים)`
+                    : ""}
+                    . יש למשוך את הלו&quot;ז הקודם חזרה לפני גזירת תוכנית זו.
+            </Alert>
+        );
     case "draft":
         return (
             <Alert severity="error">
