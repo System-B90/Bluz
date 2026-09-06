@@ -72,3 +72,6 @@ tests/.auth/
 __pycache__/
 *.pyc
 .claude/worktrees/
+# Agent worktrees checked out inside the repo. Each is its own git repo, so a
+# `git add -A` otherwise stages it as an embedded repository (gitlink).
+/worktrees/

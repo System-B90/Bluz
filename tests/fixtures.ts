@@ -187,6 +187,8 @@ export const expect = baseExpect;
 export const AUTH_FILES = {
     primary: path.join(__dirname, ".auth", "user.json"),
     secondary: path.join(__dirname, ".auth", "user-secondary.json"),
+    /** The Hanich fixture (#656) — the only non-staff session in the suite. */
+    student: path.join(__dirname, ".auth", "user-student.json"),
 } as const;
 
 /** Storage state for the second seeded account (`michaelks`, ADMIN clearance). */
@@ -232,6 +234,10 @@ export const SELECTORS = {
     toolbar: ".MuiToolbar-root",
     /** Calendar container (react-big-calendar root) */
     calendarRoot: ".rbc-calendar",
+    /** Student-view board root (#656) */
+    studentBoard: "[data-testid='student-board']",
+    /** A single event card on the student board */
+    studentEvent: "[data-testid='student-event']",
     /** Calendar toolbar buttons group */
     calendarToolbar: ".rbc-toolbar",
     /** Calendar time slots */

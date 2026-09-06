@@ -78,8 +78,19 @@ export default defineConfig({
             timeout: 240_000,
         },
         {
+            // The student-view specs run as the Hanich fixture, so they need a
+            // different storageState than every other spec (#656).
+            name: "student",
+            testMatch: /student-view\.spec\.ts/,
+            use: {
+                ...devices[ "Desktop Chrome" ],
+                storageState: path.join(__dirname, ".auth", "user-student.json"),
+            },
+            dependencies: [ "setup" ],
+        },
+        {
             name: "chromium",
-            testIgnore: [ /login\.spec\.ts/, /auth\.setup\.ts/, /backend/, /worktrees/, /\.claude/ ],
+            testIgnore: [ /login\.spec\.ts/, /auth\.setup\.ts/, /student-view\.spec\.ts/, /backend/, /worktrees/, /\.claude/ ],
             use: {
                 ...devices[ "Desktop Chrome" ],
                 // Absolute path: the custom context fixture passes this raw to

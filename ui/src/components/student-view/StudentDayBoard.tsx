@@ -121,7 +121,11 @@ export function StudentDayBoard({ date }: { date?: string }) {
     }
 
     return (
-        <Stack gap={1.5} sx={{ maxWidth: 720, mx: "auto", p: 2 }}>
+        <Stack
+            data-testid="student-board"
+            gap={1.5}
+            sx={{ maxWidth: 720, mx: "auto", p: 2 }}
+        >
             <Typography component="h1" variant="h5">
                 {heading}
             </Typography>
@@ -211,6 +215,7 @@ function StudentEventCard({ event }: { event: StudentEvent }) {
 
     return (
         <Paper
+            data-testid="student-event"
             sx={{
                 // Logical inset so the colour bar sits on the leading edge
                 // under RTL as well.

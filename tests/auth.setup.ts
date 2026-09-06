@@ -19,6 +19,14 @@ const AUTH_FILE = AUTH_FILES.primary;
 export const TEST_USERS = {
     primary: { username: "admin", password: "Password1" },
     secondary: { username: "michaelks", password: "test" },
+    /**
+     * The Hanich ("חניך") fixture seeded by
+     * scripts/demo/populate_demo_hive.py's `create_e2e_student`. The only
+     * account in the suite without staff clearance, and the only one that can
+     * prove the student boundary holds against a real session rather than a
+     * mocked one (#656).
+     */
+    student: { username: "test-hanich-e2e", password: "test" },
 } as const;
 
 async function waitForAuthApi(page: Page, baseURL: string): Promise<void>
@@ -149,6 +157,9 @@ async function authenticateAs(
     baseURL: string,
     { username, password }: { username: string; password: string },
     AUTH_FILE: string,
+    // A student never reaches the calendar — the post-auth layout bounces them
+    // to /student-view — so the "signed in" assertion differs by clearance.
+    landingSelector: string = SELECTORS.calendarRoot,
 ): Promise<void>
 {
     const authDir = path.dirname(AUTH_FILE);
@@ -165,7 +176,9 @@ async function authenticateAs(
         });
         const reusePage = await reuseContext.newPage();
 
-        // Fast optimistic check — post-auth routes redirect to /login when expired.
+        // Fast optimistic check — post-auth routes redirect to /login when
+        // expired. A student session redirects to /student-view instead, which
+        // is a *valid* session, so only /login means "expired".
         if (
             (await tryGoto(reusePage, "/")) &&
             !reusePage.url().includes("/login")
@@ -232,7 +245,7 @@ async function authenticateAs(
         { timeout: 60_000 },
     );
 
-    await expect(page.locator(SELECTORS.calendarRoot)).toBeVisible({
+    await expect(page.locator(landingSelector)).toBeVisible({
         timeout: 60_000,
     });
 
@@ -262,5 +275,22 @@ setup("authenticate a second user via Hive SSO", async ({ browser }) =>
         setup.info().project.use.baseURL as string,
         TEST_USERS.secondary,
         AUTH_FILES.secondary,
+    );
+});
+
+/**
+ * The student session (#656). Everything the student-view specs assert — that
+ * staff pages bounce, that staff APIs 403, that the socket carries no calendar
+ * data — is only meaningful against a real Hanich session issued by Hive, so
+ * this one goes through the same SSO flow as the staff accounts.
+ */
+setup("authenticate a student via Hive SSO", async ({ browser }) =>
+{
+    await authenticateAs(
+        browser,
+        setup.info().project.use.baseURL as string,
+        TEST_USERS.student,
+        AUTH_FILES.student,
+        SELECTORS.studentBoard,
     );
 });
