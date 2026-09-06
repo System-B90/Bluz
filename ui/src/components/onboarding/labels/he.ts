@@ -8,12 +8,14 @@ export const HE_LABELS: OnboardingLabels = {
     done: "הבנתי",
     stepCounter: (current, total) => `${current} מתוך ${total}`,
     closeTourAria: "סגירת ההדרכה",
+    interactiveHint: "אפשר ללחוץ עכשיו — ההדרכה תמתין.",
     help: {
         title: "עזרה",
         openAria: "פתיחת חלונית העזרה",
         close: "סגירה",
         replayTour: "הרצת ההדרכה מחדש",
         empty: "אין עדיין הסברים למסך הזה.",
+        emptyHint: "עברו למסך שיש לו הדרכה, או הריצו אחת מכאן.",
         toursGroup: "הדרכות מודרכות",
     },
 };

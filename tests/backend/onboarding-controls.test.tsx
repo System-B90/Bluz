@@ -226,9 +226,10 @@ describe("help panel contents", () => {
         expect(rendered).toEqual([...rendered].sort((a, b) => a - b));
     });
 
-    it("says so when the current screen contributed nothing", async () => {
+    it("turns the empty state into a way out rather than a dead end", async () => {
         render(
             <Harness autoStart={false}>
+                <Registrar tour={TOUR} />
                 <Controls />
             </Harness>,
         );
@@ -238,6 +239,11 @@ describe("help panel contents", () => {
         await waitFor(() =>
             expect(screen.getByText(EN_LABELS.help.empty)).toBeDefined(),
         );
+        expect(screen.getByText(EN_LABELS.help.emptyHint)).toBeDefined();
+
+        // The offered tour is the way out of the empty panel.
+        await userEvent.click(screen.getByRole("button", { name: "First tour" }));
+        await seeStep("Step A");
     });
 });
 

@@ -228,6 +228,76 @@ describe("guided tour", () => {
     });
 });
 
+describe("not losing the user's place", () => {
+    it("survives a stray click outside the card", async () => {
+        // A misclick used to end the tour *and* record it as seen, so it never
+        // came back. Only Esc, close and skip end a tour now.
+        render(<Harness tour={buildTour()} />);
+
+        await seeStep("Step one");
+        await userEvent.click(screen.getByRole("button", { name: "Target" }));
+
+        expect(screen.getByText("Step one")).toBeDefined();
+        expect(storedCompletions()).toEqual({});
+    });
+
+    it("moves focus into the card and hands it back on the way out", async () => {
+        render(<Harness tour={buildTour()} />);
+        const trigger = screen.getByRole("button", { name: "Open help" });
+        trigger.focus();
+
+        await seeStep("Step one");
+        await waitFor(() =>
+            expect(screen.getByRole("dialog").contains(document.activeElement)).toBe(
+                true,
+            ),
+        );
+
+        await userEvent.keyboard("{Escape}");
+
+        await waitFor(() => expect(document.activeElement).toBe(trigger));
+    });
+
+    it("announces each step for a screen reader", async () => {
+        render(<Harness tour={buildTour()} />);
+
+        await seeStep("Step one");
+        const live = screen.getByText(/1 of 2 — Step one/);
+
+        expect(live.getAttribute("aria-live")).toBe("polite");
+    });
+
+    it("names the tour above the step title", async () => {
+        render(<Harness tour={buildTour()} />);
+
+        await seeStep("Step one");
+        expect(screen.getByText("Demo tour")).toBeDefined();
+    });
+
+    it("says so when a step invites a click, and stays quiet otherwise", async () => {
+        const tour = buildTour({
+            steps: [
+                { id: "one", title: "Step one", body: "First", placement: "center" },
+                {
+                    id: "two",
+                    title: "Step two",
+                    body: "Second",
+                    anchor: "target",
+                    interactive: true,
+                },
+            ],
+        });
+        render(<Harness tour={tour} />);
+
+        await seeStep("Step one");
+        expect(screen.queryByText(EN_LABELS.interactiveHint)).toBeNull();
+
+        await clickButton("Next");
+        await seeStep("Step two");
+        expect(screen.getByText(EN_LABELS.interactiveHint)).toBeDefined();
+    });
+});
+
 describe("keyboard navigation", () => {
     const KEYBOARD_TOUR = buildTour({
         steps: [

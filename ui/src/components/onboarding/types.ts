@@ -87,12 +87,16 @@ export type OnboardingLabels = {
     /** e.g. `(2, 5) => "2 of 5"`. */
     stepCounter: (current: number, total: number) => string;
     closeTourAria: string;
+    /** Shown on a step that invites the user to press the spotlighted control. */
+    interactiveHint: string;
     help: {
         title: string;
         openAria: string;
         close: string;
         replayTour: string;
         empty: string;
+        /** Second line of the empty state — what to do about it. */
+        emptyHint: string;
         toursGroup: string;
     };
 };

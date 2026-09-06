@@ -93,12 +93,24 @@ seen — a tour the user walked out of does not ambush them next session.
 
 - Surfaces are MUI (`Paper`, `Popper`, `Drawer`, palette colors), so light/dark
   and the host's theme tokens apply with no styling of our own to keep in sync.
+  The backdrop dim is derived from the palette rather than a fixed slate.
 - Placements are **logical** (`inline-start`, `block-end`) and resolved against
   `theme.direction`, so a Hebrew UI needs no per-step overrides.
-- The card is a `role="dialog"` labelled by its title, `Esc` dismisses, `Enter`
-  advances, and the arrow keys move in the reading direction of the theme.
-- The spotlight is four backdrop panes around a real hole, so `interactive`
-  steps let the user press the control being described.
+- The card is a `role="dialog"` labelled by its title. Focus moves into it on
+  every step, `Tab` cycles inside it, and focus returns to where the user was
+  when the tour ends. Each step is announced through a polite live region.
+- `Esc` dismisses, `Enter` advances, and the arrow keys move in the reading
+  direction of the theme.
+- **Ending a tour is deliberate**: `Esc`, the close button or "skip". A click on
+  the backdrop does nothing — a dismissal is remembered, so a misclick must not
+  be able to spend it.
+- The spotlight is four backdrop panes around a real hole, so an `interactive`
+  step lets the user press the control being described — the step says so, the
+  ring pulses, and the control joins the card's focus cycle.
+- Below `sm` the card becomes a bottom sheet: a popper wide enough to read would
+  cover the very thing it points at on a phone.
+- `prefers-reduced-motion` turns off the pane transitions, the ring pulse, the
+  card fade and smooth scrolling.
 
 ## Language
 

@@ -8,12 +8,14 @@ export const EN_LABELS: OnboardingLabels = {
     done: "Got it",
     stepCounter: (current, total) => `${current} of ${total}`,
     closeTourAria: "Close the tour",
+    interactiveHint: "You can try it now — the tour will wait.",
     help: {
         title: "Help",
         openAria: "Open help",
         close: "Close",
         replayTour: "Replay the tour",
         empty: "There is nothing to explain on this screen yet.",
+        emptyHint: "Open a screen with a guide, or replay one from here.",
         toursGroup: "Guided tours",
     },
 };

@@ -90,13 +90,31 @@ export function HelpPanel() {
 
             <Box sx={{ overflowY: "auto", pb: 2 }}>
                 {topics.length === 0 ? (
-                    <Typography
-                        color="text.secondary"
-                        sx={{ p: 2 }}
-                        variant="body2"
-                    >
-                        {labels.help.empty}
-                    </Typography>
+                    // An empty panel is a dead end otherwise: say what is
+                    // missing, and offer the one thing there is to do here.
+                    <Stack spacing={1} sx={{ p: 2 }}>
+                        <Typography color="text.secondary" variant="body2">
+                            {labels.help.empty}
+                        </Typography>
+
+                        <Typography color="text.secondary" variant="body2">
+                            {labels.help.emptyHint}
+                        </Typography>
+
+                        {replayableTours.length > 0 ? (
+                            <Button
+                                onClick={() => startTour(replayableTours[0].id)}
+                                size="small"
+                                startIcon={
+                                    <PlayCircleOutlineIcon fontSize="small" />
+                                }
+                                sx={{ alignSelf: "flex-start" }}
+                                variant="outlined"
+                            >
+                                {replayableTours[0].title}
+                            </Button>
+                        ) : null}
+                    </Stack>
                 ) : null}
 
                 {grouped.map(([group, groupTopics]) => (
@@ -147,7 +165,11 @@ export function HelpPanel() {
                     </List>
                 ))}
 
-                {replayableTours.length > 0 ? (
+                {/* Only alongside topics: with an empty panel the same button
+                    is already the empty state's call to action. */}
+                {/* Only alongside topics: in an empty panel the same button is
+                    already the empty state's call to action. */}
+                {replayableTours.length > 0 && topics.length > 0 ? (
                     <Fragment>
                         <Divider sx={{ my: 1 }} />
 

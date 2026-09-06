@@ -1,10 +1,12 @@
 "use client";
 import CloseIcon from "@mui/icons-material/Close";
+import TouchAppIcon from "@mui/icons-material/TouchApp";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
 import { useOnboardingContext } from "@/components/onboarding/OnboardingContext";
@@ -15,6 +17,8 @@ export type TourCardProps = {
     /** Rendered inside the tour's `role="dialog"`, so it labels the dialog. */
     titleId: string;
     bodyId: string;
+    /** Names the tour the step belongs to, above its title. */
+    tourTitle: string;
 };
 
 /**
@@ -23,7 +27,7 @@ export type TourCardProps = {
  * Pure MUI surfaces — `Paper` elevation, palette colors, the theme's radius —
  * so it inherits the host app's light/dark palette and RTL flow for free.
  */
-export function TourCard({ step, titleId, bodyId }: TourCardProps) {
+export function TourCard({ step, titleId, bodyId, tourTitle }: TourCardProps) {
     const {
         labels,
         endTour,
@@ -54,18 +58,34 @@ export function TourCard({ step, titleId, bodyId }: TourCardProps) {
                 justifyContent="space-between"
                 spacing={1}
             >
-                <Typography fontWeight={600} id={titleId} variant="subtitle1">
-                    {step.title}
-                </Typography>
+                <Box sx={{ minWidth: 0 }}>
+                    {/* Which tour this is — a card met mid-flow otherwise names
+                        only its step, and reads as an ad. */}
+                    <Typography
+                        color="text.secondary"
+                        display="block"
+                        variant="overline"
+                    >
+                        {tourTitle}
+                    </Typography>
 
-                <IconButton
-                    aria-label={labels.closeTourAria}
-                    edge="end"
-                    onClick={() => endTour("dismissed")}
-                    size="small"
-                >
-                    <CloseIcon fontSize="small" />
-                </IconButton>
+                    <Typography fontWeight={600} id={titleId} variant="subtitle1">
+                        {step.title}
+                    </Typography>
+                </Box>
+
+                <Tooltip title={labels.closeTourAria}>
+                    <IconButton
+                        aria-label={labels.closeTourAria}
+                        edge="end"
+                        onClick={() => endTour("dismissed")}
+                        // A comfortable target: this is the only exit once the
+                        // first step's "skip" has turned into "back".
+                        sx={{ width: 44, height: 44, flexShrink: 0 }}
+                    >
+                        <CloseIcon fontSize="small" />
+                    </IconButton>
+                </Tooltip>
             </Stack>
 
             <Typography
@@ -77,6 +97,21 @@ export function TourCard({ step, titleId, bodyId }: TourCardProps) {
             >
                 {step.body}
             </Typography>
+
+            {step.interactive === true ? (
+                <Stack
+                    alignItems="center"
+                    direction="row"
+                    spacing={0.5}
+                    sx={{ mt: 1.5, color: "primary.main" }}
+                >
+                    <TouchAppIcon fontSize="small" />
+
+                    <Typography color="inherit" variant="caption">
+                        {labels.interactiveHint}
+                    </Typography>
+                </Stack>
+            ) : null}
 
             <Stack
                 alignItems="center"

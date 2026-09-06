@@ -85,6 +85,9 @@ export function OnboardingProvider({
     // Cancels an in-flight step transition when a newer one starts.
     const transitionRef = useRef(0);
     const autoStartedRef = useRef(new Set<string>());
+    // Where focus was when the tour took over. Captured before the card mounts,
+    // so it is the user's own place in the page and not the card itself.
+    const returnFocusRef = useRef<HTMLElement | null>(null);
 
     const canShowStep = useCallback(
         (step: TourStep) =>
@@ -228,6 +231,8 @@ export function OnboardingProvider({
             if (!tour || tour.steps.length === 0) return;
 
             setHelpOpen(false);
+            returnFocusRef.current =
+                document.activeElement as HTMLElement | null;
             activeRef.current = { tour, stepIndex: -1 };
             setActive({ tour, stepIndex: -1 });
             void moveStep(1, -1);
@@ -265,6 +270,16 @@ export function OnboardingProvider({
         },
         [storage, storageNamespace],
     );
+
+    // Hand focus back once the overlay is gone: a tour dismissed from the
+    // keyboard would otherwise strand focus on the body.
+    useEffect(() => {
+        if (active) return;
+
+        const target = returnFocusRef.current;
+        returnFocusRef.current = null;
+        target?.focus?.({ preventScroll: true });
+    }, [active]);
 
     // First run: start the first registered tour the user has not seen yet,
     // once the screen it describes has had a moment to render.
