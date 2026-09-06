@@ -11,7 +11,8 @@ vi.mock("@/api-server/google/google-calendar-service", () => ({
     disconnectGoogleCalendar: vi.fn(async () => undefined),
 }));
 vi.mock("@/api-server/session-user", () => ({
-    getSessionUser: vi.fn(async () => ({ id: "u1" })),
+    // Staff-gated since #656 — Google Calendar sync is a staff surface.
+    requireStaffSession: vi.fn(async () => ({ id: "u1" })),
     requireStaffSession: vi.fn(async () => undefined),
 }));
 
@@ -21,7 +22,8 @@ import {
     isGoogleCalendarConfigured,
     isGoogleCalendarConnected,
 } from "@/api-server/google/google-calendar-service";
-import { getSessionUser } from "@/api-server/session-user";
+import { requireStaffSession } from "@/api-server/session-user";
+import { ForbiddenError } from "@/api-shared/errors";
 import * as DisconnectRoute from "@/app/api/integrations/google-calendar/disconnect/route";
 import * as StatusRoute from "@/app/api/integrations/google-calendar/status/route";
 
@@ -31,7 +33,7 @@ const anyRequest = new Request(
 
 beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getSessionUser).mockResolvedValue({ id: "u1" } as never);
+    vi.mocked(requireStaffSession).mockResolvedValue({ id: "u1" } as never);
     vi.mocked(isGoogleCalendarConfigured).mockReturnValue(true);
     vi.mocked(isGoogleCalendarConnected).mockResolvedValue(true);
     vi.mocked(DbPersonalSettings.get).mockResolvedValue({
@@ -68,12 +70,14 @@ describe("GET /api/integrations/google-calendar/status", () => {
         expect(data.connected).toBe(false);
     });
 
-    it("401s an anonymous caller", async () => {
-        vi.mocked(getSessionUser).mockResolvedValueOnce(null as never);
+    it("403s a caller without staff clearance", async () => {
+        vi.mocked(requireStaffSession).mockRejectedValueOnce(
+            new ForbiddenError("Forbidden: insufficient clearance."),
+        );
 
         const response = await StatusRoute.GET(anyRequest, undefined as never);
 
-        expect(response.status).toBe(401);
+        expect(response.status).toBe(403);
         expect(DbPersonalSettings.get).not.toHaveBeenCalled();
     });
 });
@@ -89,15 +93,17 @@ describe("POST /api/integrations/google-calendar/disconnect", () => {
         expect(disconnectGoogleCalendar).toHaveBeenCalledWith("u1");
     });
 
-    it("401s an anonymous caller, disconnecting nothing", async () => {
-        vi.mocked(getSessionUser).mockResolvedValueOnce(null as never);
+    it("403s a caller without staff clearance, disconnecting nothing", async () => {
+        vi.mocked(requireStaffSession).mockRejectedValueOnce(
+            new ForbiddenError("Forbidden: insufficient clearance."),
+        );
 
         const response = await DisconnectRoute.POST(
             anyRequest,
             undefined as never,
         );
 
-        expect(response.status).toBe(401);
+        expect(response.status).toBe(403);
         expect(disconnectGoogleCalendar).not.toHaveBeenCalled();
     });
 });

@@ -10,7 +10,10 @@ import {
     databaseController,
     DatabaseController,
 } from "@/api-server/mongo-db-controller";
-import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
+import {
+    NotifyStudentsOfCalendarChange,
+    SendServerRequestToSessionServer,
+} from "@/api-server/web-socket-utils";
 import { eventDateFixupToDate } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
 import {
@@ -193,6 +196,7 @@ async function setDbEvent(
         } as EventDataUpdateMessage<DbEventDocument>,
         iterationSyncId(iterationId),
     );
+    NotifyStudentsOfCalendarChange(iterationId);
 
     return fixedEvent;
 }
@@ -251,6 +255,7 @@ async function createDbEvent(
         } as EventAddedOrRemovedMessage<DbEventDocument>,
         iterationSyncId(iterationId),
     );
+    NotifyStudentsOfCalendarChange(iterationId);
 
     return fixedEvent as DbEventDocument;
 }
@@ -299,6 +304,7 @@ async function deleteDbEvent(
         } as EventAddedOrRemovedMessage<DbEventDocument>,
         iterationSyncId(iterationId),
     );
+    NotifyStudentsOfCalendarChange(iterationId);
 }
 
 export namespace DbEvent {

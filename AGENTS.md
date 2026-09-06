@@ -272,6 +272,23 @@ Runtime config comes from the root **`.env`** (consumed by docker-compose and co
 - **Server/client boundary is load-bearing.** A stray browser import in `api-server` (or a
   side effect in `api-shared`) breaks the build in non-obvious ways. Respect the layer
   READMEs' checklists.
+- **Clearance is a security boundary, not a UI preference.** Hanich (student) accounts can
+  sign in (#656), so *every* route handler must call `requireStaffSession()`. A
+  logged-in check (`getSessionUser()`) is **not** a gate any more. The one exception is
+  `/api/student-view/schedule`, which returns the `StudentEvent` projection —
+  name/times/colour/room names/course names and nothing else, with hidden events and
+  other days excluded in the Mongo query itself. Never widen that projection, and never
+  return a raw event document, a Hive id, or a colour *id* on that path. Staff pages are
+  all under `app/(themed)/(post-auth)/`, whose layout silently redirects a non-staff
+  session to `/student-view`; adding a page outside that group means gating it yourself.
+- **WebSocket tickets are scoped.** `/api/ws-ticket` signs the caller's clearance into the
+  ticket (`WsScope.Segel` / `WsScope.Hanich`), and `session-server.ts` gates on it: a
+  student socket may not register a session (that would put it on the *untargeted*
+  fan-out, where `COURSES_UPDATE`/`OUTSIDERS_UPDATE`/`ROOMS_UPDATE`/`SETTINGS_UPDATE`
+  carry real payloads) and may subscribe only to `STUDENT_SYNC_ID`. Nothing but an empty
+  ping is ever broadcast there — students refetch through the projection endpoint. Never
+  put event data on that channel, and never add a per-iteration student channel: the
+  absence of one is what keeps iterations invisible to students.
 - **Don't edit generated artifacts:** files in `drizzle/*.sql` (regenerate with
   `db:generate`), `ui/.next/`, `node_modules/`, `playwright-report/`, `test-results/`,
   `tsconfig.tsbuildinfo`.

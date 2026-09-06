@@ -8,12 +8,15 @@ vi.mock("@/api-server/db-personal-settings", () => ({
     },
 }));
 
+// Staff-gated since #656: a Hanich session can hold a session but must not
+// reach this route, so the gate is `requireStaffSession`, which throws.
 vi.mock("@/api-server/session-user", () => ({
-    getSessionUser: vi.fn(),
+    requireStaffSession: vi.fn(),
 }));
 
 import { DbPersonalSettings } from "@/api-server/db-personal-settings";
-import { getSessionUser } from "@/api-server/session-user";
+import { requireStaffSession } from "@/api-server/session-user";
+import { ForbiddenError } from "@/api-shared/errors";
 import * as PersonalSettingsRoute from "@/app/api/personal-settings/route";
 
 beforeEach(() => vi.clearAllMocks());
@@ -27,7 +30,7 @@ const settings = {
 
 describe("GET /api/personal-settings", () => {
     it("returns the current user's settings", async () => {
-        vi.mocked(getSessionUser).mockResolvedValueOnce(user);
+        vi.mocked(requireStaffSession).mockResolvedValueOnce(user as never);
         vi.mocked(DbPersonalSettings.get).mockResolvedValueOnce(settings);
 
         const req = new NextRequest("http://localhost/api/personal-settings");
@@ -39,8 +42,10 @@ describe("GET /api/personal-settings", () => {
         expect(body.data).toEqual(settings);
     });
 
-    it("fails when there is no session user", async () => {
-        vi.mocked(getSessionUser).mockResolvedValueOnce(null);
+    it("fails when the caller is not staff", async () => {
+        vi.mocked(requireStaffSession).mockRejectedValueOnce(
+            new ForbiddenError("Forbidden: insufficient clearance."),
+        );
 
         const req = new NextRequest("http://localhost/api/personal-settings");
         const res = await PersonalSettingsRoute.GET(req);
@@ -52,7 +57,7 @@ describe("GET /api/personal-settings", () => {
 
 describe("POST /api/personal-settings", () => {
     it("saves settings for the current user", async () => {
-        vi.mocked(getSessionUser).mockResolvedValueOnce(user);
+        vi.mocked(requireStaffSession).mockResolvedValueOnce(user as never);
         vi.mocked(DbPersonalSettings.set).mockResolvedValueOnce(settings);
 
         const req = new NextRequest("http://localhost/api/personal-settings", {
@@ -67,8 +72,10 @@ describe("POST /api/personal-settings", () => {
         expect(body.data).toEqual(settings);
     });
 
-    it("fails when there is no session user", async () => {
-        vi.mocked(getSessionUser).mockResolvedValueOnce(null);
+    it("fails when the caller is not staff", async () => {
+        vi.mocked(requireStaffSession).mockRejectedValueOnce(
+            new ForbiddenError("Forbidden: insufficient clearance."),
+        );
 
         const req = new NextRequest("http://localhost/api/personal-settings", {
             method: "POST",

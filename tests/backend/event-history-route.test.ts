@@ -24,12 +24,15 @@ vi.mock("@/api-server/mongo-db-controller", () => ({
 vi.mock("@/api-server/db-event-history", () => ({
     DbEventHistory: { forEvent: vi.fn(async () => []) },
 }));
+// Staff-gated since #656: the log echoes whole event documents, so a Hanich
+// session must not reach it even though it holds a valid session.
 vi.mock("@/api-server/session-user", () => ({
-    getSessionUser: vi.fn(async () => ({ displayName: "מיכאל", id: "7" })),
+    requireStaffSession: vi.fn(async () => ({ display_name: "מיכאל", id: "7" })),
 }));
 
 import { DbEventHistory } from "@/api-server/db-event-history";
-import { getSessionUser } from "@/api-server/session-user";
+import { requireStaffSession } from "@/api-server/session-user";
+import { ForbiddenError } from "@/api-shared/errors";
 import {
     EventChangeAction,
     EventChangeInitiator,
@@ -54,10 +57,10 @@ function request(url: string): NextRequest {
 
 beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getSessionUser).mockResolvedValue({
-        displayName: "מיכאל",
+    vi.mocked(requireStaffSession).mockResolvedValue({
+        display_name: "מיכאל",
         id: "7",
-    });
+    } as never);
 });
 
 describe("GET /api/event/history", () => {
@@ -96,14 +99,16 @@ describe("GET /api/event/history", () => {
         expect(DbEventHistory.forEvent).not.toHaveBeenCalled();
     });
 
-    it("never serves the log anonymously", async () => {
-        vi.mocked(getSessionUser).mockResolvedValue(null);
+    it("never serves the log to a non-staff caller", async () => {
+        vi.mocked(requireStaffSession).mockRejectedValue(
+            new ForbiddenError("Forbidden: insufficient clearance."),
+        );
 
         const response = await HistoryRoute.GET(
             request("http://localhost/api/event/history?id=e1"),
         );
 
-        expect(response.status).toBe(401);
+        expect(response.status).toBe(403);
         expect(DbEventHistory.forEvent).not.toHaveBeenCalled();
     });
 });

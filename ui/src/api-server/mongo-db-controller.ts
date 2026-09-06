@@ -326,6 +326,17 @@ class MetaController {
     public get cliHandoffCodes(): Collection<CliHandoffCode> {
         return this.metaDb.collection<CliHandoffCode>("cliHandoffCodes");
     }
+    /**
+     * How long each student has had the schedule board open and focused, one
+     * document per user per day (#656). Meta rather than iteration-scoped:
+     * it records usage, not calendar data, and must not vanish when the
+     * current iteration rolls over.
+     */
+    public get studentEngagement(): Collection<StudentEngagementDocument> {
+        return this.metaDb.collection<StudentEngagementDocument>(
+            "studentEngagement",
+        );
+    }
     public get client(): MongoClient {
         // Never the module-level handle: if the first connect failed, that one
         // is a closed topology forever, and `client.startSession()` throws.
@@ -334,6 +345,20 @@ class MetaController {
 }
 
 export type PersonalSettingsDocument = PersonalSettings & { userId: string };
+
+/**
+ * One student's focused time on the schedule board for one day. `id` is
+ * `<userId>:<date>` so the upsert is a single keyed `$inc` with no read.
+ */
+export type StudentEngagementDocument = {
+    id: string;
+    userId: string;
+    /** `yyyy-MM-dd` in the app timezone. */
+    date: string;
+    /** Total seconds the board was open *and* focused that day. */
+    seconds: number;
+    updatedAt: Date;
+};
 
 let _metaController: MetaController | null = null;
 export function getMetaController(): MetaController {
