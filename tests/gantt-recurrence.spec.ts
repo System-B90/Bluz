@@ -470,9 +470,7 @@ test.describe("Gantt Recurring Events (#111)", () => {
         expect(moduleBlockBox!.width).toBeGreaterThan(eventBlockBox!.width);
     });
 
-    // Fails against a local stack: the mapped event lands outside the zoomed
-    // week, so the row never renders. Under investigation in #654.
-    test.fixme("day-view sidebar hides events mapped outside the zoomed week (#445)", async ({
+    test("day-view sidebar hides events mapped outside the zoomed week (#445)", async ({
         page,
     }) => {
         const lectureTitle = await createModuleWithEvents(page);
@@ -486,8 +484,12 @@ test.describe("Gantt Recurring Events (#111)", () => {
         await page.getByRole("tab", { name: "רצף זמן" }).click();
         await page.waitForTimeout(500);
 
+        // Not recurring, so there is no staged block in week 1's grid cell to
+        // nudge: an unmapped non-recurring event's only block lives in the
+        // sticky label cell, and that cell is the *remove* droppable — a nudge
+        // there drops on nothing. Drop on the week cell instead (#654).
         const lectureRow = await getTimelineEventRow(page, lectureTitle);
-        await mapEventToFirstWeek(page, lectureRow);
+        await mapEventToWeek(page, lectureRow, 0);
 
         const exerciseRow = await getTimelineEventRow(page, exerciseTitle);
         await mapEventToWeek(page, exerciseRow, 1);
@@ -515,9 +517,7 @@ test.describe("Gantt Recurring Events (#111)", () => {
         ).toHaveCount(0);
     });
 
-    // Same root cause as the #445 case above — no module span renders in the
-    // zoomed week because its event's mapping is elsewhere. See #654.
-    test.fixme("module blocks are not draggable in zoomed day view, only event blocks are (#640)", async ({
+    test("module blocks are not draggable in zoomed day view, only event blocks are (#640)", async ({
         page,
     }) => {
         const lectureTitle = await createModuleWithEvents(page);
@@ -527,8 +527,9 @@ test.describe("Gantt Recurring Events (#111)", () => {
         await page.getByRole("tab", { name: "רצף זמן" }).click();
         await page.waitForTimeout(500);
 
+        // Non-recurring: map via the week cell, not the nudge — see #654 above.
         const lectureRow = await getTimelineEventRow(page, lectureTitle);
-        await mapEventToFirstWeek(page, lectureRow);
+        await mapEventToWeek(page, lectureRow, 0);
 
         await zoomIntoWeek(page, 0);
 

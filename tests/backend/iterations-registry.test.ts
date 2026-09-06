@@ -138,7 +138,17 @@ vi.mock("@/api-server/web-socket-utils", () => ({
 }));
 
 import { DbIterations } from "@/api-server/db-iterations";
+import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { ClientApiError } from "@/api-shared/errors";
+import { MessageTypes } from "@/settings";
+
+/** Every CURRENT_ITERATION_CHANGED broadcast made so far, in order. */
+const iterationChangeBroadcasts = () =>
+    vi
+        .mocked(SendServerRequestToSessionServer)
+        .mock.calls.filter(
+            ([type]) => type === MessageTypes.CURRENT_ITERATION_CHANGED,
+        );
 
 beforeEach(() => {
     docs.length = 0;
@@ -296,6 +306,140 @@ describe("DbIterations.patch (set current)", () => {
         await expect(
             DbIterations.patch("nope", { label: "x" }),
         ).rejects.toBeInstanceOf(ClientApiError);
+    });
+
+    /**
+     * The broadcast is the only thing that tells an already-mounted client its
+     * data now belongs to a different database (#663). Everything below is a
+     * way for it to go missing without any other assertion noticing.
+     */
+    describe("CURRENT_ITERATION_CHANGED broadcast (#663)", () => {
+        it("announces the switch, naming the iteration that is now current", async () => {
+            await DbIterations.ensure();
+            await DbIterations.register({ id: "2026b", label: "B" });
+
+            await DbIterations.patch("2026b", { isCurrent: true });
+
+            expect(iterationChangeBroadcasts()).toEqual([
+                [
+                    MessageTypes.CURRENT_ITERATION_CHANGED,
+                    { iterationId: "2026b" },
+                ],
+            ]);
+        });
+
+        it("announces it once per switch, not once per listener or field", async () => {
+            await DbIterations.ensure();
+            await DbIterations.register({ id: "2026b", label: "B" });
+
+            await DbIterations.patch("2026b", {
+                isCurrent: true,
+                label: "B renamed",
+            });
+
+            expect(iterationChangeBroadcasts()).toHaveLength(1);
+        });
+
+        it("stays silent for a patch that does not change which iteration is current", async () => {
+            await DbIterations.ensure();
+            await DbIterations.register({ id: "2026b", label: "B" });
+            vi.mocked(SendServerRequestToSessionServer).mockClear();
+
+            await DbIterations.patch("2026b", { label: "renamed" });
+            await DbIterations.patch("2026b", { startDate: "2026-01-01" });
+            await DbIterations.patch("2026b", { isCurrent: false } as any);
+
+            expect(iterationChangeBroadcasts()).toHaveLength(0);
+        });
+
+        it("does not announce a switch that failed — the databases never moved", async () => {
+            await DbIterations.ensure();
+            await DbIterations.register({ id: "2026b", label: "B" });
+            transaction.error = new Error("write conflict");
+            vi.mocked(SendServerRequestToSessionServer).mockClear();
+
+            await expect(
+                DbIterations.patch("2026b", { isCurrent: true }),
+            ).rejects.toThrow("write conflict");
+
+            expect(iterationChangeBroadcasts()).toHaveLength(0);
+            // The in-process db-name cache must not have moved either, or every
+            // later request in this process writes to the wrong database.
+            expect(setCurrentIterationDbName).not.toHaveBeenCalledWith(
+                "bluz_2026b",
+            );
+        });
+
+        it("announces only after the promotion has actually landed", async () => {
+            await DbIterations.ensure();
+            await DbIterations.register({ id: "2026b", label: "B" });
+            vi.mocked(SendServerRequestToSessionServer).mockClear();
+
+            // A client that reacts to the broadcast immediately refetches, so
+            // the registry must already read as switched by the time it fires.
+            vi.mocked(SendServerRequestToSessionServer).mockImplementationOnce(
+                ((type: MessageTypes) => {
+                    if (type === MessageTypes.CURRENT_ITERATION_CHANGED) {
+                        expect(
+                            docs.find((d) => d.id === "2026b")?.isCurrent,
+                        ).toBe(true);
+                        expect(
+                            docs.find((d) => d.dbName === "bluz")?.isCurrent,
+                        ).toBe(false);
+                    }
+                }) as never,
+            );
+
+            await DbIterations.patch("2026b", { isCurrent: true });
+            expect(iterationChangeBroadcasts()).toHaveLength(1);
+        });
+
+        it("still announces on a standalone mongod, where the switch runs untransacted (#472)", async () => {
+            const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+            await DbIterations.ensure();
+            await DbIterations.register({ id: "bis28", label: 'בי"ס כ"ח' });
+            transaction.error = Object.assign(
+                new Error(
+                    "This MongoDB deployment does not support retryable writes.",
+                ),
+                {
+                    originalError: Object.assign(
+                        new Error(
+                            "Transaction numbers are only allowed on a replica set member or mongos",
+                        ),
+                        { code: 20, codeName: "IllegalOperation" },
+                    ),
+                },
+            );
+            vi.mocked(SendServerRequestToSessionServer).mockClear();
+
+            await DbIterations.patch("bis28", { isCurrent: true });
+
+            expect(iterationChangeBroadcasts()).toEqual([
+                [
+                    MessageTypes.CURRENT_ITERATION_CHANGED,
+                    { iterationId: "bis28" },
+                ],
+            ]);
+            warn.mockRestore();
+        });
+
+        it("announces a switch back to the iteration that was current before", async () => {
+            await DbIterations.ensure();
+            const seedId = docs.find((d) => d.dbName === "bluz")!.id;
+            await DbIterations.register({ id: "2026b", label: "B" });
+            await DbIterations.patch("2026b", { isCurrent: true });
+            vi.mocked(SendServerRequestToSessionServer).mockClear();
+
+            await DbIterations.patch(seedId, { isCurrent: true });
+
+            expect(iterationChangeBroadcasts()).toEqual([
+                [
+                    MessageTypes.CURRENT_ITERATION_CHANGED,
+                    { iterationId: seedId },
+                ],
+            ]);
+        });
     });
 
     it("allows correcting startDate", async () => {

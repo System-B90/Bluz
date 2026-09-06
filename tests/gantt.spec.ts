@@ -1,3 +1,5 @@
+import type { Page } from "@playwright/test";
+
 import { test, expect, SELECTORS, gotoAppHome, waitForAppLoad } from "./fixtures";
 
 /**
@@ -5,6 +7,26 @@ import { test, expect, SELECTORS, gotoAppHome, waitForAppLoad } from "./fixtures
  * Covers: page load, placeholder state, curriculum drawer, curriculum selection,
  *         tab navigation, URL parameter synchronization.
  */
+
+/**
+ * Opens the curriculum FAB and waits for its list to finish loading, returning
+ * the curriculum rows.
+ *
+ * Waiting on the literal draft name "הגאנט שלי" instead is what made four of
+ * these tests fail: `beforeEach` only creates that draft when the list is
+ * *empty*, so any other curriculum — seeded, or left by another spec — means
+ * the name never appears and the wait burns its full timeout. The list itself
+ * is what these tests actually need.
+ */
+async function openCurriculumList(page: Page) {
+    await page.getByRole("button", { name: "גאנטים" }).click();
+    await page
+        .locator(".MuiSkeleton-root")
+        .waitFor({ state: "hidden", timeout: 10_000 });
+    return page
+        .locator("[role='presentation'] ul li")
+        .filter({ has: page.getByRole("button") });
+}
 
 test.describe("Gantt Page", () => {
     test.beforeEach(async ({ page }) => {
@@ -111,17 +133,7 @@ test.describe("Gantt Page", () => {
     });
 
     test("selects a curriculum and shows loading/content", async ({ page }) => {
-        // Open FAB first
-        const fab = page.getByRole("button", { name: "גאנטים" });
-        await fab.click();
-        
-        // Wait for the curriculum entries to load (replaces skeleton loader)
-        await expect(page.getByText("הגאנט שלי").first()).toBeVisible({ timeout: 10_000 });
-
-        // Look for curriculum list items in the sidebar
-        const curriculumItems = page
-            .locator("[role='presentation'] ul li")
-            .filter({ has: page.getByRole("button") });
+        const curriculumItems = await openCurriculumList(page);
 
         if ((await curriculumItems.count()) > 0) {
             // Click the first curriculum
@@ -147,17 +159,7 @@ test.describe("Gantt Page", () => {
     test("URL cid parameter syncs with selected curriculum", async ({
         page,
     }) => {
-        // Open FAB first
-        const fab = page.getByRole("button", { name: "גאנטים" });
-        await fab.click();
-        
-        // Wait for the curriculum entries to load
-        await expect(page.getByText("הגאנט שלי").first()).toBeVisible({ timeout: 10_000 });
-
-        // Navigate with a cid parameter
-        const curriculumItems = page
-            .locator("[role='presentation'] ul li")
-            .filter({ has: page.getByRole("button") });
+        const curriculumItems = await openCurriculumList(page);
 
         if ((await curriculumItems.count()) > 0) {
             await curriculumItems.first().click();
@@ -177,17 +179,7 @@ test.describe("Gantt Page", () => {
     // ─── Tab Navigation (Curriculum View) ───────────────────────────────────
 
     test("switches between curriculum view tabs", async ({ page }) => {
-        // Open FAB first
-        const fab = page.getByRole("button", { name: "גאנטים" });
-        await fab.click();
-        
-        // Wait for the curriculum entries to load
-        await expect(page.getByText("הגאנט שלי").first()).toBeVisible({ timeout: 10_000 });
-
-        // Select a curriculum first
-        const curriculumItems = page
-            .locator("[role='presentation'] ul li")
-            .filter({ has: page.getByRole("button") });
+        const curriculumItems = await openCurriculumList(page);
 
         if ((await curriculumItems.count()) > 0) {
             await curriculumItems.first().click();
@@ -218,16 +210,7 @@ test.describe("Gantt Page", () => {
     test("curriculum view sidebar renders when curriculum is selected", async ({
         page,
     }) => {
-        // Open FAB first
-        const fab = page.getByRole("button", { name: "גאנטים" });
-        await fab.click();
-        
-        // Wait for the curriculum entries to load
-        await expect(page.getByText("הגאנט שלי").first()).toBeVisible({ timeout: 10_000 });
-
-        const curriculumItems = page
-            .locator("[role='presentation'] ul li")
-            .filter({ has: page.getByRole("button") });
+        const curriculumItems = await openCurriculumList(page);
 
         if ((await curriculumItems.count()) > 0) {
             await curriculumItems.first().click();

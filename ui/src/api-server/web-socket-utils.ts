@@ -25,6 +25,7 @@ const INTERNAL_SESSION_SERVER_URI =
     process.env.INTERNAL_SESSION_SERVER_URI ?? "ws://sessions:28199/";
 
 const CONNECT_TIMEOUT_MS = 5000;
+const RECONNECT_BACKOFF_MS = 1000;
 const MAX_PENDING_MESSAGES = 1000;
 
 // One persistent socket per process instead of a fresh TCP+WebSocket handshake
@@ -80,8 +81,22 @@ function connect(): WebSocket {
 
     ws.onclose = () => {
         clearTimeout(timeout);
-        if (socket === ws) {
-            socket = null; // Next send re-establishes the connection.
+        if (socket !== ws) return;
+        socket = null;
+        // A message that arrives while this connection is still (re)establishing
+        // gets queued in pendingMessages regardless of how that attempt turns
+        // out. Without this, a connect that loses the race against
+        // CONNECT_TIMEOUT_MS — plausible for the very first connect a process
+        // makes, before anything has warmed up — stranded that message forever:
+        // nothing retried until some *unrelated* later call happened to invoke
+        // SendServerRequestToSessionServer again. A one-off write with no
+        // follow-up broadcast (e.g. a single event save) never got a second
+        // chance, and the peer it was meant for silently never saw it.
+        if (pendingMessages.length > 0) {
+            const retry = setTimeout(() => {
+                if (!socket) socket = connect();
+            }, RECONNECT_BACKOFF_MS);
+            retry.unref?.();
         }
     };
 
