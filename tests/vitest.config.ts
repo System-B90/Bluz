@@ -1,20 +1,13 @@
 import path from "path";
 
-import { configDefaults, defineConfig } from "vitest/config";
+import { defineSharedVitestConfig } from "@system-b90/test-kit/vitest";
 
-export default defineConfig({
-    // Vite 8 resolves tsconfig `paths` natively, so the `vite-tsconfig-paths`
-    // plugin is gone — it was the only thing pulling in the deprecated,
-    // unmaintained `tsconfck`. Vitest had been emitting this exact advice on
-    // every run. See #380.
-    resolve: { tsconfigPaths: true },
+export default defineSharedVitestConfig({
     test: {
-        environment: "node",
         setupFiles: [ path.resolve(__dirname, "backend/setup-session.ts") ],
         // `.tsx` too: component tests for the gantt dialogs opt into jsdom
         // per file (`// @vitest-environment jsdom`).
         include: [ "tests/backend/**/*.test.ts", "tests/backend/**/*.test.tsx" ],
-        exclude: [ ...configDefaults.exclude, "**/.claude/**", "**/worktrees/**" ],
         alias: {
             "@": path.resolve(__dirname, "../ui/src"),
             // `ws` is installed twice — once at the root and once under
@@ -75,4 +68,3 @@ export default defineConfig({
         },
     },
 });
-
