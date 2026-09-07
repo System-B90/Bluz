@@ -9,6 +9,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  * hands students staff data.
  */
 
+/*
+ * The ws-ticket case signs a real ticket, and signing derives its key from this
+ * secret — unset in CI, where the route's catch-all would turn the throw into a
+ * 401 and quietly re-create the assertion this file used to make. Pinned the
+ * same way `student-refresh-ping` and `ws-sender` pin it.
+ */
+process.env.WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY ??= "test-root-secret";
+
 vi.mock("@/api-server/db-event-history", () => ({
     DbEventHistory: { forEvent: vi.fn(async () => []) },
 }));
