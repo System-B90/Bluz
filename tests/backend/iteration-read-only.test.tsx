@@ -36,7 +36,13 @@ const iterations: Array<Iteration> = [
     },
 ];
 
-const apiListIterations = vi.fn(async () => iterations);
+// Returns fresh objects each call, like a real fetch would. Returning the
+// same array reference made two tests below flake: React bails out of a
+// re-render when `setIterations` receives an object identical (`Object.is`)
+// to the current state, so a refetch that isn't paired with some other state
+// change (e.g. no `setIterationId`) would appear to do nothing even though
+// the mutation it fetched was real.
+const apiListIterations = vi.fn(async () => iterations.map((i) => ({ ...i })));
 vi.mock("@/api-client/iterations", () => ({
     apiListIterations: () => apiListIterations(),
 }));
@@ -44,6 +50,19 @@ vi.mock("@/api-client/iterations", () => ({
 const enqueueSnackbar = vi.fn();
 vi.mock("notistack", () => ({
     useSnackbar: () => ({ enqueueSnackbar }),
+}));
+
+// The provider subscribes to the session websocket so a "make current" switch
+// made elsewhere reaches it (#663). Capture the handler the tests drive.
+let messageHandler: ((type: string, data: unknown) => void) | null = null;
+const removeMessageHandler = vi.fn();
+vi.mock("@/components/auth/AuthProvider", () => ({
+    useAuth: () => ({
+        addMessageHandler: (handler: (type: string, data: unknown) => void) => {
+            messageHandler = handler;
+            return removeMessageHandler;
+        },
+    }),
 }));
 
 let searchParam: string | null = null;
@@ -74,7 +93,17 @@ afterEach(() => {
     cleanup();
     vi.clearAllMocks();
     searchParam = null;
+    messageHandler = null;
+    iterations[0].isCurrent = true;
+    iterations[1].isCurrent = false;
 });
+
+/** Flip which iteration the (mocked) API reports as current. */
+function makeCurrent(id: string) {
+    iterations.forEach((iteration) => {
+        iteration.isCurrent = iteration.id === id;
+    });
+}
 
 describe("IterationProvider — read-only scoping", () => {
     it("is not read-only for the current run (no param)", async () => {
@@ -134,6 +163,204 @@ describe("IterationProvider — read-only scoping", () => {
         // No current id resolved: falls back to treating any param as read-only
         // rather than silently granting write access.
         expect(result.current.currentIterationId).toBeUndefined();
+        expect(result.current.isReadOnlyIteration).toBe(true);
+    });
+});
+
+/**
+ * Switching the current iteration used to leave every already-mounted provider
+ * pointed at the previous one until a full page reload (#663). The provider now
+ * refetches — and follows the switch — on a CURRENT_ITERATION_CHANGED
+ * broadcast.
+ */
+describe("IterationProvider — current-iteration switch", () => {
+    it("follows the switch when scoped to the run that was current", async () => {
+        searchParam = null;
+        const { result } = renderScope();
+        await waitFor(() => expect(result.current.iterationId).toBe("2026a"));
+
+        makeCurrent("2025b");
+        act(() => messageHandler?.("cic", { iterationId: "2025b" }));
+
+        await waitFor(() =>
+            expect(result.current.currentIterationId).toBe("2025b"),
+        );
+        // Followed the switch rather than becoming a read-only view of the
+        // iteration that was just demoted.
+        expect(result.current.iterationId).toBe("2025b");
+        expect(result.current.isReadOnlyIteration).toBe(false);
+    });
+
+    it("leaves a deliberately past scope alone", async () => {
+        searchParam = "2025b";
+        const { result } = renderScope();
+        await waitFor(() =>
+            expect(result.current.currentIterationId).toBe("2026a"),
+        );
+
+        // A third iteration becomes current; the user is reading 2025b on
+        // purpose and must not be yanked out of it.
+        act(() => messageHandler?.("cic", { iterationId: "2026a" }));
+
+        await waitFor(() => expect(apiListIterations).toHaveBeenCalledTimes(2));
+        expect(result.current.iterationId).toBe("2025b");
+        expect(result.current.isReadOnlyIteration).toBe(true);
+    });
+
+    it("ignores unrelated websocket messages", async () => {
+        searchParam = null;
+        const { result } = renderScope();
+        await waitFor(() => expect(result.current.iterationId).toBe("2026a"));
+
+        act(() => messageHandler?.("cu", {}));
+
+        expect(apiListIterations).toHaveBeenCalledTimes(1);
+    });
+
+    it("still refetches when the message carries no iteration id", async () => {
+        searchParam = null;
+        const { result } = renderScope();
+        await waitFor(() => expect(result.current.iterationId).toBe("2026a"));
+
+        // Nothing to follow, but read-only mode is decided by the *fetched*
+        // current id — leaving it stale is the #663 failure in miniature.
+        makeCurrent("2025b");
+        act(() => messageHandler?.("cic", {}));
+
+        await waitFor(() =>
+            expect(result.current.currentIterationId).toBe("2025b"),
+        );
+        // The scope stayed on the demoted run, so it is now genuinely read-only.
+        expect(result.current.iterationId).toBe("2026a");
+        expect(result.current.isReadOnlyIteration).toBe(true);
+    });
+
+    it("is a no-op when the scope already names the newly current iteration", async () => {
+        searchParam = "2025b";
+        const { result } = renderScope();
+        await waitFor(() =>
+            expect(result.current.currentIterationId).toBe("2026a"),
+        );
+        expect(result.current.isReadOnlyIteration).toBe(true);
+        replace.mockClear();
+
+        // The iteration the user is pinned to becomes the current one.
+        makeCurrent("2025b");
+        act(() => messageHandler?.("cic", { iterationId: "2025b" }));
+
+        await waitFor(() =>
+            expect(result.current.isReadOnlyIteration).toBe(false),
+        );
+        expect(result.current.iterationId).toBe("2025b");
+        // No scope change, so no URL rewrite either.
+        expect(replace).not.toHaveBeenCalled();
+    });
+
+    it("follows a second switch, not just the first", async () => {
+        searchParam = null;
+        const { result } = renderScope();
+        await waitFor(() => expect(result.current.iterationId).toBe("2026a"));
+
+        makeCurrent("2025b");
+        act(() => messageHandler?.("cic", { iterationId: "2025b" }));
+        // Wait for currentIterationId too, not just iterationId: the two land
+        // on different ticks (setIterationId vs. the loadIterations refetch).
+        // Firing the second switch before currentIterationIdRef has caught up
+        // would make onIterationChanged compare against the *stale* pre-switch
+        // value and wrongly conclude the scope is "a deliberately past
+        // iteration" — see the note on that ref in IterationProvider.
+        await waitFor(() => {
+            expect(result.current.iterationId).toBe("2025b");
+            expect(result.current.currentIterationId).toBe("2025b");
+        });
+
+        makeCurrent("2026a");
+        act(() => messageHandler?.("cic", { iterationId: "2026a" }));
+
+        // `iterationId` (from the switch's own setIterationId) and
+        // `currentIterationId` (from the switch's loadIterations refetch) land
+        // on different ticks — wait for the read-only flag itself, which is
+        // only false once both have actually settled.
+        await waitFor(() =>
+            expect(result.current.isReadOnlyIteration).toBe(false),
+        );
+        expect(result.current.iterationId).toBe("2026a");
+        expect(apiListIterations).toHaveBeenCalledTimes(3);
+    });
+
+    it("mirrors the followed switch into the URL param", async () => {
+        searchParam = null;
+        const { result } = renderScope();
+        await waitFor(() => expect(result.current.iterationId).toBe("2026a"));
+        replace.mockClear();
+
+        makeCurrent("2025b");
+        act(() => messageHandler?.("cic", { iterationId: "2025b" }));
+
+        await waitFor(() => expect(replace).toHaveBeenCalled());
+        // A reload after the switch must land on the iteration the app moved
+        // to, not the one the URL was written with at mount.
+        expect(String(replace.mock.calls.at(-1)?.[0])).toContain("2025b");
+    });
+
+    it("keeps working when the refetch triggered by the switch fails", async () => {
+        searchParam = null;
+        const { result } = renderScope();
+        await waitFor(() => expect(result.current.iterationId).toBe("2026a"));
+
+        apiListIterations.mockRejectedValueOnce(new Error("network down"));
+        act(() => messageHandler?.("cic", { iterationId: "2025b" }));
+
+        await waitFor(() => expect(enqueueSnackbar).toHaveBeenCalled());
+        // The list is stale, but the scope still followed the switch, so the
+        // app is not left silently writing into the demoted iteration.
+        expect(result.current.iterationId).toBe("2025b");
+        expect(result.current.iterations).toHaveLength(2);
+    });
+
+    it("stops listening once unmounted", async () => {
+        searchParam = null;
+        const { result, unmount } = renderScope();
+        await waitFor(() => expect(result.current.iterationId).toBe("2026a"));
+
+        unmount();
+        expect(removeMessageHandler).toHaveBeenCalled();
+    });
+
+    /**
+     * Known race, not yet fixed: `onIterationChanged` decides whether the
+     * scope is "following the current run" by comparing it against
+     * `currentIterationIdRef.current` — the value from the *last completed*
+     * `loadIterations()` fetch. If a second CURRENT_ITERATION_CHANGED arrives
+     * before that fetch resolves, the ref still holds the pre-switch id, so
+     * the second broadcast looks identical to "the user deliberately pinned
+     * this scope to a past iteration" and is dropped — the provider silently
+     * stops following, and isReadOnlyIteration flips on for a run that is
+     * actually still current. Plausible whenever two admins (or one admin,
+     * twice) flip the current iteration within one request round-trip. Filed
+     * as a follow-up to #666, not fixed here.
+     */
+    it("known bug: a second switch arriving before the first's refetch settles is dropped", async () => {
+        searchParam = null;
+        const { result } = renderScope();
+        await waitFor(() => expect(result.current.iterationId).toBe("2026a"));
+
+        makeCurrent("2025b");
+        act(() => messageHandler?.("cic", { iterationId: "2025b" }));
+        // Second switch fired immediately — before the first's loadIterations
+        // promise has resolved, so currentIterationIdRef is still "2026a".
+        makeCurrent("2026a");
+        act(() => messageHandler?.("cic", { iterationId: "2026a" }));
+
+        await waitFor(() =>
+            expect(apiListIterations).toHaveBeenCalledTimes(3),
+        );
+
+        // What SHOULD happen: the scope follows the current run, landing on
+        // "2026a" with isReadOnlyIteration false. This asserts what actually
+        // happens instead — remove this test once the race above is fixed,
+        // and replace it with the "should" behaviour.
+        expect(result.current.iterationId).toBe("2025b");
         expect(result.current.isReadOnlyIteration).toBe(true);
     });
 });

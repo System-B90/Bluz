@@ -9,6 +9,7 @@ Author: Michael K. Steinberg
 from __future__ import annotations
 
 import random
+import socket
 import string
 import threading
 import time
@@ -30,6 +31,17 @@ from bluz_cli.output import success, warn
 
 app = typer.Typer(help="Authentication and CLI configuration.", no_args_is_help=True)
 
+# How long the callback server keeps listening after the login has succeeded,
+# so a browser navigation that repeats the handoff code still lands on the
+# success page rather than a connection error (#660).
+#
+# Sized for a human, not a round trip: popup blockers mean the browser cannot
+# hand off on its own, so the user has to notice the "השלם התחברות" button and
+# click it. The wait costs the user nothing -- it runs on a daemon thread while
+# `login` gets on with its remaining prompts (see `_run_callback_server`) -- so
+# it is set generously rather than trimmed.
+POST_SUCCESS_GRACE_SECONDS = 30.0
+
 
 class AuthHTTPServer(ThreadingHTTPServer):
     """
@@ -44,10 +56,37 @@ class AuthHTTPServer(ThreadingHTTPServer):
 
     daemon_threads = True
 
+    # The port scan below means "give me a port nobody is serving on", and
+    # SO_REUSEADDR breaks exactly that: a second `bluz login` started while a
+    # previous server is still in its post-success grace window binds the same
+    # port successfully, and the two then race for the browser's callback. With
+    # reuse off, an occupied port raises OSError and the scan moves on (#660).
+    allow_reuse_address = False
+
+    def server_bind(self) -> None:
+        """Claim the port exclusively before binding.
+
+        Clearing `allow_reuse_address` is not enough on Windows: without
+        SO_EXCLUSIVEADDRUSE a second bind to a port another socket is already
+        listening on can still succeed, and the two servers then split the
+        incoming callbacks between them at random -- which is precisely the
+        ambiguity the port scan exists to avoid (#660).
+        """
+        exclusive = getattr(socket, "SO_EXCLUSIVEADDRUSE", None)
+        if exclusive is not None:
+            self.socket.setsockopt(socket.SOL_SOCKET, exclusive, 1)
+        super().server_bind()
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.token: str | None = None
         self.token_received = threading.Event()
+        # Handoff codes already exchanged for a token, so a repeat callback
+        # carrying the same code is answered from here instead of re-redeeming
+        # it (#660). Handoff codes are strictly single-use server-side, so
+        # without this the second delivery of the *same* login always fails.
+        self.redeemed: dict[str, str] = {}
+        self.redeemed_lock = threading.Lock()
 
 
 _RESULT_PAGE = """<!doctype html>
@@ -133,6 +172,25 @@ def _redeem_handoff_code(url: str, handoff_code: str, *, insecure: bool) -> str:
     return token
 
 
+def _shutdown_server(server: AuthHTTPServer, serve_thread: threading.Thread) -> None:
+    """Stop the callback server and release its socket."""
+    server.shutdown()
+    serve_thread.join(timeout=5)
+    server.server_close()
+
+
+def _shutdown_after_grace(
+    server: AuthHTTPServer, serve_thread: threading.Thread
+) -> None:
+    """Keep answering the callback for the grace window, then shut down.
+
+    Runs on a daemon thread so a login that has already produced its token does
+    not make the user wait for the window to expire (#660).
+    """
+    time.sleep(POST_SUCCESS_GRACE_SECONDS)
+    _shutdown_server(server, serve_thread)
+
+
 def _run_callback_server(url: str, *, insecure: bool = False) -> str | None:
     """
     Run a temporary local HTTP server to receive the CLI login handoff code
@@ -196,8 +254,16 @@ def _run_callback_server(url: str, *, insecure: bool = False) -> str | None:
             )
             body = html_body if html else json_body
             self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
-            self.wfile.write(body)
+            try:
+                self.end_headers()
+                self.wfile.write(body)
+            except OSError:
+                # The page's fetch() aborts on its own timeout, which closes
+                # this socket mid-response. The login itself is already decided
+                # by the time we get here, so a dead socket is not a failure --
+                # swallowing it keeps the handler from unwinding past the code
+                # that reports the result (#660).
+                pass
 
         def do_OPTIONS(self) -> None:
             self.send_response(204)
@@ -231,25 +297,52 @@ def _run_callback_server(url: str, *, insecure: bool = False) -> str | None:
                 )
                 return
 
-            # Redeem the handoff code for the real session token over HTTPS.
-            # The browser never sent us the token itself (#520).
-            try:
-                token = _redeem_handoff_code(url, handoff_list[0], insecure=insecure)
-            except Exception:
-                self._respond(
-                    400,
-                    json_body=b'{"status":"error","error":"redeem_failed"}',
-                    html_body=_result_page(ok=False),
-                )
-                return
+            handoff_code = handoff_list[0]
+            server: AuthHTTPServer = self.server  # type: ignore[assignment]
 
-            self.server.token = token  # type: ignore[attr-defined]
+            # The same handoff code routinely arrives twice: the page's fetch()
+            # is aborted (its own 3s timeout, or Chrome's Local Network Access
+            # check killing the response) *after* this server already redeemed
+            # it, and the page then falls back to a plain navigation carrying
+            # that same code. Redeeming is single-use server-side, so the
+            # second delivery used to fail and land the user on "לא התקבל קוד
+            # התחברות" even though the login had in fact succeeded (#660).
+            # Replaying the first result makes the callback idempotent.
+            # The lock is held across the whole check-redeem-store, not just
+            # around the dict: the two deliveries of one code routinely overlap,
+            # and a lock that only guards the lookup lets both threads miss the
+            # cache, both call out, and the loser get "already-used" back --
+            # exactly the failure this cache exists to prevent. Serializing
+            # costs nothing here; a login produces a couple of requests, not
+            # concurrent traffic.
+            with server.redeemed_lock:
+                token = server.redeemed.get(handoff_code)
+                if token is None:
+                    # Redeem the handoff code for the real session token over
+                    # HTTPS. The browser never sent us the token itself (#520).
+                    try:
+                        token = _redeem_handoff_code(
+                            url, handoff_code, insecure=insecure
+                        )
+                    except Exception:
+                        self._respond(
+                            400,
+                            json_body=b'{"status":"error","error":"redeem_failed"}',
+                            html_body=_result_page(ok=False),
+                        )
+                        return
+                    server.redeemed[handoff_code] = token
+
+            # Record the result *before* answering: writing the response can
+            # fail on a socket the browser already abandoned, and the login
+            # must not be lost to that (#660).
+            server.token = token
+            server.token_received.set()
             self._respond(
                 200,
                 json_body=b'{"status":"success"}',
                 html_body=_result_page(ok=True),
             )
-            self.server.token_received.set()  # type: ignore[attr-defined]
 
     server = None
     for p in range(52400, 52411):
@@ -304,9 +397,25 @@ def _run_callback_server(url: str, *, insecure: bool = False) -> str | None:
                     pbar.update(int(elapsed - last_elapsed))
                     last_elapsed = elapsed
     finally:
-        server.shutdown()
-        serve_thread.join(timeout=5)
-        server.server_close()
+        # Keep serving for a while after succeeding. The page may still be
+        # about to deliver the same handoff code by navigation -- its fetch()
+        # having been aborted or blocked, leaving the user to click "השלם
+        # התחברות" -- and with the server already gone that navigation lands on
+        # a connection error instead of the success page. The callback is
+        # idempotent, so the late arrival costs nothing (#660).
+        #
+        # Torn down from a daemon thread rather than by sleeping here: blocking
+        # the caller would add the full grace period to every successful login,
+        # and the user has prompts left to answer. Both threads are daemons, so
+        # whichever way `login` ends they never hold the process open.
+        if server.token_received.is_set():
+            threading.Thread(
+                target=_shutdown_after_grace,
+                args=(server, serve_thread),
+                daemon=True,
+            ).start()
+        else:
+            _shutdown_server(server, serve_thread)
 
     return server.token
 

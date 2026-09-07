@@ -40,6 +40,7 @@ def _drive(
     (covered separately by the API route's own unit tests).
     """
     started = threading.Event()
+    browser_threads: list[threading.Thread] = []
 
     def fake_open(url: str) -> None:
         query = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
@@ -50,7 +51,9 @@ def _drive(
             started.set()
             on_port(port, code)
 
-        threading.Thread(target=run, daemon=True).start()
+        thread = threading.Thread(target=run, daemon=True)
+        browser_threads.append(thread)
+        thread.start()
 
     def fake_redeem(url: str, handoff_code: str, *, insecure: bool) -> str:
         return f"redeemed:{handoff_code}"
@@ -62,7 +65,13 @@ def _drive(
     try:
         start = time.monotonic()
         token = auth._run_callback_server("https://bluz.dev")
-        return token, time.monotonic() - start
+        elapsed = time.monotonic() - start
+        # The server records the token *before* writing the response (#660), so
+        # `_run_callback_server` can return while the stub browser is still
+        # reading it. Join before asserting on what the stub captured.
+        for thread in browser_threads:
+            thread.join(timeout=10)
+        return token, elapsed
     finally:
         auth.webbrowser.open = original_open  # type: ignore[assignment]
         auth._redeem_handoff_code = original_redeem  # type: ignore[assignment]
@@ -287,3 +296,67 @@ def test_result_page_is_valid_utf8_html() -> None:
         assert 'dir="rtl"' in page.decode("utf-8")
 
     assert ok != failed
+
+
+def test_the_same_handoff_code_can_be_delivered_twice() -> None:
+    """The page routinely delivers one handoff code twice (#660).
+
+    Its fetch() is aborted -- by its own timeout, or by Chrome refusing to let
+    an HTTPS page read a 127.0.0.1 response -- *after* this server already
+    redeemed the code, and it then falls back to a plain navigation carrying
+    that same code. Handoff codes are single-use server-side, so re-redeeming
+    fails; the second delivery must replay the first result instead, or the
+    user is shown "לא התקבל קוד התחברות" for a login that actually succeeded.
+    """
+    captured: dict[str, Any] = {}
+    redeemed: list[str] = []
+
+    def single_use_redeem(url: str, handoff_code: str, *, insecure: bool) -> str:
+        if handoff_code in redeemed:
+            raise BluzApiError("ClientApiError", "Invalid or already-used code.")
+        redeemed.append(handoff_code)
+        return f"redeemed:{handoff_code}"
+
+    def call(port: int, code: str) -> None:
+        path = f"/callback?code={code}&handoff=HANDOFF-1"
+        captured["fetch"] = _get(port, path, FETCH_ACCEPT)
+        captured["navigation"] = _get(port, path, NAVIGATION_ACCEPT)
+
+    token, _ = _drive(call, redeem=single_use_redeem)
+
+    assert token == "redeemed:HANDOFF-1"
+    # The server exchanged the code exactly once.
+    assert redeemed == ["HANDOFF-1"]
+    assert captured["fetch"][0] == 200
+    # The repeat navigation lands on the success page, not the failure page.
+    status, headers, body = captured["navigation"]
+    assert status == 200
+    assert headers["Content-Type"] == "text/html; charset=utf-8"
+    assert "ההתחברות הושלמה בהצלחה".encode() in body
+
+
+def test_a_dead_socket_does_not_lose_a_completed_login() -> None:
+    """The browser can abandon the connection mid-response.
+
+    The result is recorded before the response is written, so a socket the
+    client already closed cannot cost the CLI a login it has already
+    completed (#660).
+    """
+
+    def call(port: int, code: str) -> None:
+        conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+        conn.request(
+            "GET", f"/callback?code={code}&handoff=HANDOFF-1", headers=FETCH_ACCEPT
+        )
+        # Walk away without reading the response, exactly as an aborted
+        # fetch() does. The brief wait is what makes this deterministic:
+        # closing the instant after `request()` can reset the connection
+        # before the server has read it at all, which tests nothing.
+        time.sleep(0.5)
+        conn.close()
+
+    token, elapsed = _drive(call)
+
+    assert token == "redeemed:HANDOFF-1"
+    # Returned on the callback rather than running out the 60s clock.
+    assert elapsed < 15

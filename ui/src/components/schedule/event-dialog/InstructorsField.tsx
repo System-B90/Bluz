@@ -10,7 +10,8 @@ import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { InstructorSelect } from "@/components/base/InstructorSelect";
 import { useOutsiders } from "@/components/base/OutsidersProvider";
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
-import {
+import
+{
     eventHasLecturers,
     EventType,
     lecturersLabelForType,
@@ -203,7 +204,7 @@ export function InstructorsField({
             display={ "flex" }
             flexDirection={ "row" }
             flexWrap={ "nowrap" }
-            gap={ 2 }
+            gap={ isLecture ? 2:0 }
             width={ "100%" }
         >
             <Box flexGrow={ 1 }>

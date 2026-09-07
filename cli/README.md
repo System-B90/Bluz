@@ -86,7 +86,9 @@ bluz gantt curriculums execution <id>    # תכנון מול ביצוע (plan vs
 ```
 
 Gating failures are coded, and nothing is written when they fire: `draft`,
-`no-iteration`, `already-cut` (HTTP 409) and `invalid-plan` (HTTP 400).
+`no-iteration`, `already-cut`, `foreign-cut` (HTTP 409) and `invalid-plan`
+(HTTP 400). `foreign-cut` means the linked iteration still holds a live cut of a
+*different* curriculum — pull that one back before cutting this one.
 
 ### Parent ids on gantt lists
 

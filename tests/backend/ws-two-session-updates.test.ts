@@ -218,6 +218,62 @@ describe("live event updates across two sessions (#582)", () => {
         ).toHaveLength(0);
     });
 
+    it("delivers two near-simultaneous updates for the same event in send order, even when they disagree", async () => {
+        const wss = await loadSessionServer();
+        const tabB = openSession(wss, "user-b", "initiator-b");
+
+        // Two sessions race to save the same event; the server has no
+        // ordering guarantee beyond "relay frames as they arrive", so if the
+        // second save's write completes and broadcasts before the first
+        // save's broadcast is sent, the client can receive the older edit
+        // last and have it stick — the same silent-clobber risk as the write
+        // path, but on the read side. This pins down what a client actually
+        // receives: two frames, in the order they were sent, which is what a
+        // "last message wins" client-side apply has to reason about.
+        broadcastFromServer(wss, MessageTypes.EVENT_DATA_UPDATE, {
+            events: { "event-1": { id: "event-1", name: "גרסה ראשונה" } },
+        });
+        broadcastFromServer(wss, MessageTypes.EVENT_DATA_UPDATE, {
+            events: { "event-1": { id: "event-1", name: "גרסה שנייה" } },
+        });
+
+        const updates = tabB.receivedOfType(MessageTypes.EVENT_DATA_UPDATE);
+        expect(updates).toHaveLength(2);
+        expect(updates[0]!.data.events["event-1"].name).toBe("גרסה ראשונה");
+        expect(updates[1]!.data.events["event-1"].name).toBe("גרסה שנייה");
+    });
+
+    it("gives each of one user's two tabs only the traffic for the iteration it is viewing", async () => {
+        const wss = await loadSessionServer();
+        // Same person, two tabs open on two different iterations at once —
+        // e.g. reviewing an older iteration in one tab while planning the
+        // current one in the other. Neither should see the other's events.
+        const tabCurrent = openSession(wss, "user-a", "initiator-a-current");
+        const tabOther = openSession(wss, "user-a", "initiator-a-other", "2025b");
+
+        broadcastFromServer(wss, MessageTypes.EVENT_DATA_UPDATE, {
+            events: { "event-current": { id: "event-current" } },
+        });
+        broadcastFromServer(
+            wss,
+            MessageTypes.EVENT_DATA_UPDATE,
+            { events: { "event-other": { id: "event-other" } } },
+            "2025b",
+        );
+
+        const currentUpdates = tabCurrent.receivedOfType(
+            MessageTypes.EVENT_DATA_UPDATE,
+        );
+        expect(currentUpdates).toHaveLength(1);
+        expect(currentUpdates[0]!.data.events["event-current"]).toBeDefined();
+
+        const otherUpdates = tabOther.receivedOfType(
+            MessageTypes.EVENT_DATA_UPDATE,
+        );
+        expect(otherUpdates).toHaveLength(1);
+        expect(otherUpdates[0]!.data.events["event-other"]).toBeDefined();
+    });
+
     it("keeps delivering to the remaining session after the other tab closes", async () => {
         const wss = await loadSessionServer();
         const tabA = openSession(wss, "user-a", "initiator-a");

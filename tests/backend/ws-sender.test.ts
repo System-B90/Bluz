@@ -227,6 +227,46 @@ describe("SendServerRequestToSessionServer connection lifecycle", () => {
         });
     });
 
+    it("retries on its own once a connection carrying a queued message closes (#654 live-updates flake)", async () => {
+        // Nothing else calls SendServerRequestToSessionServer again for this
+        // request, so without a self-triggered retry a connect that loses the
+        // race against CONNECT_TIMEOUT_MS drops this message forever: the
+        // queue only drains on the *next* unrelated broadcast, and a one-off
+        // save (create an event, nothing else) never produces one.
+        const { SendServerRequestToSessionServer } = await loadSender();
+
+        SendServerRequestToSessionServer(MessageTypes.EVENT_ADDED_OR_REMOVED, {
+            eventId: "event-1",
+        });
+        vi.advanceTimersByTime(5000); // CONNECT_TIMEOUT_MS elapses
+        expect(constructed[0].terminated).toBe(true);
+        // Real `ws` emits close once terminate() completes; the fake only
+        // flips readyState, so fire it explicitly.
+        constructed[0].onclose?.();
+
+        expect(constructed).toHaveLength(1); // no eager reconnect yet
+
+        vi.advanceTimersByTime(1000); // RECONNECT_BACKOFF_MS
+
+        expect(constructed).toHaveLength(2);
+        constructed[1].open();
+        expect(JSON.parse(constructed[1].sent[0]).data).toEqual({
+            eventId: "event-1",
+        });
+    });
+
+    it("does not schedule a retry when the closing socket had nothing queued", async () => {
+        const { SendServerRequestToSessionServer } = await loadSender();
+
+        SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE);
+        constructed[0].open(); // flushes the only message
+        constructed[0].onclose?.();
+
+        vi.advanceTimersByTime(10_000);
+
+        expect(constructed).toHaveLength(1);
+    });
+
     it("logs a connection error without dropping the healthy socket", async () => {
         const { SendServerRequestToSessionServer } = await loadSender();
 

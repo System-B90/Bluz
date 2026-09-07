@@ -1,6 +1,7 @@
 import * as path from "path";
 
-import { test as baseTest, expect as baseExpect, APIRequestContext, Browser, Locator, Page, BrowserContext } from "@playwright/test";
+import { APIRequestContext, Browser, Locator, Page, BrowserContext } from "@playwright/test";
+import { test as baseTest, expect as baseExpect } from "@system-b90/test-kit/fixtures";
 
 import { idsFromListBody } from "./list-ids";
 

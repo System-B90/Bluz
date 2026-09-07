@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 import { Browser, expect, Page, test as setup } from "@playwright/test";
+import { hiveLogin } from "@system-b90/test-kit/auth";
 
 import { AUTH_FILES, SELECTORS } from "./fixtures";
 
@@ -28,80 +29,6 @@ export const TEST_USERS = {
      */
     student: { username: "test-hanich-e2e", password: "test" },
 } as const;
-
-async function waitForAuthApi(page: Page, baseURL: string): Promise<void>
-{
-    for (let attempt = 1; attempt <= 10; attempt++)
-    {
-        const response = await page.request.get(`${baseURL}/api/auth/csrf`);
-        if (response.ok())
-        {
-            return;
-        }
-
-        await page.waitForTimeout(3_000);
-    }
-
-    throw new Error("NextAuth API is not ready");
-}
-
-async function startHiveSso(page: Page, baseURL: string): Promise<void>
-{
-    await waitForAuthApi(page, baseURL);
-
-    const maxAttempts = 3;
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt++)
-    {
-        try
-        {
-            const csrfResponse = await page.request.get(
-                `${baseURL}/api/auth/csrf`,
-            );
-            if (!csrfResponse.ok())
-            {
-                throw new Error(
-                    `CSRF request failed: ${csrfResponse.status()}`,
-                );
-            }
-
-            const { csrfToken } = await csrfResponse.json();
-            const signInResponse = await page.request.post(
-                `${baseURL}/api/auth/signin/hive`,
-                {
-                    form: {
-                        csrfToken,
-                        callbackUrl: `${baseURL}/`,
-                        json: "true",
-                    },
-                },
-            );
-            if (!signInResponse.ok())
-            {
-                throw new Error(
-                    `Sign-in request failed: ${signInResponse.status()}`,
-                );
-            }
-
-            const signInData = await signInResponse.json();
-
-            await page.goto(signInData.url, {
-                waitUntil: "commit",
-                timeout: 60_000,
-            });
-            await page.waitForURL(/hive\.org/, { timeout: 60_000 });
-            return;
-        } catch (error)
-        {
-            if (attempt === maxAttempts)
-            {
-                throw error;
-            }
-
-            await page.waitForTimeout(3_000 * attempt);
-        }
-    }
-}
 
 async function tryGoto(
     page: Page,
@@ -207,43 +134,7 @@ async function authenticateAs(
         return;
     }
 
-    await startHiveSso(page, baseURL);
-
-    const usernameField = page
-        .locator(
-            "input[name='username'], input[name='login'], input[type='text']",
-        )
-        .first();
-    const passwordField = page
-        .locator("input[name='password'], input[type='password']")
-        .first();
-
-    await usernameField.waitFor({ state: "visible", timeout: 30_000 });
-    await usernameField.fill(username);
-    await passwordField.fill(password);
-
-    const submitButton = page
-        .locator("button[type='submit'], input[type='submit']")
-        .first();
-    await submitButton.click();
-
-    try
-    {
-        const authorizeButton = page.locator(
-            "button:has-text('Authorize'), button:has-text('Allow'), button:has-text('אשר'), input[type='submit'][value='Authorize']",
-        );
-        await authorizeButton.waitFor({ state: "visible", timeout: 5_000 });
-        await authorizeButton.click();
-    } catch
-    {
-        // No authorization screen — continue
-    }
-
-    await page.waitForURL(
-        (url) =>
-            !url.hostname.includes("hive") && !url.pathname.includes("/login"),
-        { timeout: 60_000 },
-    );
+    await hiveLogin(page, { baseURL, username, password });
 
     await expect(page.locator(landingSelector)).toBeVisible({
         timeout: 60_000,

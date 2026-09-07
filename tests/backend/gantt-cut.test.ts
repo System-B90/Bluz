@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const fakeEvents = {
     countDocuments: vi.fn(async () => 0),
+    findOne: vi.fn(async () => null as any),
     insertMany: vi.fn(async () => ({ insertedCount: 0 })),
     find: vi.fn(() => ({ toArray: async () => [] as Array<any> })),
     updateMany: vi.fn(async () => ({ matchedCount: 0, modifiedCount: 0 })),
@@ -49,6 +50,13 @@ vi.mock("@/api-server/db-courses", () => ({
 vi.mock("@/api-server/mongo-db-controller", () => ({
     getDatabaseController: vi.fn(() => fakeController),
     getMetaController: vi.fn(() => fakeMetaController),
+}));
+// The cut asks Hive for the module → subject map. Mocked so these tests never
+// reach the network — and, since a failure is now retried with backoff (#662),
+// never sit through that backoff either.
+const getModules = vi.fn(async () => [] as Array<any>);
+vi.mock("@/api-server/hive/session-client", () => ({
+    createHiveClient: vi.fn(async () => ({ getModules })),
 }));
 const broadcast = vi.fn();
 vi.mock("@/api-server/web-socket-utils", () => ({
@@ -186,10 +194,16 @@ const occ = (over: Partial<PlannedOccurrence>): PlannedOccurrence => ({
 beforeEach(() => {
     vi.clearAllMocks();
     fakeEvents.countDocuments.mockResolvedValue(0);
+    fakeEvents.findOne.mockResolvedValue(null);
     fakeEvents.find.mockReturnValue({ toArray: async () => [] as Array<any> });
     fakeEvents.updateMany.mockResolvedValue({ matchedCount: 0, modifiedCount: 0 });
     vi.mocked(DbSettings.get).mockResolvedValue({ dayStartTime: "08:00" } as ScheduleSettings);
     vi.mocked(DbCourses.get).mockResolvedValue([]);
+    // `clearAllMocks` clears recorded calls but keeps implementations, so any
+    // per-test mapping/Hive stub would otherwise leak into the tests after it.
+    vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([]);
+    getModules.mockReset();
+    getModules.mockResolvedValue([]);
 });
 
 // ---- Pure helpers ----------------------------------------------------------
@@ -381,6 +395,51 @@ describe("cutCurriculumToSchedule", () => {
         expect(fakeEvents.insertMany).not.toHaveBeenCalled();
     });
 
+    it("refuses when another curriculum's cut is still live in the iteration", async () => {
+        // Curriculum-scoped gating must not let a second curriculum be cut on
+        // top of the first's live schedule — the calendar is iteration-scoped,
+        // so the two would overlay and neither pull-back could separate them.
+        vi.mocked(DbCurriculum.getItem).mockResolvedValue(makeCurriculum([makeEvent({ id: "e1" })]));
+        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(makeIteration());
+        // Nothing of ours; 312 of somebody else's.
+        fakeEvents.countDocuments
+            .mockResolvedValueOnce(0)
+            .mockResolvedValueOnce(312);
+        fakeEvents.findOne.mockResolvedValue({ ganttCurriculumId: "c-other" });
+
+        const outcome = await cutCurriculumToSchedule("c1");
+
+        expect(outcome.ok).toBe(false);
+        if (outcome.ok) return;
+        expect(outcome.error.code).toBe("foreign-cut");
+        expect(outcome.error.count).toBe(312);
+        expect(outcome.error.foreignCurriculumId).toBe("c-other");
+        expect(fakeEvents.insertMany).not.toHaveBeenCalled();
+    });
+
+    it("counts only this curriculum's own cut events when gating (#661)", async () => {
+        // An iteration relinked from one curriculum to a duplicate holds the
+        // *first* curriculum's events. Those are not this curriculum's cut and
+        // used to block it with a false "already-cut".
+        vi.mocked(DbCurriculum.getItem).mockResolvedValue(makeCurriculum([makeEvent({ id: "e1" })]));
+        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(makeIteration());
+        vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([
+            { dayId: "w0d0", eventId: "e1", sortOrder: 0 },
+        ] as any);
+
+        const outcome = await cutCurriculumToSchedule("c1");
+
+        expect(outcome.ok).toBe(true);
+        expect(fakeEvents.countDocuments).toHaveBeenCalledWith({
+            archived: { $ne: true },
+            ganttEventId: { $exists: true },
+            $or: [
+                { ganttCurriculumId: "c1" },
+                { ganttCurriculumId: { $not: { $type: "string" } } },
+            ],
+        });
+    });
+
     it("propagates planner validation errors without writing", async () => {
         vi.mocked(DbCurriculum.getItem).mockResolvedValue(makeCurriculum([makeEvent({ id: "e1", title: "לא ממופה" })]));
         vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(makeIteration());
@@ -503,5 +562,92 @@ describe("pullBackCutSchedule", () => {
         expect(filter).toMatchObject({ archived: { $ne: true } });
         expect(update).toEqual({ $set: { archived: true } });
         expect(broadcast).toHaveBeenCalledTimes(2);
+    });
+});
+
+/**
+ * A transient Hive failure during the cut used to be swallowed to an empty
+ * module → subject map, stamping every module-linked event `subject: 0` — no
+ * subject, and so no colour — with nothing but a server log line to show for
+ * it (#662).
+ */
+describe("cut — Hive subject fallback", () => {
+    /** Curriculum whose module carries the Hive link, not its event. */
+    const moduleLinkedCurriculum = () => {
+        const curriculum = makeCurriculum([makeEvent({ id: "e1" })]);
+        (curriculum as any).c2s[0].syllabus.s2m[0].module.hiveIds = [6];
+        return curriculum;
+    };
+
+    const arrange = () => {
+        vi.mocked(DbCurriculum.getItem).mockResolvedValue(moduleLinkedCurriculum());
+        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(makeIteration());
+        vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([
+            { dayId: "w0d0", eventId: "e1", sortOrder: 0 },
+        ] as any);
+    };
+
+    it("resolves the subject from the module's Hive link", async () => {
+        arrange();
+        getModules.mockResolvedValue([{ id: 6, parent_subject: 42 }]);
+
+        const outcome = await cutCurriculumToSchedule("c1");
+
+        expect(outcome.ok).toBe(true);
+        if (!outcome.ok) return;
+        expect(outcome.result.hiveSubjectsUnavailable).toBe(false);
+        const inserted = fakeEvents.insertMany.mock.calls[0][0] as Array<any>;
+        expect(inserted[0].subject).toBe(42);
+    });
+
+    it("retries a failing Hive fetch before giving up", async () => {
+        arrange();
+        getModules
+            .mockRejectedValueOnce(new Error("cold session"))
+            .mockResolvedValue([{ id: 6, parent_subject: 42 }]);
+
+        const outcome = await cutCurriculumToSchedule("c1");
+
+        expect(outcome.ok).toBe(true);
+        if (!outcome.ok) return;
+        expect(getModules).toHaveBeenCalledTimes(2);
+        // The retry succeeded, so nothing was mis-tagged and nothing is warned.
+        expect(outcome.result.hiveSubjectsUnavailable).toBe(false);
+        const inserted = fakeEvents.insertMany.mock.calls[0][0] as Array<any>;
+        expect(inserted[0].subject).toBe(42);
+    });
+
+    it("still cuts, but reports the failure, when every attempt fails", async () => {
+        arrange();
+        getModules.mockRejectedValue(new Error("hive down"));
+
+        const outcome = await cutCurriculumToSchedule("c1");
+
+        expect(outcome.ok).toBe(true);
+        if (!outcome.ok) return;
+        expect(getModules).toHaveBeenCalledTimes(3);
+        // The cut is not blocked by a Hive outage — but the caller is told the
+        // events came out subject-less so it can prompt for a reload.
+        expect(outcome.result.hiveSubjectsUnavailable).toBe(true);
+        const inserted = fakeEvents.insertMany.mock.calls[0][0] as Array<any>;
+        expect(inserted[0].subject).toBe(0);
+    });
+
+    it("does not warn when no event depended on the module fallback", async () => {
+        // Event carries its own Hive subject: a Hive outage costs it nothing.
+        vi.mocked(DbCurriculum.getItem).mockResolvedValue(
+            makeCurriculum([makeEvent({ id: "e1", hiveSubjectId: 9, hiveModuleId: 6 })]),
+        );
+        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(makeIteration());
+        vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([
+            { dayId: "w0d0", eventId: "e1", sortOrder: 0 },
+        ] as any);
+        getModules.mockRejectedValue(new Error("hive down"));
+
+        const outcome = await cutCurriculumToSchedule("c1");
+
+        expect(outcome.ok).toBe(true);
+        if (!outcome.ok) return;
+        expect(outcome.result.hiveSubjectsUnavailable).toBe(false);
     });
 });
