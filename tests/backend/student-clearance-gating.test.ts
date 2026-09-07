@@ -22,6 +22,7 @@ vi.mock("@/api-server/iteration-request", () => ({
 import { DbEventHistory } from "@/api-server/db-event-history";
 import { DbPersonalSettings } from "@/api-server/db-personal-settings";
 import { Clearance } from "@/api-shared/types/hive";
+import { verifyWsTicketIdentity, WsScope } from "@/settings";
 import * as EventHistoryRoute from "@/app/api/event/history/route";
 import * as PersonalSettingsRoute from "@/app/api/personal-settings/route";
 import * as WsTicketRoute from "@/app/api/ws-ticket/route";
@@ -45,13 +46,20 @@ describe("staff-only routes reject a Hanich session", () => {
         expect(DbEventHistory.forEvent).not.toHaveBeenCalled();
     });
 
-    it("GET /api/ws-ticket", async () => {
-        // The socket broadcasts whole event documents; a ticket is a bypass of
-        // the entire student projection.
+    it("GET /api/ws-ticket issues a hanich-scoped ticket, never a staff one", async () => {
+        // Not a rejection: the student board needs the refresh channel, so the
+        // route hands out a *scoped* ticket instead (#656). The scope is the
+        // boundary — the session server refuses to register a hanich socket or
+        // to let it listen to anything but the empty student ping — so what
+        // has to hold here is that a student can never be signed as `segel`.
         const response = await WsTicketRoute.GET();
+        const { ticket } = await response.json();
 
-        expect(response.status).toBe(401);
-        expect(await response.text()).not.toContain("ticket");
+        expect(response.status).toBe(200);
+        expect(verifyWsTicketIdentity(ticket)).toEqual({
+            scope: WsScope.Hanich,
+            userId: HANICH.id,
+        });
     });
 
     it("GET /api/personal-settings", async () => {
