@@ -383,6 +383,11 @@ jobs:
                   # Pin online bundle to this release's tag (the "latest" GHCR tag is never published)
                   echo "${{ github.ref_name }}" > release-online/VERSION
 
+                  # The offline bundle needs it too: `update.sh --package` reads
+                  # VERSION to learn which release a package holds, before it
+                  # loads a single image.
+                  echo "${{ github.ref_name }}" > release-offline/VERSION
+
             - name: Export Offline Images
               run: |
                   TAG_NAME=${{ github.ref_name }}
@@ -422,13 +427,17 @@ jobs:
                   # same nginx/ssl — so a version in the directory name would
                   # only ever be a lie after the first update.sh run.
                   #
-                  # The offline bundle keeps its versioned directory until
-                  # offline upgrades exist; the moment they do it should move to
-                  # the versionless name for exactly the same reason.
+                  # The offline bundle now upgrades in place the same way
+                  # (`update.sh --package`), so it takes the versionless name
+                  # too — a version in the directory would be a lie after the
+                  # first upgrade. The two are packed one at a time because
+                  # they share that directory name.
                   mv release-online bluz
-                  mv release-offline bluz-${{ github.ref_name }}
                   tar -czvf bluz-online-${{ github.ref_name }}.tar.gz bluz
-                  tar -czvf bluz-offline-${{ github.ref_name }}.tar.gz bluz-${{ github.ref_name }}
+                  rm -rf bluz
+
+                  mv release-offline bluz
+                  tar -czvf bluz-offline-${{ github.ref_name }}.tar.gz bluz
 
             - name: Publish GitHub Release
               uses: softprops/action-gh-release@v3

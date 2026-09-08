@@ -61,7 +61,7 @@ bluz/
 ├── docker-compose.hive-local.yml   # overlay, co-located Hive only
 ├── .env                            # written by the wizard — contains secrets
 ├── install.sh / install.ps1
-├── update.sh                       # in-place upgrade to a newer release
+├── update.sh                       # in-place upgrade to a newer release (online or --package)
 ├── link-hive.sh / link-hive.ps1
 ├── setup.py, requirements.txt      # the configuration wizard
 ├── nginx/ssl/                      # cert.pem + key.pem
@@ -159,6 +159,32 @@ to the bundle's `VERSION` file when GitHub is unreachable; `--version <tag>`
 pins it explicitly. `--skip-backup` accepts the risk of an unrecoverable migration;
 `--yes` skips the confirmation prompt. It refuses to run against a stopped
 stack — use `./install.sh` for a first install.
+
+#### Air-gapped (offline bundle)
+
+```bash
+./update.sh --package /media/usb/bluz-offline-v1.1.0.tar.gz
+```
+
+Same upgrade, no registry access. Point `--package` at the **full new offline
+package** — the downloaded `bluz-offline-<tag>.tar.gz` or a directory it was
+already extracted into. Run it from the directory the *running* deployment lives
+in; the package is only read from.
+
+What it does differently: the version comes from the package's `VERSION` file
+(never from GitHub), every `images/*.tar` in it is `docker load`ed — the database
+images included, since a release may move those pins — and the deployment's own
+bundle files (`docker-compose.yml`, the overlay, `install.sh`, `update.sh`,
+`link-hive.sh`, `setup.py`, `requirements.txt`, `backup/*.sh`, `VERSION`) are
+replaced with the package's, with the previous copies kept in
+`.bundle-bak-<old-version>/`. Your `.env`, `nginx/ssl/` and every data volume are
+untouched. Everything else — backup first, roll `ui` → `sessions` → `proxy`,
+verify, rollback hint on failure — is identical.
+
+Pointing `--package` at the *online* bundle fails immediately with that
+diagnosis: it ships no images, so it cannot upgrade an air-gapped host.
+`--package` cannot be combined with `--version` or `--pre-release` — a package
+carries exactly one release.
 
 Re-running the installer over an existing `.env` also works and is the fallback
 when the stack is down: it skips the wizard and updates `BLUZ_VERSION` from the
