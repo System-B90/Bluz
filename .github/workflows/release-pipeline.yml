@@ -415,6 +415,38 @@ jobs:
                   python -m pip install --upgrade pip build
                   python -m build cli/
 
+            # An offline box has no PyPI and no route to the org PEP 503 index,
+            # so shipping requirements.txt alone left install.sh's `pip install`
+            # dead on arrival. Vendor every wheel the wizard needs, plus the
+            # freshly built bluz CLI, and install.sh installs from wheels/ with
+            # --no-index.
+            #
+            # Bluz is installed on Windows as often as on Linux, so the download
+            # runs once per target platform. Both passes are strict: a dependency
+            # that stops publishing a wheel must fail the release here, not on a
+            # customer's air-gapped machine.
+            - name: Vendor Python wheels for the offline bundle
+              run: |
+                  mkdir -p release-offline/wheels
+                  for platform in manylinux2014_x86_64 win_amd64; do
+                      echo "Downloading wheels for ${platform}..."
+                      python -m pip download -r scripts/requirements.txt \
+                          --only-binary=:all: \
+                          --platform "${platform}" \
+                          --python-version 3.11 \
+                          -d release-offline/wheels
+                  done
+
+                  # The CLI itself is pure-python and platform independent.
+                  cp cli/dist/*.whl release-offline/wheels/
+
+                  # Guard: an empty or CLI-only wheels/ means the download
+                  # silently resolved nothing (see the --no-index path in
+                  # install.sh, which would then fail on the customer's box).
+                  count=$(ls release-offline/wheels/*.whl | wc -l)
+                  [ "$count" -gt 1 ] || { echo "::error::offline bundle has no vendored wheels"; exit 1; }
+                  echo "Vendored ${count} wheels."
+
             - name: Compress Final Packages
               run: |
                   # The online bundle extracts into a versionless "bluz/" (#479).
