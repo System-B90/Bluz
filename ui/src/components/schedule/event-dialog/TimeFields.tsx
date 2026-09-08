@@ -1,4 +1,5 @@
 import Box, { BoxProps } from "@mui/material/Box";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { PickerValue } from "@mui/x-date-pickers/internals";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import dayjs, { Dayjs } from "dayjs";
@@ -66,8 +67,32 @@ export function EventTimeField({
         [ startTime, onBlurCallback ],
     );
 
+    // Moves the event to another day (any week) while keeping its time of
+    // day and duration intact — the only way to move an event across weeks
+    // without editing the underlying timestamps by hand (#658).
+    const dateChange = useCallback(
+        (date: PickerValue) =>
+        {
+            if (!date || !startTime) return;
+            const newStart = startTime
+                .year(date.year())
+                .month(date.month())
+                .date(date.date());
+            onBlurCallback({ startTime: newStart, endTime: newStart.add(duration) });
+        },
+        [ startTime, duration, onBlurCallback ],
+    );
+
     return (
         <Box alignSelf="center" display="flex" gap={ 2 } { ...props }>
+            <DatePicker
+                format="DD/MM/YYYY"
+                label="תאריך"
+                onChange={ dateChange }
+                slotProps={ { textField: { fullWidth: true } } }
+                sx={ { width: "9rem" } }
+                value={ event?.startTime ?? dayjs() }
+            />
             <TimePicker
                 label="שעת התחלה"
                 onChange={ startTimeChange }
