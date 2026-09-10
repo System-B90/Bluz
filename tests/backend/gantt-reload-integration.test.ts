@@ -65,6 +65,10 @@ vi.mock("@/api-server/mongo-db-controller", () => ({
 }));
 const broadcast = vi.fn();
 vi.mock("@/api-server/web-socket-utils", () => ({
+    // The student refresh ping (#656) rides the same write paths. These suites
+    // do not reach it today, but a factory mock replaces the module wholesale,
+    // so an unlisted export throws the moment one does.
+    NotifyStudentsOfCalendarChange: vi.fn(),
     SendServerRequestToSessionServer: (...args: Array<unknown>) =>
         broadcast(...args),
 }));
