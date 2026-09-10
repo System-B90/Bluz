@@ -91,7 +91,19 @@ if (-not (Test-Path ".env")) {
     Write-Host ""
     Write-Wait "Initializing environment configuration wizard..."
     & $python -m venv .venv
-    & ".venv\Scripts\python.exe" -m pip install -r requirements.txt --quiet
+    # The offline bundle ships every wheel under wheels/; installing with
+    # --no-index keeps an air-gapped box from reaching for PyPI and the org
+    # index, neither of which it can see.
+    if (Test-Path "wheels") {
+        & ".venv\Scripts\python.exe" -m pip install --no-index --find-links=wheels -r requirements.txt --quiet
+        if ($LASTEXITCODE -ne 0) {
+            Stop-WithError "Could not install the wizard's Python packages from wheels\." @(
+                "The bundle may be incomplete - re-download the offline release."
+            )
+        }
+    } else {
+        & ".venv\Scripts\python.exe" -m pip install -r requirements.txt --quiet
+    }
     & ".venv\Scripts\python.exe" setup.py
     if (-not (Test-Path ".env")) {
         Stop-WithError "The setup wizard did not produce a .env file." @(
