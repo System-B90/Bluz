@@ -1,5 +1,6 @@
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import CallSplitIcon from "@mui/icons-material/CallSplit";
 import CloudSyncIcon from "@mui/icons-material/CloudSync";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
@@ -85,6 +86,10 @@ const PRESENTATION: Record<EventChangeInitiator, InitiatorPresentation> = {
     [EventChangeInitiator.PrayerSettings]: {
         color: "info",
         icon: <SelfImprovementIcon fontSize="small" />,
+    },
+    [EventChangeInitiator.Split]: {
+        color: "secondary",
+        icon: <CallSplitIcon fontSize="small" />,
     },
     [EventChangeInitiator.Undo]: {
         color: "secondary",

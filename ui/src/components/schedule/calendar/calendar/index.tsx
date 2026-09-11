@@ -108,7 +108,7 @@ export function BluzCalendar({
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [isFullscreen]);
 
-    const { handleEventDrag, handleSlotSelect, setActiveEvent } =
+    const { handleEventDrag, handleSplitEvent, handleSlotSelect, setActiveEvent } =
         useCalendarHandlers(
             events,
             handleSaveEvent,
@@ -370,6 +370,7 @@ export function BluzCalendar({
                         onNavigate={onNavigate}
                         onSelectEvent={handleSelectEvent}
                         onSelectSlot={handleSlotSelect}
+                        onSplitEvent={handleSplitEvent}
                         onToggleFullscreen={handleToggleFullscreen}
                         onToggleToolbar={handleToggleToolbar}
                         onView={handleViewChange}
