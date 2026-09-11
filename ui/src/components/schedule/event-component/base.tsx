@@ -4,7 +4,7 @@ import { alpha, Theme, useTheme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import dayjs from "dayjs";
-import { useMemo } from "react";
+import { MouseEvent as ReactMouseEvent, useCallback, useMemo } from "react";
 import { EventProps } from "react-big-calendar";
 
 import { breakWindowsFor, workingMsOf } from "@/api-shared/break-windows";
@@ -19,6 +19,7 @@ import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useCustomColors } from "@/components/base/CustomColorsProvider";
 import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
+import { dampDragDelta } from "@/components/schedule/calendar/calendar/UsePrecisionDrag";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { useEventDropTarget } from "@/components/schedule/calendar/instructor-dnd/use-event-drop-target";
 import {
@@ -45,6 +46,28 @@ const CONTINUATION_LABEL_MIN_HEIGHT = 34;
 
 const CORNER_RADIUS = "4px";
 const MIN_WORKING_MS = MIN_SEGMENT_MINUTES * 60_000;
+
+/** Mouse button index of the wheel/middle button in `MouseEvent.button`. */
+const MIDDLE_BUTTON = 1;
+
+/**
+ * The instant under the pointer, snapped to the grid step. A piece never
+ * crosses a break, so its on-screen height maps linearly onto its own
+ * `from..to` span.
+ */
+function instantUnderPointer(
+    segment: EventSegment,
+    pointer: ReactMouseEvent<HTMLElement>,
+): number {
+    const rect = pointer.currentTarget.getBoundingClientRect();
+    const ratio =
+        rect.height > 0
+            ? Math.min(1, Math.max(0, (pointer.clientY - rect.top) / rect.height))
+            : 0;
+    const from = segment.from.valueOf();
+    const raw = from + ratio * (segment.to.valueOf() - from);
+    return Math.round(raw / MIN_WORKING_MS) * MIN_WORKING_MS;
+}
 
 /**
  * Corner rounding that makes a run of pieces read as one object: only the
@@ -153,6 +176,7 @@ function EventSegmentBlock({ segment }: { segment: EventSegment }) {
         selectedEventId,
         activeDrag,
         setHoveredEventId,
+        splitEventAt,
     } = useSplitCalendar();
 
     const isFirst = isFirstSegment(segment);
@@ -162,6 +186,41 @@ function EventSegmentBlock({ segment }: { segment: EventSegment }) {
     const isHovered = hoveredEventId === event.id;
     const isSelected = selectedEventId === event.id;
     const isBeingDragged = activeDrag?.eventId === event.id;
+    // A Ctrl+drag leaves the original where it is, so it must not fade like
+    // a moved one — the fade is the "this is leaving" cue.
+    const isFading = isBeingDragged && !activeDrag?.duplicate;
+
+    // Split gestures (#657): Shift+click, or a middle-click for devices with
+    // a wheel button. Both stop here so the grid does not also treat them as
+    // a select. The middle button's mousedown is cancelled too, or Chrome
+    // starts its autoscroll mode on the same press.
+    const splitHere = useCallback(
+        (pointer: ReactMouseEvent<HTMLElement>) => {
+            pointer.preventDefault();
+            pointer.stopPropagation();
+            if (event.locked) return;
+            splitEventAt(event, instantUnderPointer(segment, pointer));
+        },
+        [ event, segment, splitEventAt ],
+    );
+    const handleClick = useCallback(
+        (pointer: ReactMouseEvent<HTMLElement>) => {
+            if (pointer.shiftKey) splitHere(pointer);
+        },
+        [ splitHere ],
+    );
+    const handleAuxClick = useCallback(
+        (pointer: ReactMouseEvent<HTMLElement>) => {
+            if (pointer.button === MIDDLE_BUTTON) splitHere(pointer);
+        },
+        [ splitHere ],
+    );
+    const handleMouseDown = useCallback(
+        (pointer: ReactMouseEvent<HTMLElement>) => {
+            if (pointer.button === MIDDLE_BUTTON) pointer.preventDefault();
+        },
+        [],
+    );
 
     const lock = eventLocks[event.id];
     const subject = getSubject(event.subject);
@@ -190,13 +249,16 @@ function EventSegmentBlock({ segment }: { segment: EventSegment }) {
 
     return (
         <Box
+            onAuxClick={handleAuxClick}
+            onClick={handleClick}
+            onMouseDown={handleMouseDown}
             onMouseEnter={() => setHoveredEventId(event.id)}
             onMouseLeave={() => setHoveredEventId(null)}
             ref={setDropRef}
             sx={{
                 position: "relative",
                 height: "100%",
-                opacity: isBeingDragged ? 0.35 : 1,
+                opacity: isFading ? 0.35 : 1,
                 ...(isOver && {
                     outline: `2px solid ${theme.palette.primary.main}`,
                     outlineOffset: "-2px",
@@ -367,21 +429,24 @@ function EditingLockBadge({ name }: { name: string }) {
 /**
  * Where the whole event would land, given the proposed range of the one piece
  * the user actually grabbed. A move shifts the event by the same delta and
- * keeps its duration; a resize re-measures the duration in working time. Kept
- * identical to what `CalendarView` commits on drop, so the preview never lies.
+ * keeps its duration; a resize re-measures the duration in working time. An
+ * Alt-held (precise) drag damps the pointer's delta first. Kept identical to
+ * what `CalendarView` commits on drop, so the preview never lies.
  */
 function proposedLayout(
     preview: SegmentDragPreview,
     windows: Array<Interval>,
     action: "move" | "resize",
     direction: string | undefined,
+    precise: boolean,
 ): Array<Interval> {
     const { event } = preview;
     const previewStart = preview.start.valueOf();
+    const pieceStart = preview.from.valueOf();
     const eventStart = event.startTime.valueOf();
 
     if (action === "move") {
-        const delta = previewStart - preview.from.valueOf();
+        const delta = dampDragDelta(previewStart - pieceStart, precise);
         return layoutAroundWindows(eventStart + delta, workingMsOf(event), windows);
     }
 
@@ -389,18 +454,30 @@ function proposedLayout(
         const displayEnd = layoutEnd(
             layoutAroundWindows(eventStart, workingMsOf(event), windows),
         );
+        const newStart =
+            pieceStart + dampDragDelta(previewStart - pieceStart, precise);
         const working = Math.max(
             MIN_WORKING_MS,
-            workingMsUpTo(previewStart, displayEnd, windows),
+            workingMsUpTo(newStart, displayEnd, windows),
         );
-        return layoutAroundWindows(previewStart, working, windows);
+        return layoutAroundWindows(newStart, working, windows);
     }
 
+    const pieceEnd = preview.to.valueOf();
+    const newEnd =
+        pieceEnd + dampDragDelta(preview.end.valueOf() - pieceEnd, precise);
     const working = Math.max(
         MIN_WORKING_MS,
-        workingMsUpTo(eventStart, preview.end.valueOf(), windows),
+        workingMsUpTo(eventStart, newEnd, windows),
     );
     return layoutAroundWindows(eventStart, working, windows);
+}
+
+/** What the preview says about the modifier modes currently armed. */
+function dragModeLabel(drag: { duplicate: boolean; precise: boolean } | null): string {
+    return [ drag?.duplicate && "שכפול", drag?.precise && "דיוק" ]
+        .filter(Boolean)
+        .join(" · ");
 }
 
 /**
@@ -436,6 +513,7 @@ function SplitDragPreview({ preview }: { preview: SegmentDragPreview }) {
                 breakWindowsFor(event, breakWindows),
                 activeDrag?.action ?? "move",
                 activeDrag?.direction,
+                activeDrag?.precise ?? false,
             ),
         [preview, event, breakWindows, activeDrag],
     );
@@ -445,6 +523,7 @@ function SplitDragPreview({ preview }: { preview: SegmentDragPreview }) {
     const endLabel = dayjs(layoutEnd(pieces)).format("HH:mm");
     const showEndLabel =
         layoutEnd(pieces) - pieces[0].start > 60 * 60_000;
+    const modeLabel = dragModeLabel(activeDrag);
 
     const calloutSx = {
         position: "absolute" as const,
@@ -492,6 +571,22 @@ function SplitDragPreview({ preview }: { preview: SegmentDragPreview }) {
                         {isFirst ? (
                             <Box sx={{ ...calloutSx, bottom: "100%", mb: 0.5 }}>
                                 {startLabel}
+                            </Box>
+                        ) : null}
+                        {isFirst && modeLabel ? (
+                            <Box
+                                data-testid="drag-mode-badge"
+                                sx={{
+                                    ...calloutSx,
+                                    insetInlineStart: "auto",
+                                    insetInlineEnd: 4,
+                                    top: 4,
+                                    transform: "none",
+                                    bgcolor: theme.palette.primary.main,
+                                    color: theme.palette.primary.contrastText,
+                                }}
+                            >
+                                {modeLabel}
                             </Box>
                         ) : null}
                         {isLast && showEndLabel ? (

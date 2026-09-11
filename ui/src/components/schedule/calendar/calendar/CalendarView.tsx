@@ -36,7 +36,12 @@ import
     localizer,
 } from "@/components/schedule/calendar/calendar/DndLocalizer";
 import { dayRangeHeaderFormat } from "@/components/schedule/calendar/calendar/range-header";
-import { usePrecisionDrag } from "@/components/schedule/calendar/calendar/UsePrecisionDrag";
+import type { GridInteraction } from "@/components/schedule/calendar/calendar/UseCalendarHandlers";
+import {
+    DragModifiers,
+    useDragModifiers,
+} from "@/components/schedule/calendar/calendar/UseDragModifiers";
+import { dampDragDelta } from "@/components/schedule/calendar/calendar/UsePrecisionDrag";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { CustomWorkWeek } from "@/components/schedule/calendar/CustomWorkWeek";
 import { splitAwareDayLayout } from "@/components/schedule/calendar/split/segment-layout";
@@ -256,13 +261,15 @@ type CalendarViewProps = {
     onSelectSlot: (slotInfo: SlotInfo) => void;
     /**
      * Reports a committed grid interaction in event-space. `interaction`
-     * distinguishes a move from a resize so the write can be attributed
-     * correctly in the event change log.
+     * distinguishes a move from a resize from a Ctrl-held duplicate so the
+     * write can be attributed correctly in the event change log.
      */
     onEventDrop: (
         args: EventInteractionArgs<Event>,
-        interaction: "move" | "resize",
+        interaction: GridInteraction,
     ) => void;
+    /** Middle-click / Shift+click on a tile: cut the event at that instant (#657). */
+    onSplitEvent: (event: Event, atMs: number) => void;
     onToggleFullscreen: () => void;
     onToggleToolbar: () => void;
     onExportIcs: () => void;
@@ -280,6 +287,7 @@ export function CalendarView({
     onDoubleClickEvent,
     onSelectSlot,
     onEventDrop,
+    onSplitEvent,
     onToggleFullscreen,
     onToggleToolbar,
     onExportIcs,
@@ -323,8 +331,9 @@ export function CalendarView({
             hoveredEventId,
             selectedEventId,
             setHoveredEventId,
+            splitEventAt: onSplitEvent,
         }),
-        [ breakWindows, activeDrag, hoveredEventId, selectedEventId ],
+        [ breakWindows, activeDrag, hoveredEventId, selectedEventId, onSplitEvent ],
     );
 
     // A drag that ends outside the grid resolves through neither drop handler,
@@ -337,9 +346,20 @@ export function CalendarView({
         return () => window.removeEventListener("mouseup", clear);
     }, [ activeDrag ]);
 
-    // Alt held during a drag damps it into a fine adjustment (#475). Ctrl is
-    // taken by duplicate-on-drag, which the damping used to fight (#608).
-    const { applyPrecision } = usePrecisionDrag();
+    // Ctrl duplicates the dragged event (#575); Alt damps the drag into a fine
+    // adjustment (#475, #608). Both are tracked live for the whole drag: the
+    // ref is what a drop commits, and the mirrored `activeDrag` flags are what
+    // the preview and the original tile render.
+    const syncDragModifiers = useCallback(
+        (modifiers: DragModifiers) =>
+            setActiveDrag((drag) => (drag ? { ...drag, ...modifiers } : drag)),
+        [],
+    );
+    const readModifiers = useDragModifiers(activeDrag !== null, syncDragModifiers);
+    const applyPrecision = useCallback(
+        (deltaMs: number) => dampDragDelta(deltaMs, readModifiers().precise),
+        [ readModifiers ],
+    );
 
     const handleDragStart = useCallback(
         ({ event: segment, action, direction }: ActiveDragStart) =>
@@ -348,9 +368,10 @@ export function CalendarView({
                 eventId: segment.event.id,
                 action,
                 direction: direction ?? undefined,
+                ...readModifiers(),
             });
         },
-        [],
+        [ readModifiers ],
     );
 
     /**
@@ -363,7 +384,7 @@ export function CalendarView({
             args: EventInteractionArgs<EventSegment>,
             startMs: number,
             workingMs: number,
-            interaction: "move" | "resize",
+            interaction: GridInteraction,
         ) =>
         {
             setActiveDrag(null);
@@ -408,10 +429,10 @@ export function CalendarView({
                 args,
                 event.startTime.valueOf() + delta,
                 workingMsOf(event),
-                "move",
+                readModifiers().duplicate ? "duplicate" : "move",
             );
         },
-        [ applyPrecision, commit ],
+        [ applyPrecision, commit, readModifiers ],
     );
 
     const handleSegmentResize = useCallback(
@@ -450,7 +471,10 @@ export function CalendarView({
 
             // Bottom edge: the head stays put and the dropped point becomes
             // the drawn end — measured in working time, so the breaks the
-            // event steps over are not counted as duration.
+            // event steps over are not counted as duration. Both edges damp
+            // under Alt exactly like a move does, so a short resize can be
+            // made accurately; `proposedLayout` in the event component
+            // mirrors this so the preview shows where the edge will land.
             const startMs = event.startTime.valueOf();
             const delta = applyPrecision(toMs(args.end) - segment.to.valueOf());
             const endMs = segment.to.valueOf() + delta;

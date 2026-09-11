@@ -42,6 +42,8 @@ export enum EventChangeInitiator {
     SnapshotRestore = "snapshot-restore",
     /** Pulled in from a linked Google Calendar. */
     GoogleSync = "google-sync",
+    /** Middle-click / Shift+click split of an event into two on the grid. */
+    Split = "split",
     /** Ctrl+Z/Ctrl+Y history travel on the calendar. */
     Undo = "undo",
     /** Change made by the in-app AI assistant on the user's behalf. */

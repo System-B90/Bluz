@@ -3,6 +3,7 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import dayjs from "dayjs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("notistack", () => ({ enqueueSnackbar: vi.fn() }));
 vi.mock("@/components/base/CalendarFilterProvider", () => ({
     useCalendarFilters: () => ({
         filteredInstructors: [ 7 ],
@@ -141,66 +142,111 @@ describe("useCalendarHandlers — drag and resize", () => {
         expect(handleSaveEvent.mock.calls[ 0 ][ 0 ].rooms).toEqual([]);
     });
 
-    it("Ctrl+drag saves a brand-new event and leaves the original alone", () => {
+    it("a duplicate drop saves a brand-new event and leaves the original alone", () => {
         const { result, handleSaveEvent } = renderHandlers();
 
-        press("Control", { ctrlKey: true });
         act(() =>
             result.current.handleEventDrag(
                 dropAt("2026-03-02T10:00:00.000Z", "2026-03-02T11:00:00.000Z"),
+                "duplicate",
             ),
         );
 
-        const [ saved ] = handleSaveEvent.mock.calls[ 0 ];
+        expect(handleSaveEvent).toHaveBeenCalledTimes(1);
+        const [ saved, initiator ] = handleSaveEvent.mock.calls[ 0 ];
         expect(saved.id).toBeUndefined();
         // Gantt provenance must not follow the copy (#575).
         expect(saved.ganttEventId).toBeUndefined();
         expect(saved.ganttCurriculumId).toBeUndefined();
         expect(saved.title).toBe("מופע");
+        expect(saved.startTime.toISOString()).toBe(
+            "2026-03-02T10:00:00.000Z",
+        );
+        expect(initiator).toBe(EventChangeInitiator.DragDrop);
     });
 
-    it("does not duplicate on a Ctrl+resize", () => {
+    it("refuses to duplicate a locked event", () => {
         const { result, handleSaveEvent } = renderHandlers();
 
-        press("Control", { ctrlKey: true });
         act(() =>
             result.current.handleEventDrag(
-                dropAt("2026-03-01T08:00:00.000Z", "2026-03-01T10:00:00.000Z"),
-                "resize",
+                {
+                    ...dropAt(
+                        "2026-03-02T10:00:00.000Z",
+                        "2026-03-02T11:00:00.000Z",
+                    ),
+                    event: { ...baseEvent, locked: true },
+                } as never,
+                "duplicate",
             ),
         );
 
-        expect(handleSaveEvent.mock.calls[ 0 ][ 0 ].id).toBe("e1");
+        expect(handleSaveEvent).not.toHaveBeenCalled();
     });
+});
 
-    it("stops duplicating once Ctrl is released", () => {
+describe("useCalendarHandlers — split (#657)", () => {
+    const at = (iso: string) => new Date(iso).getTime();
+
+    it("trims the original to the cut and creates the tail as a new event", () => {
         const { result, handleSaveEvent } = renderHandlers();
 
-        press("Control", { ctrlKey: true });
-        act(() => {
-            window.dispatchEvent(new KeyboardEvent("keyup", { key: "Control" }));
-        });
         act(() =>
-            result.current.handleEventDrag(
-                dropAt("2026-03-02T10:00:00.000Z", "2026-03-02T11:00:00.000Z"),
+            result.current.handleSplitEvent(
+                baseEvent,
+                at("2026-03-01T08:20:00.000Z"),
             ),
         );
 
-        expect(handleSaveEvent.mock.calls[ 0 ][ 0 ].id).toBe("e1");
+        expect(handleSaveEvent).toHaveBeenCalledTimes(2);
+        const [ head, headInitiator ] = handleSaveEvent.mock.calls[ 0 ];
+        const [ tail, tailInitiator ] = handleSaveEvent.mock.calls[ 1 ];
+
+        expect(head.id).toBe("e1");
+        expect(head.startTime.toISOString()).toBe("2026-03-01T08:00:00.000Z");
+        expect(head.endTime.toISOString()).toBe("2026-03-01T08:20:00.000Z");
+        expect(head.ganttEventId).toBe("ge1");
+
+        expect(tail.id).toBeUndefined();
+        expect(tail.ganttEventId).toBeUndefined();
+        expect(tail.title).toBe("מופע");
+        expect(tail.startTime.toISOString()).toBe("2026-03-01T08:20:00.000Z");
+        expect(tail.endTime.toISOString()).toBe("2026-03-01T09:00:00.000Z");
+
+        expect(headInitiator).toBe(EventChangeInitiator.Split);
+        expect(tailInitiator).toBe(EventChangeInitiator.Split);
     });
 
-    it("forgets a held Ctrl when the window loses focus", () => {
+    it("refuses a cut that would leave a piece shorter than the grid step", () => {
         const { result, handleSaveEvent } = renderHandlers();
 
-        press("Control", { ctrlKey: true });
-        act(() => window.dispatchEvent(new window.Event("blur")));
         act(() =>
-            result.current.handleEventDrag(
-                dropAt("2026-03-02T10:00:00.000Z", "2026-03-02T11:00:00.000Z"),
+            result.current.handleSplitEvent(
+                baseEvent,
+                at("2026-03-01T08:02:00.000Z"),
+            ),
+        );
+        act(() =>
+            result.current.handleSplitEvent(
+                baseEvent,
+                at("2026-03-01T09:00:00.000Z"),
             ),
         );
 
-        expect(handleSaveEvent.mock.calls[ 0 ][ 0 ].id).toBe("e1");
+        expect(handleSaveEvent).not.toHaveBeenCalled();
+    });
+
+    it("refuses to split a locked event", () => {
+        const { result, handleSaveEvent } = renderHandlers();
+
+        act(() =>
+            result.current.handleSplitEvent(
+                { ...baseEvent, locked: true },
+                at("2026-03-01T08:30:00.000Z"),
+            ),
+        );
+
+        expect(handleSaveEvent).not.toHaveBeenCalled();
     });
 });
 
