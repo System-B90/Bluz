@@ -14,5 +14,5 @@ PyHiveLMS>=2.1.3
 # System-B90/Bluz#226 and System-B90/devops-py.
 sb90-devops>=0.1.0
 tqdm>=4.70.0
-ruff>=0.9.0
+ruff>=0.16.1
 pytest>=8.0.0
