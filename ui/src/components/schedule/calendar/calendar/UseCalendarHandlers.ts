@@ -1,19 +1,64 @@
 import dayjs from "dayjs";
+import { enqueueSnackbar } from "notistack";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { SlotInfo } from "react-big-calendar";
 import type { EventInteractionArgs } from "react-big-calendar/lib/addons/dragAndDrop";
 
+import {
+    breakWindowsFor,
+    collectBreakWindows,
+    workingMsOf,
+} from "@/api-shared/break-windows";
+import { MIN_SEGMENT_MINUTES, workingMsUpTo } from "@/api-shared/interval-layout";
 import { EventChangeInitiator } from "@/api-shared/types/event-history";
 import { ResolvableRoom, resourceKeyToResolvable } from "@/api-shared/types/room";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { Event } from "@/components/schedule/types/event";
 
 const DUMMY_ROOM_ID = "no-room-unassigned";
+const MIN_WORKING_MS = MIN_SEGMENT_MINUTES * 60_000;
+
+/**
+ * What a committed grid gesture was: a plain move, a resize, or a Ctrl-held
+ * move that places a copy and leaves the original where it was (#575).
+ */
+export type GridInteraction = "duplicate" | "move" | "resize";
+
+/**
+ * Everything of an event that a *copy* of it may carry. Strips the id plus
+ * everything that identifies the source event rather than the copy:
+ * locked/hidden/fake are per-event display state, and ganttEventId/
+ * ganttOccurrenceDate/ganttCurriculumId are gantt-cut provenance (see
+ * EventFactory.ts's invariant) — carrying them over would make the copy
+ * masquerade as the original event.
+ */
+function copyableFields(event: Event): Omit<
+    Event,
+    | "fake"
+    | "ganttCurriculumId"
+    | "ganttEventId"
+    | "ganttOccurrenceDate"
+    | "hidden"
+    | "id"
+    | "locked"
+> {
+    const {
+        id: _id,
+        locked: _locked,
+        hidden: _hidden,
+        fake: _fake,
+        ganttEventId: _ganttEventId,
+        ganttOccurrenceDate: _ganttOccurrenceDate,
+        ganttCurriculumId: _ganttCurriculumId,
+        ...rest
+    } = event;
+    return rest;
+}
 
 /**
  * Custom React hook to manage calendar event logic, user interactions (e.g. drag & drop, select, click),
  * and keyboard shortcuts (copy, paste, delete).
- * 
+ *
  * @param events - The current list of calendar events.
  * @param handleSaveEvent - Callback when saving an event.
  * @param handleDeleteEvent - Callback when deleting an event.
@@ -50,35 +95,10 @@ export function useCalendarHandlers(
         copyPasteData.current = { activeEvent, copiedEvent, selectedSlotInfo };
     }, [activeEvent, copiedEvent, selectedSlotInfo]);
 
-    // react-big-calendar's drag addon doesn't forward modifier keys to
-    // onEventDrop, so we track Ctrl/Cmd ourselves for Ctrl+Drag duplication
-    // (#575). Escape-to-cancel is already handled by the library itself
-    // (it aborts the drag before onEventDrop ever fires).
-    const ctrlHeldRef = useRef(false);
-    useEffect(() => {
-        const onKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Control" || e.key === "Meta") ctrlHeldRef.current = true;
-        };
-        const onKeyUp = (e: KeyboardEvent) => {
-            if (e.key === "Control" || e.key === "Meta") ctrlHeldRef.current = false;
-        };
-        const onBlur = () => {
-            ctrlHeldRef.current = false;
-        };
-        window.addEventListener("keydown", onKeyDown);
-        window.addEventListener("keyup", onKeyUp);
-        window.addEventListener("blur", onBlur);
-        return () => {
-            window.removeEventListener("keydown", onKeyDown);
-            window.removeEventListener("keyup", onKeyUp);
-            window.removeEventListener("blur", onBlur);
-        };
-    }, []);
-
     const handleEventDrag = useCallback(
         (
             changes: EventInteractionArgs<Event>,
-            interaction: "move" | "resize" = "move",
+            interaction: GridInteraction = "move",
         ): void => {
             if (changes.event.locked) return;
 
@@ -97,23 +117,11 @@ export function useCalendarHandlers(
 
             // Ctrl+Drag duplicates: the dragged instance is placed at the
             // drop target as a brand-new event, and the original is left
-            // untouched at its original slot. Only relevant while actually
-            // moving an event around, not resizing one in place.
-            const isDuplicating = interaction === "move" && ctrlHeldRef.current;
-
-            if (isDuplicating) {
-                const {
-                    id: _id,
-                    locked: _locked,
-                    hidden: _hidden,
-                    fake: _fake,
-                    ganttEventId: _ganttEventId,
-                    ganttOccurrenceDate: _ganttOccurrenceDate,
-                    ganttCurriculumId: _ganttCurriculumId,
-                    ...rest
-                } = changes.event;
+            // untouched at its original slot. The modifier is resolved by
+            // the calendar view, which tracks it live for the whole drag.
+            if (interaction === "duplicate") {
                 const duplicatedEvent = {
-                    ...rest,
+                    ...copyableFields(changes.event),
                     startTime: dayjs(changes.start),
                     endTime: dayjs(changes.end),
                     rooms: newRooms,
@@ -138,6 +146,45 @@ export function useCalendarHandlers(
             );
         },
         [handleSaveEvent],
+    );
+
+    /**
+     * Cuts an event in two at a wall-clock instant (#657): the original keeps
+     * its head and is trimmed to end at the cut, and a new event carrying the
+     * same fields takes the tail. Durations are measured in *working* time, so
+     * an event that jumps over a break keeps the same total after the cut.
+     */
+    const handleSplitEvent = useCallback(
+        (event: Event, atMs: number): void => {
+            if (event.locked) return;
+
+            const windows = breakWindowsFor(event, collectBreakWindows(events));
+            const startMs = event.startTime.valueOf();
+            const headWorkingMs = workingMsUpTo(startMs, atMs, windows);
+            const tailWorkingMs = workingMsOf(event) - headWorkingMs;
+
+            if (headWorkingMs < MIN_WORKING_MS || tailWorkingMs < MIN_WORKING_MS) {
+                enqueueSnackbar(
+                    `לא ניתן לפצל כאן: כל חלק חייב להימשך לפחות ${MIN_SEGMENT_MINUTES} דקות.`,
+                    { variant: "warning" },
+                );
+                return;
+            }
+
+            const head: Event = {
+                ...event,
+                endTime: dayjs(startMs + headWorkingMs),
+            };
+            const tail = {
+                ...copyableFields(event),
+                startTime: dayjs(atMs),
+                endTime: dayjs(atMs + tailWorkingMs),
+            } as Event;
+
+            handleSaveEvent(head, EventChangeInitiator.Split);
+            handleSaveEvent(tail, EventChangeInitiator.Split);
+        },
+        [events, handleSaveEvent],
     );
 
     const handleSlotSelect = useCallback(
@@ -243,25 +290,8 @@ export function useCalendarHandlers(
                         parsedRoomId.id === DUMMY_ROOM_ID ? [] : [parsedRoomId];
                 }
 
-                // Strip id plus everything that identifies the *source*
-                // event rather than the pasted copy: locked/hidden/fake
-                // are per-event display state, and ganttEventId/
-                // ganttOccurrenceDate/ganttCurriculumId are gantt-cut
-                // provenance (see EventFactory.ts's invariant) — carrying
-                // them over would make the paste masquerade as the
-                // original event.
-                const {
-                    id: _id,
-                    locked: _locked,
-                    hidden: _hidden,
-                    fake: _fake,
-                    ganttEventId: _ganttEventId,
-                    ganttOccurrenceDate: _ganttOccurrenceDate,
-                    ganttCurriculumId: _ganttCurriculumId,
-                    ...rest
-                } = currentCopied;
                 const newEvent = {
-                    ...rest,
+                    ...copyableFields(currentCopied),
                     startTime: newStart, // Keep Dayjs objects to align with the Event type signature
                     endTime: newEnd, // Keep Dayjs objects to align with the Event type signature
                     rooms: newRooms,
@@ -282,6 +312,7 @@ export function useCalendarHandlers(
 
     return {
         handleEventDrag,
+        handleSplitEvent,
         handleSlotSelect,
         setActiveEvent,
         activeEvent,

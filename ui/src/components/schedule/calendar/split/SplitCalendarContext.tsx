@@ -2,10 +2,11 @@
 import { createContext, useContext } from "react";
 
 import { BreakWindow } from "@/api-shared/break-windows";
-import { EventId } from "@/components/schedule/types/event";
+import { DragModifiers } from "@/components/schedule/calendar/calendar/UseDragModifiers";
+import { Event, EventId } from "@/components/schedule/types/event";
 
 /** The interaction react-big-calendar currently has in flight, if any. */
-export type ActiveDrag = {
+export type ActiveDrag = DragModifiers & {
     eventId: EventId;
     action: "move" | "resize";
     direction?: "DOWN" | "LEFT" | "RIGHT" | "UP";
@@ -23,6 +24,8 @@ export type SplitCalendarContextValue = {
     hoveredEventId: EventId | null;
     selectedEventId: EventId | null;
     setHoveredEventId: (eventId: EventId | null) => void;
+    /** Middle-click / Shift+click on a tile: cut the event in two at `atMs` (#657). */
+    splitEventAt: (event: Event, atMs: number) => void;
 };
 
 const EMPTY: SplitCalendarContextValue = {
@@ -31,6 +34,7 @@ const EMPTY: SplitCalendarContextValue = {
     hoveredEventId: null,
     selectedEventId: null,
     setHoveredEventId: () => undefined,
+    splitEventAt: () => undefined,
 };
 
 const SplitCalendarContext = createContext<SplitCalendarContextValue>(EMPTY);

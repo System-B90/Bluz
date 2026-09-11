@@ -1,7 +1,3 @@
-"use client";
-
-import { useEffect, useRef } from "react";
-
 /** How much of the pointer's time delta a precision drag actually applies. */
 const PRECISION_FACTOR = 0.25;
 
@@ -11,6 +7,17 @@ const PRECISION_SNAP_MS = 60_000;
 /**
  * The delta a drag of `deltaMs` on screen should actually apply. Pure, so the
  * damping rule is testable without a pointer.
+ *
+ * Alt-held drags move (or resize) an event a quarter as far as the pointer
+ * travelled and land on whole minutes (#475). The grid snaps to 5 minutes,
+ * which is coarse for a small correction and forces the user to fight the
+ * snap; holding Alt trades reach for resolution without changing the grid.
+ *
+ * The modifier used to be Ctrl, which is claimed by "duplicate the dragged
+ * event" — so a Ctrl+drag duplicate landed at a quarter of the intended offset
+ * (#608). Precision moved to Alt; duplicate keeps Ctrl. Both are read live by
+ * `useDragModifiers`, and the drag preview applies this same rule so what is
+ * drawn mid-drag is exactly what lands on drop.
  */
 export function dampDragDelta(deltaMs: number, isPrecise: boolean): number {
     if (!isPrecise) return deltaMs;
@@ -18,47 +25,4 @@ export function dampDragDelta(deltaMs: number, isPrecise: boolean): number {
         Math.round((deltaMs * PRECISION_FACTOR) / PRECISION_SNAP_MS) *
         PRECISION_SNAP_MS
     );
-}
-
-/**
- * Alt-held drags move an event a quarter as far as the pointer travelled and
- * land on whole minutes (#475). The grid snaps to 5 minutes, which is coarse
- * for a small correction and forces the user to fight the snap; holding Alt
- * trades reach for resolution without changing the grid itself.
- *
- * The modifier used to be Ctrl, which UseCalendarHandlers already claims for
- * "duplicate the dragged event" — so a Ctrl+drag duplicate landed at a quarter
- * of the intended offset (#608). Precision moved to Alt; duplicate keeps Ctrl.
- *
- * The modifier is read from live keyboard/pointer state rather than from the
- * drop event, because react-big-calendar's drop callback carries only the
- * computed dates, not the DOM event that produced them.
- */
-export function usePrecisionDrag() {
-    const isPrecise = useRef(false);
-
-    useEffect(() => {
-        const sync = (event: KeyboardEvent | MouseEvent) => {
-            isPrecise.current = event.altKey;
-        };
-        // A window that loses focus mid-drag never sees the keyup.
-        const clear = () => {
-            isPrecise.current = false;
-        };
-        window.addEventListener("keydown", sync);
-        window.addEventListener("keyup", sync);
-        window.addEventListener("mousemove", sync);
-        window.addEventListener("blur", clear);
-        return () => {
-            window.removeEventListener("keydown", sync);
-            window.removeEventListener("keyup", sync);
-            window.removeEventListener("mousemove", sync);
-            window.removeEventListener("blur", clear);
-        };
-    }, []);
-
-    const applyPrecision = (deltaMs: number): number =>
-        dampDragDelta(deltaMs, isPrecise.current);
-
-    return { applyPrecision };
 }
