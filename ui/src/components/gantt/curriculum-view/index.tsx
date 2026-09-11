@@ -6,6 +6,7 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { GanttContentCommands } from "@/components/app-commands/GanttContentCommands";
 import { GanttOnboarding } from "@/components/app-onboarding/gantt/GanttOnboarding";
+import { GanttCreationDeletionCallbackProps } from "@/components/gantt/curriculum-fab/CurriculumActionItems";
 import { CurriculumViewSidebar } from "@/components/gantt/curriculum-view/components/sidebars";
 import { GanttSearchNavProvider } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
 import { CurriculumViewTabs } from "@/components/gantt/curriculum-view/tabs";
@@ -13,11 +14,12 @@ import { CurriculumViewTabs } from "@/components/gantt/curriculum-view/tabs";
 export type CurriculumViewProps = {
     curriculumId: GanttCurriculumId | null;
     setCurrentCurriculum: Dispatch<SetStateAction<GanttCurriculumId | null>>;
-} & BoxProps;
+} & BoxProps & GanttCreationDeletionCallbackProps;
 
 export function CurriculumView({
     curriculumId,
     setCurrentCurriculum,
+    onCreate, onDelete,
     ...props
 }: CurriculumViewProps)
 {
@@ -80,6 +82,8 @@ export function CurriculumView({
             >
                 <CurriculumViewSidebar
                     curriculumId={ curriculumId }
+                    onCreate={ onCreate }
+                    onDelete={ onDelete }
                     selectedTabIndex={ selectedTabIndex }
                     setCurrentCurriculum={ setCurrentCurriculum }
                 />

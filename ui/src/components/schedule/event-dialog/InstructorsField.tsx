@@ -11,11 +11,11 @@ import { InstructorSelect } from "@/components/base/InstructorSelect";
 import { useOutsiders } from "@/components/base/OutsidersProvider";
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
 import
-    {
-        eventHasLecturers,
-        EventType,
-        lecturersLabelForType,
-    } from "@/components/schedule/types/event";
+{
+    eventHasLecturers,
+    EventType,
+    lecturersLabelForType,
+} from "@/components/schedule/types/event";
 
 type InstructorsFieldProps = {} & EventFieldProps;
 type LecturerSelectionFieldProps = {

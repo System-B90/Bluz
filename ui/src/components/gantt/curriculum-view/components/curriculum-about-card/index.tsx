@@ -2,6 +2,7 @@ import Box from "@mui/material/Box";
 import Card, { CardProps } from "@mui/material/Card";
 import Skeleton from "@mui/material/Skeleton";
 import Typography from "@mui/material/Typography";
+import { Dispatch, SetStateAction } from "react";
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
@@ -10,7 +11,6 @@ import { CurriculumDescription } from "@/components/gantt/curriculum-view/compon
 import { CurriculumName } from "@/components/gantt/curriculum-view/components/curriculum-about-card/CurriculumName";
 import { CurriculumStatusActions } from "@/components/gantt/curriculum-view/components/curriculum-about-card/CurriculumStatusActions";
 import { IterationLinkField } from "@/components/gantt/curriculum-view/components/curriculum-about-card/IterationLinkField";
-import { Dispatch, SetStateAction } from "react";
 
 export type CurriculumCardProps = {
     curriculumId: GanttCurriculumId | null;
@@ -56,9 +56,9 @@ export function CurriculumAboutCard({
                 <CurriculumStatusActions
                     curriculum={ curriculum }
                     curriculumId={ curriculumId }
-                    setCurrentCurriculum={ setCurrentCurriculum }
                     onCreate={ onCreate }
                     onDelete={ onDelete }
+                    setCurrentCurriculum={ setCurrentCurriculum }
                 />
             </Box>
         </Card>

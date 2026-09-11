@@ -10,12 +10,12 @@ import { CurriculumCutClaim } from "@/api-shared/types/curriculum-cut";
 import { CustomColor } from "@/api-shared/types/custom-color";
 import { EventHistoryEntry } from "@/api-shared/types/event-history";
 import
-    {
-        GanttCurriculum,
-        GanttEvent,
-        GanttModule,
-        GanttSyllabus,
-    } from "@/api-shared/types/gantt/models";
+{
+    GanttCurriculum,
+    GanttEvent,
+    GanttModule,
+    GanttSyllabus,
+} from "@/api-shared/types/gantt/models";
 import { GoogleCalendarLink } from "@/api-shared/types/google-calendar";
 import { HiveLessonActivation } from "@/api-shared/types/hive-activation";
 import { Iteration, IterationId } from "@/api-shared/types/iteration";
@@ -23,12 +23,12 @@ import { Outsider } from "@/api-shared/types/outsider";
 import { PersonalSettings } from "@/api-shared/types/personal-settings";
 import { DbReservation } from "@/api-shared/types/reservation";
 import
-    {
-        CustomRoom,
-        RoomExtendedInfo,
-        RoomId,
-        RoomSource,
-    } from "@/api-shared/types/room";
+{
+    CustomRoom,
+    RoomExtendedInfo,
+    RoomId,
+    RoomSource,
+} from "@/api-shared/types/room";
 import { Setting } from "@/api-shared/types/settings/settings";
 import { logger } from "@/logging/pino";
 

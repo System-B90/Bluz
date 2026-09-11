@@ -1,5 +1,6 @@
 import { useSnackbar } from "notistack";
-import {
+import
+{
     ReactNode,
     useCallback,
     useEffect,
@@ -10,7 +11,8 @@ import {
 
 import { ganttApi } from "@/api-client/gantt";
 import { BaseDbDocument } from "@/api-server/gantt/db-base";
-import {
+import
+{
     GanttCurriculumId,
     GanttCurriculumModuleDayMapping,
     GanttDayId,
@@ -28,24 +30,27 @@ export function GanttMappingProvider({
 }: {
     children: ReactNode;
     curriculumId: GanttCurriculumId;
-}) {
+})
+{
     const { enqueueSnackbar } = useSnackbar();
-    const [state, dispatch] = useReducer(ganttMappingReducer, {
+    const [ state, dispatch ] = useReducer(ganttMappingReducer, {
         mappings: {},
         isLoading: true,
     });
 
     const mappingsRef = useRef(state.mappings);
-    useEffect(() => {
+    useEffect(() =>
+    {
         mappingsRef.current = state.mappings;
-    }, [state.mappings]);
+    }, [ state.mappings ]);
 
-    const refreshMappings = useCallback(async (signal?: AbortSignal) => {
+    const refreshMappings = useCallback(async (signal?: AbortSignal) =>
+    {
         dispatch({ type: "SET_LOADING", payload: true });
         const data = await ganttApi.mappings.apiGet(curriculumId);
         if (signal?.aborted) return;
         dispatch({ type: "SET_MAPPINGS", payload: data }); // Internally sets loading state to false
-    }, [dispatch, curriculumId]);
+    }, [ dispatch, curriculumId ]);
 
     /**
      * createMapping: Handles assigning a module to a day for the first time.
@@ -59,7 +64,8 @@ export function GanttMappingProvider({
             moduleId: GanttModuleId;
             eventId: GanttEventId | null;
             dayId: GanttDayId;
-        }) => {
+        }) =>
+        {
             const tempSortOrder = Date.now();
             const optimisticMapping: GanttCurriculumModuleDayMapping &
                 BaseDbDocument = {
@@ -75,7 +81,8 @@ export function GanttMappingProvider({
             // Optimistic UI Update
             dispatch({ type: "UPSERT_MAPPING", payload: optimisticMapping });
 
-            try {
+            try
+            {
                 const result = await ganttApi.mappings.apiCreate(curriculumId, {
                     moduleId,
                     eventId,
@@ -86,7 +93,8 @@ export function GanttMappingProvider({
                 dispatch({ type: "UPSERT_MAPPING", payload: result });
 
                 return result;
-            } catch (e) {
+            } catch (e)
+            {
                 // Rollback on failure
                 dispatch({
                     type: "DELETE_MAPPING",
@@ -99,7 +107,7 @@ export function GanttMappingProvider({
                 );
             }
         },
-        [dispatch, curriculumId, enqueueSnackbar],
+        [ dispatch, curriculumId, enqueueSnackbar ],
     );
 
     const moveMapping = useCallback(
@@ -111,16 +119,17 @@ export function GanttMappingProvider({
         }: {
             moduleId: GanttModuleId;
             eventId: GanttEventId | null;
-            from: { d: GanttDayId };
-            to: { d: GanttDayId };
-        }) => {
+            from: { d: GanttDayId; };
+            to: { d: GanttDayId; };
+        }) =>
+        {
             // Optimistic UI Update
             const oldKey = getGanttMappingKey({
                 dayId: from.d,
                 moduleId,
                 eventId,
             });
-            const originalMapping = mappingsRef.current[oldKey];
+            const originalMapping = mappingsRef.current[ oldKey ];
 
             if (!originalMapping) return;
 
@@ -132,7 +141,8 @@ export function GanttMappingProvider({
             });
             dispatch({ type: "UPSERT_MAPPING", payload: updatedMapping });
 
-            try {
+            try
+            {
                 await ganttApi.mappings.apiUpdate(
                     curriculumId,
                     moduleId,
@@ -140,7 +150,8 @@ export function GanttMappingProvider({
                     { dayId: from.d },
                     { dayId: to.d },
                 );
-            } catch (e) {
+            } catch (e)
+            {
                 // Rollback on failure
                 dispatch({
                     type: "DELETE_MAPPING",
@@ -155,7 +166,7 @@ export function GanttMappingProvider({
                 );
             }
         },
-        [curriculumId, dispatch, enqueueSnackbar],
+        [ curriculumId, dispatch, enqueueSnackbar ],
     );
 
     const removeMapping = useCallback(
@@ -167,19 +178,22 @@ export function GanttMappingProvider({
             moduleId: GanttModuleId;
             eventId: GanttEventId | null;
             dayId: GanttDayId;
-        }) => {
+        }) =>
+        {
             dispatch({
                 type: "DELETE_MAPPING",
                 payload: { dayId, moduleId, eventId },
             });
-            try {
+            try
+            {
                 await ganttApi.mappings.apiDelete(
                     curriculumId,
                     moduleId,
                     eventId,
                     dayId,
                 );
-            } catch (e) {
+            } catch (e)
+            {
                 await refreshMappings(); // Re-sync on failure
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
@@ -188,12 +202,14 @@ export function GanttMappingProvider({
                 );
             }
         },
-        [refreshMappings, dispatch, curriculumId, enqueueSnackbar],
+        [ refreshMappings, dispatch, curriculumId, enqueueSnackbar ],
     );
 
-    useEffect(() => {
+    useEffect(() =>
+    {
         const controller = new AbortController();
-        refreshMappings(controller.signal).catch((error) => {
+        refreshMappings(controller.signal).catch((error) =>
+        {
             if (controller.signal.aborted) return;
             enqueueApiErrorSnackbar(
                 enqueueSnackbar,
@@ -202,7 +218,7 @@ export function GanttMappingProvider({
             );
         });
         return () => controller.abort();
-    }, [enqueueSnackbar, refreshMappings]); // Initial load
+    }, [ enqueueSnackbar, refreshMappings ]); // Initial load
 
     const value = useMemo(
         () => ({
@@ -212,12 +228,12 @@ export function GanttMappingProvider({
             removeMapping,
             createMapping,
         }),
-        [state, refreshMappings, moveMapping, removeMapping, createMapping],
+        [ state, refreshMappings, moveMapping, removeMapping, createMapping ],
     );
 
     return (
-        <GanttMappingContext.Provider value={value}>
-            {children}
+        <GanttMappingContext.Provider value={ value }>
+            { children }
         </GanttMappingContext.Provider>
     );
 }

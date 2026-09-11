@@ -31,7 +31,6 @@ export function isolateRtl(text: string): string
     return `${RLI}${text}${PDI}`;
 }
 
-
 /**
  * Formats `start - end` as a single LTR run. Both sides are already-formatted
  * strings, so this works for times (`10:00`), day numbers (`05`), or anything

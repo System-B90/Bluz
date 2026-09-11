@@ -32,7 +32,7 @@ export function DeleteCurriculumAction({
             () => onDelete(sourceCurriculum.id),
             "מחיקת הגאנט נכשלה!",
         );
-    }, [ onDelete, runAction, sourceCurriculum ]);
+    }, [ onDelete, runAction, sourceCurriculum, confirm ]);
 
     return (
         <Fragment>

@@ -16,12 +16,12 @@ import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
 
 import
-    {
-        GanttEvent,
-        GanttEventId,
-        GanttModuleId,
-        ModuleEventType,
-    } from "@/api-shared/types/gantt/models";
+{
+    GanttEvent,
+    GanttEventId,
+    GanttModuleId,
+    ModuleEventType,
+} from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { InstructorSelect } from "@/components/base/InstructorSelect";
 import { NumberSpinner } from "@/components/base/NumberSpinner";

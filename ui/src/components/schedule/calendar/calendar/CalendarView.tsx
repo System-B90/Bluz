@@ -2,57 +2,57 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import
-    {
-        CalendarProps,
-        SlotInfo,
-        ToolbarProps,
-        View,
-        Views,
-    } from "react-big-calendar";
+{
+    CalendarProps,
+    SlotInfo,
+    ToolbarProps,
+    View,
+    Views,
+} from "react-big-calendar";
 import type { EventInteractionArgs } from "react-big-calendar/lib/addons/dragAndDrop";
 
 import
-    {
-        breakWindowsFor,
-        collectBreakWindows,
-        workingMsOf,
-    } from "@/api-shared/break-windows";
+{
+    breakWindowsFor,
+    collectBreakWindows,
+    workingMsOf,
+} from "@/api-shared/break-windows";
 import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 import
-    {
-        layoutAroundWindows,
-        layoutEnd,
-        MIN_SEGMENT_MINUTES,
-        workingMsUpTo,
-    } from "@/api-shared/interval-layout";
+{
+    layoutAroundWindows,
+    layoutEnd,
+    MIN_SEGMENT_MINUTES,
+    workingMsUpTo,
+} from "@/api-shared/interval-layout";
 import { GanttDayIndex, getDayNameDisplay, HEBREW_DAYS_SHORT } from "@/api-shared/types/gantt/models/day";
 import { Room, roomLikeToResourceKey, RoomSource } from "@/api-shared/types/room"; // Import the full Room type and the stable resource-key helper
 import { useSettings } from "@/components/base/SettingsProvider";
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
-import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { CalendarToolbar } from "@/components/schedule/calendar/calendar/CalendarToolbar";
 import
-    {
-        DnDCalendar,
-        localizer,
-    } from "@/components/schedule/calendar/calendar/DndLocalizer";
+{
+    DnDCalendar,
+    localizer,
+} from "@/components/schedule/calendar/calendar/DndLocalizer";
 import { dayRangeHeaderFormat } from "@/components/schedule/calendar/calendar/range-header";
 import { usePrecisionDrag } from "@/components/schedule/calendar/calendar/UsePrecisionDrag";
+import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { CustomWorkWeek } from "@/components/schedule/calendar/CustomWorkWeek";
 import { splitAwareDayLayout } from "@/components/schedule/calendar/split/segment-layout";
 import
-    {
-        buildEventSegments,
-        EventSegment,
-        isFirstSegment,
-        isLastSegment,
-        spansMultipleDays,
-    } from "@/components/schedule/calendar/split/segments";
+{
+    buildEventSegments,
+    EventSegment,
+    isFirstSegment,
+    isLastSegment,
+    spansMultipleDays,
+} from "@/components/schedule/calendar/split/segments";
 import
-    {
-        ActiveDrag,
-        SplitCalendarProvider,
-    } from "@/components/schedule/calendar/split/SplitCalendarContext";
+{
+    ActiveDrag,
+    SplitCalendarProvider,
+} from "@/components/schedule/calendar/split/SplitCalendarContext";
 import { BluzEventComponent } from "@/components/schedule/event-component/base";
 import { Event, EventId } from "@/components/schedule/types/event";
 

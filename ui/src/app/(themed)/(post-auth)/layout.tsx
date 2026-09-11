@@ -1,5 +1,5 @@
-import { getServerSession } from "next-auth/next";
 import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth/next";
 
 import { isHiveReachable } from "@/api-server/hive/health";
 import { authOptions } from "@/api-server/hive/sso";

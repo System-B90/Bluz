@@ -36,7 +36,6 @@ export function CreateCurriculumHoverMenu({
 
     const handleEnter = useCallback(() => setExpanded(true), []);
     const handleLeave = useCallback(() => setExpanded(false), []);
-    const handleToggle = useCallback(() => setExpanded((prev) => !prev), []);
 
     return (
         <Box
