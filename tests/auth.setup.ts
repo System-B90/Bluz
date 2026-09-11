@@ -50,6 +50,39 @@ async function tryGoto(
     }
 }
 
+/**
+ * Marks the gantt intro tour (ui/src/components/app-onboarding/gantt/use-gantt-tour.tsx,
+ * GANTT_TOUR_ID "gantt.intro", version 1) as already seen.
+ *
+ * The tour has `autoStart: true` and a fresh browser context has no
+ * localStorage, so every gantt test would otherwise launch it — its spotlight
+ * backdrop (a fixed, full-viewport MuiBox) then intercepts every click on the
+ * page underneath until a human dismisses it, which no test does. Saved into
+ * this setup's storageState so it rides along on every session it produces.
+ */
+async function suppressOnboardingTours(page: Page): Promise<void>
+{
+    await page.evaluate(() => {
+        try
+        {
+            localStorage.setItem(
+                "bluz:onboarding:completions:v1",
+                JSON.stringify({
+                    "gantt.intro": {
+                        version: 1,
+                        at: new Date().toISOString(),
+                        reason: "completed",
+                    },
+                }),
+            );
+        }
+        catch
+        {
+            // Storage unavailable — the tour will just show up in the test; not fatal.
+        }
+    });
+}
+
 async function gotoReliable(page: Page, url: string): Promise<void>
 {
     const maxAttempts = 3;
@@ -111,6 +144,7 @@ async function authenticateAs(
             !reusePage.url().includes("/login")
         )
         {
+            await suppressOnboardingTours(reusePage);
             await reuseContext.storageState({ path: AUTH_FILE });
             await reuseContext.close();
             return;
@@ -129,6 +163,7 @@ async function authenticateAs(
 
     if (!page.url().includes("/login"))
     {
+        await suppressOnboardingTours(page);
         await context.storageState({ path: AUTH_FILE });
         await context.close();
         return;
@@ -140,6 +175,7 @@ async function authenticateAs(
         timeout: 60_000,
     });
 
+    await suppressOnboardingTours(page);
     await context.storageState({ path: AUTH_FILE });
     await context.close();
 }
