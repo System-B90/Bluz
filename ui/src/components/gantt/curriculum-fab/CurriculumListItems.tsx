@@ -8,6 +8,7 @@ import { Dispatch, Fragment, SetStateAction } from "react";
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { EmptyState } from "@/components/base/EmptyState";
+import { GanttCreationDeletionCallbackProps } from "@/components/gantt/curriculum-fab/CurriculumActionItems";
 import { CurriculumEntry } from "@/components/gantt/curriculum-fab/CurriculumEntry";
 import { CurriculumGroups } from "@/components/gantt/curriculum-fab/utils";
 
@@ -17,7 +18,7 @@ export type CurriculumListItemsProps = {
     groups: CurriculumGroups;
     setCurrentCurriculum: Dispatch<SetStateAction<GanttCurriculumId | null>>;
     currentCurriculum?: GanttCurriculumId | null;
-};
+} & GanttCreationDeletionCallbackProps;
 
 type SectionConfig = {
     key: keyof CurriculumGroups;
@@ -36,22 +37,25 @@ export function CurriculumListItems({
     groups,
     setCurrentCurriculum,
     currentCurriculum,
-}: CurriculumListItemsProps) {
-    if (isFetchingDetails) {
+}: CurriculumListItemsProps)
+{
+    if (isFetchingDetails)
+    {
         // Default to 3 skeletons while doing the initial double-fetch
         const skeletonCount = Object.keys(curriculumsData).length || 3;
 
         return Array.from({ length: skeletonCount }).map((_, index) => (
-            <ListItem disablePadding key={`skeleton-${index}`}>
+            <ListItem disablePadding key={ `skeleton-${index}` }>
                 <ListItemButton disabled>
-                    <Skeleton height={28} variant="text" width="80%" />
+                    <Skeleton height={ 28 } variant="text" width="80%" />
                 </ListItemButton>
             </ListItem>
         ));
     }
 
-    const isEmpty = SECTIONS.every(({ key }) => groups[key].length === 0);
-    if (isEmpty) {
+    const isEmpty = SECTIONS.every(({ key }) => groups[ key ].length === 0);
+    if (isEmpty)
+    {
         // The create action lives in CurriculumActionItems directly above this
         // list, so the empty state points at it instead of duplicating it.
         return (
@@ -62,39 +66,41 @@ export function CurriculumListItems({
         );
     }
 
-    return SECTIONS.map(({ key, label }) => {
-        const ids = groups[key];
+    return SECTIONS.map(({ key, label }) =>
+    {
+        const ids = groups[ key ];
         if (ids.length === 0) return null;
 
         return (
-            <Fragment key={key}>
+            <Fragment key={ key }>
                 <ListSubheader
-                    sx={{
+                    sx={ {
                         paddingY: 0,
                         lineHeight: 1.5,
                         bgcolor: "background.paper",
-                    }}
+                    } }
                 >
                     <Typography
                         align="center"
                         color="text.secondary"
                         variant="caption"
                     >
-                        {label}
+                        { label }
                     </Typography>
                 </ListSubheader>
-                {ids.map((id) => {
-                    const curriculum = curriculumsData[id];
+                { ids.map((id) =>
+                {
+                    const curriculum = curriculumsData[ id ];
                     if (!curriculum) return null;
                     return (
                         <CurriculumEntry
-                            curriculum={curriculum}
-                            key={id}
-                            onClick={() => setCurrentCurriculum(id)}
-                            selected={currentCurriculum === id}
+                            curriculum={ curriculum }
+                            key={ id }
+                            onClick={ () => setCurrentCurriculum(id) }
+                            selected={ currentCurriculum === id }
                         />
                     );
-                })}
+                }) }
             </Fragment>
         );
     });

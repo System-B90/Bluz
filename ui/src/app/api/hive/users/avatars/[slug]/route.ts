@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
+import { getStaffSession } from "@/api-server/session-user";
 import { getHiveBaseUrl } from "@/api-shared/common";
 import { AuthSessionData } from "@/api-shared/types/sso";
 
@@ -26,6 +27,12 @@ export async function GET(
     // server-side fetch (SSRF) instead of hitting the avatar endpoint.
     if (!/^[\w-]+$/.test(slug)) {
         return new NextResponse("Invalid user identifier", { status: 400 });
+    }
+
+    // Staff-only: this proxies an arbitrary Hive user id, and the student view
+    // renders no avatars at all (#656).
+    if (!(await getStaffSession())) {
+        return new NextResponse("Forbidden", { status: 403 });
     }
 
     // 2. Retrieve the session token directly from the request cookies

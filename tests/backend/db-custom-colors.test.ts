@@ -4,6 +4,9 @@ vi.mock("@/api-server/mongo-db-controller", () => ({
     getMetaController: vi.fn(),
 }));
 vi.mock("@/api-server/web-socket-utils", () => ({
+    // The student refresh ping (#656) is a second network side effect on the
+    // same write paths; stubbed alongside the broadcast.
+    NotifyStudentsOfCalendarChange: vi.fn(),
     SendServerRequestToSessionServer: vi.fn(),
 }));
 

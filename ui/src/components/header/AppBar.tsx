@@ -11,6 +11,7 @@ import Link from "next/link";
 import { CommandPaletteButton } from "@/components/header/CommandPaletteButton";
 import { CurriculumIcon } from "@/components/header/CurriculumIcon";
 import { Logo } from "@/components/header/logo";
+import { StudentViewIcon } from "@/components/header/StudentViewIcon";
 import { UserAccessCard } from "@/components/header/UserAccessCard";
 
 export function ScheduleAppBar({
@@ -76,6 +77,8 @@ export function ScheduleAppBar({
                     justifyContent={"flex-end"}
                 >
                     <CurriculumIcon />
+
+                    <StudentViewIcon />
 
                     <IconButton
                         className="hover-rotate-subtle transition-all duration-200 hover:scale-110 active:scale-95"

@@ -2,6 +2,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // The session-server broadcast is a network side effect; stub it out.
 vi.mock("@/api-server/web-socket-utils", () => ({
+    // The student refresh ping (#656) is a second network side effect on the
+    // same write paths; stubbed alongside the broadcast.
+    NotifyStudentsOfCalendarChange: vi.fn(),
     SendServerRequestToSessionServer: vi.fn(),
 }));
 

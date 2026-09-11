@@ -53,6 +53,10 @@ vi.mock("@/api-server/session-user", () => ({
 
 const sentBroadcasts: Array<{ type: string; data: unknown }> = [];
 vi.mock("@/api-server/web-socket-utils", () => ({
+    // The student refresh ping (#656) is a second network side effect on the
+    // same write paths, so it has to be stubbed alongside the broadcast — a
+    // factory mock replaces the module wholesale and an unlisted export throws.
+    NotifyStudentsOfCalendarChange: vi.fn(),
     SendServerRequestToSessionServer: vi.fn((type: string, data: unknown) => {
         sentBroadcasts.push({ type, data });
     }),

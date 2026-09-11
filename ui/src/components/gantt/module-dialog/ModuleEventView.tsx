@@ -15,7 +15,8 @@ import TextField from "@mui/material/TextField";
 import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
 
-import {
+import
+{
     GanttEvent,
     GanttEventId,
     GanttModuleId,
@@ -28,10 +29,7 @@ import { EVENT_ANCHOR_PREFIX } from "@/components/gantt/curriculum-view/search/G
 import { MoveEventDialog } from "@/components/gantt/module-dialog/MoveEventDialog";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import { useEvent } from "@/components/gantt/state/hooks/UseEvent";
-import {
-    useCurriculumProviderActions,
-    useCurriculumState,
-} from "@/components/gantt/state/provider";
+import { useCurriculumProviderActions, useCurriculumState } from "@/components/gantt/state/provider";
 
 function ModuleEventTitle({
     moduleEvent,
@@ -39,17 +37,18 @@ function ModuleEventTitle({
 }: {
     moduleEvent: GanttEvent | undefined;
     handleCommit: (updates: Partial<GanttEvent>) => void;
-}) {
-    const [localTitle, setLocalTitle] = useState(moduleEvent?.title ?? "");
+})
+{
+    const [ localTitle, setLocalTitle ] = useState(moduleEvent?.title ?? "");
 
     return (
         <TextField
-            disabled={!moduleEvent}
+            disabled={ !moduleEvent }
             fullWidth
-            onBlur={() => handleCommit({ title: localTitle })}
-            onChange={(e) => setLocalTitle(e.target.value)}
+            onBlur={ () => handleCommit({ title: localTitle }) }
+            onChange={ (e) => setLocalTitle(e.target.value) }
             size="small"
-            value={localTitle}
+            value={ localTitle }
         />
     );
 }
@@ -62,19 +61,21 @@ export function ModuleEventView({
     moduleId: GanttModuleId;
     eventId: GanttEventId;
     isHighlighted?: boolean;
-}) {
+})
+{
     const { enqueueSnackbar } = useSnackbar();
     const moduleEvent = useEvent(eventId);
     const { deleteEvent, updateEvent, duplicateEvent } = useModuleEventActions();
     const { openEventDialog } = useCurriculumProviderActions();
     const state = useCurriculumState();
-    const [moveDialogOpen, setMoveDialogOpen] = useState(false);
+    const [ moveDialogOpen, setMoveDialogOpen ] = useState(false);
 
-    const handleEditClick = useCallback(() => {
-        const syllabusId = state.modules[moduleId]?.syllabusId;
+    const handleEditClick = useCallback(() =>
+    {
+        const syllabusId = state.modules[ moduleId ]?.syllabusId;
         if (!syllabusId) return;
         openEventDialog(syllabusId, moduleId, eventId);
-    }, [state.modules, moduleId, eventId, openEventDialog]);
+    }, [ state.modules, moduleId, eventId, openEventDialog ]);
 
     const {
         attributes,
@@ -86,7 +87,8 @@ export function ModuleEventView({
     } = useSortable({ id: eventId });
 
     const handleCommit = useCallback(
-        (updates: Partial<GanttEvent>) => {
+        (updates: Partial<GanttEvent>) =>
+        {
             updateEvent(eventId, updates).catch((error) =>
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
@@ -95,10 +97,11 @@ export function ModuleEventView({
                 ),
             );
         },
-        [eventId, updateEvent, enqueueSnackbar],
+        [ eventId, updateEvent, enqueueSnackbar ],
     );
 
-    const handleDeleteClick = useCallback(() => {
+    const handleDeleteClick = useCallback(() =>
+    {
         deleteEvent(moduleId, eventId).catch((error) =>
             enqueueApiErrorSnackbar(
                 enqueueSnackbar,
@@ -106,9 +109,10 @@ export function ModuleEventView({
                 error,
             ),
         );
-    }, [eventId, moduleId, deleteEvent, enqueueSnackbar]);
+    }, [ eventId, moduleId, deleteEvent, enqueueSnackbar ]);
 
-    const handleDuplicateClick = useCallback(() => {
+    const handleDuplicateClick = useCallback(() =>
+    {
         duplicateEvent(eventId, moduleId).catch((error) =>
             enqueueApiErrorSnackbar(
                 enqueueSnackbar,
@@ -116,18 +120,18 @@ export function ModuleEventView({
                 error,
             ),
         );
-    }, [eventId, moduleId, duplicateEvent, enqueueSnackbar]);
+    }, [ eventId, moduleId, duplicateEvent, enqueueSnackbar ]);
 
     return (
         <TableRow
-            id={`${EVENT_ANCHOR_PREFIX}${eventId}`}
-            ref={setNodeRef}
-            style={{
+            id={ `${EVENT_ANCHOR_PREFIX}${eventId}` }
+            ref={ setNodeRef }
+            style={ {
                 transform: CSS.Transform.toString(transform),
                 transition,
                 opacity: isDragging ? 0.4 : 1,
-            }}
-            sx={{
+            } }
+            sx={ {
                 transition: "background-color 0.4s ease",
                 ...(isHighlighted && {
                     backgroundColor: "primary.light",
@@ -135,63 +139,63 @@ export function ModuleEventView({
                         backgroundColor: "transparent",
                     },
                 }),
-            }}
+            } }
         >
-            <TableCell sx={{ width: "1rem", pr: 0, cursor: "grab" }} {...attributes} {...listeners}>
-                <DragIndicatorIcon fontSize="small" sx={{ color: "text.disabled", display: "block" }} />
+            <TableCell sx={ { width: "1rem", pr: 0, cursor: "grab" } } { ...attributes } { ...listeners }>
+                <DragIndicatorIcon fontSize="small" sx={ { color: "text.disabled", display: "block" } } />
             </TableCell>
             <TableCell>
                 <ModuleEventTitle
-                    handleCommit={handleCommit}
-                    key={`${moduleEvent?.title ?? "-title"}`}
-                    moduleEvent={moduleEvent}
+                    handleCommit={ handleCommit }
+                    key={ `${moduleEvent?.title ?? "-title"}` }
+                    moduleEvent={ moduleEvent }
                 />
             </TableCell>
             <TableCell>
-                <FormControl disabled={!moduleEvent} fullWidth size="small">
+                <FormControl disabled={ !moduleEvent } fullWidth size="small">
                     <Select
-                        onChange={(e) =>
+                        onChange={ (e) =>
                             handleCommit({
                                 type: e.target.value as ModuleEventType,
                             })
                         }
-                        value={moduleEvent?.type ?? ModuleEventType.Other}
+                        value={ moduleEvent?.type ?? ModuleEventType.Other }
                     >
-                        {(
+                        { (
                             Object.values(
                                 ModuleEventType,
                             ) as Array<ModuleEventType>
                         ).map((eventType) => (
-                            <MenuItem key={eventType} value={eventType}>
-                                {eventType}
+                            <MenuItem key={ eventType } value={ eventType }>
+                                { eventType }
                             </MenuItem>
-                        ))}
+                        )) }
                     </Select>
                 </FormControl>
             </TableCell>
             <TableCell>
                 <FormControl
-                    disabled={!moduleEvent}
+                    disabled={ !moduleEvent }
                     fullWidth
                     size="small"
-                    sx={{ m: 0, p: 0 }}
+                    sx={ { m: 0, p: 0 } }
                 >
                     <NumberSpinner
-                        largeStep={45}
-                        onValueChange={(v) =>
+                        largeStep={ 45 }
+                        onValueChange={ (v) =>
                             v ? handleCommit({ minimumDuration: v }) : {}
                         }
                         size="small"
-                        step={5}
-                        value={moduleEvent?.minimumDuration ?? 0}
+                        step={ 5 }
+                        value={ moduleEvent?.minimumDuration ?? 0 }
                     />
                 </FormControl>
             </TableCell>
             <TableCell>
-                <FormControl disabled={!moduleEvent} fullWidth size="small">
+                <FormControl disabled={ !moduleEvent } fullWidth size="small" sx={ { minWidth: '6rem' } }>
                     <InstructorSelect<"" | number>
                         excludeTeachers
-                        onChange={(e) =>
+                        onChange={ (e) =>
                             handleCommit({
                                 orchestratorId:
                                     e.target.value === ""
@@ -199,7 +203,7 @@ export function ModuleEventView({
                                         : Number(e.target.value),
                             })
                         }
-                        value={moduleEvent?.orchestratorId ?? ""}
+                        value={ moduleEvent?.orchestratorId ?? "" }
                     >
                         <MenuItem value="">
                             <em>ללא אחראי</em>
@@ -208,24 +212,24 @@ export function ModuleEventView({
                 </FormControl>
             </TableCell>
             <TableCell>
-                <IconButton onClick={handleEditClick} size="small" title="עריכת המופע">
+                <IconButton onClick={ handleEditClick } size="small" title="עריכת המופע">
                     <EditIcon color="primary" fontSize="small" />
                 </IconButton>
-                <IconButton onClick={handleDuplicateClick} size="small" title="שכפול המופע">
+                <IconButton onClick={ handleDuplicateClick } size="small" title="שכפול המופע">
                     <FileCopyIcon color="info" fontSize="small" />
                 </IconButton>
-                <IconButton onClick={() => setMoveDialogOpen(true)} size="small" title="העבר מופע למערך אחר">
+                <IconButton onClick={ () => setMoveDialogOpen(true) } size="small" title="העבר מופע למערך אחר">
                     <DriveFileMoveIcon color="action" fontSize="small" />
                 </IconButton>
-                <IconButton onClick={handleDeleteClick} size="small" title="מחיקת המופע">
+                <IconButton onClick={ handleDeleteClick } size="small" title="מחיקת המופע">
                     <DeleteIcon color="error" fontSize="small" />
                 </IconButton>
             </TableCell>
             <MoveEventDialog
-                currentModuleId={moduleId}
-                eventId={eventId}
-                onClose={() => setMoveDialogOpen(false)}
-                open={moveDialogOpen}
+                currentModuleId={ moduleId }
+                eventId={ eventId }
+                onClose={ () => setMoveDialogOpen(false) }
+                open={ moveDialogOpen }
             />
         </TableRow>
     );

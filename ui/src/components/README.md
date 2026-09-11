@@ -9,11 +9,12 @@ This directory is the foundational core of the Bluz user interface. It contains 
 ## Directory Structure
 
 - **`app-commands/`**: Bluz's contributions to the command palette — the Hebrew copy, and the hooks each surface uses to register its own commands. See its [README](app-commands/README.md).
+- **`app-onboarding/`**: Bluz's contributions to onboarding — the gantt tour, the help-panel topics, the Hebrew copy and the anchor ids. See its [README](app-onboarding/README.md).
 - **`auth/`**: Components, forms, and contexts related to authentication flows, SSO interactions, and user session validation.
 - **`base/`**: Core application frameworks and wrappers (e.g., custom sidebars, page wrappers, offline-state providers, and standard layout grids).
-- **`command-palette/`**: The generic, VSCode-style command palette. Self-contained and staged for extraction into a shared library — it must not import anything outside itself. See its [README](command-palette/README.md).
 - **`gantt/`**: All timeline, curriculum mapping, constraint allocation, and curriculum view components specific to the relational PostgreSQL-backed Gantt scheduler.
 - **`header/`**: Navigation bars, user settings menus, title bars, and header modules.
+- **`onboarding/`**: The generic guided-tour engine and help panel. Self-contained and staged for extraction into a shared library the way the command palette became `@system-b90/command-palette` — it must not import anything outside itself. See its [README](onboarding/README.md).
 - **`schedule/`**: The complete MongoDB-backed interactive Calendar schedule engine. Includes calendar grid view, drag-and-drop handlers, popup dialogue modals, and schedule event-specific components.
 - **`settings-dialog/`**: Application and user configuration dialog systems.
 - **`theme/`**: The global theme styling rules, dark/light mode palettes, and MUI component style overrides.

@@ -36,7 +36,6 @@ export function CreateCurriculumHoverMenu({
 
     const handleEnter = useCallback(() => setExpanded(true), []);
     const handleLeave = useCallback(() => setExpanded(false), []);
-    const handleToggle = useCallback(() => setExpanded((prev) => !prev), []);
 
     return (
         <Box
@@ -48,7 +47,7 @@ export function CreateCurriculumHoverMenu({
             <ActionItemButton
                 aria-expanded={ expanded }
                 disabled={ isDisabled }
-                onClick={ handleToggle }
+                onClick={ undefined }
                 startIcon={ <AddIcon fontSize="small" /> }
                 tooltipTitle="גאנט חדש"
             />
