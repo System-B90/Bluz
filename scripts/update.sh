@@ -1,19 +1,30 @@
 #!/usr/bin/env bash
 #
-# Bluz online release upgrade.
+# Bluz release upgrade — online (pull from GHCR) or offline (from a bundle).
 #
-# Upgrades a running Bluz deployment to a new release: back up, pull, roll the
-# containers one service at a time, let the ui image run its own migrations,
-# then verify. Any failed step stops the upgrade and prints the exact rollback
-# command, including the backup taken at the start of this run.
+# Upgrades a running Bluz deployment in place: back up, get the new images,
+# refresh the bundle's own files, roll the containers one service at a time,
+# let the ui image run its own migrations, then verify. Any failed step stops
+# the upgrade and prints the exact rollback command, including the backup taken
+# at the start of this run.
 #
 # Run it from the directory the release bundle was extracted into — the one
 # holding docker-compose.yml and .env.
 #
 # Usage: ./update.sh [--version <tag>] [--pre-release] [--skip-backup] [--yes]
+#        ./update.sh --package <path> [--skip-backup] [--yes]
+#
 #        Without --version it upgrades to the latest published (non-prerelease)
 #        release. Pass --pre-release to opt into the newest release including
 #        prereleases (e.g. -rc.N tags).
+#
+#        --package takes a FULL new offline package — either the downloaded
+#        bluz-offline-<tag>.tar.gz or an already-extracted bundle directory —
+#        and upgrades entirely from it, with no registry access. The images
+#        come from the package's images/*.tar and the deployment's own scripts,
+#        compose file and backup helpers are replaced with the package's. The
+#        live .env, nginx/ssl/ and every data volume are left untouched.
+#
 # Env:   BLUZ_RELEASE_REPO    GitHub repo to read releases from
 #                              (default System-B90/Bluz)
 #        BLUZ_COMPOSE_FILE    compose file (default ./docker-compose.yml)
@@ -39,6 +50,10 @@ SKIP_BACKUP=0
 ASSUME_YES=0
 BACKUP_DIR=""
 PREVIOUS_VERSION=""
+PACKAGE_ARG=""
+PACKAGE_ROOT=""
+EXTRACT_DIR=""
+BUNDLE_BACKUP_DIR=""
 
 log()  { echo -e "${CYAN}[bluz-update]${NC} $*"; }
 ok()   { echo -e "${GREEN}[OK]${NC} $*"; }
@@ -51,6 +66,14 @@ fail() {
     exit 1
 }
 
+# The extracted package is scratch space; it is only ever read from, so there is
+# nothing to preserve on the way out.
+cleanup() {
+    [ -n "${EXTRACT_DIR}" ] && [ -d "${EXTRACT_DIR}" ] && rm -rf "${EXTRACT_DIR}"
+    return 0
+}
+trap cleanup EXIT
+
 # Every failure past the point of no return routes through here, so the operator
 # always leaves with the same two facts: which step broke, and how to get back.
 abort_with_rollback() {
@@ -60,6 +83,16 @@ abort_with_rollback() {
         echo -e "        The stack is left as-is for inspection. To roll the images back:"
         echo -e "          1. set BLUZ_VERSION=${PREVIOUS_VERSION} in ${ENV_FILE}"
         echo -e "          2. docker compose -f ${COMPOSE_FILE} ${OVERLAY_ARGS[*]} up -d --wait"
+        if [ -n "${PACKAGE_ARG}" ]; then
+            # An offline roll back needs no registry: `docker load` never removes
+            # the tags it replaces, so the previous release's images are still on
+            # this host.
+            echo -e "        The ${PREVIOUS_VERSION} images are still loaded locally — no download needed."
+        fi
+    fi
+    if [ -n "${BUNDLE_BACKUP_DIR}" ]; then
+        echo -e "        The bundle's own files were replaced. The previous copies are in:"
+        echo -e "          ${BUNDLE_BACKUP_DIR}"
     fi
     if [ -n "${BACKUP_DIR}" ]; then
         echo -e "        A migration may have already changed the databases. To restore this run's backup:"
@@ -71,13 +104,23 @@ abort_with_rollback() {
 while [ $# -gt 0 ]; do
     case "$1" in
         --version) TARGET_VERSION="${2:-}"; shift 2 ;;
+        --package) PACKAGE_ARG="${2:-}"; shift 2 ;;
         --pre-release) PRE_RELEASE=1; shift ;;
         --skip-backup) SKIP_BACKUP=1; shift ;;
         --yes|-y) ASSUME_YES=1; shift ;;
-        -h|--help) sed -n '2,24p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '2,34p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) fail "Unknown argument: $1" "Run ./update.sh --help." ;;
     esac
 done
+
+if [ -n "${PACKAGE_ARG}" ]; then
+    [ -z "${TARGET_VERSION}" ] \
+        || fail "--package and --version are mutually exclusive." \
+                "An offline package IS the version; it carries exactly one release."
+    [ "${PRE_RELEASE}" -eq 0 ] \
+        || fail "--package and --pre-release are mutually exclusive." \
+                "There is nothing to resolve — the package names its own release."
+fi
 
 # Co-located Bluz+Hive deployments run with docker-compose.hive-local.yml
 # layered on top; without it the rolled ui/sessions/proxy lose their route to
@@ -124,6 +167,8 @@ docker compose version &> /dev/null \
             "An upgrade reuses the existing deployment's .env — this looks like" \
             "a fresh host. Run ./install.sh instead."
 
+INSTALL_DIR="$(cd "$(dirname "${COMPOSE_FILE}")" && pwd)"
+
 # shellcheck disable=SC1090
 set -a && . "${ENV_FILE}" && set +a
 PREVIOUS_VERSION="${BLUZ_VERSION:-}"
@@ -132,11 +177,70 @@ PREVIOUS_VERSION="${BLUZ_VERSION:-}"
             "Compose resolves the image tags from it, so an upgrade has no" \
             "'from' version to roll back to. Set it to the running release first."
 
+# ---------------------------------------------------------------------------
+# Offline package — resolve, unpack and validate it before anything is touched.
+#
+# A half-valid package is the one failure worth catching early: by the time the
+# images are loading, the operator has already accepted a backup and a roll.
+# ---------------------------------------------------------------------------
+if [ -n "${PACKAGE_ARG}" ]; then
+    if [ -d "${PACKAGE_ARG}" ]; then
+        PACKAGE_ROOT="$(cd "${PACKAGE_ARG}" && pwd)"
+    elif [ -f "${PACKAGE_ARG}" ]; then
+        log "extracting ${PACKAGE_ARG}..."
+        EXTRACT_DIR="$(mktemp -d "${TMPDIR:-/tmp}/bluz-package.XXXXXX")"
+        tar -xzf "${PACKAGE_ARG}" -C "${EXTRACT_DIR}" \
+            || fail "Could not extract ${PACKAGE_ARG}." \
+                    "Expected the release's bluz-offline-<tag>.tar.gz."
+        PACKAGE_ROOT="${EXTRACT_DIR}"
+    else
+        fail "Package not found: ${PACKAGE_ARG}" \
+             "Pass the bluz-offline-<tag>.tar.gz you downloaded, or the" \
+             "directory it extracts into."
+    fi
+
+    # The tarball wraps the bundle in one directory (bluz/, or bluz-<tag>/ for
+    # packages built before #479's rename), so descend once when the root we
+    # landed on is that wrapper rather than the bundle itself.
+    if [ ! -f "${PACKAGE_ROOT}/docker-compose.yml" ]; then
+        nested="$(find "${PACKAGE_ROOT}" -mindepth 1 -maxdepth 1 -type d)"
+        [ "$(echo "${nested}" | wc -l)" -eq 1 ] && [ -n "${nested}" ] \
+            && [ -f "${nested}/docker-compose.yml" ] \
+            && PACKAGE_ROOT="${nested}"
+    fi
+
+    [ -f "${PACKAGE_ROOT}/docker-compose.yml" ] \
+        || fail "No docker-compose.yml in the package (${PACKAGE_ROOT})." \
+                "That is not a Bluz release bundle."
+
+    ls "${PACKAGE_ROOT}"/images/*.tar &> /dev/null \
+        || fail "No images/*.tar in the package (${PACKAGE_ROOT})." \
+                "This is the ONLINE bundle — it carries no images and cannot" \
+                "upgrade an air-gapped host. Download bluz-offline-<tag>.tar.gz."
+
+    # Which release the package is. Its VERSION file is authoritative; older
+    # offline bundles shipped without one, so fall back to the tag recorded in
+    # the ui image archive's own manifest (read with tar, not docker — this
+    # runs before anything is loaded).
+    if [ -f "${PACKAGE_ROOT}/VERSION" ]; then
+        TARGET_VERSION="$(tr -d '[:space:]' < "${PACKAGE_ROOT}/VERSION")"
+    elif [ -f "${PACKAGE_ROOT}/images/bluz-ui.tar" ]; then
+        TARGET_VERSION="$(tar -xOf "${PACKAGE_ROOT}/images/bluz-ui.tar" manifest.json 2>/dev/null \
+            | sed -n 's/.*"RepoTags"[^]]*:[^"]*"[^"]*:\([^"]*\)".*/\1/p' | head -n 1)" || TARGET_VERSION=""
+    fi
+
+    [ -n "${TARGET_VERSION}" ] \
+        || fail "Could not tell which release the package holds." \
+                "It has no VERSION file and no readable tag in images/bluz-ui.tar." \
+                "Write one and re-run: echo v1.0.0 > ${PACKAGE_ROOT}/VERSION"
+
+    ok "offline package: ${TARGET_VERSION} (${PACKAGE_ROOT})"
+
 # With no --version, upgrade to the newest published release (#479). The
 # bundle's own VERSION file is only a fallback: an online deployment upgrades in
 # place, so after the first run that file names the release already installed
 # and defaulting to it made a bare `./update.sh` a no-op.
-if [ -z "${TARGET_VERSION}" ]; then
+elif [ -z "${TARGET_VERSION}" ]; then
     if [ "${PRE_RELEASE}" -eq 1 ]; then
         log "resolving latest release (including prereleases) from ${RELEASE_REPO}..."
         # /releases/latest only ever returns the newest non-prerelease, so an
@@ -165,7 +269,8 @@ if [ -z "${TARGET_VERSION}" ]; then
         warn "could not reach GitHub — falling back to the bundle's VERSION file"
         [ -f "VERSION" ] \
             || fail "No target version given, GitHub unreachable, and no VERSION file in $(pwd)." \
-                    "Pass it explicitly: ./update.sh --version v1.0.0"
+                    "Pass it explicitly: ./update.sh --version v1.0.0" \
+                    "Air-gapped host? Upgrade from a package: ./update.sh --package <path>"
         TARGET_VERSION="$(tr -d '[:space:]' < VERSION)"
     fi
 fi
@@ -202,6 +307,8 @@ fi
 
 echo
 log "upgrade ${PREVIOUS_VERSION} -> ${TARGET_VERSION}"
+log "mode         : $([ -n "${PACKAGE_ARG}" ] && echo "offline (${PACKAGE_ARG})" || echo "online (ghcr.io)")"
+log "install dir  : ${INSTALL_DIR}"
 log "compose file : ${COMPOSE_FILE}"
 log "env file     : ${ENV_FILE}"
 if [ "${SKIP_BACKUP}" -eq 1 ]; then
@@ -233,16 +340,120 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 2. Pull — the running containers keep serving while the new images download,
+# 2. Images — the running containers keep serving while the new images arrive,
 #    which is the bulk of the wall-clock time in an upgrade.
+#
+#    Offline: every images/*.tar in the package is loaded, not just the three
+#    Bluz ones. Postgres and Mongo are pinned by tag in the compose file and a
+#    release may move those pins, in which case the new tag exists nowhere on
+#    an air-gapped host but in the package.
 # ---------------------------------------------------------------------------
-log "pulling ${TARGET_VERSION} images (containers keep running)..."
-BLUZ_VERSION="${TARGET_VERSION}" compose pull \
-    || abort_with_rollback "image pull"
-ok "images pulled"
+if [ -n "${PACKAGE_ARG}" ]; then
+    log "loading ${TARGET_VERSION} images from the package (containers keep running)..."
+    for archive in "${PACKAGE_ROOT}"/images/*.tar; do
+        log "  $(basename "${archive}")"
+        docker load -i "${archive}" > /dev/null \
+            || abort_with_rollback "loading $(basename "${archive}")"
+    done
+    ok "images loaded"
+
+    # Fail here rather than three steps later in the roll: a package whose tars
+    # do not carry the tag the compose file will ask for is a broken package,
+    # and the symptom without this check is an opaque "manifest not found" on a
+    # host that cannot reach a registry to begin with.
+    for repo in ui sessions proxy; do
+        docker image inspect "ghcr.io/system-b90/bluz/${repo}:${TARGET_VERSION}" &> /dev/null \
+            || abort_with_rollback "package verification: ghcr.io/system-b90/bluz/${repo}:${TARGET_VERSION} is not among the loaded images"
+    done
+    ok "all three Bluz images present at ${TARGET_VERSION}"
+else
+    log "pulling ${TARGET_VERSION} images (containers keep running)..."
+    BLUZ_VERSION="${TARGET_VERSION}" compose pull \
+        || abort_with_rollback "image pull"
+    ok "images pulled"
+fi
 
 # ---------------------------------------------------------------------------
-# 3. Roll — service by service, waiting for each to pass its healthcheck before
+# 3. Bundle files (offline only) — the package is a FULL bundle, so the
+#    deployment's scripts, compose file and backup helpers are replaced with
+#    the new release's. An online upgrade cannot do this (it has no new bundle
+#    to copy from), which is the one real asymmetry between the two modes.
+#
+#    Everything host-specific is deliberately excluded: .env holds this
+#    deployment's secrets, nginx/ssl/ its certificates, and images/ is bulk
+#    that has already been loaded into Docker.
+# ---------------------------------------------------------------------------
+if [ -n "${PACKAGE_ARG}" ]; then
+    BUNDLE_BACKUP_DIR="${INSTALL_DIR}/.bundle-bak-${PREVIOUS_VERSION}"
+    log "refreshing bundle files (previous copies -> ${BUNDLE_BACKUP_DIR})..."
+    mkdir -p "${BUNDLE_BACKUP_DIR}"
+
+    for relative in \
+        docker-compose.yml \
+        docker-compose.hive-local.yml \
+        install.sh install.ps1 \
+        update.sh \
+        link-hive.sh link-hive.ps1 \
+        setup.py requirements.txt \
+        VERSION \
+        TROUBLESHOOTING.md INSTALL.md \
+        backup/bluz-backup.sh backup/bluz-restore.sh
+    do
+        [ -f "${PACKAGE_ROOT}/${relative}" ] || continue
+        if [ -f "${INSTALL_DIR}/${relative}" ]; then
+            mkdir -p "${BUNDLE_BACKUP_DIR}/$(dirname "${relative}")"
+            cp -p "${INSTALL_DIR}/${relative}" "${BUNDLE_BACKUP_DIR}/${relative}" \
+                || abort_with_rollback "saving previous ${relative}"
+        fi
+        mkdir -p "${INSTALL_DIR}/$(dirname "${relative}")"
+        # The running script is one of the files being replaced. Bash reads the
+        # source by offset as it goes, so overwriting update.sh in place would
+        # make it resume mid-line in the new file; write a new inode instead.
+        cp "${PACKAGE_ROOT}/${relative}" "${INSTALL_DIR}/${relative}.new" \
+            && mv -f "${INSTALL_DIR}/${relative}.new" "${INSTALL_DIR}/${relative}" \
+            || abort_with_rollback "installing ${relative}"
+    done
+    chmod +x "${INSTALL_DIR}"/*.sh "${INSTALL_DIR}"/backup/*.sh 2>/dev/null || true
+
+    # wheels/ is a directory, not a single file, so it does not fit the loop
+    # above — swap it wholesale the same way: old copy kept for rollback, new
+    # one put in place. Without this the venv's bluz-cli and other vendored
+    # packages stay pinned at the previous release forever, since nothing else
+    # ever touches wheels/ after install.sh's first run (#672).
+    if [ -d "${PACKAGE_ROOT}/wheels" ]; then
+        if [ -d "${INSTALL_DIR}/wheels" ]; then
+            mv "${INSTALL_DIR}/wheels" "${BUNDLE_BACKUP_DIR}/wheels" \
+                || abort_with_rollback "saving previous wheels/"
+        fi
+        cp -r "${PACKAGE_ROOT}/wheels" "${INSTALL_DIR}/wheels" \
+            || abort_with_rollback "installing wheels/"
+    fi
+    ok "bundle files refreshed"
+
+    # Upgrade the packages the setup wizard's venv already has installed —
+    # bluz-cli included — to match wheels/. install.sh only ever runs this on
+    # a fresh .env; an in-place upgrade otherwise leaves the venv frozen at
+    # whatever version first created it (#672).
+    if [ -d "${INSTALL_DIR}/.venv" ] && [ -d "${INSTALL_DIR}/wheels" ]; then
+        log "upgrading Python packages in .venv from wheels/..."
+        # shellcheck disable=SC1091
+        source "${INSTALL_DIR}/.venv/bin/activate"
+        pip install --no-index --find-links="${INSTALL_DIR}/wheels" \
+            --upgrade -r "${INSTALL_DIR}/requirements.txt" --quiet \
+            || { deactivate; abort_with_rollback "upgrading Python packages from wheels/"; }
+        # bluz-cli isn't in requirements.txt — it's built by this same release
+        # pipeline, not pulled from the org index — so -r above skips it.
+        # Install it by name, from the same vendored wheel.
+        pip install --no-index --find-links="${INSTALL_DIR}/wheels" \
+            --upgrade bluz-cli --quiet \
+            || { deactivate; abort_with_rollback "upgrading bluz-cli from wheels/"; }
+        deactivate
+        ok "Python packages upgraded"
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+# 4. Roll — service by service, waiting for each to pass its healthcheck before
 #    touching the next.
 #
 #    Compose recreates a container in place, so this is near-zero downtime, not
@@ -288,7 +499,7 @@ for service in ui sessions proxy; do
 done
 
 # ---------------------------------------------------------------------------
-# 4. Verify — health endpoint, then a real read through the app's own DB layer.
+# 5. Verify — health endpoint, then a real read through the app's own DB layer.
 #    Postgres migrations already ran inside the ui entrypoint; Mongo has no
 #    formal migration mechanism today, so there is nothing to trigger for it.
 # ---------------------------------------------------------------------------
@@ -316,5 +527,6 @@ ok "databases reachable"
 echo
 ok "Bluz upgraded ${PREVIOUS_VERSION} -> ${TARGET_VERSION}"
 echo -e "        previous env file kept at ${ENV_FILE}.bak-${PREVIOUS_VERSION}"
+[ -n "${BUNDLE_BACKUP_DIR}" ] && echo -e "        previous bundle files: ${BUNDLE_BACKUP_DIR}"
 [ -n "${BACKUP_DIR}" ] && echo -e "        pre-upgrade backup: ${BACKUP_DIR}"
 exit 0
