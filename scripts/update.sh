@@ -414,7 +414,42 @@ if [ -n "${PACKAGE_ARG}" ]; then
             || abort_with_rollback "installing ${relative}"
     done
     chmod +x "${INSTALL_DIR}"/*.sh "${INSTALL_DIR}"/backup/*.sh 2>/dev/null || true
+
+    # wheels/ is a directory, not a single file, so it does not fit the loop
+    # above — swap it wholesale the same way: old copy kept for rollback, new
+    # one put in place. Without this the venv's bluz-cli and other vendored
+    # packages stay pinned at the previous release forever, since nothing else
+    # ever touches wheels/ after install.sh's first run (#672).
+    if [ -d "${PACKAGE_ROOT}/wheels" ]; then
+        if [ -d "${INSTALL_DIR}/wheels" ]; then
+            mv "${INSTALL_DIR}/wheels" "${BUNDLE_BACKUP_DIR}/wheels" \
+                || abort_with_rollback "saving previous wheels/"
+        fi
+        cp -r "${PACKAGE_ROOT}/wheels" "${INSTALL_DIR}/wheels" \
+            || abort_with_rollback "installing wheels/"
+    fi
     ok "bundle files refreshed"
+
+    # Upgrade the packages the setup wizard's venv already has installed —
+    # bluz-cli included — to match wheels/. install.sh only ever runs this on
+    # a fresh .env; an in-place upgrade otherwise leaves the venv frozen at
+    # whatever version first created it (#672).
+    if [ -d "${INSTALL_DIR}/.venv" ] && [ -d "${INSTALL_DIR}/wheels" ]; then
+        log "upgrading Python packages in .venv from wheels/..."
+        # shellcheck disable=SC1091
+        source "${INSTALL_DIR}/.venv/bin/activate"
+        pip install --no-index --find-links="${INSTALL_DIR}/wheels" \
+            --upgrade -r "${INSTALL_DIR}/requirements.txt" --quiet \
+            || { deactivate; abort_with_rollback "upgrading Python packages from wheels/"; }
+        # bluz-cli isn't in requirements.txt — it's built by this same release
+        # pipeline, not pulled from the org index — so -r above skips it.
+        # Install it by name, from the same vendored wheel.
+        pip install --no-index --find-links="${INSTALL_DIR}/wheels" \
+            --upgrade bluz-cli --quiet \
+            || { deactivate; abort_with_rollback "upgrading bluz-cli from wheels/"; }
+        deactivate
+        ok "Python packages upgraded"
+    fi
 fi
 
 # ---------------------------------------------------------------------------
