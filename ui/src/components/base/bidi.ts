@@ -13,6 +13,7 @@
 
 /** U+2066 LEFT-TO-RIGHT ISOLATE */
 const LRI = "⁦";
+const RLI = "⁧";
 /** U+2069 POP DIRECTIONAL ISOLATE */
 const PDI = "⁩";
 
@@ -20,15 +21,23 @@ const PDI = "⁩";
  * Wraps `text` so it always lays out left-to-right, whatever paragraph it sits
  * in. Use for any two-sided range whose sides are numeric.
  */
-export function isolateLtr(text: string): string {
+export function isolateLtr(text: string): string
+{
     return `${LRI}${text}${PDI}`;
 }
+
+export function isolateRtl(text: string): string
+{
+    return `${RLI}${text}${PDI}`;
+}
+
 
 /**
  * Formats `start - end` as a single LTR run. Both sides are already-formatted
  * strings, so this works for times (`10:00`), day numbers (`05`), or anything
  * else that reads left-to-right.
  */
-export function formatRange(start: string, end: string): string {
+export function formatRange(start: string, end: string): string
+{
     return isolateLtr(`${start} - ${end}`);
 }

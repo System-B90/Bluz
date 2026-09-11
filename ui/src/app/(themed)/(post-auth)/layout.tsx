@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth/next";
+import { redirect } from "next/navigation";
 
 import { isHiveReachable } from "@/api-server/hive/health";
 import { authOptions } from "@/api-server/hive/sso";
@@ -12,12 +12,14 @@ export default async function PostAuthLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
-}>) {
+}>)
+{
     const session = (await getServerSession(
         authOptions,
     )) as AuthSessionData | null;
 
-    if (!session || !session.user) {
+    if (!session || !session.user)
+    {
         redirect("/login");
     }
 
@@ -29,7 +31,8 @@ export default async function PostAuthLayout({
     if (
         session.user.clearance !== Clearance.Segel &&
         session.user.clearance !== Clearance.Admin
-    ) {
+    )
+    {
         redirect(STUDENT_VIEW_PATH);
     }
 
@@ -37,16 +40,18 @@ export default async function PostAuthLayout({
     // up. If Hive is unreachable, fall back to the cached session instead
     // of locking the user out entirely.
     let degraded = false;
-    if (session.error === "TokenExpiredError") {
-        if (await isHiveReachable()) {
+    if (session.error === "TokenExpiredError")
+    {
+        if (await isHiveReachable())
+        {
             redirect("/login");
         }
         degraded = true;
     }
 
     return (
-        <AuthProvider degraded={degraded} userData={session.user as AuthSessionUser}>
-            {children}
+        <AuthProvider degraded={ degraded } userData={ session.user as AuthSessionUser }>
+            { children }
         </AuthProvider>
     );
 }

@@ -8,7 +8,6 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Link from "next/link";
 
-import { BluzHelpButton } from "@/components/app-onboarding/BluzHelpButton";
 import { CommandPaletteButton } from "@/components/header/CommandPaletteButton";
 import { CurriculumIcon } from "@/components/header/CurriculumIcon";
 import { Logo } from "@/components/header/logo";
@@ -80,8 +79,6 @@ export function ScheduleAppBar({
                     <CurriculumIcon />
 
                     <StudentViewIcon />
-
-                    <BluzHelpButton />
 
                     <IconButton
                         className="hover-rotate-subtle transition-all duration-200 hover:scale-110 active:scale-95"

@@ -1,7 +1,7 @@
 "use client";
 import Box, { BoxProps } from "@mui/material/Box";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { GanttContentCommands } from "@/components/app-commands/GanttContentCommands";
@@ -12,16 +12,20 @@ import { CurriculumViewTabs } from "@/components/gantt/curriculum-view/tabs";
 
 export type CurriculumViewProps = {
     curriculumId: GanttCurriculumId | null;
+    setCurrentCurriculum: Dispatch<SetStateAction<GanttCurriculumId | null>>;
 } & BoxProps;
 
 export function CurriculumView({
     curriculumId,
+    setCurrentCurriculum,
     ...props
-}: CurriculumViewProps) {
+}: CurriculumViewProps)
+{
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
-    const [selectedTabIndex, setSelectedTabIndex] = useState<number>(() => {
+    const [ selectedTabIndex, setSelectedTabIndex ] = useState<number>(() =>
+    {
         const viewIndexFromUrl = searchParams.get("v");
         const parsedViewIndex = viewIndexFromUrl
             ? parseInt(viewIndexFromUrl, 10)
@@ -30,15 +34,18 @@ export function CurriculumView({
         return Number.isFinite(parsedViewIndex) ? parsedViewIndex : 0;
     });
 
-    useEffect(() => {
-        if (typeof window === "undefined") {
+    useEffect(() =>
+    {
+        if (typeof window === "undefined")
+        {
             return;
         }
 
         const currentViewIndex = selectedTabIndex.toString();
         const nextParams = new URLSearchParams(window.location.search);
 
-        if (nextParams.get("v") === currentViewIndex) {
+        if (nextParams.get("v") === currentViewIndex)
+        {
             return;
         }
 
@@ -49,42 +56,43 @@ export function CurriculumView({
         const nextUrl = `${pathname}${nextSearch ? `?${nextSearch}` : ""}${hash}`;
 
         window.history.replaceState(window.history.state, "", nextUrl);
-    }, [selectedTabIndex, pathname]);
+    }, [ selectedTabIndex, pathname ]);
 
     return (
         <GanttSearchNavProvider>
-            {/* Needs both the curriculum state and the search-nav context. */}
+            {/* Needs both the curriculum state and the search-nav context. */ }
             <GanttContentCommands />
 
-            {/* The tour drives the tabs, so it is registered by their owner. */}
-            <GanttOnboarding setSelectedTabIndex={setSelectedTabIndex} />
+            {/* The tour drives the tabs, so it is registered by their owner. */ }
+            <GanttOnboarding setSelectedTabIndex={ setSelectedTabIndex } />
 
             <Box
-                alignItems={"flex-start"}
-                display={"flex"}
-                flexDirection={"row"}
-                flexWrap={"nowrap"}
-                gap={4}
-                height={"100%"}
-                justifyContent={"flex-start"}
-                justifyItems={"flex-start"}
-                width={"100%"}
-                {...props}
+                alignItems={ "flex-start" }
+                display={ "flex" }
+                flexDirection={ "row" }
+                flexWrap={ "nowrap" }
+                gap={ 4 }
+                height={ "100%" }
+                justifyContent={ "flex-start" }
+                justifyItems={ "flex-start" }
+                width={ "100%" }
+                { ...props }
             >
                 <CurriculumViewSidebar
-                    curriculumId={curriculumId}
-                    selectedTabIndex={selectedTabIndex}
+                    curriculumId={ curriculumId }
+                    selectedTabIndex={ selectedTabIndex }
+                    setCurrentCurriculum={ setCurrentCurriculum }
                 />
 
                 <CurriculumViewTabs
-                    curriculumId={curriculumId}
-                    display={"flex"}
-                    flexDirection={"column"}
-                    flexGrow={1}
-                    height={"100%"}
-                    selectedTabIndex={selectedTabIndex}
-                    setSelectedTabIndex={setSelectedTabIndex}
-                    width={"100%"}
+                    curriculumId={ curriculumId }
+                    display={ "flex" }
+                    flexDirection={ "column" }
+                    flexGrow={ 1 }
+                    height={ "100%" }
+                    selectedTabIndex={ selectedTabIndex }
+                    setSelectedTabIndex={ setSelectedTabIndex }
+                    width={ "100%" }
                 />
             </Box>
         </GanttSearchNavProvider>

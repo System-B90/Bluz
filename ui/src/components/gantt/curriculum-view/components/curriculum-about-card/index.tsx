@@ -5,51 +5,60 @@ import Typography from "@mui/material/Typography";
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { GanttCreationDeletionCallbackProps } from "@/components/gantt/curriculum-fab/CurriculumActionItems";
 import { CurriculumDescription } from "@/components/gantt/curriculum-view/components/curriculum-about-card/CurriculumDescription";
 import { CurriculumName } from "@/components/gantt/curriculum-view/components/curriculum-about-card/CurriculumName";
 import { CurriculumStatusActions } from "@/components/gantt/curriculum-view/components/curriculum-about-card/CurriculumStatusActions";
 import { IterationLinkField } from "@/components/gantt/curriculum-view/components/curriculum-about-card/IterationLinkField";
+import { Dispatch, SetStateAction } from "react";
 
 export type CurriculumCardProps = {
     curriculumId: GanttCurriculumId | null;
     curriculum: GanttCurriculumDocument | undefined;
-} & Omit<CardProps, "sx">;
+    setCurrentCurriculum: Dispatch<SetStateAction<GanttCurriculumId | null>>;
+} & Omit<CardProps, "sx"> & GanttCreationDeletionCallbackProps;
 
 export function CurriculumAboutCard({
     curriculumId,
     curriculum,
+    setCurrentCurriculum,
+    onCreate, onDelete,
     ...props
-}: CurriculumCardProps) {
+}: CurriculumCardProps)
+{
     return (
-        <Card sx={{ padding: 2, minWidth: "14rem", flexShrink: 0 }} {...props}>
+        <Card sx={ { padding: 2, minWidth: "14rem", flexShrink: 0 } } { ...props }>
             <CurriculumName
-                curriculumId={curriculumId}
-                title={curriculum?.title}
+                curriculumId={ curriculumId }
+                title={ curriculum?.title }
             />
             <CurriculumDescription
-                curriculumId={curriculumId}
-                description={curriculum?.description}
+                curriculumId={ curriculumId }
+                description={ curriculum?.description }
             />
-            <Box color="textSecondary" display={"flex"} flexDirection={"row"}>
+            <Box color="textSecondary" display={ "flex" } flexDirection={ "row" }>
                 <Typography color="textSecondary" variant="body2">
                     עדכון אחרון:
                 </Typography>
-                <Box width={"0.2rem"} />
-                {curriculum?.updatedAt ? (
+                <Box width={ "0.2rem" } />
+                { curriculum?.updatedAt ? (
                     <Typography color="textSecondary">
-                        {curriculum.updatedAt.format("DD/MM/YYYY")}
+                        { curriculum.updatedAt.format("DD/MM/YYYY") }
                     </Typography>
                 ) : (
-                    <Skeleton variant="text" width={80} />
-                )}
+                    <Skeleton variant="text" width={ 80 } />
+                ) }
             </Box>
-            <Box mt={1.5}>
-                <IterationLinkField curriculumId={curriculumId} />
+            <Box mt={ 1.5 }>
+                <IterationLinkField curriculumId={ curriculumId } />
             </Box>
-            <Box mt={1.5}>
+            <Box mt={ 1.5 }>
                 <CurriculumStatusActions
-                    curriculum={curriculum}
-                    curriculumId={curriculumId}
+                    curriculum={ curriculum }
+                    curriculumId={ curriculumId }
+                    setCurrentCurriculum={ setCurrentCurriculum }
+                    onCreate={ onCreate }
+                    onDelete={ onDelete }
                 />
             </Box>
         </Card>

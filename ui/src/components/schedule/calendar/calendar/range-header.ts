@@ -1,5 +1,5 @@
 import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
-import { formatRange, isolateLtr } from "@/components/base/bidi";
+import { formatRange, isolateRtl } from "@/components/base/bidi";
 
 /**
  * The calendar's week/day range header, e.g. `05 - 11 בספטמבר 2026`.
@@ -14,17 +14,21 @@ export function dayRangeHeaderFormat({
 }: {
     start: Date;
     end: Date;
-}): string {
+}): string
+{
     const s = dayjs(start).tz(APP_TIMEZONE).locale("he");
     const e = dayjs(end).tz(APP_TIMEZONE).locale("he");
-    if (s.month() === e.month()) {
+    if (s.month() === e.month())
+    {
         // Only the two day numbers form the numeric range; the month and year
         // stay in the surrounding RTL run.
         return `${formatRange(s.format("DD"), e.format("DD"))} ב${s.format("MMMM")} ${s.format("YYYY")}`;
     }
     // Each side carries its own month name, so isolating either side alone
     // would not help — the whole range is one LTR run here.
-    return `${isolateLtr(
-        `${s.format("DD")} ב${s.format("MMMM")} - ${e.format("DD")} ב${e.format("MMMM")}`,
+
+    return `${isolateRtl(
+        isolateRtl(`${s.format("DD")} ב${s.format("MMMM")}`) + ' - ' +
+        isolateRtl(`${e.format("DD")} ב${e.format("MMMM")}`),
     )} ${e.format("YYYY")}`;
 }

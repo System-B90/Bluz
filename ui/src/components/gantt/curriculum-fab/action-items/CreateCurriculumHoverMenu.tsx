@@ -48,7 +48,7 @@ export function CreateCurriculumHoverMenu({
             <ActionItemButton
                 aria-expanded={ expanded }
                 disabled={ isDisabled }
-                onClick={ handleToggle }
+                onClick={ undefined }
                 startIcon={ <AddIcon fontSize="small" /> }
                 tooltipTitle="גאנט חדש"
             />
