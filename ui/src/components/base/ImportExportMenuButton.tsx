@@ -21,9 +21,9 @@ export type ImportExportMenuButtonProps = {
     exportLabel?: string;
     triggerLabel?: string;
     accept?: string;
-    size?: ButtonProps["size"];
-    variant?: ButtonProps["variant"];
-    color?: ButtonProps["color"];
+    size?: ButtonProps[ "size" ];
+    variant?: ButtonProps[ "variant" ];
+    color?: ButtonProps[ "color" ];
     exportDisabled?: boolean;
     importDisabled?: boolean;
     iconOnly?: boolean;
@@ -56,27 +56,33 @@ export function ImportExportMenuButton({
     onExportError,
     onExportExcel,
     exportExcelLabel = "ייצוא לאקסל",
-}: ImportExportMenuButtonProps) {
-    const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+}: ImportExportMenuButtonProps)
+{
+    const [ anchorEl, setAnchorEl ] = useState<HTMLElement | null>(null);
     const open = Boolean(anchorEl);
 
     const handleClick = useCallback(
-        (event: React.MouseEvent<HTMLButtonElement>) => {
+        (event: React.MouseEvent<HTMLButtonElement>) =>
+        {
             setAnchorEl(event.currentTarget);
         },
         [],
     );
 
-    const handleClose = useCallback(() => {
+    const handleClose = useCallback(() =>
+    {
         setAnchorEl(null);
     }, []);
 
-    const handleExportClick = useCallback(async () => {
-        try {
+    const handleExportClick = useCallback(async () =>
+    {
+        try
+        {
             const data = await onExport();
-            if (data) {
+            if (data)
+            {
                 const jsonString = JSON.stringify(data, null, 2);
-                const blob = new Blob([jsonString], { type: "application/json" });
+                const blob = new Blob([ jsonString ], { type: "application/json" });
                 const url = URL.createObjectURL(blob);
 
                 const cleanTitle = safeTitle(exportTitle || "export");
@@ -91,7 +97,8 @@ export function ImportExportMenuButton({
                 URL.revokeObjectURL(url);
             }
             if (onExportSuccess) onExportSuccess();
-        } catch (error) {
+        } catch (error)
+        {
             if (onExportError) onExportError(error);
         }
         handleClose();
@@ -104,38 +111,43 @@ export function ImportExportMenuButton({
         handleClose,
     ]);
 
-    const handleExportExcelClick = useCallback(async () => {
-        try {
-            if (onExportExcel) {
+    const handleExportExcelClick = useCallback(async () =>
+    {
+        try
+        {
+            if (onExportExcel)
+            {
                 await onExportExcel();
             }
             if (onExportSuccess) onExportSuccess();
-        } catch (error) {
+        } catch (error)
+        {
             if (onExportError) onExportError(error);
         }
         handleClose();
-    }, [onExportExcel, onExportSuccess, onExportError, handleClose]);
+    }, [ onExportExcel, onExportSuccess, onExportError, handleClose ]);
 
     const handleImportChange = useCallback(
-        (e: React.ChangeEvent<HTMLInputElement>) => {
+        (e: React.ChangeEvent<HTMLInputElement>) =>
+        {
             onImport(e);
             handleClose();
         },
-        [onImport, handleClose],
+        [ onImport, handleClose ],
     );
 
     const trigger = iconOnly ? (
-        <Tooltip title={triggerLabel}>
+        <Tooltip title={ triggerLabel }>
             <span>
                 <IconButton
-                    aria-controls={open ? "import-export-menu" : undefined}
-                    aria-expanded={open ? "true" : undefined}
+                    aria-controls={ open ? "import-export-menu" : undefined }
+                    aria-expanded={ open ? "true" : undefined }
                     aria-haspopup="true"
-                    aria-label={triggerLabel}
-                    color={color}
-                    disabled={Boolean(exportDisabled && importDisabled) || loading}
-                    onClick={handleClick}
-                    sx={{
+                    aria-label={ triggerLabel }
+                    color={ color }
+                    disabled={ Boolean(exportDisabled && importDisabled) || loading }
+                    onClick={ handleClick }
+                    sx={ {
                         border: "1px solid",
                         borderColor: "primary.light",
                         borderRadius: "8px",
@@ -144,69 +156,69 @@ export function ImportExportMenuButton({
                         padding: 0.5,
                         transition: (theme) =>
                             theme.transitions.create(
-                                ["color", "border-color"],
+                                [ "color", "border-color" ],
                                 { duration: theme.transitions.duration.short },
                             ),
                         "&.Mui-disabled": {
                             color: (theme) => theme.palette.action.disabled,
                             borderColor: (theme) => theme.palette.action.disabledBackground,
                         },
-                    }}
+                    } }
                 >
-                    {loading ? <CircularProgress color="inherit" size={16} /> : <ImportExportIcon />}
+                    { loading ? <CircularProgress color="inherit" size={ 16 } /> : <ImportExportIcon /> }
                 </IconButton>
             </span>
         </Tooltip>
     ) : (
         <Button
-            aria-controls={open ? "import-export-menu" : undefined}
-            aria-expanded={open ? "true" : undefined}
+            aria-controls={ open ? "import-export-menu" : undefined }
+            aria-expanded={ open ? "true" : undefined }
             aria-haspopup="true"
-            color={color}
-            disabled={loading}
-            onClick={handleClick}
-            size={size}
-            startIcon={loading ? <CircularProgress color="inherit" size={16} /> : <ImportExportIcon />}
-            sx={{ whiteSpace: "nowrap" }}
-            variant={variant}
+            color={ color }
+            disabled={ loading }
+            onClick={ handleClick }
+            size={ size }
+            startIcon={ loading ? <CircularProgress color="inherit" size={ 16 } /> : <ImportExportIcon /> }
+            sx={ { whiteSpace: "nowrap" } }
+            variant={ variant }
         >
-            {triggerLabel}
+            { triggerLabel }
         </Button>
     );
 
     return (
         <>
-            {trigger}
+            { trigger }
             <Menu
-                anchorEl={anchorEl}
+                anchorEl={ anchorEl }
                 id="import-export-menu"
-                onClose={handleClose}
-                open={open}
+                onClose={ handleClose }
+                open={ open }
             >
-                <MenuItem disabled={exportDisabled} onClick={handleExportClick}>
-                    <ListItemIcon>
-                        <DownloadIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>{exportLabel}</ListItemText>
-                </MenuItem>
-                {onExportExcel ? (
-                    <MenuItem disabled={exportDisabled} onClick={handleExportExcelClick}>
+                { onExportExcel ? (
+                    <MenuItem disabled={ exportDisabled } onClick={ handleExportExcelClick }>
                         <ListItemIcon>
                             <TableChartIcon fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>{exportExcelLabel}</ListItemText>
+                        <ListItemText>{ exportExcelLabel }</ListItemText>
                     </MenuItem>
-                ) : null}
-                <MenuItem component="label" disabled={importDisabled}>
+                ) : null }
+                <MenuItem disabled={ exportDisabled } onClick={ handleExportClick }>
+                    <ListItemIcon>
+                        <DownloadIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>{ exportLabel }</ListItemText>
+                </MenuItem>
+                <MenuItem component="label" disabled={ importDisabled }>
                     <ListItemIcon>
                         <UploadIcon fontSize="small" />
                     </ListItemIcon>
-                    <ListItemText>{importLabel}</ListItemText>
+                    <ListItemText>{ importLabel }</ListItemText>
                     <input
-                        accept={accept}
-                        disabled={importDisabled}
+                        accept={ accept }
+                        disabled={ importDisabled }
                         hidden
-                        onChange={handleImportChange}
+                        onChange={ handleImportChange }
                         type="file"
                     />
                 </MenuItem>

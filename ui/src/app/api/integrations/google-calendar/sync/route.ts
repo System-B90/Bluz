@@ -10,8 +10,8 @@ import {
     pullEventEdits,
     pushAllEvents,
 } from "@/api-server/google/google-calendar-service";
-import { getSessionUser } from "@/api-server/session-user";
-import { ClientApiError, UserNotLoggedInError } from "@/api-shared/errors";
+import { requireStaffSession } from "@/api-server/session-user";
+import { ClientApiError } from "@/api-shared/errors";
 import { ApiGoogleCalendarSyncResponse } from "@/api-shared/types/google-calendar";
 
 const SYNC_WINDOW_DAYS = 90;
@@ -21,8 +21,8 @@ const SYNC_WINDOW_DAYS = 90;
  * signed-in user's own upcoming events and pulls their Google busy blocks.
  */
 export const POST = withApi(async () => {
-    const user = await getSessionUser();
-    if (!user) throw new UserNotLoggedInError("אינך מחובר");
+    // Staff-only (#656): Google Calendar sync is a staff surface.
+    const user = await requireStaffSession();
     if (!isGoogleCalendarConfigured()) {
         throw new ClientApiError(
             "אינטגרציית Google Calendar אינה מוגדרת בשרת זה",

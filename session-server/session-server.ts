@@ -5,7 +5,12 @@
  */
 import { startSessionServer } from "@system-b90/session-ws/server";
 
-import { iterationSyncId, MessageTypes } from "./session-common";
+import {
+    iterationSyncId,
+    MessageTypes,
+    STUDENT_SYNC_ID,
+    WsScope,
+} from "./session-common";
 
 /*
  * Crash guard (#511). The shared core reads frame fields without a shape
@@ -25,12 +30,30 @@ process.on("unhandledRejection", (reason) => {
 
 const server = startSessionServer({
     validMessageTypes: Object.values(MessageTypes),
-    // Every ticketed connection already belongs to an authenticated staff
-    // user, and any staff user can already view any iteration's data through
-    // the regular API — a sync-object subscription just narrows which
-    // *broadcasts* a socket receives, it grants no new read access (#525).
-    canListenToSyncObject: () => true,
+    /*
+     * Students hold real sessions as of #656, so a ticketed connection is no
+     * longer proof of staff clearance. A registered session receives every
+     * *untargeted* broadcast — COURSES_UPDATE, OUTSIDERS_UPDATE and friends
+     * carry real payloads — so a Hanich socket must not become one. It listens
+     * to STUDENT_SYNC_ID and receives nothing but empty pings.
+     */
+    canRegisterSession: ({ scope }) => scope !== WsScope.Hanich,
+    canListenToSyncObject: ({ scope }, syncObjectId) => {
+        // The only sync object a student may hold, and the reason iterations
+        // stay invisible to them: there is no per-iteration student channel.
+        if (scope === WsScope.Hanich) return syncObjectId === STUDENT_SYNC_ID;
+        // Staff: any staff user can already view any iteration through the
+        // regular API — a subscription just narrows which *broadcasts* a
+        // socket receives, it grants no new read access (#525).
+        return true;
+    },
     onClientMessage: (ws, data, dispatch, identity) => {
+        // Students only ever listen. Every app-level frame here is a staff
+        // presence relay, and a student must not be able to forge one.
+        if (identity.scope === WsScope.Hanich) {
+            return true;
+        }
+
         // Frames are attacker-controlled; reject anything that is not a plain
         // object before touching its fields (#511).
         if (!data || typeof data !== "object" || Array.isArray(data)) {

@@ -134,6 +134,9 @@ vi.mock("@/api-server/mongo-db-controller", () => ({
 // session server on every seeded setting — irrelevant to these tests and
 // otherwise throws for lack of WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY.
 vi.mock("@/api-server/web-socket-utils", () => ({
+    // The student refresh ping (#656) is a second network side effect on the
+    // same write paths; stubbed alongside the broadcast.
+    NotifyStudentsOfCalendarChange: vi.fn(),
     SendServerRequestToSessionServer: vi.fn(),
 }));
 

@@ -9,7 +9,8 @@ import { Course } from "@/api-shared/types/course";
 import { CurriculumCutClaim } from "@/api-shared/types/curriculum-cut";
 import { CustomColor } from "@/api-shared/types/custom-color";
 import { EventHistoryEntry } from "@/api-shared/types/event-history";
-import {
+import
+{
     GanttCurriculum,
     GanttEvent,
     GanttModule,
@@ -21,7 +22,8 @@ import { Iteration, IterationId } from "@/api-shared/types/iteration";
 import { Outsider } from "@/api-shared/types/outsider";
 import { PersonalSettings } from "@/api-shared/types/personal-settings";
 import { DbReservation } from "@/api-shared/types/reservation";
-import {
+import
+{
     CustomRoom,
     RoomExtendedInfo,
     RoomId,
@@ -44,8 +46,9 @@ export const DEFAULT_ITERATION_DB_NAME = process.env.MONGO_DB_NAME ?? "bluz";
 /** Shared meta database that holds the registry of all iterations. */
 export const META_DB_NAME = process.env.MONGO_META_DB_NAME ?? "bluz_meta";
 
-function readIntEnv(name: string, fallback: number): number {
-    const parsed = Number.parseInt(process.env[name] ?? "", 10);
+function readIntEnv(name: string, fallback: number): number
+{
+    const parsed = Number.parseInt(process.env[ name ] ?? "", 10);
     return Number.isNaN(parsed) ? fallback : parsed;
 }
 
@@ -53,9 +56,10 @@ function readIntEnv(name: string, fallback: number): number {
 // handles are cheap, so we create one controller per database name on demand.
 // The client is cached on globalThis so Next.js dev hot-reload reuses the pool
 // instead of leaking a new connection pool on every module re-evaluation.
-const globalCache = globalThis as unknown as { __bluzMongoClient?: MongoClient };
+const globalCache = globalThis as unknown as { __bluzMongoClient?: MongoClient; };
 
-function createMongoClient(): MongoClient {
+function createMongoClient(): MongoClient
+{
     return new MongoClient(MONGO_CONNECTION_STRING, {
         maxPoolSize: readIntEnv("MONGO_MAX_POOL_SIZE", 50),
         minPoolSize: readIntEnv("MONGO_MIN_POOL_SIZE", 0),
@@ -65,7 +69,8 @@ function createMongoClient(): MongoClient {
 
 let mongoClient = globalCache.__bluzMongoClient ?? createMongoClient();
 
-if (process.env.NODE_ENV !== "production") {
+if (process.env.NODE_ENV !== "production")
+{
     globalCache.__bluzMongoClient = mongoClient;
 }
 
@@ -84,18 +89,21 @@ if (process.env.NODE_ENV !== "production") {
  * client that produced them, which is why the controller resolves them per
  * access rather than caching them in the constructor.
  */
-function getMongoClient(): MongoClient {
+function getMongoClient(): MongoClient
+{
     // `topology` is undefined before the first connect and carries an
     // `isDestroyed()` once one has happened.
     const topology = (
         mongoClient as unknown as {
-            topology?: { isDestroyed?: () => boolean };
+            topology?: { isDestroyed?: () => boolean; };
         }
     ).topology;
 
-    if (topology?.isDestroyed?.()) {
+    if (topology?.isDestroyed?.())
+    {
         mongoClient = createMongoClient();
-        if (process.env.NODE_ENV !== "production") {
+        if (process.env.NODE_ENV !== "production")
+        {
             globalCache.__bluzMongoClient = mongoClient;
         }
     }
@@ -103,10 +111,12 @@ function getMongoClient(): MongoClient {
     return mongoClient;
 }
 
-class DatabaseController {
+class DatabaseController
+{
     public readonly dbName: string;
 
-    constructor(dbName: string = DEFAULT_ITERATION_DB_NAME) {
+    constructor(dbName: string = DEFAULT_ITERATION_DB_NAME)
+    {
         this.dbName = dbName;
     }
 
@@ -114,54 +124,69 @@ class DatabaseController {
     // bound to the client that created it, so a controller built while Mongo
     // was unreachable would keep serving handles from the dead client for the
     // life of the process. `db()`/`collection()` are cheap wrappers.
-    private get bluzDb(): Db {
+    private get bluzDb(): Db
+    {
         return getMongoClient().db(this.dbName);
     }
 
-    public get events(): Collection<DbEventDocument> {
+    public get events(): Collection<DbEventDocument>
+    {
         return this.bluzDb.collection("events");
     }
     /**
      * Append-only change log for events. Rows reference events by id and never
      * copy event state, so the events collection stays free of audit columns.
      */
-    public get eventHistory(): Collection<EventHistoryEntry> {
+    public get eventHistory(): Collection<EventHistoryEntry>
+    {
         return this.bluzDb.collection("eventHistory");
     }
-    public get settings(): Collection<Setting> {
+    public get settings(): Collection<Setting>
+    {
         return this.bluzDb.collection("settings");
     }
-    public get courses(): Collection<Course> {
+    public get courses(): Collection<Course>
+    {
         return this.bluzDb.collection("courses");
     }
-    public get rooms(): Collection<CustomRoom> {
+    public get rooms(): Collection<CustomRoom>
+    {
         return this.bluzDb.collection("rooms");
     }
-    public get curriculums(): Collection<GanttCurriculum & BaseDbDocument> {
+    public get curriculums(): Collection<GanttCurriculum & BaseDbDocument>
+    {
         return this.bluzDb.collection("curriculums");
     }
-    public get syllabuses(): Collection<GanttSyllabus & BaseDbDocument> {
+    public get syllabuses(): Collection<GanttSyllabus & BaseDbDocument>
+    {
         return this.bluzDb.collection("syllabuses");
     }
-    public get modules(): Collection<GanttModule & BaseDbDocument> {
+    public get modules(): Collection<GanttModule & BaseDbDocument>
+    {
         return this.bluzDb.collection("modules");
     }
-    public get moduleEvents(): Collection<GanttEvent & BaseDbDocument> {
+    public get moduleEvents(): Collection<GanttEvent & BaseDbDocument>
+    {
         return this.bluzDb.collection("moduleEvents");
     }
-    public get roomExtendedInfo(): Collection<RoomExtendedInfoDocument> {
+    public get roomExtendedInfo(): Collection<RoomExtendedInfoDocument>
+    {
         return this.bluzDb.collection("roomExtendedInfo");
     }
-    public get outsiders(): Collection<Outsider> {
+    public get outsiders(): Collection<Outsider>
+    {
         return this.bluzDb.collection("outsiders");
     }
-    public get reservations(): Collection<DbReservation> {
+    public get reservations(): Collection<DbReservation>
+    {
         return this.bluzDb.collection("reservations");
     }
-    public get calendarSnapshots(): Collection<CalendarSnapshot> {
+    public get calendarSnapshots(): Collection<CalendarSnapshot>
+    {
         return this.bluzDb.collection("calendarSnapshots");
     }
-    public get calendarDrafts(): Collection<CalendarDraft> {
+    public get calendarDrafts(): Collection<CalendarDraft>
+    {
         return this.bluzDb.collection("calendarDrafts");
     }
     /**
@@ -170,7 +195,8 @@ class DatabaseController {
      * is what makes the activator idempotent and safe to run in more than one
      * replica — the insert, not a lock, decides who acts.
      */
-    public get hiveLessonActivations(): Collection<HiveLessonActivation> {
+    public get hiveLessonActivations(): Collection<HiveLessonActivation>
+    {
         return this.bluzDb.collection("hiveLessonActivations");
     }
     /**
@@ -179,10 +205,12 @@ class DatabaseController {
      * check-then-insert let two concurrent cuts both pass the guard and each
      * insert the whole schedule (#515).
      */
-    public get curriculumCuts(): Collection<CurriculumCutClaim> {
+    public get curriculumCuts(): Collection<CurriculumCutClaim>
+    {
         return this.bluzDb.collection("curriculumCuts");
     }
-    public get client(): MongoClient {
+    public get client(): MongoClient
+    {
         return getMongoClient();
     }
 }
@@ -194,7 +222,8 @@ export { DatabaseController };
 // are safe, and a failure only costs query speed, never correctness.
 const indexedDbNames = new Set<string>();
 
-function ensureIndexesInBackground(controller: DatabaseController): void {
+function ensureIndexesInBackground(controller: DatabaseController): void
+{
     // Unit tests run without Mongo; skip so vitest never waits on connect retries.
     if (process.env.VITEST) return;
     if (indexedDbNames.has(controller.dbName)) return;
@@ -256,10 +285,13 @@ function ensureIndexesInBackground(controller: DatabaseController): void {
             { curriculumId: 1 },
             { unique: true },
         ),
-    ]).then((results) => {
+    ]).then((results) =>
+    {
         // allSettled, not all: one failing index must not skip the rest.
-        for (const result of results) {
-            if (result.status === "rejected") {
+        for (const result of results)
+        {
+            if (result.status === "rejected")
+            {
                 logger.error({ err: result.reason }, `Failed to ensure a Mongo index on "${controller.dbName}"`);
             }
         }
@@ -276,9 +308,11 @@ const controllerCache = new Map<string, DatabaseController>();
  */
 export function getDatabaseController(
     dbName: string = DEFAULT_ITERATION_DB_NAME,
-): DatabaseController {
+): DatabaseController
+{
     let controller = controllerCache.get(dbName);
-    if (!controller) {
+    if (!controller)
+    {
         controller = new DatabaseController(dbName);
         controllerCache.set(dbName, controller);
         ensureIndexesInBackground(controller);
@@ -294,26 +328,32 @@ const databaseController = getDatabaseController(DEFAULT_ITERATION_DB_NAME);
 export { databaseController };
 
 /** Lightweight controller over the shared `bluz_meta` database. */
-class MetaController {
+class MetaController
+{
     // Same reason as DatabaseController: never cache a handle from a client
     // that may have closed its topology.
-    private get metaDb(): Db {
+    private get metaDb(): Db
+    {
         return getMongoClient().db(META_DB_NAME);
     }
-    public get iterations(): Collection<Iteration> {
+    public get iterations(): Collection<Iteration>
+    {
         return this.metaDb.collection<Iteration>("iterations");
     }
     /** Per-user personal settings (favorites etc.), shared across all iterations. */
-    public get personalSettings(): Collection<PersonalSettingsDocument> {
+    public get personalSettings(): Collection<PersonalSettingsDocument>
+    {
         return this.metaDb.collection<PersonalSettingsDocument>(
             "personalSettings",
         );
     }
-    public get customColors(): Collection<CustomColor> {
+    public get customColors(): Collection<CustomColor>
+    {
         return this.metaDb.collection<CustomColor>("customColors");
     }
     /** Per-user Google Calendar OAuth links (opt-in), shared across all iterations. */
-    public get googleCalendarLinks(): Collection<GoogleCalendarLink> {
+    public get googleCalendarLinks(): Collection<GoogleCalendarLink>
+    {
         return this.metaDb.collection<GoogleCalendarLink>(
             "googleCalendarLinks",
         );
@@ -323,23 +363,54 @@ class MetaController {
      * `code` is both the lookup and the single-use guard — the same
      * insert/delete-as-claim pattern as `curriculumCuts`.
      */
-    public get cliHandoffCodes(): Collection<CliHandoffCode> {
+    public get cliHandoffCodes(): Collection<CliHandoffCode>
+    {
         return this.metaDb.collection<CliHandoffCode>("cliHandoffCodes");
     }
-    public get client(): MongoClient {
+    /**
+     * How long each student has had the schedule board open and focused, one
+     * document per user per day (#656). Meta rather than iteration-scoped:
+     * it records usage, not calendar data, and must not vanish when the
+     * current iteration rolls over.
+     */
+    public get studentEngagement(): Collection<StudentEngagementDocument>
+    {
+        return this.metaDb.collection<StudentEngagementDocument>(
+            "studentEngagement",
+        );
+    }
+    public get client(): MongoClient
+    {
         // Never the module-level handle: if the first connect failed, that one
         // is a closed topology forever, and `client.startSession()` throws.
         return getMongoClient();
     }
 }
 
-export type PersonalSettingsDocument = PersonalSettings & { userId: string };
+export type PersonalSettingsDocument = PersonalSettings & { userId: string; };
+
+/**
+ * One student's focused time on the schedule board for one day. `id` is
+ * `<userId>:<date>` so the upsert is a single keyed `$inc` with no read.
+ */
+export type StudentEngagementDocument = {
+    id: string;
+    userId: string;
+    /** `yyyy-MM-dd` in the app timezone. */
+    date: string;
+    /** Total seconds the board was open *and* focused that day. */
+    seconds: number;
+    updatedAt: Date;
+};
 
 let _metaController: MetaController | null = null;
-export function getMetaController(): MetaController {
-    if (!_metaController) {
+export function getMetaController(): MetaController
+{
+    if (!_metaController)
+    {
         _metaController = new MetaController();
-        if (!process.env.VITEST) {
+        if (!process.env.VITEST)
+        {
             // The registry is consulted on every iteration-scoped request.
             void Promise.all([
                 // Unique: the registry is keyed by `id`, and the register
@@ -369,7 +440,8 @@ export function getMetaController(): MetaController {
                     { createdAt: 1 },
                     { expireAfterSeconds: CLI_HANDOFF_TTL_SECONDS },
                 ),
-            ]).catch((error) => {
+            ]).catch((error) =>
+            {
                 logger.error({ err: error }, "Failed to ensure iteration registry indexes");
             });
         }
@@ -393,26 +465,32 @@ const CURRENT_ITERATION_MEMO_TTL_MS = 15_000;
 let _currentInitPromise: null | Promise<void> = null;
 let _currentInitAt = 0;
 
-async function ensureCurrentIterationResolved(): Promise<void> {
+async function ensureCurrentIterationResolved(): Promise<void>
+{
     // Unit tests run without Mongo; the registry is mocked where it matters, so
     // skip the probe to keep the default fast and deterministic.
     if (process.env.VITEST) return;
     if (
         _currentInitPromise &&
         Date.now() - _currentInitAt < CURRENT_ITERATION_MEMO_TTL_MS
-    ) {
+    )
+    {
         return await _currentInitPromise;
     }
     let failed = false;
-    const probe: Promise<void> = (async () => {
-        try {
+    const probe: Promise<void> = (async () =>
+    {
+        try
+        {
             const current = await getMetaController().iterations.findOne({
                 isCurrent: true,
             });
-            if (current?.dbName) {
+            if (current?.dbName)
+            {
                 _currentIterationDbName = current.dbName;
             }
-        } catch {
+        } catch
+        {
             // Registry unreachable or unseeded — keep the default database for
             // now, but do not let a one-off failure pin the process to it.
             failed = true;
@@ -423,14 +501,16 @@ async function ensureCurrentIterationResolved(): Promise<void> {
     await probe;
     // Clear the memo so the next request probes again. An explicit switch that
     // landed meanwhile owns the memo, so only drop it if it is still ours.
-    if (failed && _currentInitPromise === probe) {
+    if (failed && _currentInitPromise === probe)
+    {
         _currentInitPromise = null;
         _currentInitAt = 0;
     }
 }
 
 /** Update the cached current-iteration database (called after a setCurrent). */
-export function setCurrentIterationDbName(dbName: string) {
+export function setCurrentIterationDbName(dbName: string)
+{
     _currentIterationDbName = dbName;
     // A subsequent registry probe must not clobber an explicit switch — but the
     // TTL still applies, so a switch made by another replica is picked up.
@@ -439,7 +519,8 @@ export function setCurrentIterationDbName(dbName: string) {
 }
 
 /** The database name backing the current (writable) iteration. */
-export function getCurrentIterationDbName(): string {
+export function getCurrentIterationDbName(): string
+{
     return _currentIterationDbName;
 }
 
@@ -451,7 +532,8 @@ export function getCurrentIterationDbName(): string {
  */
 export async function resolveIterationDb(
     iterationId?: IterationId,
-): Promise<DatabaseController> {
+): Promise<DatabaseController>
+{
     return await lookupIterationDb(iterationId, false);
 }
 
@@ -461,7 +543,8 @@ export async function resolveIterationDb(
  */
 export async function resolveWritableIterationDb(
     iterationId?: IterationId,
-): Promise<DatabaseController> {
+): Promise<DatabaseController>
+{
     return await lookupIterationDb(iterationId, true);
 }
 
@@ -469,8 +552,10 @@ export async function resolveWritableIterationDb(
 async function lookupIterationDb(
     iterationId: IterationId | undefined,
     writable: boolean,
-): Promise<DatabaseController> {
-    if (!iterationId) {
+): Promise<DatabaseController>
+{
+    if (!iterationId)
+    {
         await ensureCurrentIterationResolved();
         return getDatabaseController(_currentIterationDbName);
     }
@@ -478,10 +563,12 @@ async function lookupIterationDb(
     const iteration = await getMetaController().iterations.findOne({
         id: iterationId,
     });
-    if (!iteration) {
+    if (!iteration)
+    {
         throw new ClientApiError(`Unknown iteration "${iterationId}"`);
     }
-    if (writable && !iteration.isCurrent) {
+    if (writable && !iteration.isCurrent)
+    {
         throw new ClientApiError(
             "מחזור קודם הוא לקריאה בלבד ולא ניתן לעריכה",
         );
@@ -490,16 +577,18 @@ async function lookupIterationDb(
 }
 
 export type ProjectionMap<T> = {
-    [P in keyof T]: 1;
+    [ P in keyof T ]: 1;
 };
 
 export function createProjectionMap<T extends object>(
     keys: Array<keyof T>,
-): ProjectionMap<T> {
+): ProjectionMap<T>
+{
     const map: any = {};
 
-    keys.forEach((key) => {
-        map[key] = 1;
+    keys.forEach((key) =>
+    {
+        map[ key ] = 1;
     });
 
     return map;

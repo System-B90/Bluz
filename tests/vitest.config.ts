@@ -45,6 +45,13 @@ export default defineSharedVitestConfig({
         // old nesting was silently ignored, so the cap had stopped applying —
         // which is exactly the starvation it was added to prevent.
         maxForks: 4,
+        // Node 22+ exposes a global `localStorage`/`sessionStorage` (Web
+        // Storage API) that wins over jsdom's own implementation and, with
+        // no `--localstorage-file` path configured, is a broken stub
+        // (`localStorage.clear is not a function`). Disabling it lets
+        // jsdom's localStorage — the one component tests actually want —
+        // through.
+        execArgv: [ "--no-experimental-webstorage" ],
         // The backend suite is import-bound, not compute-bound: a single
         // `api-server` test file pulls in the Drizzle/Postgres stack and the
         // gantt planner graph, which costs seconds to transform and evaluate

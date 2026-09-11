@@ -5,34 +5,27 @@ import List from "@mui/material/List";
 import ListSubheader from "@mui/material/ListSubheader";
 import Popover from "@mui/material/Popover";
 import Typography from "@mui/material/Typography";
-import { useSnackbar } from "notistack";
 import {
     Dispatch,
     MouseEvent,
     SetStateAction,
     useCallback,
     useEffect,
-    useMemo,
-    useRef,
     useState,
 } from "react";
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
-import { useCurriculumCommands } from "@/components/app-commands/use-curriculum-commands";
-import { useCurriculumSyncRef } from "@/components/gantt/curriculum-fab/curriculum-sync-context";
+import { GANTT_ANCHORS } from "@/components/app-onboarding/anchors";
 import { CurriculumActionItems } from "@/components/gantt/curriculum-fab/CurriculumActionItems";
 import { CurriculumListItems } from "@/components/gantt/curriculum-fab/CurriculumListItems";
-import {
-    fetchDrawerData,
-    flattenCurriculumGroups,
-    groupCurriculumsByStatus,
-} from "@/components/gantt/curriculum-fab/utils";
+import { useCurriculumList } from "@/components/gantt/state/curriculum-list";
+import { useTourAnchor } from "@/components/onboarding";
 
 export type CurriculumDrawerProps = {
     open?: boolean;
     setOpen?: Dispatch<SetStateAction<boolean>>;
-    setCurrentCurriculum: Dispatch<SetStateAction<GanttCurriculumId | null>>;
+    setCurrentCurriculum?: Dispatch<SetStateAction<GanttCurriculumId | null>>;
     currentCurriculum?: GanttCurriculumId | null;
     onLoadingChange?: (isFetchingDetails: boolean) => void;
 };
@@ -40,104 +33,29 @@ export type CurriculumDrawerProps = {
 const PANEL_WIDTH = 320;
 
 export function CurriculumFab({
-    setCurrentCurriculum,
-    currentCurriculum,
+    setCurrentCurriculum: propSetCurrentCurriculum,
+    currentCurriculum: propCurrentCurriculum,
     onLoadingChange,
 }: CurriculumDrawerProps) {
-    const { enqueueSnackbar } = useSnackbar();
-    const [curriculumsData, setCurriculumsData] = useState<
-        Record<GanttCurriculumId, GanttCurriculumDocument>
-    >({} as Record<GanttCurriculumId, GanttCurriculumDocument>);
-    const [isFetchingDetails, setIsFetchingDetails] = useState<boolean>(true);
-    const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
-    const hasInitializedSelection = useRef(false);
-    const syncRef = useCurriculumSyncRef();
+    const listState = useCurriculumList();
+    const curriculumsData = listState.curriculums;
+    const isFetchingDetails = listState.isLoading;
+    const groups = listState.groups;
+    const currentCurriculum =
+        propCurrentCurriculum !== undefined
+            ? propCurrentCurriculum
+            : listState.currentCurriculum;
+    const setCurrentCurriculum =
+        propSetCurrentCurriculum ?? listState.setCurrentCurriculum;
 
-    useEffect(() => {
-        let isMounted = true;
-        void fetchDrawerData({
-            isMounted,
-            enqueueSnackbar,
-            setCurriculumsData,
-            setIsFetchingDetails,
-        });
-        return () => {
-            isMounted = false;
-        };
-    }, [enqueueSnackbar]);
+    const [ anchorEl, setAnchorEl ] = useState<HTMLButtonElement | null>(null);
+    const curriculumFabAnchor = useTourAnchor<HTMLButtonElement>(
+        GANTT_ANCHORS.curriculumFab,
+    );
 
     useEffect(() => {
         onLoadingChange?.(isFetchingDetails);
-    }, [isFetchingDetails, onLoadingChange]);
-
-    useEffect(() => {
-        if (!syncRef) return;
-        syncRef.current = (updatedCurriculum) => {
-            setCurriculumsData((prev) => ({
-                ...prev,
-                [updatedCurriculum.id]: updatedCurriculum,
-            }));
-        };
-    }, [syncRef]);
-
-    // The drawer already owns the fetched list, so it is also what contributes
-    // the curriculums to the command palette's entity lane.
-    useCurriculumCommands({
-        curriculums: curriculumsData,
-        currentCurriculum,
-        setCurrentCurriculum,
-    });
-
-    const groups = useMemo(
-        () => groupCurriculumsByStatus(curriculumsData),
-        [curriculumsData],
-    );
-
-    const sortedIds = useMemo(() => flattenCurriculumGroups(groups), [groups]);
-
-    useEffect(() => {
-        if (
-            !hasInitializedSelection.current &&
-            sortedIds.length > 0 &&
-            !currentCurriculum
-        ) {
-            setCurrentCurriculum(sortedIds[0]);
-            hasInitializedSelection.current = true;
-        }
-    }, [sortedIds, currentCurriculum, setCurrentCurriculum]);
-
-    const onCreateCallback = useCallback(
-        (newCurriculum: GanttCurriculumDocument) => {
-            setCurrentCurriculum(newCurriculum.id);
-            setCurriculumsData((prev) => ({
-                ...prev,
-                [newCurriculum.id]: newCurriculum,
-            }));
-            setAnchorEl(null);
-        },
-        [setCurrentCurriculum],
-    );
-
-    const onDeleteCallback = useCallback(
-        (deletedCurriculumId: GanttCurriculumId) => {
-            setCurriculumsData((prev) => {
-                const next = { ...prev };
-                delete next[deletedCurriculumId];
-                return next;
-            });
-            setCurrentCurriculum((previousCurrent) => {
-                if (previousCurrent !== deletedCurriculumId) {
-                    return previousCurrent;
-                }
-                const remainingIds = sortedIds.filter(
-                    (id) => id !== deletedCurriculumId,
-                );
-                return remainingIds[0] ?? null;
-            });
-            setAnchorEl(null);
-        },
-        [setCurrentCurriculum, sortedIds],
-    );
+    }, [ isFetchingDetails, onLoadingChange ]);
 
     const handleTogglePanel = useCallback(
         (event: MouseEvent<HTMLButtonElement>) => {
@@ -155,7 +73,23 @@ export function CurriculumFab({
             setCurrentCurriculum(value);
             handleClosePanel();
         },
-        [handleClosePanel, setCurrentCurriculum],
+        [ handleClosePanel, setCurrentCurriculum ],
+    );
+
+    const handleCreate = useCallback(
+        (newCurriculum: GanttCurriculumDocument) => {
+            listState.onCreate(newCurriculum);
+            handleClosePanel();
+        },
+        [ handleClosePanel, listState ],
+    );
+
+    const handleDelete = useCallback(
+        (deletedCurriculumId: GanttCurriculumId) => {
+            listState.onDelete(deletedCurriculumId);
+            handleClosePanel();
+        },
+        [ handleClosePanel, listState ],
     );
 
     const isOpen = Boolean(anchorEl);
@@ -165,8 +99,9 @@ export function CurriculumFab({
             <Fab
                 aria-label="גאנטים"
                 color="primary"
-                onClick={handleTogglePanel}
-                sx={{
+                onClick={ handleTogglePanel }
+                ref={ curriculumFabAnchor }
+                sx={ {
                     position: "fixed",
                     insetInlineEnd: 16,
                     bottom: 16,
@@ -180,17 +115,17 @@ export function CurriculumFab({
                     "&:active": {
                         transform: "scale(0.92)",
                     },
-                }}
+                } }
             >
                 <MenuBookIcon />
             </Fab>
 
             <Popover
-                anchorEl={anchorEl}
-                anchorOrigin={{ vertical: "top", horizontal: "right" }}
-                onClose={handleClosePanel}
-                open={isOpen}
-                slotProps={{
+                anchorEl={ anchorEl }
+                anchorOrigin={ { vertical: "top", horizontal: "right" } }
+                onClose={ handleClosePanel }
+                open={ isOpen }
+                slotProps={ {
                     paper: {
                         className: "animate-slide-up-fade",
                         sx: {
@@ -208,40 +143,40 @@ export function CurriculumFab({
                                 "0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)",
                         },
                     },
-                }}
-                transformOrigin={{ vertical: "bottom", horizontal: "left" }}
+                } }
+                transformOrigin={ { vertical: "bottom", horizontal: "left" } }
             >
-                <Box sx={{ p: 1, pb: 0, flexShrink: 0 }}>
+                <Box sx={ { p: 1, pb: 0, flexShrink: 0 } }>
                     <Typography align="center" variant="h6">
                         גאנטים
                     </Typography>
                     <CurriculumActionItems
-                        disabled={isFetchingDetails}
-                        onCreate={onCreateCallback}
-                        onDelete={onDeleteCallback}
+                        disabled={ isFetchingDetails }
+                        onCreate={ handleCreate }
+                        onDelete={ handleDelete }
                         sourceCurriculum={
                             currentCurriculum
-                                ? curriculumsData[currentCurriculum]
+                                ? curriculumsData[ currentCurriculum ]
                                 : null
                         }
                     />
                 </Box>
                 <List
                     dense
-                    sx={{
+                    sx={ {
                         paddingX: 1,
                         paddingY: 0.5,
                         overflowY: "auto",
                         flexGrow: 1,
                         minHeight: 0,
-                    }}
+                    } }
                 >
                     <ListSubheader
-                        sx={{
+                        sx={ {
                             paddingY: 0,
                             lineHeight: 1.75,
                             bgcolor: "background.paper",
-                        }}
+                        } }
                     >
                         <Typography
                             align="center"
@@ -252,11 +187,13 @@ export function CurriculumFab({
                         </Typography>
                     </ListSubheader>
                     <CurriculumListItems
-                        currentCurriculum={currentCurriculum}
-                        curriculumsData={curriculumsData}
-                        groups={groups}
-                        isFetchingDetails={isFetchingDetails}
-                        setCurrentCurriculum={handleSelectCurriculum}
+                        currentCurriculum={ currentCurriculum }
+                        curriculumsData={ curriculumsData }
+                        groups={ groups }
+                        isFetchingDetails={ isFetchingDetails }
+                        onCreate={ handleCreate }
+                        onDelete={ handleDelete }
+                        setCurrentCurriculum={ handleSelectCurriculum }
                     />
                 </List>
             </Popover>

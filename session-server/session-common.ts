@@ -11,6 +11,7 @@ export {
     SECURE_CONTEXT_ONLY,
     signWsTicket,
     verifyWsTicket,
+    verifyWsTicketIdentity,
     WEBSOCKET_PORT_SUFFIX,
     WEBSOCKET_PROTOCOL,
     WEBSOCKET_SESSION_SERVER_HOST,
@@ -54,6 +55,12 @@ export enum MessageTypes {
     // Period locking: broadcast that a user has started/finished editing an event
     EVENT_LOCK = "el",
     EVENT_UNLOCK = "eu",
+
+    /**
+     * Content-free "something changed, refetch" ping for student sockets
+     * (#656). Carries no data by construction — see `STUDENT_SYNC_ID`.
+     */
+    STUDENT_REFRESH = "srf",
 }
 /**
  * Compile-time proof that the mirrored values still match the package's.
@@ -87,3 +94,28 @@ export const CURRENT_ITERATION_SYNC_ID = "iteration:current";
 export function iterationSyncId(iterationId?: string): string {
     return iterationId ? `iteration:${iterationId}` : CURRENT_ITERATION_SYNC_ID;
 }
+
+/**
+ * Privilege label signed into a connect ticket (#656). Bluz serves two kinds
+ * of socket and they may not see the same traffic, so the scope decides what a
+ * socket is allowed to register for — see `session-server.ts`.
+ */
+export enum WsScope {
+    /** Segel/Admin. The full staff calendar wire. */
+    Segel = "segel",
+    /** Hanich. Content-free refresh pings and nothing else. */
+    Hanich = "hanich",
+}
+
+/**
+ * Sync-object id for the student refresh channel.
+ *
+ * Students must never receive a calendar payload, so nothing is broadcast on
+ * this id but an *empty* ping: the board refetches through
+ * `/api/student-view/schedule`, which applies the whole student projection
+ * server-side. It is also the only sync object a Hanich socket may register
+ * for, which is what keeps iterations invisible to students — there is no
+ * per-iteration student channel to subscribe to, and their fetch is pinned to
+ * the current iteration server-side regardless.
+ */
+export const STUDENT_SYNC_ID = "students:current";

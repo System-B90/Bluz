@@ -1,42 +1,43 @@
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
-import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
 
 import
 {
-    GanttCurriculumDocument,
-    apiExportCurriculum,
-    apiImportCurriculum,
+    GanttCurriculumDocument
 } from "@/api-client/gantt/curriculum";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
-import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
-import { ImportExportMenuButton } from "@/components/base/ImportExportMenuButton";
 import { CreateCurriculumHoverMenu } from "@/components/gantt/curriculum-fab/action-items/CreateCurriculumHoverMenu";
 import { DeleteCurriculumAction } from "@/components/gantt/curriculum-fab/action-items/DeleteCurriculumAction";
+import { useCurriculumList } from "@/components/gantt/state/curriculum-list";
 
 type ActionKey =
     | "createDraft"
     | "createFromTemplate"
     | "delete"
-    | "duplicate"
-    | "importExport";
+    | "duplicate";
 
-export type CreateNewCurriculumProps = {
-    disabled: boolean;
-    onCreate: (newCurriculum: GanttCurriculumDocument) => void;
-    onDelete: (deletedCurriculumId: GanttCurriculumId) => void;
-    sourceCurriculum?: GanttCurriculumDocument | null;
+export type GanttCreationDeletionCallbackProps = {
+    onCreate?: (newCurriculum: GanttCurriculumDocument) => void;
+    onDelete?: (deletedCurriculumId: GanttCurriculumId) => void;
 };
+
+export type CurriculumActionItemsProps = {
+    disabled: boolean;
+    sourceCurriculum?: GanttCurriculumDocument | null;
+} & GanttCreationDeletionCallbackProps;
 
 export function CurriculumActionItems({
     onCreate,
     onDelete,
     disabled,
     sourceCurriculum,
-}: CreateNewCurriculumProps)
+}: CurriculumActionItemsProps)
 {
-    const { enqueueSnackbar } = useSnackbar();
+    const curriculumList = useCurriculumList();
+    const handleCreate = onCreate ?? curriculumList.onCreate;
+    const handleDelete = onDelete ?? curriculumList.onDelete;
+
     const [ activeAction, setActiveAction ] = useState<ActionKey | null>(null);
     const isProcessing = activeAction !== null;
     const isDisabled = disabled || isProcessing;
@@ -44,67 +45,6 @@ export function CurriculumActionItems({
     const makeProcessingHandler = useCallback(
         (key: ActionKey) => (loading: boolean) => setActiveAction(loading ? key : null),
         [],
-    );
-
-    const handleExport = useCallback(async () =>
-    {
-        if (!sourceCurriculum) return null;
-        setActiveAction("importExport");
-        try
-        {
-            return await apiExportCurriculum(sourceCurriculum.id);
-        } finally
-        {
-            setActiveAction(null);
-        }
-    }, [ sourceCurriculum ]);
-
-    const handleExportExcel = useCallback(() =>
-    {
-        if (!sourceCurriculum) return;
-        window.open(`/api/gantt/curriculums/${sourceCurriculum.id}/export/excel`, "_blank");
-    }, [ sourceCurriculum ]);
-
-    const handleExportSuccess = useCallback(() =>
-    {
-        enqueueSnackbar("הגאנט יוצא בהצלחה!", { variant: "success" });
-    }, [ enqueueSnackbar ]);
-
-    const handleExportError = useCallback(
-        (error: any) =>
-        {
-            enqueueApiErrorSnackbar(enqueueSnackbar, "ייצוא הגאנט נכשל!", error);
-        },
-        [ enqueueSnackbar ],
-    );
-
-    const handleImport = useCallback(
-        (e: React.ChangeEvent<HTMLInputElement>) =>
-        {
-            const file = e.target.files?.[ 0 ];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = async (event) =>
-            {
-                try
-                {
-                    const json = JSON.parse(event.target?.result as string);
-                    setActiveAction("importExport");
-                    const newCurriculum = await apiImportCurriculum(json);
-                    onCreate(newCurriculum);
-                    enqueueSnackbar("הגאנט יובא בהצלחה!", { variant: "success" });
-                } catch (err)
-                {
-                    enqueueApiErrorSnackbar(enqueueSnackbar, "ייבוא הגאנט נכשל!", err);
-                } finally
-                {
-                    setActiveAction(null);
-                }
-            };
-            reader.readAsText(file);
-        },
-        [ onCreate, enqueueSnackbar ],
     );
 
     return (
@@ -123,29 +63,9 @@ export function CurriculumActionItems({
                 activeAction={ activeAction }
                 isDisabled={ isDisabled }
                 makeProcessingHandler={ makeProcessingHandler }
-                onCreate={ onCreate }
+                onCreate={ handleCreate }
                 sourceCurriculum={ sourceCurriculum }
             />
-
-            <Divider flexItem orientation="vertical" sx={ { my: 0.5 } } />
-
-            { /* Import/export on the current curriculum */ }
-            <Box alignItems="center" display="flex" gap={ 0.5 }>
-                <ImportExportMenuButton
-                    exportDisabled={ isDisabled || !sourceCurriculum }
-                    exportFilenamePrefix="bluz-gantt-"
-                    exportTitle={ sourceCurriculum?.title }
-                    iconOnly
-                    importDisabled={ isDisabled }
-                    loading={ activeAction === "importExport" }
-                    onExport={ handleExport }
-                    onExportError={ handleExportError }
-                    onExportExcel={ handleExportExcel }
-                    onExportSuccess={ handleExportSuccess }
-                    onImport={ handleImport }
-                    variant="outlined"
-                />
-            </Box>
 
             <Divider flexItem orientation="vertical" sx={ { my: 0.5 } } />
 
@@ -153,10 +73,11 @@ export function CurriculumActionItems({
             <DeleteCurriculumAction
                 disabled={ isDisabled || !sourceCurriculum }
                 loading={ activeAction === "delete" }
-                onDelete={ onDelete }
+                onDelete={ handleDelete }
                 onProcessingChange={ makeProcessingHandler("delete") }
                 sourceCurriculum={ sourceCurriculum }
             />
+
         </Box>
     );
 }

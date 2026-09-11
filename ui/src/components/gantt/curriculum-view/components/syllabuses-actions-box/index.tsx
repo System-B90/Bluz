@@ -5,6 +5,7 @@ import { useSnackbar } from "notistack";
 import React, { useCallback } from "react";
 
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { GANTT_ANCHORS } from "@/components/app-onboarding/anchors";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { ImportExportMenuButton } from "@/components/base/ImportExportMenuButton";
 import { CreateSyllabusButton } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box/CreateSyllabusButton";
@@ -14,6 +15,7 @@ import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/Use
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
 import { useCurriculumState } from "@/components/gantt/state/provider";
+import { useTourAnchor } from "@/components/onboarding";
 
 export type SyllabusesActionsBoxProps = {
     curriculumId: GanttCurriculumId;
@@ -31,6 +33,7 @@ export function SyllabusesActionsBox({
 }: SyllabusesActionsBoxProps)
 {
     const { enqueueSnackbar } = useSnackbar();
+    const searchAnchor = useTourAnchor<HTMLDivElement>(GANTT_ANCHORS.search);
     const state = useCurriculumState();
     const curriculum = state.curriculums[ curriculumId ];
 
@@ -220,7 +223,14 @@ export function SyllabusesActionsBox({
 
             <Divider flexItem orientation="vertical" />
 
-            <GanttSearchField />
+            <Box
+                display="flex"
+                flexGrow={ 1 }
+                maxWidth={ 420 }
+                ref={ searchAnchor }
+            >
+                <GanttSearchField />
+            </Box>
 
             <Box flexGrow={ 1 } />
 

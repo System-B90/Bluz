@@ -11,8 +11,8 @@ import {
     connectGoogleCalendar,
     isGoogleCalendarConfigured,
 } from "@/api-server/google/google-calendar-service";
-import { getSessionUser } from "@/api-server/session-user";
-import { ClientApiError, UserNotLoggedInError } from "@/api-shared/errors";
+import { requireStaffSession } from "@/api-server/session-user";
+import { ClientApiError } from "@/api-shared/errors";
 import { ApiGoogleCalendarConnectPayload } from "@/api-shared/types/google-calendar";
 
 /**
@@ -23,8 +23,8 @@ import { ApiGoogleCalendarConnectPayload } from "@/api-shared/types/google-calen
  * so no redirect URI is ever registered or configured server-side.
  */
 export const POST = withApi(async (request: NextRequest) => {
-    const user = await getSessionUser();
-    if (!user) throw new UserNotLoggedInError("אינך מחובר");
+    // Staff-only (#656): Google Calendar sync is a staff surface.
+    const user = await requireStaffSession();
 
     if (!isGoogleCalendarConfigured()) {
         throw new ClientApiError(

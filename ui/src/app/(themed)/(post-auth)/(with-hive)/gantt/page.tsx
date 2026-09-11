@@ -2,27 +2,22 @@
 "use client";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
-import { keyframes } from '@mui/material/styles';
+import { keyframes } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSnackbar } from "notistack";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
 import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
-import {
-    CURRICULUM_QUERY_PARAM,
-    GanttCurriculumId,
-} from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import { ErrorSurface } from "@/components/errors/ErrorSurface";
 import { CurriculumFab } from "@/components/gantt/curriculum-fab";
-import {
-    CurriculumSyncContext,
-    CurriculumSyncHandler,
-} from "@/components/gantt/curriculum-fab/curriculum-sync-context";
 import { CurriculumView } from "@/components/gantt/curriculum-view";
+import {
+    CurriculumListProvider,
+    useCurriculumList,
+} from "@/components/gantt/state/curriculum-list";
 import { GanttMappingProvider } from "@/components/gantt/state/mappings/Provider";
 import { CurriculumProvider } from "@/components/gantt/state/provider";
 import { GanttRecurrenceExceptionProvider } from "@/components/gantt/state/recurrence-exceptions/Provider";
@@ -48,14 +43,11 @@ const LOADING_STRINGS = [
 /**
  * Animated loading screen sub-component
  */
-const WindowsLoadingScreen = () =>
-{
+const WindowsLoadingScreen = () => {
     const [ index, setIndex ] = useState(0);
 
-    useEffect(() =>
-    {
-        const interval = setInterval(() =>
-        {
+    useEffect(() => {
+        const interval = setInterval(() => {
             setIndex((prev) => (prev + 1) % LOADING_STRINGS.length);
         }, 3000); // Cycles every 3 seconds
         return () => clearInterval(interval);
@@ -94,109 +86,59 @@ const WindowsLoadingScreen = () =>
 export default function GanttPage() {
     return (
         <Suspense>
-            <GanttPageInner />
+            <CurriculumListProvider>
+                <GanttPageInner />
+            </CurriculumListProvider>
         </Suspense>
     );
 }
 
-function GanttPageInner()
-{
+function GanttPageInner() {
     const { enqueueSnackbar } = useSnackbar();
-    const router = useRouter();
-    const pathname = usePathname();
-    const searchParams = useSearchParams();
     const [ drawerOpen, setDrawerOpen ] = useState(true);
-    const [ currentCurriculum, setCurrentCurriculum ] =
-        useState<GanttCurriculumId | null>(() =>
-        {
-            const cidFromUrl = searchParams.get(CURRICULUM_QUERY_PARAM);
-            return cidFromUrl ? (cidFromUrl as GanttCurriculumId) : null;
-        });
-
-    const curriculumSyncRef = useRef<CurriculumSyncHandler>(() => {});
+    const {
+        currentCurriculum,
+        setCurrentCurriculum,
+        isLoading: isLoadingCurriculums,
+    } = useCurriculumList();
 
     const [ initialData, setInitialData ] = useState<ApiCurriculum | null>(null);
     const [ isLoading, setIsLoading ] = useState(false);
     const [ error, setError ] = useState<null | string>(null);
-    const [ isLoadingCurriculums, setIsLoadingCurriculums ] = useState(true);
-
-    // Tracks the `cid` this component itself last wrote to the URL, so an
-    // *external* URL change (a deep link landing on an already-mounted page —
-    // Next keeps this component alive across soft back/forward navigation, so
-    // the `useState` initializer above only ever runs once) is told apart from
-    // our own state->URL echo below and adopted instead of clobbered back.
-    const lastSyncedCidRef = useRef(currentCurriculum);
-
-    useEffect(() =>
-    {
-        const urlCid = searchParams.get(CURRICULUM_QUERY_PARAM);
-        const currentCid = currentCurriculum ?? null;
-
-        if (urlCid === currentCid) return;
-
-        if (urlCid !== lastSyncedCidRef.current)
-        {
-            // The URL moved out from under us — a deep link, not our own
-            // write. Follow it instead of overwriting it back.
-            lastSyncedCidRef.current = urlCid as GanttCurriculumId | null;
-            setCurrentCurriculum(urlCid as GanttCurriculumId | null);
-            return;
-        }
-
-        const nextParams = new URLSearchParams(searchParams.toString());
-        if (currentCid)
-        {
-            nextParams.set(CURRICULUM_QUERY_PARAM, currentCid);
-        } else
-        {
-            nextParams.delete(CURRICULUM_QUERY_PARAM);
-        }
-
-        lastSyncedCidRef.current = currentCid;
-        const nextSearch = nextParams.toString();
-        router.replace(nextSearch ? `${pathname}?${nextSearch}` : pathname);
-    }, [ currentCurriculum, pathname, router, searchParams ]);
 
     const [ prevCurriculum, setPrevCurriculum ] = useState(currentCurriculum);
-    if (currentCurriculum !== prevCurriculum)
-    {
+    if (currentCurriculum !== prevCurriculum) {
         setPrevCurriculum(currentCurriculum);
         if (!currentCurriculum) setInitialData(null);
     }
 
-    useEffect(() =>
-    {
+    useEffect(() => {
         if (!currentCurriculum) return;
 
         let isMounted = true;
 
-        const fetchCurriculum = async () =>
-        {
+        const fetchCurriculum = async () => {
             setIsLoading(true);
             setError(null);
-            try
-            {
+            try {
                 const data =
                     await ganttApi.curriculum.apiGet(currentCurriculum);
                 if (isMounted) setInitialData(data);
-            } catch (err: any)
-            {
+            } catch (err: any) {
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     `טעינת הגאנט נכשלה!`,
                     err,
                 );
                 if (isMounted) setError(err.message);
-            } finally
-            {
+            } finally {
                 if (isMounted) setIsLoading(false);
             }
         };
 
         queueMicrotask(() => void fetchCurriculum());
 
-        return () =>
-        {
+        return () => {
             isMounted = false;
         };
     }, [ currentCurriculum, enqueueSnackbar ]);
@@ -210,65 +152,63 @@ function GanttPageInner()
             maxWidth="100vw"
             sx={ { position: "relative" } }
         >
-            <CurriculumSyncContext.Provider value={ curriculumSyncRef }>
-                <CurriculumFab
-                    currentCurriculum={ currentCurriculum }
-                    onLoadingChange={ setIsLoadingCurriculums }
-                    open={ drawerOpen }
-                    setCurrentCurriculum={ setCurrentCurriculum }
-                    setOpen={ setDrawerOpen }
-                />
+            <CurriculumFab
+                open={ drawerOpen }
+                setOpen={ setDrawerOpen }
+            />
 
-                <Box
-                    flexGrow={ 1 }
-                    sx={ {
-                        padding: 2,
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        maxWidth: "100%",
-                    } }
-                >
-                    { !currentCurriculum && !isLoading && !isLoadingCurriculums && (
-                        <Typography color="textSecondary">
+            <Box
+                flexGrow={ 1 }
+                sx={ {
+                    padding: 2,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    maxWidth: "100%",
+                } }
+            >
+                { !currentCurriculum && !isLoading && !isLoadingCurriculums && (
+                    <Typography color="textSecondary">
                         בחרו גאנט כדי להתחיל לעבוד
-                        </Typography>
-                    ) }
+                    </Typography>
+                ) }
 
-                    { isLoading || isLoadingCurriculums ? <WindowsLoadingScreen /> : null }
+                { isLoading || isLoadingCurriculums ? <WindowsLoadingScreen /> : null }
 
-                    { error ? <Typography color="error">{ error }</Typography> : null }
+                { error ? <Typography color="error">{ error }</Typography> : null }
 
-                    { currentCurriculum && !isLoading && initialData ? (
-                        <ErrorBoundary
-                            fallback={ (boundaryError, reset) => (
-                                <ErrorSurface
-                                    actions={ [
-                                        { label: "נסו שוב", onClick: reset, variant: "contained" },
-                                    ] }
-                                    description="הצגת הגאנט נכשלה. ניתן לנסות שוב, או לבחור גאנט אחר."
-                                    details={ boundaryError.message }
-                                    title="שגיאה בהצגת הגאנט"
-                                />
-                            ) }
-                            key={ currentCurriculum }
-                            scope="gantt"
+                { currentCurriculum && !isLoading && initialData ? (
+                    <ErrorBoundary
+                        fallback={ (boundaryError, reset) => (
+                            <ErrorSurface
+                                actions={ [
+                                    { label: "נסו שוב", onClick: reset, variant: "contained" },
+                                ] }
+                                description="הצגת הגאנט נכשלה. ניתן לנסות שוב, או לבחור גאנט אחר."
+                                details={ boundaryError.message }
+                                title="שגיאה בהצגת הגאנט"
+                            />
+                        ) }
+                        key={ currentCurriculum }
+                        scope="gantt"
+                    >
+                        <CurriculumProvider
+                            curriculumId={ currentCurriculum }
+                            initialData={ initialData }
                         >
-                            <CurriculumProvider
-                                curriculumId={ currentCurriculum }
-                                initialData={ initialData }
-                            >
-                                <GanttMappingProvider curriculumId={ currentCurriculum }>
-                                    <GanttRecurrenceExceptionProvider curriculumId={ currentCurriculum }>
-                                        <CurriculumView curriculumId={ currentCurriculum } />
-                                    </GanttRecurrenceExceptionProvider>
-                                </GanttMappingProvider>
-                            </CurriculumProvider>
-                        </ErrorBoundary>
-                    ) : null }
-                </Box>
-            </CurriculumSyncContext.Provider>
+                            <GanttMappingProvider curriculumId={ currentCurriculum }>
+                                <GanttRecurrenceExceptionProvider curriculumId={ currentCurriculum }>
+                                    <CurriculumView
+                                        curriculumId={ currentCurriculum }
+                                        setCurrentCurriculum={ setCurrentCurriculum }
+                                    />
+                                </GanttRecurrenceExceptionProvider>
+                            </GanttMappingProvider>
+                        </CurriculumProvider>
+                    </ErrorBoundary>
+                ) : null }
+            </Box>
         </Box>
     );
 }

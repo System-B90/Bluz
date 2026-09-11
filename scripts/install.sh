@@ -51,7 +51,16 @@ if [ ! -f ".env" ]; then
     echo -e "\n${YELLOW}[WAIT] Initializing environment configuration wizard...${NC}"
     python3 -m venv .venv
     source .venv/bin/activate
-    pip install -r requirements.txt --quiet
+    # The offline bundle ships every wheel under wheels/; installing with
+    # --no-index keeps an air-gapped box from reaching for PyPI and the org
+    # index, neither of which it can see.
+    if [ -d "wheels" ]; then
+        pip install --no-index --find-links=wheels -r requirements.txt --quiet \
+            || fail "Could not install the wizard's Python packages from wheels/." \
+                    "The bundle may be incomplete — re-download the offline release."
+    else
+        pip install -r requirements.txt --quiet
+    fi
     python3 setup.py
     deactivate
     [ -f ".env" ] || fail "The setup wizard did not produce a .env file." \

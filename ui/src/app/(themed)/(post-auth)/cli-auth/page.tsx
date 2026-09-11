@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { Suspense } from "react";
 
 import { DbCliHandoff } from "@/api-server/db-cli-handoff";
-import { getSessionUser } from "@/api-server/session-user";
+import { getStaffSession } from "@/api-server/session-user";
 import { CliAuthWidget } from "@/app/(themed)/(post-auth)/cli-auth/cli-auth-widget";
 
 type PageProps = {
@@ -33,7 +33,10 @@ export default async function CliAuthPage({ searchParams }: PageProps) {
     // reaches the browser's DOM, a callback URL, or browser history -- the
     // CLI redeems the handoff code for the token itself over HTTPS
     // (POST /api/cli-auth/redeem), and the code is deleted on first use.
-    const sessionUser = await getSessionUser();
+    // Staff-only, checked here as well as in the post-auth layout: a handoff
+    // code is a session token in disguise, and the CLI it unlocks talks to
+    // staff-gated endpoints (#656).
+    const sessionUser = await getStaffSession();
     const handoffCode =
         token && sessionUser
             ? await DbCliHandoff.create(token, sessionUser.id)

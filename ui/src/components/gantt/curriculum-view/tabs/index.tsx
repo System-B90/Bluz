@@ -15,11 +15,13 @@ import {
 } from "react";
 
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { GANTT_ANCHORS } from "@/components/app-onboarding/anchors";
 import { CutPreviewTab } from "@/components/gantt/curriculum-view/tabs/cut-preview-tab";
 import { CurriculumGanttView } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab";
 import { SyllabusesTab } from "@/components/gantt/curriculum-view/tabs/syllabuses-tab";
 import { TimeframeEventsTab } from "@/components/gantt/curriculum-view/tabs/timeframe-events-tab";
 import { WeeksTab } from "@/components/gantt/curriculum-view/tabs/weeks-tab";
+import { useTourAnchor } from "@/components/onboarding";
 
 type TabProps = {
     selectedTabIndex: number;
@@ -34,10 +36,13 @@ export type CurriculumViewTabsProps = {
     TabProps;
 
 function TabLabels({ selectedTabIndex, setSelectedTabIndex }: TabProps) {
+    const tabsAnchor = useTourAnchor<HTMLDivElement>(GANTT_ANCHORS.tabs);
+
     return (
         <Fragment>
             <Tabs
                 onChange={(_, v) => setSelectedTabIndex(v)}
+                ref={tabsAnchor}
                 slots={{
                     StartScrollButtonIcon: KeyboardArrowLeft,
                     EndScrollButtonIcon: KeyboardArrowRight,

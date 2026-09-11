@@ -293,6 +293,47 @@ def create_students(client: HiveClient):
             tqdm.tqdm.write(str(ex))
 
 
+# The e2e student fixture (#656). Deliberately separate from MOCK_STUDENTS,
+# which is randomised (random classes, random program, random mentor) and so
+# cannot back assertions: this one has a fixed username, password and class, so
+# a test can say exactly what the student should and should not see.
+E2E_STUDENT_USERNAME = "test-hanich-e2e"
+E2E_STUDENT_PASSWORD = "test"
+
+
+def create_e2e_student(client: HiveClient):
+    """Create the deterministic Hanich account the student-view e2e specs use."""
+    existing = next(
+        (
+            u
+            for u in client.get_users(clearance__in=[ClearanceEnum.HANICH])
+            if u.username == E2E_STUDENT_USERNAME
+        ),
+        None,
+    )
+    if existing:
+        tqdm.tqdm.write(f"User '{E2E_STUDENT_USERNAME}' already exists, reusing.")
+        return existing
+
+    programs = list(client.get_programs())
+    mentors = list(client.get_users(clearance__in=[ClearanceEnum.SEGEL]))
+    try:
+        return client.create_student(
+            E2E_STUDENT_USERNAME,
+            E2E_STUDENT_PASSWORD,
+            gender=GenderEnum.MALE,
+            number=999,
+            first_name="חניך",
+            last_name="בדיקה",
+            classes=[],
+            program=programs[0] if programs else None,
+            mentor=mentors[0] if mentors else None,
+        )
+    except Exception as ex:
+        tqdm.tqdm.write(f"Error creating {E2E_STUDENT_USERNAME}: {ex}")
+        raise
+
+
 def create_segel(client: HiveClient):
     for segel_data in tqdm.tqdm(MOCK_SEGEL, desc="Creating Segel", unit="segel"):
         try:
@@ -445,6 +486,7 @@ def main():
         create_subjects(client)
 
         create_students(client)
+        create_e2e_student(client)
 
         create_classes(client)
 

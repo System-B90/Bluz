@@ -25,7 +25,8 @@ import { Filters } from "@/components/header/filters";
 import { DraftsMenu } from "@/components/schedule/calendar/calendar/DraftsMenu";
 import { IterationSelector } from "@/components/schedule/calendar/calendar/IterationSelector";
 import { SnapshotMenu } from "@/components/schedule/calendar/calendar/SnapshotMenu";
-import {
+import
+{
     CONTROL_BUTTON_SX,
     PULSING_ICON_BUTTON_SX,
 } from "@/components/schedule/calendar/calendar/toolbar-button-sx";

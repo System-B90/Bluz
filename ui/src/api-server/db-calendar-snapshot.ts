@@ -6,7 +6,10 @@ import {
     DatabaseController,
 } from "@/api-server/mongo-db-controller";
 import { withOptionalTransaction } from "@/api-server/mongo-transactions";
-import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
+import {
+    NotifyStudentsOfCalendarChange,
+    SendServerRequestToSessionServer,
+} from "@/api-server/web-socket-utils";
 import { eventDateFixupToDate } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
 import {
@@ -245,6 +248,9 @@ async function restoreSnapshot(
             iterationSyncId(iterationId),
         );
     }
+    // One ping for the whole restore: the board refetches the day regardless
+    // of how many events moved.
+    NotifyStudentsOfCalendarChange(iterationId);
 
     return {
         restoredCount: events.length,

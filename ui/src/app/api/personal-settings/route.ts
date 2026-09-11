@@ -6,15 +6,13 @@ import {
     withApi,
 } from "@/api-server/common";
 import { DbPersonalSettings } from "@/api-server/db-personal-settings";
-import { getSessionUser } from "@/api-server/session-user";
-import { UserNotLoggedInError } from "@/api-shared/errors";
+import { requireStaffSession } from "@/api-server/session-user";
 import { PersonalSettings } from "@/api-shared/types/personal-settings";
 
+// Staff-only: personal settings are a staff surface, and the student view has
+// no settings of any kind (#656).
 async function resolveUserId(): Promise<string> {
-    const user = await getSessionUser();
-    if (!user) {
-        throw new UserNotLoggedInError("אינך מחובר");
-    }
+    const user = await requireStaffSession();
     return user.id;
 }
 

@@ -37,7 +37,9 @@ instead — see [Co-located Hive](#co-located-hive) below.
 | A Hive account that can register SSO applications | The wizard registers Bluz automatically | — |
 
 The online bundle also needs outbound access to `ghcr.io`. The offline bundle
-ships every image as a `.tar` under `images/` and needs no registry access.
+ships every image as a `.tar` under `images/` and every Python package the
+wizard needs as a wheel under `wheels/`, so it needs neither registry nor PyPI
+access.
 
 ## What the installer asks you
 
@@ -66,7 +68,8 @@ bluz/
 ├── setup.py, requirements.txt      # the configuration wizard
 ├── nginx/ssl/                      # cert.pem + key.pem
 ├── VERSION                         # which release this is
-├── images/                         # offline bundle only
+├── images/                         # offline bundle only — image .tar archives
+├── wheels/                         # offline bundle only — vendored Python wheels
 └── TROUBLESHOOTING.md
 ```
 

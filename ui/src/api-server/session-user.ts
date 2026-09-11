@@ -30,6 +30,26 @@ export async function getSessionUser(): Promise<null | SessionUser> {
 }
 
 /**
+ * Non-throwing clearance check for *page* (RSC) code, where a throw becomes a
+ * 500 rather than a 403. Callers redirect on `false`. Route handlers must use
+ * {@link requireStaffSession} instead.
+ * @returns The session user when they hold Segel/Admin clearance, else null.
+ */
+export async function getStaffSession(): Promise<
+    AuthSessionData["user"] | null
+    > {
+    const session = (await getServerSession(authOptions)) as
+        | AuthSessionData
+        | null;
+    if (!session?.user) return null;
+    const { clearance } = session.user;
+    if (clearance !== Clearance.Segel && clearance !== Clearance.Admin) {
+        return null;
+    }
+    return session.user;
+}
+
+/**
  * Gates a route to Segel/Admin clearance (#199). Every request re-checks the
  * JWT, not just the one-time sign-in gate in `sso.ts`'s `signInCallback`.
  * Throws so callers can just `await requireStaffSession()` at the top of a

@@ -5,8 +5,8 @@ import { NextRequest } from "next/server";
 import { ApiSuccess, withApi } from "@/api-server/common";
 import { DbEventHistory } from "@/api-server/db-event-history";
 import { resolveIterationFromRequest } from "@/api-server/iteration-request";
-import { getSessionUser } from "@/api-server/session-user";
-import { ClientApiError, UserNotLoggedInError } from "@/api-shared/errors";
+import { requireStaffSession } from "@/api-server/session-user";
+import { ClientApiError } from "@/api-shared/errors";
 import { ApiEventHistoryResponse } from "@/api-shared/types/event-history";
 
 /**
@@ -15,13 +15,10 @@ import { ApiEventHistoryResponse } from "@/api-shared/types/event-history";
  * write paths themselves (see `api-server/db-event-history.ts`).
  */
 export const GET = withApi(async (request: NextRequest) => {
-    // The log names who changed what, so it is never served anonymously.
-    const user = await getSessionUser();
-    if (!user) {
-        throw new UserNotLoggedInError(
-            "Unauthorized: No active session found.",
-        );
-    }
+    // The log names who changed what and echoes whole event documents, so it
+    // is staff-only — a logged-in check is not enough now that students can
+    // hold a session (#656).
+    await requireStaffSession();
 
     const eventId = request.nextUrl.searchParams.get("id");
     if (!eventId) throw new ClientApiError("No event id provided!");
