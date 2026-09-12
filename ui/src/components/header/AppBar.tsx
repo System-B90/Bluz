@@ -49,6 +49,8 @@ export function ScheduleAppBar({
                     <Box width={"0.3rem"} />
 
                     <UserAccessCard />
+
+                    <StudentViewIcon />
                 </Box>
 
                 <Box flexGrow={1} />
@@ -77,8 +79,6 @@ export function ScheduleAppBar({
                     justifyContent={"flex-end"}
                 >
                     <CurriculumIcon />
-
-                    <StudentViewIcon />
 
                     <IconButton
                         className="hover-rotate-subtle transition-all duration-200 hover:scale-110 active:scale-95"

@@ -4,18 +4,33 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import MenuItem from "@mui/material/MenuItem";
-import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import "dayjs/locale/he";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { View, Views } from "react-big-calendar";
 
 import { apiGetStudentSchedule } from "@/api-client/student-view";
 import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 import { StudentEvent } from "@/api-shared/types/student-view";
+import {
+    Calendar,
+    localizer,
+} from "@/components/student-view/StudentCalendarLocalizer";
 import { useForegroundTimer } from "@/components/student-view/use-foreground-timer";
 import { useStudentLiveRefresh } from "@/components/student-view/use-student-live-refresh";
+
+/** No-room column, mirrors the staff calendar's own sentinel (#656). */
+const NO_ROOM = "ללא כיתה";
+
+type CalendarEvent = {
+    room: string;
+    title: string;
+    start: Date;
+    end: Date;
+    color: string;
+};
 
 /** Sentinel for "no filter", so an empty `<TextField select>` value is avoided. */
 const ALL = "";
@@ -40,7 +55,6 @@ export function StudentDayBoard({ date }: { date?: string }) {
     const [events, setEvents] = useState<Array<StudentEvent> | null>(null);
     const [failed, setFailed] = useState(false);
     const [course, setCourse] = useState(ALL);
-    const [room, setRoom] = useState(ALL);
     // Bumped by the live-refresh ping to re-run the fetch below.
     const [reloadToken, setReloadToken] = useState(0);
 
@@ -77,26 +91,47 @@ export function StudentDayBoard({ date }: { date?: string }) {
         () => collectNames(events, (event) => event.courses),
         [events],
     );
-    const roomOptions = useMemo(
-        () => collectNames(events, (event) => event.rooms),
-        [events],
-    );
 
     // A selection carried over from another day may name something that day
     // has none of. Falling back to "all" keeps the board from silently
     // rendering empty, and keeps the select's value inside its option list.
     const activeCourse = courseOptions.includes(course) ? course : ALL;
-    const activeRoom = roomOptions.includes(room) ? room : ALL;
 
     const visible = useMemo(
         () =>
             (events ?? []).filter(
                 (event) =>
-                    (activeCourse === ALL ||
-                        event.courses.includes(activeCourse)) &&
-                    (activeRoom === ALL || event.rooms.includes(activeRoom)),
+                    activeCourse === ALL || event.courses.includes(activeCourse),
             ),
-        [activeCourse, activeRoom, events],
+        [activeCourse, events],
+    );
+
+    // One resource column per room; events with no room land in NO_ROOM.
+    // Events in more than one room repeat, once per column, same as the
+    // staff calendar's own resource view.
+    const calendarEvents = useMemo<Array<CalendarEvent>>(
+        () =>
+            visible.flatMap((event) => {
+                const start = dayjs(event.startTime).tz(APP_TIMEZONE).toDate();
+                const end = dayjs(event.endTime).tz(APP_TIMEZONE).toDate();
+                const rooms = event.rooms.length > 0 ? event.rooms : [NO_ROOM];
+                return rooms.map((roomName) => ({
+                    color: event.color,
+                    end,
+                    room: roomName,
+                    start,
+                    title: event.name,
+                }));
+            }),
+        [visible],
+    );
+
+    const resources = useMemo(
+        () =>
+            [...new Set(calendarEvents.map((event) => event.room))]
+                .sort(sortHe)
+                .map((name) => ({ id: name, title: name })),
+        [calendarEvents],
     );
 
     const day = dayjs(date ?? undefined)
@@ -121,16 +156,12 @@ export function StudentDayBoard({ date }: { date?: string }) {
     }
 
     return (
-        <Stack
-            data-testid="student-board"
-            gap={1.5}
-            sx={{ maxWidth: 720, mx: "auto", p: 2 }}
-        >
+        <Stack data-testid="student-board" gap={1.5} sx={{ p: 2 }}>
             <Typography component="h1" variant="h5">
                 {heading}
             </Typography>
 
-            {courseOptions.length > 0 || roomOptions.length > 0 ? (
+            {courseOptions.length > 0 ? (
                 <Box display="flex" flexWrap="wrap" gap={1}>
                     <FilterSelect
                         allLabel="כל הקבוצות"
@@ -138,13 +169,6 @@ export function StudentDayBoard({ date }: { date?: string }) {
                         onChange={setCourse}
                         options={courseOptions}
                         value={activeCourse}
-                    />
-                    <FilterSelect
-                        allLabel="כל החדרים"
-                        label="חדר"
-                        onChange={setRoom}
-                        options={roomOptions}
-                        value={activeRoom}
                     />
                 </Box>
             ) : null}
@@ -158,12 +182,38 @@ export function StudentDayBoard({ date }: { date?: string }) {
                     אין אירועים התואמים לסינון
                 </Typography>
             ) : (
-                visible.map((event) => (
-                    <StudentEventCard event={event} key={event.id} />
-                ))
+                <Box sx={{ height: "calc(100vh - 180px)" }}>
+                    <Calendar
+                        components={{ event: CalendarEventContent }}
+                        date={day.toDate()}
+                        defaultView={Views.DAY}
+                        endAccessor="end"
+                        eventPropGetter={(event) => ({
+                            style: {
+                                backgroundColor: (event as CalendarEvent).color,
+                                borderColor: (event as CalendarEvent).color,
+                            },
+                        })}
+                        events={calendarEvents}
+                        localizer={localizer}
+                        resourceAccessor="room"
+                        resourceIdAccessor="id"
+                        resources={resources}
+                        resourceTitleAccessor="title"
+                        rtl
+                        startAccessor="start"
+                        titleAccessor="title"
+                        toolbar={false}
+                        views={[Views.DAY] as Array<View>}
+                    />
+                </Box>
             )}
         </Stack>
     );
+}
+
+function CalendarEventContent({ event }: { event: CalendarEvent }) {
+    return <span>{event.title}</span>;
 }
 
 /** Distinct, Hebrew-sorted names pulled off the day's events. */
@@ -205,44 +255,5 @@ function FilterSelect({
                 </MenuItem>
             ))}
         </TextField>
-    );
-}
-
-function StudentEventCard({ event }: { event: StudentEvent }) {
-    const start = dayjs(event.startTime).tz(APP_TIMEZONE).format("HH:mm");
-    const end = dayjs(event.endTime).tz(APP_TIMEZONE).format("HH:mm");
-    const subtitle = [...event.courses, ...event.rooms].join(" · ");
-
-    return (
-        <Paper
-            data-testid="student-event"
-            sx={{
-                // Logical inset so the colour bar sits on the leading edge
-                // under RTL as well.
-                borderInlineStartColor: event.color,
-                borderInlineStartStyle: "solid",
-                borderInlineStartWidth: 6,
-                display: "flex",
-                gap: 2,
-                p: 1.5,
-            }}
-            variant="outlined"
-        >
-            <Typography
-                color="text.secondary"
-                sx={{ fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}
-                variant="body2"
-            >
-                {start}–{end}
-            </Typography>
-            <Box minWidth={0}>
-                <Typography variant="subtitle1">{event.name}</Typography>
-                {subtitle ? (
-                    <Typography color="text.secondary" variant="body2">
-                        {subtitle}
-                    </Typography>
-                ) : null}
-            </Box>
-        </Paper>
     );
 }
