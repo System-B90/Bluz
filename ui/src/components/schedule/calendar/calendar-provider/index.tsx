@@ -44,7 +44,7 @@ export const CalendarProvider = ({
     const [endDate, setEndDate] = useState<Date>();
     // Active iteration, owned by IterationProvider so the providers mounted
     // above the calendar (settings, most of all) share the same scope.
-    const { iterationId, isReadOnlyIteration, setIterationId } =
+    const { iterationId, isReadOnlyIteration, setIterationId, currentIterationId } =
         useIterationScope();
     // Internal lock state carries per-lock expiry; the public `eventLocks` map
     // (below) strips that bookkeeping for consumers.
@@ -148,7 +148,15 @@ export const CalendarProvider = ({
 
     // WS updates go through remoteDispatch so they don't pollute the undo stack.
     // Pass the active iteration so broadcasts for other iterations are ignored.
-    useEventWebsocket(offlineMode, remoteDispatch, setEventLock, iterationId);
+    // `currentIterationId` too: the server spells a current-run broadcast as
+    // "no iteration", while the scope here is that iteration's real id.
+    useEventWebsocket(
+        offlineMode,
+        remoteDispatch,
+        setEventLock,
+        iterationId,
+        currentIterationId,
+    );
 
     const { saveEvent, deleteEvent, syncHistoryTravel } = useEventActions(
         events,
