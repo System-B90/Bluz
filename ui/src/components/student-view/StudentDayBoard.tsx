@@ -244,7 +244,7 @@ export function StudentDayBoard({ date }: { date?: string }) {
         // Same skeleton the staff calendar uses, so the first paint reads as
         // the grid arriving rather than a spinner on an empty page.
         return (
-            <Box sx={{ height: "calc(100vh - 120px)", position: "relative" }}>
+            <Box sx={{ flex: 1, minHeight: 0, position: "relative" }}>
                 <CalendarSkeleton />
             </Box>
         );
@@ -254,7 +254,13 @@ export function StudentDayBoard({ date }: { date?: string }) {
         <Stack
             data-testid="student-board"
             gap={1}
-            sx={{ bgcolor: "background.default", color: "text.primary", p: 2 }}
+            sx={{
+                bgcolor: "background.default",
+                color: "text.primary",
+                flex: 1,
+                minHeight: 0,
+                p: 2,
+            }}
         >
             <Box alignItems="center" display="flex" flexWrap="wrap" gap={1.5}>
                 <Typography component="h1" sx={{ fontWeight: 600 }} variant="h6">
@@ -262,8 +268,8 @@ export function StudentDayBoard({ date }: { date?: string }) {
                 </Typography>
 
                 <FilterSelect
-                    allLabel="כל הקבוצות"
-                    label="קבוצה"
+                    allLabel="כל השאפלים"
+                    label="שאפל"
                     onChange={setCourse}
                     options={courseOptions}
                     value={activeCourse}
@@ -302,7 +308,11 @@ export function StudentDayBoard({ date }: { date?: string }) {
                             border: 1,
                             borderColor: "divider",
                             borderRadius: 1,
-                            height: "calc(100vh - 140px)",
+                            flex: 1,
+                            // Without this a flex child refuses to shrink
+                            // below its content, and the grid overflows the
+                            // page instead of scrolling inside its own box.
+                            minHeight: 0,
                             overflow: "hidden",
                         }
                 }

@@ -62,12 +62,22 @@ test.describe("student view", () => {
             timeout: 30_000,
         });
 
-        // No app bar, no calendar, and nothing that hints the rest of the app
-        // is there — no link off this page at all.
+        // No app bar, and nothing that hints the rest of the app is there —
+        // no link off this page at all.
         await expect(page.locator(SELECTORS.appBar)).toHaveCount(0);
-        await expect(page.locator(SELECTORS.calendarRoot)).toHaveCount(0);
         await expect(page.locator("a[href='/gantt']")).toHaveCount(0);
         await expect(page.locator("a[href='/']")).toHaveCount(0);
+
+        // The board *is* a react-big-calendar grid (the student day view), so
+        // its presence is expected. What must be absent is the staff
+        // calendar's own machinery: the toolbar, the drag-and-drop addon, the
+        // instructor rail and the event dialog.
+        await expect(page.locator(".rbc-toolbar")).toHaveCount(0);
+        await expect(page.locator(".rbc-addons-dnd")).toHaveCount(0);
+        await expect(page.locator("[data-testid='instructor-rail']")).toHaveCount(
+            0,
+        );
+        await expect(page.locator("[role='dialog']")).toHaveCount(0);
     });
 
     test("shows no staff preview bar", async ({ page }) => {
@@ -334,6 +344,144 @@ test.describe("a hostile student probing the boundary", () => {
             "hiveModule",
         ]) {
             expect(html, `student page named ${marker}`).not.toContain(marker);
+        }
+    });
+});
+
+test.describe("no packet the student page receives carries staff data", () => {
+    /*
+     * The strongest form of the boundary: not "the schedule endpoint is
+     * clean", but "nothing that reaches this browser is dirty". Every HTTP
+     * response body and every websocket frame the page receives is scanned.
+     * This is the test that would catch a leak through an RSC payload, a
+     * prefetch, a source map, or a stray chunk — places no endpoint test
+     * looks.
+     */
+    test.slow();
+
+    /** Markers that may never appear in anything the student receives. */
+    const FORBIDDEN = [
+        // Staff event fields.
+        "hiveModule",
+        "hiveLesson",
+        "hiveQueues",
+        "personalTalk",
+        "ganttEventId",
+        "ganttCurriculumId",
+        // Staff API surface.
+        "/api/event",
+        "/api/gantt",
+        "/api/hive",
+        "/api/settings",
+        "/api/outsiders",
+        "/api/custom-colors",
+        "/api/iterations",
+        "/api/calendar/drafts",
+        "/api/calendar/snapshots",
+    ];
+
+    /**
+     * Next serves the whole client bundle from `/_next/static`, which contains
+     * the app's *code* — every route string in it, staff routes included. That
+     * is a bundling property, not a data leak, and splitting the student route
+     * into its own bundle is tracked separately; scanning it here would assert
+     * something this test cannot fix. Data-bearing responses are what matter.
+     */
+    function isDataResponse(url: string): boolean {
+        return !url.includes("/_next/static/");
+    }
+
+    test("every HTTP body and websocket frame is clean", async ({ page }) => {
+        const dirty: Array<string> = [];
+        const frames: Array<string> = [];
+
+        page.on("websocket", (ws) => {
+            ws.on("framereceived", (frame) =>
+                frames.push(String(frame.payload)),
+            );
+        });
+
+        page.on("response", async (response) => {
+            const url = response.url();
+            if (!isDataResponse(url)) return;
+            let body = "";
+            try {
+                body = await response.text();
+            } catch {
+                // Redirects and no-content responses have no body to read.
+                return;
+            }
+            for (const marker of FORBIDDEN) {
+                if (body.includes(marker)) {
+                    dirty.push(`${marker} in ${url}`);
+                }
+            }
+        });
+
+        await page.goto("/student-view");
+        await expect(page.locator(SELECTORS.studentBoard)).toBeVisible({
+            timeout: 30_000,
+        });
+        // Let the socket connect, register and receive whatever it receives.
+        await page.waitForTimeout(5_000);
+
+        for (const frame of frames) {
+            for (const marker of FORBIDDEN) {
+                if (frame.includes(marker)) dirty.push(`${marker} over WS`);
+            }
+        }
+
+        expect(
+            dirty,
+            `staff data reached the student: ${dirty.join(" | ")}`,
+        ).toEqual([]);
+    });
+
+    test("the schedule response body holds only projection values", async ({
+        request,
+    }) => {
+        const response = await request.get("/api/student-view/schedule");
+        const { data } = await response.json();
+
+        for (const event of data.events) {
+            expect(Object.keys(event).sort()).toEqual([
+                "color",
+                "courses",
+                "endTime",
+                "id",
+                "name",
+                "rooms",
+                "startTime",
+            ]);
+            // Values, not just keys: a colour must be a hex string and never
+            // an id, and rooms/courses must be display names.
+            expect(event.color).toMatch(/^#[0-9a-fA-F]{6}$/);
+            expect(Array.isArray(event.rooms)).toBe(true);
+            expect(Array.isArray(event.courses)).toBe(true);
+            for (const name of [...event.rooms, ...event.courses]) {
+                expect(typeof name).toBe("string");
+                // Bluz ids are uuids; a display name never looks like one.
+                expect(name).not.toMatch(
+                    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+                );
+            }
+        }
+    });
+
+    test("no staff cookie or header comes back with the board", async ({
+        page,
+    }) => {
+        await page.goto("/student-view");
+        await expect(page.locator(SELECTORS.studentBoard)).toBeVisible({
+            timeout: 30_000,
+        });
+
+        const cookies = await page.context().cookies();
+        for (const cookie of cookies) {
+            expect(
+                cookie.name.toLowerCase(),
+                `cookie ${cookie.name} names a clearance`,
+            ).not.toContain("clearance");
         }
     });
 });

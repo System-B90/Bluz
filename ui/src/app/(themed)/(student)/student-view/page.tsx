@@ -28,7 +28,18 @@ export default async function StudentViewPage({ searchParams }: PageProps) {
     const date = staff && DATE_PATTERN.test(rawDate) ? rawDate : undefined;
 
     return (
-        <Box bgcolor="background.default" minHeight="100vh">
+        // A column of exactly the viewport's height: the preview bar takes
+        // what it needs and the board fills the rest, so the grid reaches the
+        // bottom edge instead of stopping at a guessed offset.
+        <Box
+            sx={{
+                bgcolor: "background.default",
+                display: "flex",
+                flexDirection: "column",
+                height: "100dvh",
+                overflow: "hidden",
+            }}
+        >
             {staff ? <StudentPreviewBar date={date} /> : null}
             <StudentDayBoard date={date} />
         </Box>

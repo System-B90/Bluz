@@ -116,31 +116,31 @@ async function renderBoard() {
     await waitFor(() => expect(screen.getByText("הרצאה בוקר")).toBeDefined());
 }
 
-/** Picks an option out of the group select. */
+/** Picks an option out of the shuffle ("שאפל") select. */
 async function choose(label: string, option: string) {
     await userEvent.click(screen.getByLabelText(label));
     await userEvent.click(await screen.findByRole("option", { name: option }));
 }
 
 describe("StudentDayBoard filtering", () => {
-    it("offers only the groups present in the delivered events", async () => {
+    it("offers only the shuffles present in the delivered events", async () => {
         await renderBoard();
 
-        await userEvent.click(screen.getByLabelText("קבוצה"));
+        await userEvent.click(screen.getByLabelText("שאפל"));
         const courseOptions = screen
             .getAllByRole("option")
             .map((option) => option.textContent);
 
         // "All" plus exactly the two distinct course names — deduped, and
         // nothing that was not already on screen.
-        expect(courseOptions).toEqual(["כל הקבוצות", "מחזור א", "מחזור ב"]);
+        expect(courseOptions).toEqual(["כל השאפלים", "מחזור א", "מחזור ב"]);
         expect(apiGetStudentSchedule).toHaveBeenCalledTimes(1);
     });
 
-    it("filters by group", async () => {
+    it("filters by shuffle", async () => {
         await renderBoard();
 
-        await choose("קבוצה", "מחזור ב");
+        await choose("שאפל", "מחזור ב");
 
         expect(screen.queryByText("הרצאה בוקר")).toBeNull();
         expect(screen.queryByText("תרגול ערב")).toBeNull();
@@ -153,7 +153,7 @@ describe("StudentDayBoard filtering", () => {
         );
         await renderBoard();
 
-        await choose("קבוצה", "כל הקבוצות");
+        await choose("שאפל", "כל השאפלים");
 
         // An empty result is an empty *calendar*, never a bare message: the
         // student should always see the day, not a dead end.
@@ -172,7 +172,7 @@ describe("StudentDayBoard filtering", () => {
             expect(document.querySelector(".rbc-calendar")).not.toBeNull(),
         );
         // Nothing to filter by, so no filter — but the day is still drawn.
-        expect(screen.queryByLabelText("קבוצה")).toBeNull();
+        expect(screen.queryByLabelText("שאפל")).toBeNull();
         expect(screen.queryByText("אין אירועים ליום זה")).toBeNull();
     });
 });
@@ -253,7 +253,7 @@ describe("StudentDayBoard grid window", () => {
 });
 
 describe("StudentDayBoard tiles", () => {
-    it("shows the name, the time range and the event's groups", async () => {
+    it("shows the name, the time range and the event's shuffles", async () => {
         await renderBoard();
 
         const tile = screen.getByText("הרצאה בוקר").closest(".rbc-event");

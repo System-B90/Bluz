@@ -15,6 +15,8 @@ that assumption.
 ```powershell
 # The adversarial unit suites (fast, no containers)
 npx vitest run --config tests/vitest.config.ts tests/backend/student-data-leak.test.ts
+npx vitest run --config tests/vitest.config.ts tests/backend/student-route-surface.test.ts
+npx vitest run --config tests/vitest.config.ts tests/backend/student-projection-invariants.test.ts
 npx vitest run --config tests/vitest.config.ts tests/backend/student-view-route.test.ts
 npx vitest run --config tests/vitest.config.ts tests/backend/student-clearance-gating.test.ts
 npx vitest run --config tests/vitest.config.ts tests/backend/student-routing-gate.test.ts
@@ -81,13 +83,15 @@ accounts hold real sessions.
 
 | Suite | Covers |
 | --- | --- |
+| `tests/backend/student-route-surface.test.ts` | **Whole-surface sweep.** Every `route.ts` under `app/api` must gate (directly or through a shared builder) or sit on an explicit `PUBLIC_ROUTES` allowlist with a reason; the student surface is pinned to exactly two routes; the schedule route stays read-only and engagement write-only; the student component tree imports no staff module and names no non-student endpoint. |
+| `tests/backend/student-projection-invariants.test.ts` | **Gate + builder in isolation.** Every clearance value that may and may not pass, every `?date=` shape a student could send, and the projection against hostile documents (extra fields, nested staff blobs, inherited properties, `__proto__`, wrong types) asserted on own *and* inherited keys. |
 | `tests/backend/student-data-leak.test.ts` | **Adversarial.** Date probes (casing, duplication, encoding, traversal, `$ne`), iteration probes, forged clearance headers, projection under fully-populated staff documents, unresolvable ids, Hive down, read-only verbs. |
 | `tests/backend/student-view-route.test.ts` | Field whitelist, envelope keys, calendar hours, room short names, hidden-event filter, colour resolution. |
 | `tests/backend/student-clearance-gating.test.ts` | Staff routes refusing a Hanich JWT; ws-ticket scope. |
 | `tests/backend/student-routing-gate.test.ts` | Staff pages redirecting silently — no 403 page, nothing naming what was refused. |
 | `tests/backend/ws-student-scope.test.ts` | The session server's own gate on the signed scope. |
 | `tests/backend/student-day-board.test.tsx` | The board derives its filters from delivered events only, and issues exactly one request. |
-| `tests/student-view.spec.ts` | The whole boundary against a real Hive student token: staff APIs, staff pages, the raw response body, the rendered HTML, the socket frames. |
+| `tests/student-view.spec.ts` | The whole boundary against a real Hive student token: staff APIs, staff pages, the raw response body, the rendered HTML, the socket frames — plus a sweep that scans **every HTTP body and websocket frame the page receives** for staff markers, and asserts the projection's *values* (hex colours, display names, never a uuid). |
 
 ## Rules for changing any of this
 
