@@ -250,6 +250,35 @@ describe("StudentDayBoard grid window", () => {
 
         expect(gutter[0]).toBe("07:00");
     });
+
+    it("renders the school's wall clock whatever the device timezone is", async () => {
+        // The bug this pins: the board computes its bounds and event instants
+        // in APP_TIMEZONE, but they reach react-big-calendar as plain Dates,
+        // which the localizer used to format in the *device's* timezone. A
+        // student phone set to UTC saw the whole day shifted two hours. These
+        // assertions are absolute on purpose — if they ever start depending on
+        // where the test runs, the localizer has come unpinned again.
+        vi.mocked(apiGetStudentSchedule).mockResolvedValue(
+            schedule({
+                calendarDayEndTime: "20:00",
+                calendarDayStartTime: "08:00",
+            }) as never,
+        );
+
+        renderWithTheme();
+
+        await waitFor(() => expect(screen.getByText("הרצאה בוקר")).toBeDefined());
+        const gutter = [
+            ...document.querySelectorAll(".rbc-time-gutter .rbc-label"),
+        ].map((label) => label.textContent);
+
+        // 08:00 Asia/Jerusalem, not 08:00 wherever the runner happens to be.
+        expect(gutter[0]).toBe("08:00");
+        // The 06:00Z event start is 08:00 school time, so it sits on the first
+        // gutter row rather than two rows above the grid.
+        expect(gutter).toContain("08:00");
+        expect(gutter).not.toContain("06:00");
+    });
 });
 
 describe("StudentDayBoard tiles", () => {
