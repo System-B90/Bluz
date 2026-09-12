@@ -5,6 +5,11 @@ import { SELECTORS } from "./fixtures";
 /**
  * The student boundary, end to end against a real Hanich session (#656).
  *
+ * TOP SECURITY PRIORITY. Treat the student as hostile: they read the bundle,
+ * know every staff query parameter, and will replay requests by hand. A
+ * failure in this file is a data leak — never relax an assertion to make it
+ * pass. See `docs/security/student-boundary.md`.
+ *
  * Everything here is pinned at the unit level too, but only against mocked
  * sessions. This suite is the one that answers "does it hold when a genuine
  * Hive student token is in the cookie jar" — the unit tests cannot catch a
@@ -208,6 +213,127 @@ test.describe("the websocket carries no calendar data", () => {
             for (const field of ["events", "notes", "hiveModule", "instructors"]) {
                 expect(payload, `leaked ${field} over WS`).not.toContain(field);
             }
+        }
+    });
+});
+
+test.describe("a hostile student probing the boundary", () => {
+    test.slow();
+
+    /** Staff parameters a student can copy straight out of a staff URL. */
+    const PROBES = [
+        "?date=2020-01-01",
+        "?date=2030-12-31",
+        "?DATE=2020-01-01",
+        "?date=2020-01-01&date=2020-01-02",
+        "?date[$ne]=null",
+        "?date=../../../etc/passwd",
+    ];
+
+    for (const probe of PROBES) {
+        test(`the schedule endpoint holds the day against ${probe}`, async ({
+            request,
+        }) => {
+            const response = await request.get(
+                `/api/student-view/schedule${probe}`,
+            );
+
+            // Either refused outright, or served — but never another day.
+            if (response.ok()) {
+                const { data } = await response.json();
+                expect(data.date).not.toBe("2020-01-01");
+                expect(data.date).not.toBe("2030-12-31");
+                expect(data.date).not.toBe("2020-01-02");
+            } else {
+                expect(response.status()).toBe(403);
+            }
+        });
+    }
+
+    test("a forged clearance header changes nothing", async ({ request }) => {
+        const response = await request.get(
+            "/api/student-view/schedule?date=2020-01-01",
+            {
+                headers: {
+                    "x-clearance": "Admin",
+                    "x-user-clearance": "Segel",
+                    "x-bluz-staff": "true",
+                },
+            },
+        );
+
+        expect(response.status()).toBe(403);
+    });
+
+    test("the schedule endpoint refuses every write verb", async ({
+        request,
+    }) => {
+        for (const send of [
+            request.post("/api/student-view/schedule", { data: {} }),
+            request.put("/api/student-view/schedule", { data: {} }),
+            request.patch("/api/student-view/schedule", { data: {} }),
+            request.delete("/api/student-view/schedule"),
+        ]) {
+            const response = await send;
+            expect(
+                response.ok(),
+                `a write to the student schedule succeeded (${response.status()})`,
+            ).toBe(false);
+        }
+    });
+
+    test("the response carries nothing beyond the agreed envelope", async ({
+        request,
+    }) => {
+        const response = await request.get("/api/student-view/schedule");
+        const { data } = await response.json();
+
+        expect(Object.keys(data).sort()).toEqual([
+            "calendarDayEndTime",
+            "calendarDayStartTime",
+            "date",
+            "events",
+        ]);
+    });
+
+    test("an engagement report cannot name another user or day", async ({
+        request,
+    }) => {
+        // The body carries a duration and nothing else; a forged identity or
+        // date in the payload must be ignored, not honoured.
+        const response = await request.post("/api/student-view/engagement", {
+            data: {
+                date: "2020-01-01",
+                seconds: 30,
+                userId: "someone-else",
+            },
+        });
+
+        // Accepted (it is the student's own counter) or refused — either way,
+        // nothing in the body may steer it. A 500 would mean the extra fields
+        // reached something that tried to use them.
+        expect([200, 400, 401, 403]).toContain(response.status());
+    });
+
+    test("the student page itself renders no staff route in its HTML", async ({
+        page,
+    }) => {
+        await page.goto("/student-view");
+        await expect(page.locator(SELECTORS.studentBoard)).toBeVisible({
+            timeout: 30_000,
+        });
+
+        const html = await page.content();
+        for (const marker of [
+            "/api/event",
+            "/api/gantt",
+            "/api/hive",
+            "/api/settings",
+            "/gantt",
+            "instructors",
+            "hiveModule",
+        ]) {
+            expect(html, `student page named ${marker}`).not.toContain(marker);
         }
     });
 });

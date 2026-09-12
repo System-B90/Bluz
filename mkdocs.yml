@@ -73,6 +73,7 @@ nav:
   - Home: index.md
   - Getting Started: getting-started.md
   - Architecture: architecture.md
+  - Student Boundary (Security): student-boundary.md
   - Performance & Scaling: performance-and-scaling.md
   - Backup & Restore: backup-and-restore.md
   - Code Quality Review: code-quality.md

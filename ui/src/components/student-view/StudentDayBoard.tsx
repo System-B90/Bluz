@@ -2,6 +2,7 @@
 
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
+import ZoomInMapIcon from "@mui/icons-material/ZoomInMap";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
@@ -12,7 +13,14 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import "dayjs/locale/he";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+    useCallback,
+    useEffect,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
 import { View, Views } from "react-big-calendar";
 
 import { apiGetStudentSchedule } from "@/api-client/student-view";
@@ -84,6 +92,9 @@ export function StudentDayBoard({ date }: { date?: string }) {
     const [failed, setFailed] = useState(false);
     const [hours, setHours] = useState(DEFAULT_HOURS);
     const [fullscreen, setFullscreen] = useState(false);
+    // Clicking a room header zooms that column to the full width; clicking it
+    // again returns to every room.
+    const [zoomedRoom, setZoomedRoom] = useState<null | string>(null);
     const [course, setCourse] = useState(ALL);
     // Bumped by the live-refresh ping to re-run the fetch below.
     const [reloadToken, setReloadToken] = useState(0);
@@ -114,8 +125,8 @@ export function StudentDayBoard({ date }: { date?: string }) {
                 if (cancelled) return;
                 setEvents(response.events);
                 setHours({
-                    end: response.calendarDayEndTime,
-                    start: response.calendarDayStartTime,
+                    end: response.calendarDayEndTime || DEFAULT_HOURS.end,
+                    start: response.calendarDayStartTime || DEFAULT_HOURS.start,
                 });
                 setFailed(false);
             } catch {
@@ -176,11 +187,29 @@ export function StudentDayBoard({ date }: { date?: string }) {
         const names = [...new Set(calendarEvents.map((event) => event.room))].sort(
             sortHe,
         );
-        return (names.length > 0 ? names : [NO_ROOM]).map((name) => ({
-            id: name,
-            title: name,
-        }));
-    }, [calendarEvents]);
+        const all = names.length > 0 ? names : [NO_ROOM];
+        const shown = zoomedRoom && all.includes(zoomedRoom) ? [zoomedRoom] : all;
+        return shown.map((name) => ({ id: name, title: name }));
+    }, [calendarEvents, zoomedRoom]);
+
+    const toggleZoom = useCallback(
+        (room: string) => setZoomedRoom((current) => (current === room ? null : room)),
+        [],
+    );
+
+    const components = useMemo(
+        () => ({
+            event: CalendarEventContent,
+            resourceHeader: ({ resource }: { resource: { title: string } }) => (
+                <RoomHeader
+                    label={resource.title}
+                    onToggle={toggleZoom}
+                    zoomed={zoomedRoom === resource.title}
+                />
+            ),
+        }),
+        [toggleZoom, zoomedRoom],
+    );
 
     // Same grid window as the staff calendar. The bounds ride on the schedule
     // response because the student bundle mounts no settings provider.
@@ -243,7 +272,11 @@ export function StudentDayBoard({ date }: { date?: string }) {
                 <Box flexGrow={1} />
 
                 <Tooltip title="מסך מלא">
-                    <IconButton onClick={() => setFullscreen(true)} size="small">
+                    <IconButton
+                        aria-label="מסך מלא"
+                        onClick={() => setFullscreen(true)}
+                        size="small"
+                    >
                         <FullscreenIcon fontSize="small" />
                     </IconButton>
                 </Tooltip>
@@ -277,6 +310,7 @@ export function StudentDayBoard({ date }: { date?: string }) {
                 {fullscreen ? (
                     <Tooltip title="צא ממסך מלא (Esc)">
                         <IconButton
+                            aria-label="צא ממסך מלא (Esc)"
                             onClick={() => setFullscreen(false)}
                             size="small"
                             sx={{
@@ -295,7 +329,7 @@ export function StudentDayBoard({ date }: { date?: string }) {
                 ) : null}
 
                 <Calendar
-                    components={{ event: CalendarEventContent }}
+                    components={components}
                     date={day.toDate()}
                     defaultView={Views.DAY}
                     endAccessor="end"
@@ -336,19 +370,106 @@ export function StudentDayBoard({ date }: { date?: string }) {
 }
 
 /**
- * Height thresholds (in event minutes, the grid being linear in time) at which
- * another line of tile text still fits. A short event drops to a single row
- * rather than clipping three stacked lines.
+ * A room column header. Clicking it zooms the board to that room alone, and
+ * clicking the zoomed header returns every room — the same affordance the
+ * staff calendar has for a single-room day, minus anything staff-only.
  */
-const COMPACT_MINUTES = 30;
-const MEDIUM_MINUTES = 50;
+function RoomHeader({
+    label,
+    onToggle,
+    zoomed,
+}: {
+    label: string;
+    onToggle: (room: string) => void;
+    zoomed: boolean;
+}) {
+    return (
+        <Tooltip title={zoomed ? "חזרה לכל הכיתות" : `הצגת ${label} בלבד`}>
+            <Box
+                aria-pressed={zoomed}
+                component="button"
+                onClick={() => onToggle(label)}
+                sx={{
+                    alignItems: "center",
+                    background: "none",
+                    // A zoomed column is marked by an underline under its own
+                    // name rather than a glyph stuck to the text: it reads as
+                    // a selected tab, which is what it behaves like.
+                    borderBlockEnd: 2,
+                    borderBlockEndStyle: "solid",
+                    borderColor: zoomed ? "primary.main" : "transparent",
+                    borderInline: 0,
+                    borderBlockStart: 0,
+                    color: "inherit",
+                    cursor: "pointer",
+                    display: "flex",
+                    font: "inherit",
+                    fontWeight: zoomed ? 700 : "inherit",
+                    gap: 0.5,
+                    justifyContent: "center",
+                    px: 0.5,
+                    py: 0.25,
+                    transition: "border-color 0.15s ease-in-out",
+                    width: "100%",
+                    "&:hover": {
+                        borderColor: zoomed ? "primary.main" : "divider",
+                    },
+                }}
+                type="button"
+            >
+                {label}
+                {zoomed ? (
+                    <ZoomInMapIcon sx={{ fontSize: "0.9rem", opacity: 0.7 }} />
+                ) : null}
+            </Box>
+        </Tooltip>
+    );
+}
+
+/**
+ * Measured tile heights (px) at which each line still fits. Measured, not
+ * derived from the event's duration: the grid's pixels-per-minute depends on
+ * the day window and the viewport, so a minute threshold clips on short days.
+ */
+const COMPACT_HEIGHT = 26;
+const COURSES_HEIGHT = 34;
+
+/**
+ * The height of the tile this content sits in. Measured on the *parent*
+ * (`.rbc-event`, sized by the grid) rather than on the content itself: an
+ * observer on the content feeds its own layout, and the tile flickers between
+ * the one- and two-line forms.
+ */
+function useTileHeight() {
+    const ref = useRef<HTMLDivElement | null>(null);
+    const [height, setHeight] = useState(0);
+
+    useLayoutEffect(() => {
+        const tile = ref.current?.parentElement;
+        // No observer under jsdom/SSR: the tile then keeps its full form,
+        // which is the right default for anything that cannot measure.
+        if (!tile || typeof ResizeObserver === "undefined") return;
+        const observer = new ResizeObserver(([entry]) =>
+            setHeight(entry.contentRect.height),
+        );
+        observer.observe(tile);
+        return () => observer.disconnect();
+    }, []);
+
+    return { height, ref };
+}
 
 function CalendarEventContent({ event }: { event: CalendarEvent }) {
+    const { height: tileHeight, ref } = useTileHeight();
     const start = dayjs(event.start).tz(APP_TIMEZONE);
     const end = dayjs(event.end).tz(APP_TIMEZONE);
     const range = `${start.format("HH:mm")}–${end.format("HH:mm")}`;
-    const minutes = end.diff(start, "minute");
     const courses = event.courses.join(" • ");
+    // Until the observer reports, assume there is room: a first paint with
+    // both lines that then collapses reads better than the reverse.
+    const height = tileHeight || COURSES_HEIGHT;
+    const compact = height < COMPACT_HEIGHT;
+    const showCourses = Boolean(courses) && height >= COURSES_HEIGHT;
 
     const clipped = {
         overflow: "hidden",
@@ -356,49 +477,12 @@ function CalendarEventContent({ event }: { event: CalendarEvent }) {
         whiteSpace: "nowrap",
     } as const;
 
-    // `dir` as an attribute, not a style: the emotion RTL plugin flips a
-    // `direction` declaration in `sx`, so styling it there yields LTR.
-    if (minutes < COMPACT_MINUTES) {
-        return (
-            <Box
-                dir="rtl"
-                sx={{
-                    alignItems: "baseline",
-                    display: "flex",
-                    gap: 0.5,
-                    height: "100%",
-                    overflow: "hidden",
-                    px: 0.75,
-                    textAlign: "start",
-                }}
-            >
-                <Typography
-                    sx={{
-                        fontSize: "0.6875rem",
-                        fontWeight: 700,
-                        lineHeight: 1.1,
-                        ...clipped,
-                    }}
-                >
-                    {event.title}
-                </Typography>
-                <Typography
-                    sx={{
-                        flexShrink: 0,
-                        fontSize: "0.625rem",
-                        lineHeight: 1.1,
-                        opacity: 0.85,
-                    }}
-                >
-                    <bdi dir="ltr">{range}</bdi>
-                </Typography>
-            </Box>
-        );
-    }
-
     return (
+        // `dir` as an attribute, not a style: the emotion RTL plugin flips a
+        // `direction` declaration in `sx`, so styling it there yields LTR.
         <Box
             dir="rtl"
+            ref={ref}
             sx={{
                 display: "flex",
                 flexDirection: "column",
@@ -406,34 +490,47 @@ function CalendarEventContent({ event }: { event: CalendarEvent }) {
                 height: "100%",
                 overflow: "hidden",
                 px: 0.75,
-                py: 0.25,
+                py: compact ? 0 : 0.25,
                 textAlign: "start",
             }}
         >
-            <Typography
+            {/* Name and time share the first row — the time sits at its far
+                end — so a short tile spends its height on the courses line
+                instead of a row of its own. */}
+            <Box
                 sx={{
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    lineHeight: 1.2,
-                    ...clipped,
+                    alignItems: "baseline",
+                    display: "flex",
+                    gap: 0.75,
+                    minWidth: 0,
                 }}
             >
-                {event.title}
-            </Typography>
-            <Typography
-                sx={{
-                    fontSize: "0.6875rem",
-                    lineHeight: 1.2,
-                    opacity: 0.85,
-                    textAlign: "start",
-                    whiteSpace: "nowrap",
-                }}
-            >
-                {/* `bdi` keeps the range itself LTR without dragging the
-                    line's own alignment out of the RTL tile. */}
-                <bdi dir="ltr">{range}</bdi>
-            </Typography>
-            {courses && minutes >= MEDIUM_MINUTES ? (
+                <Typography
+                    sx={{
+                        fontSize: compact ? "0.6875rem" : "0.75rem",
+                        fontWeight: 700,
+                        lineHeight: compact ? 1.1 : 1.2,
+                        ...clipped,
+                    }}
+                >
+                    {event.title}
+                </Typography>
+                <Box flexGrow={1} />
+                <Typography
+                    sx={{
+                        flexShrink: 0,
+                        fontSize: compact ? "0.625rem" : "0.6875rem",
+                        lineHeight: compact ? 1.1 : 1.2,
+                        opacity: 0.85,
+                    }}
+                >
+                    {/* `bdi` keeps the range itself LTR without dragging the
+                        line's own alignment out of the RTL tile. */}
+                    <bdi dir="ltr">{range}</bdi>
+                </Typography>
+            </Box>
+
+            {showCourses ? (
                 <Typography
                     sx={{
                         fontSize: "0.6875rem",

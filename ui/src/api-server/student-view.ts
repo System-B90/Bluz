@@ -43,7 +43,8 @@ export type StudentViewSession = {
 /**
  * Gates the student-view endpoint. Unlike every other API route this one is
  * reachable by a Hanich session — it is the single endpoint that is. Anything
- * below Hanich (i.e. no session at all) is rejected.
+ * below Hanich (i.e. no session at all) is rejected: every student reaches
+ * Bluz through a Hive sign-in, so there is no anonymous viewer to serve.
  */
 export async function requireStudentViewSession(): Promise<StudentViewSession> {
     const session = (await getServerSession(authOptions)) as
