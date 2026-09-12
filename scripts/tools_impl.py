@@ -27,7 +27,7 @@ DEV_LOG_FILE = STATE_DIR / "dev.log"
 DEV_PORT = 3000
 DEV_HOST = "bluz.dev"
 
-HIVE_HOST = "hive.org"
+HIVE_HOST = "hive.test"
 PYHIVE_REPO_URL = "https://github.com/System-B90/pyhive.git"
 HIVE_STACK_CLONE = STATE_DIR / "pyhive-stack"
 HIVE_REGISTRY_PREFIX = "ghcr.io/system-b90/hive"
@@ -164,7 +164,7 @@ def _fail(msg: str) -> None:
 
 
 def _check_hosts() -> None:
-    """Mirrors e2e.yml's /etc/hosts mapping (hive.org + bluz.dev loopbacks)."""
+    """Mirrors e2e.yml's /etc/hosts mapping (hive.test + bluz.dev loopbacks)."""
     wanted = {HIVE_HOST: "127.0.0.1", DEV_HOST: "127.0.0.3"}
     missing = []
     for host, ip in wanted.items():
@@ -333,7 +333,7 @@ def _init_hive(stack: Path, wait_attempts: int) -> None:
         "-e",
         "DJANGO_SUPERUSER_PASSWORD=Password1",
         "-e",
-        "DJANGO_SUPERUSER_EMAIL=admin@hive.org",
+        "DJANGO_SUPERUSER_EMAIL=admin@hive.test",
         "core",
         "python",
         "manage.py",

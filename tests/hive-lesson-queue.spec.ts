@@ -17,7 +17,7 @@ import { expect, test } from "./fixtures";
  * HIVE_API_* service account.
  */
 
-const HIVE_URL = process.env.NEXT_PUBLIC_HIVE_URL ?? "https://hive.org";
+const HIVE_URL = process.env.NEXT_PUBLIC_HIVE_URL ?? "https://hive.test";
 const HIVE_USERNAME = process.env.HIVE_API_USERNAME ?? "api";
 const HIVE_PASSWORD = process.env.HIVE_API_PASSWORD ?? "Password1";
 
