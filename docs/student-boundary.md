@@ -66,6 +66,12 @@ accounts hold real sessions.
    tree to inspect, and nothing on screen implies the rest of the app exists.
 10. **The socket carries no data.** Students refetch through the projection endpoint; the
     student channel broadcasts empty pings. Never add a per-iteration student channel.
+    This is enforced on the wire, not by call-site discipline: `STUDENT_SYNC_ID` is
+    declared in `payloadFreeSyncObjects`, so the session-server core strips `data` from
+    anything targeted at it however the broadcast was issued.
+11. **A ticket opens one socket.** `singleUseTickets` is on, so a ticket observed inside
+    its 30s TTL cannot be replayed into a second socket carrying the holder's scope, and
+    the core budgets connects per remote address before it even verifies a ticket.
 
 ## Where it is enforced
 
@@ -89,7 +95,7 @@ accounts hold real sessions.
 | `tests/backend/student-view-route.test.ts` | Field whitelist, envelope keys, calendar hours, room short names, hidden-event filter, colour resolution. |
 | `tests/backend/student-clearance-gating.test.ts` | Staff routes refusing a Hanich JWT; ws-ticket scope. |
 | `tests/backend/student-routing-gate.test.ts` | Staff pages redirecting silently — no 403 page, nothing naming what was refused. |
-| `tests/backend/ws-student-scope.test.ts` | The session server's own gate on the signed scope. |
+| `tests/backend/ws-student-scope.test.ts` | The session server's own gate on the signed scope, the wire-level payload strip on the student channel, and the refusal of a replayed ticket. |
 | `tests/backend/student-day-board.test.tsx` | The board derives its filters from delivered events only, and issues exactly one request. |
 | `tests/student-view.spec.ts` | The whole boundary against a real Hive student token: staff APIs, staff pages, the raw response body, the rendered HTML, the socket frames — plus a sweep that scans **every HTTP body and websocket frame the page receives** for staff markers, and asserts the projection's *values* (hex colours, display names, never a uuid). |
 
