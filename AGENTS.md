@@ -272,6 +272,12 @@ Runtime config comes from the root **`.env`** (consumed by docker-compose and co
 - **Server/client boundary is load-bearing.** A stray browser import in `api-server` (or a
   side effect in `api-shared`) breaks the build in non-obvious ways. Respect the layer
   READMEs' checklists.
+- **The student boundary is security priority #1.** Read
+  [`docs/student-boundary.md`](docs/student-boundary.md) before touching anything under
+  `student-view`, `(post-auth)/layout.tsx`, `ws-ticket`, or the `StudentEvent`
+  projection. Assume students are hostile and will probe for staff data; the adversarial
+  suite is `tests/backend/student-data-leak.test.ts` plus `tests/student-view.spec.ts`.
+  A failure there is a data leak, never a styling regression.
 - **Clearance is a security boundary, not a UI preference.** Hanich (student) accounts can
   sign in (#656), so *every* route handler must call `requireStaffSession()`. A
   logged-in check (`getSessionUser()`) is **not** a gate any more. The one exception is

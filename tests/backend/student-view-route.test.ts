@@ -18,6 +18,9 @@ vi.mock("@/api-server/db-courses", () => ({
 vi.mock("@/api-server/db-custom-colors", () => ({
     DbCustomColors: { get: vi.fn(async () => []) },
 }));
+vi.mock("@/api-server/db-settings", () => ({
+    DbSettings: { get: vi.fn(async () => null) },
+}));
 vi.mock("@/api-server/hive/service-client", () => ({
     // Hive unreachable in unit tests; the projection must degrade, not throw.
     createHiveServiceClient: vi.fn(async () => {
@@ -31,8 +34,10 @@ vi.mock("@/api-server/iteration-request", () => ({
 }));
 
 import { DbCourses } from "@/api-server/db-courses";
+import { DbSettings } from "@/api-server/db-settings";
 import { DbEvent } from "@/api-server/db-event";
 import { Clearance } from "@/api-shared/types/hive";
+import { RoomSource } from "@/api-shared/types/room";
 import * as StudentViewRoute from "@/app/api/student-view/schedule/route";
 
 const HANICH = { id: "s1", display_name: "חניך", clearance: Clearance.Hanich };
@@ -83,6 +88,7 @@ function staffEvent(overrides: Record<string, unknown> = {}) {
 beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(DbCourses.get).mockResolvedValue([]);
+    vi.mocked(DbSettings.get).mockResolvedValue(null as never);
 });
 
 describe("GET /api/student-view/schedule — access", () => {
@@ -216,5 +222,78 @@ describe("GET /api/student-view/schedule — projection", () => {
         const [event] = (await response.json()).data.events;
 
         expect(event.color).toBe("#3f51b5");
+    });
+});
+
+describe("GET /api/student-view/schedule — the response envelope", () => {
+    it("carries only the whitelisted top-level keys", async () => {
+        asUser(HANICH);
+        vi.mocked(DbEvent.getInRange).mockResolvedValue([]);
+
+        const response = await StudentViewRoute.GET(makeRequest());
+        const { data } = await response.json();
+
+        // The grid bounds ride along so the board need not read settings; a
+        // student may not call the settings API at all. Anything *else*
+        // appearing here is a new field crossing the boundary unreviewed.
+        expect(Object.keys(data).sort()).toEqual([
+            "calendarDayEndTime",
+            "calendarDayStartTime",
+            "date",
+            "events",
+        ]);
+    });
+
+    it("sends the calendar hours from the iteration's settings", async () => {
+        asUser(HANICH);
+        vi.mocked(DbEvent.getInRange).mockResolvedValue([]);
+        vi.mocked(DbSettings.get).mockResolvedValue({
+            calendarDayEndTime: "21:30",
+            calendarDayStartTime: "06:30",
+            dayStartTime: "08:00",
+            weekendHomeStartTime: "10:00",
+        } as never);
+
+        const response = await StudentViewRoute.GET(makeRequest());
+        const { data } = await response.json();
+
+        expect(data.calendarDayStartTime).toBe("06:30");
+        expect(data.calendarDayEndTime).toBe("21:30");
+    });
+
+    it("falls back to the defaults when the iteration has no settings row", async () => {
+        asUser(HANICH);
+        vi.mocked(DbEvent.getInRange).mockResolvedValue([]);
+        vi.mocked(DbSettings.get).mockResolvedValue(null as never);
+
+        const response = await StudentViewRoute.GET(makeRequest());
+        const { data } = await response.json();
+
+        expect(data.calendarDayStartTime).toBe("07:00");
+        expect(data.calendarDayEndTime).toBe("22:00");
+    });
+
+    it("names rooms by their short name, never a Hive path or id", async () => {
+        asUser(HANICH);
+        vi.mocked(DbEvent.getInRange).mockResolvedValue([
+            staffEvent({ rooms: [{ id: "r1", source: RoomSource.Custom }] }),
+        ] as never);
+        const { resolveIterationFromRequest } = await import(
+            "@/api-server/iteration-request"
+        );
+        vi.mocked(resolveIterationFromRequest).mockResolvedValue({
+            controller: {
+                rooms: {
+                    find: () => ({
+                        toArray: async () => [{ id: "r1", name: "כיתה 1" }],
+                    }),
+                },
+            },
+        } as never);
+
+        const response = await StudentViewRoute.GET(makeRequest());
+        const [event] = (await response.json()).data.events;
+
+        expect(event.rooms).toEqual(["כיתה 1"]);
     });
 });

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { DbCourses } from "@/api-server/db-courses";
 import { DbCustomColors } from "@/api-server/db-custom-colors";
 import { DbEvent, DbEventDocument } from "@/api-server/db-event";
+import { DbSettings } from "@/api-server/db-settings";
 import { createHiveServiceClient } from "@/api-server/hive/service-client";
 import { authOptions } from "@/api-server/hive/sso";
 import { DatabaseController } from "@/api-server/mongo-db-controller";
@@ -10,6 +11,12 @@ import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 import { ForbiddenError, UserNotLoggedInError } from "@/api-shared/errors";
 import { Clearance } from "@/api-shared/types/hive";
 import { RoomSource } from "@/api-shared/types/room";
+import {
+    DEFAULT_CALENDAR_DAY_END_TIME,
+    DEFAULT_CALENDAR_DAY_START_TIME,
+    SCHEDULE_SETTINGS_KEY,
+    ScheduleSettings,
+} from "@/api-shared/types/settings/schedule";
 import { AuthSessionData } from "@/api-shared/types/sso";
 import {
     ApiStudentScheduleGetResponse,
@@ -36,7 +43,8 @@ export type StudentViewSession = {
 /**
  * Gates the student-view endpoint. Unlike every other API route this one is
  * reachable by a Hanich session — it is the single endpoint that is. Anything
- * below Hanich (i.e. no session at all) is rejected.
+ * below Hanich (i.e. no session at all) is rejected: every student reaches
+ * Bluz through a Hive sign-in, so there is no anonymous viewer to serve.
  */
 export async function requireStudentViewSession(): Promise<StudentViewSession> {
     const session = (await getServerSession(authOptions)) as
@@ -134,10 +142,9 @@ async function getRoomNames(
     try {
         const hive = await createHiveServiceClient();
         for (const room of await hive.getRooms()) {
-            names.set(
-                `${RoomSource.Hive}:${room.id}`,
-                room.display_name || room.name,
-            );
+            // `display_name` is the room's full path ("רמת גן / Bis90 / Room");
+            // the calendar's own column headers use the short `name`.
+            names.set(`${RoomSource.Hive}:${room.id}`, room.name || room.display_name);
         }
     } catch {
         // Hive down: custom rooms still render, Hive rooms are simply omitted.
@@ -168,11 +175,14 @@ export async function buildStudentSchedule(
         controller,
     );
 
-    const [customColorDocs, courses, roomNames] = await Promise.all([
-        DbCustomColors.get(),
-        DbCourses.get(undefined, controller),
-        getRoomNames(controller),
-    ]);
+    const [customColorDocs, courses, roomNames, scheduleSetting] =
+        await Promise.all([
+            DbCustomColors.get(),
+            DbCourses.get(undefined, controller),
+            getRoomNames(controller),
+            DbSettings.get(SCHEDULE_SETTINGS_KEY, undefined, controller) as
+                Promise<null | ScheduleSettings>,
+        ]);
     const customColors = new Map(customColorDocs.map((c) => [c.id, c.hex]));
     const courseNames = new Map(courses.map((c) => [c.id, c.name]));
     const subjectColors = await getSubjectColors();
@@ -193,5 +203,13 @@ export async function buildStudentSchedule(
 
     projected.sort((a, b) => a.startTime.localeCompare(b.startTime));
 
-    return { date, events: projected };
+    return {
+        calendarDayEndTime:
+            scheduleSetting?.calendarDayEndTime ?? DEFAULT_CALENDAR_DAY_END_TIME,
+        calendarDayStartTime:
+            scheduleSetting?.calendarDayStartTime ??
+            DEFAULT_CALENDAR_DAY_START_TIME,
+        date,
+        events: projected,
+    };
 }

@@ -156,8 +156,12 @@ async function main() {
     const client = new MongoClient(connectionString);
     try {
         await client.connect();
-        const db = client.db("bluz");
-        console.log("Successfully connected to database: bluz");
+        // The current iteration lives in its own database (see
+        // `mongo-db-controller`), so seeding always-"bluz" leaves the running
+        // app with no demo data. MONGO_DB names the target explicitly.
+        const dbName = process.env.MONGO_DB || "bluz";
+        const db = client.db(dbName);
+        console.log(`Successfully connected to database: ${dbName}`);
 
         // 3. Clear existing collections
         console.log("Clearing courses and events collections...");

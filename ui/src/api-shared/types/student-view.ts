@@ -42,6 +42,13 @@ export type ApiStudentScheduleGetResponse = {
     /** The day the events belong to, `yyyy-MM-dd` in the app timezone. */
     date: string;
     events: Array<StudentEvent>;
+    /**
+     * The staff calendar's own grid bounds (`HH:mm`), so the student board
+     * shows the same window instead of a bare 00:00-24:00 day. Carried on the
+     * response because the student bundle mounts no settings provider.
+     */
+    calendarDayStartTime: string;
+    calendarDayEndTime: string;
 };
 
 /**
