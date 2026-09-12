@@ -1,11 +1,15 @@
 "use client";
 
+import FullscreenIcon from "@mui/icons-material/Fullscreen";
+import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import { useTheme } from "@mui/material/styles";
 import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import "dayjs/locale/he";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -79,6 +83,7 @@ export function StudentDayBoard({ date }: { date?: string }) {
     const [events, setEvents] = useState<Array<StudentEvent> | null>(null);
     const [failed, setFailed] = useState(false);
     const [hours, setHours] = useState(DEFAULT_HOURS);
+    const [fullscreen, setFullscreen] = useState(false);
     const [course, setCourse] = useState(ALL);
     // Bumped by the live-refresh ping to re-run the fetch below.
     const [reloadToken, setReloadToken] = useState(0);
@@ -89,6 +94,15 @@ export function StudentDayBoard({ date }: { date?: string }) {
 
     const onRemoteChange = useCallback(() => setReloadToken((n) => n + 1), []);
     useStudentLiveRefresh(onRemoteChange);
+
+    useEffect(() => {
+        if (!fullscreen) return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === "Escape") setFullscreen(false);
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [fullscreen]);
 
     useEffect(() => {
         // State is only ever touched after the await, so switching days does
@@ -227,19 +241,59 @@ export function StudentDayBoard({ date }: { date?: string }) {
                 />
 
                 <Box flexGrow={1} />
+
+                <Tooltip title="מסך מלא">
+                    <IconButton onClick={() => setFullscreen(true)} size="small">
+                        <FullscreenIcon fontSize="small" />
+                    </IconButton>
+                </Tooltip>
+
                 <ThemeSelectorIcon />
             </Box>
 
             <Box
-                sx={{
-                    bgcolor: "background.paper",
-                    border: 1,
-                    borderColor: "divider",
-                    borderRadius: 1,
-                    height: "calc(100vh - 140px)",
-                    overflow: "hidden",
-                }}
+                sx={
+                    fullscreen
+                        ? {
+                            bgcolor: "background.paper",
+                            height: "100vh",
+                            insetInlineStart: 0,
+                            overflow: "hidden",
+                            position: "fixed",
+                            top: 0,
+                            width: "100vw",
+                            zIndex: 9999,
+                        }
+                        : {
+                            bgcolor: "background.paper",
+                            border: 1,
+                            borderColor: "divider",
+                            borderRadius: 1,
+                            height: "calc(100vh - 140px)",
+                            overflow: "hidden",
+                        }
+                }
             >
+                {fullscreen ? (
+                    <Tooltip title="צא ממסך מלא (Esc)">
+                        <IconButton
+                            onClick={() => setFullscreen(false)}
+                            size="small"
+                            sx={{
+                                bgcolor: "background.paper",
+                                border: 1,
+                                borderColor: "divider",
+                                insetInlineEnd: 8,
+                                position: "absolute",
+                                top: 8,
+                                zIndex: 1,
+                            }}
+                        >
+                            <FullscreenExitIcon fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                ) : null}
+
                 <Calendar
                     components={{ event: CalendarEventContent }}
                     date={day.toDate()}
