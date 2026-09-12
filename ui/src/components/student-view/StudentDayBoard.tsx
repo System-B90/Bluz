@@ -281,24 +281,75 @@ export function StudentDayBoard({ date }: { date?: string }) {
     );
 }
 
+/**
+ * Height thresholds (in event minutes, the grid being linear in time) at which
+ * another line of tile text still fits. A short event drops to a single row
+ * rather than clipping three stacked lines.
+ */
+const COMPACT_MINUTES = 30;
+const MEDIUM_MINUTES = 50;
+
 function CalendarEventContent({ event }: { event: CalendarEvent }) {
-    const range = `${dayjs(event.start).tz(APP_TIMEZONE).format("HH:mm")}–${dayjs(
-        event.end,
-    )
-        .tz(APP_TIMEZONE)
-        .format("HH:mm")}`;
+    const start = dayjs(event.start).tz(APP_TIMEZONE);
+    const end = dayjs(event.end).tz(APP_TIMEZONE);
+    const range = `${start.format("HH:mm")}–${end.format("HH:mm")}`;
+    const minutes = end.diff(start, "minute");
+    const courses = event.courses.join(" • ");
+
+    const clipped = {
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+    } as const;
+
+    // `dir` as an attribute, not a style: the emotion RTL plugin flips a
+    // `direction` declaration in `sx`, so styling it there yields LTR.
+    if (minutes < COMPACT_MINUTES) {
+        return (
+            <Box
+                dir="rtl"
+                sx={{
+                    alignItems: "baseline",
+                    display: "flex",
+                    gap: 0.5,
+                    height: "100%",
+                    overflow: "hidden",
+                    px: 0.75,
+                    textAlign: "start",
+                }}
+            >
+                <Typography
+                    sx={{
+                        fontSize: "0.6875rem",
+                        fontWeight: 700,
+                        lineHeight: 1.1,
+                        ...clipped,
+                    }}
+                >
+                    {event.title}
+                </Typography>
+                <Typography
+                    sx={{
+                        flexShrink: 0,
+                        fontSize: "0.625rem",
+                        lineHeight: 1.1,
+                        opacity: 0.85,
+                    }}
+                >
+                    <bdi dir="ltr">{range}</bdi>
+                </Typography>
+            </Box>
+        );
+    }
 
     return (
-        // `dir` as an attribute, not a style: the emotion RTL plugin flips a
-        // `direction` declaration in `sx`, so styling it there yields LTR.
         <Box
             dir="rtl"
             sx={{
                 display: "flex",
                 flexDirection: "column",
-                gap: 0.25,
+                gap: 0.15,
                 height: "100%",
-                justifyContent: "flex-start",
                 overflow: "hidden",
                 px: 0.75,
                 py: 0.25,
@@ -307,12 +358,10 @@ function CalendarEventContent({ event }: { event: CalendarEvent }) {
         >
             <Typography
                 sx={{
-                    fontSize: "0.8125rem",
+                    fontSize: "0.75rem",
                     fontWeight: 700,
-                    lineHeight: 1.25,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
+                    lineHeight: 1.2,
+                    ...clipped,
                 }}
             >
                 {event.title}
@@ -330,19 +379,17 @@ function CalendarEventContent({ event }: { event: CalendarEvent }) {
                     line's own alignment out of the RTL tile. */}
                 <bdi dir="ltr">{range}</bdi>
             </Typography>
-            {event.courses.length > 0 ? (
+            {courses && minutes >= MEDIUM_MINUTES ? (
                 <Typography
                     sx={{
                         fontSize: "0.6875rem",
                         lineHeight: 1.2,
                         opacity: 0.85,
-                        overflow: "hidden",
                         textAlign: "start",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
+                        ...clipped,
                     }}
                 >
-                    {event.courses.join(" • ")}
+                    {courses}
                 </Typography>
             ) : null}
         </Box>
