@@ -57,7 +57,7 @@ test.describe("File exports", () => {
         expect(content).toContain("BEGIN:VCALENDAR");
     });
 
-    test("exports a curriculum as a non-empty .xlsx from the Gantt FAB", async ({
+    test("exports a curriculum as a non-empty .xlsx from the curriculum card", async ({
         page,
     }) => {
         await page.goto("/gantt");
@@ -117,21 +117,27 @@ test.describe("File exports", () => {
 
         // Selecting a curriculum closes the panel on purpose —
         // handleSelectCurriculum calls handleClosePanel (curriculum-fab/index.tsx).
-        // Wait for that close before reopening, otherwise the reopen races it and
-        // the panel ends up shut. The Excel export lives only on this action bar.
+        // Wait for that close so the assertions below run against the
+        // curriculum view rather than a panel still animating shut.
         await expect(fabPopover).toHaveCount(0, { timeout: 10_000 });
-        await fab.click();
 
-        // Anchor on aria-haspopup, not on the label or the icon:
-        //  - In its `iconOnly` form the trigger has no accessible name at all.
-        //    ImportExportMenuButton wraps the IconButton in <Tooltip><span>, so
-        //    "ייבוא / ייצוא" lands on the span. Only the non-iconOnly variant
-        //    (syllabuses-actions-box, whose menu carries no Excel item) exposes
-        //    that name, so an unscoped getByRole matches *that* button instead.
-        //  - MUI drops `data-testid` from its icons in production builds, and
-        //    these specs run against the production image, so the icon is out
-        //    as an anchor too.
-        const exportTrigger = fabPopover.locator('button[aria-haspopup="true"]');
+        // The export moved out of the FAB action bar and onto the curriculum
+        // "about" card in the view's sidebar (#665, which added
+        // CurriculumImportExportButton and deleted the FAB's copy in the same
+        // commit). This spec kept driving the old location and had been
+        // failing ever since.
+        //
+        // Anchor on the accessible name: the about-card trigger is the only
+        // ImportExportMenuButton that keeps the default `triggerLabel`, and
+        // the only one wired with `onExportExcel`. The other two — the
+        // syllabuses action box and the weeks tab — carry their own labels
+        // ("...סילבוסים", "...שבועות") and offer no Excel item, so an exact
+        // match cannot pick the wrong one. `exact` matters: without it those
+        // longer labels also match.
+        const exportTrigger = page.getByRole("button", {
+            name: "ייבוא / ייצוא",
+            exact: true,
+        });
         await expect(exportTrigger).toBeEnabled({ timeout: 10_000 });
         await exportTrigger.click();
 

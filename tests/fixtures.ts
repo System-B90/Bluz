@@ -150,8 +150,19 @@ export const test = baseTest.extend<{ serverStateIsolation: undefined }>({
             await step("events", async () => {
                 for (const event of await listEvents(request)) {
                     if (eventsBefore.has(event.id)) continue;
+                    // `DELETE /api/event` reads a bare JSON *string* as its
+                    // body (route.ts parses it with parseJsonBody). Passing
+                    // the raw id sends `abc-123`, which is not valid JSON, so
+                    // every delete came back 400 -- and since nothing here
+                    // inspects the response, the sweep reported success while
+                    // removing nothing. Events from every spec accumulated on
+                    // the shared stack instead, crowding the day view that
+                    // geometry-based specs depend on.
                     await request
-                        .delete("/api/event", { data: event.id })
+                        .delete("/api/event", {
+                            data: JSON.stringify(event.id),
+                            headers: { "Content-Type": "application/json" },
+                        })
                         .catch(() => {});
                 }
             });
@@ -640,24 +651,64 @@ export async function createEventInOfflineMode(
 const CLEANUP_WINDOW_DAYS_BACK = 60;
 const CLEANUP_WINDOW_DAYS_FORWARD = 400;
 
+/**
+ * `GET /api/event` refuses a span wider than `MAX_EVENT_RANGE_DAYS` (366).
+ *
+ * The window above is 460 days, so the sweep's one request was rejected with a
+ * 400 every single time — and `listEvents` treats a non-ok response as "no
+ * events", so the sweep found nothing to delete and reported success. Events
+ * from every spec therefore accumulated on the shared stack forever, which is
+ * exactly the coupling this isolation layer exists to prevent: the day view
+ * fills up, and geometry-based assertions in unrelated specs start failing on
+ * debris rather than on regressions.
+ *
+ * Kept a little under the server's cap rather than at it, so a leap year or an
+ * off-by-one in either direction cannot put a chunk back over the line.
+ */
+const CLEANUP_CHUNK_DAYS = 360;
+
 type ApiEvent = { id: string; name?: string };
 
-function cleanupWindow(): { sd: string; ed: string } {
-    const sd = new Date();
-    sd.setDate(sd.getDate() - CLEANUP_WINDOW_DAYS_BACK);
-    sd.setHours(0, 0, 0, 0);
-    const ed = new Date();
-    ed.setDate(ed.getDate() + CLEANUP_WINDOW_DAYS_FORWARD);
-    ed.setHours(23, 59, 59, 999);
-    return { sd: sd.toISOString(), ed: ed.toISOString() };
+function cleanupWindow(): { start: Date; end: Date } {
+    const start = new Date();
+    start.setDate(start.getDate() - CLEANUP_WINDOW_DAYS_BACK);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date();
+    end.setDate(end.getDate() + CLEANUP_WINDOW_DAYS_FORWARD);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
 }
 
+/** Every event in the cleanup window, in chunks the range cap accepts. */
 async function listEvents(request: APIRequestContext): Promise<Array<ApiEvent>> {
-    const { sd, ed } = cleanupWindow();
-    const response = await request.get(`/api/event?sd=${sd}&ed=${ed}`);
-    if (!response.ok()) return [];
-    const body = (await response.json()) as { data?: Array<ApiEvent> };
-    return body.data ?? [];
+    const { start, end } = cleanupWindow();
+    const byId = new Map<string, ApiEvent>();
+
+    for (
+        let from = new Date(start);
+        from < end;
+        from.setDate(from.getDate() + CLEANUP_CHUNK_DAYS)
+    ) {
+        const to = new Date(from);
+        to.setDate(to.getDate() + CLEANUP_CHUNK_DAYS);
+        const chunkEnd = to < end ? to : end;
+
+        const response = await request.get(
+            `/api/event?sd=${from.toISOString()}&ed=${chunkEnd.toISOString()}`,
+        );
+        if (!response.ok()) {
+            // Loud on purpose: a silently-empty listing is what let this rot
+            // for months. A failed chunk means the sweep is blind again.
+            console.warn(
+                `[isolation] event listing failed (${response.status()}) for ${from.toISOString()}..${chunkEnd.toISOString()}`,
+            );
+            continue;
+        }
+        const body = (await response.json()) as { data?: Array<ApiEvent> };
+        for (const event of body.data ?? []) byId.set(event.id, event);
+    }
+
+    return [...byId.values()];
 }
 
 /**
