@@ -1,14 +1,17 @@
 import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
+import RestoreIcon from "@mui/icons-material/Restore";
 import Chip from "@mui/material/Chip";
+import IconButton from "@mui/material/IconButton";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import dayjs from "dayjs";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import {
     GanttEventExecution,
@@ -25,7 +28,29 @@ const DATE_FORMAT = "DD/MM/YYYY";
  * What the user actually cares about per occurrence: did the event happen on
  * its planned day, and did the duration change.
  */
-function OccurrenceRow({ occurrence }: { occurrence: OccurrenceExecution }) {
+function OccurrenceRow({
+    ganttEventId,
+    occurrence,
+}: {
+    ganttEventId: string;
+    occurrence: OccurrenceExecution;
+}) {
+    const { recreateOccurrence } = useGanttExecution();
+    const [isRecreating, setIsRecreating] = useState(false);
+    // The plan may have moved on since the deletion (the gantt was edited
+    // after the cut) — only offer the button while there is still a planned
+    // occurrence to recreate from.
+    const canRecreate = !occurrence.actual && Boolean(occurrence.planned);
+
+    const handleRecreate = async () => {
+        setIsRecreating(true);
+        try {
+            await recreateOccurrence(ganttEventId, occurrence.occurrenceDate);
+        } finally {
+            setIsRecreating(false);
+        }
+    };
+
     return (
         <TableRow
             sx={
@@ -44,7 +69,12 @@ function OccurrenceRow({ occurrence }: { occurrence: OccurrenceExecution }) {
                 {occurrence.actual ? (
                     dayjs(occurrence.actual.startTime).format(DATE_FORMAT)
                 ) : (
-                    <Chip color="error" label="נמחק" size="small" variant="outlined" />
+                    <Chip
+                        color="error"
+                        label="נמחק"
+                        size="small"
+                        variant="outlined"
+                    />
                 )}
             </TableCell>
             <TableCell>
@@ -56,6 +86,21 @@ function OccurrenceRow({ occurrence }: { occurrence: OccurrenceExecution }) {
                 {occurrence.actual
                     ? formatHoursLabel(occurrence.actual.durationMinutes)
                     : "—"}
+            </TableCell>
+            <TableCell>
+                {canRecreate ? (
+                    <Tooltip title="שחזור האירוע ללו&quot;ז">
+                        <span>
+                            <IconButton
+                                disabled={isRecreating}
+                                onClick={handleRecreate}
+                                size="small"
+                            >
+                                <RestoreIcon fontSize="small" />
+                            </IconButton>
+                        </span>
+                    </Tooltip>
+                ) : null}
             </TableCell>
         </TableRow>
     );
@@ -77,11 +122,13 @@ function ExecutionTable({
                         <TableCell>בוצע בתאריך</TableCell>
                         <TableCell>משך מתוכנן</TableCell>
                         <TableCell>משך בפועל</TableCell>
+                        <TableCell />
                     </TableRow>
                 </TableHead>
                 <TableBody>
                     {execution.occurrences.map((occurrence) => (
                         <OccurrenceRow
+                            ganttEventId={execution.ganttEventId}
                             key={`${occurrence.occurrenceDate}-${occurrence.actual?.eventId ?? "planned"}`}
                             occurrence={occurrence}
                         />
@@ -100,6 +147,7 @@ function ExecutionTable({
                         <TableCell sx={{ fontWeight: 600 }}>
                             {formatHoursLabel(execution.totals.actualMinutes)}
                         </TableCell>
+                        <TableCell />
                     </TableRow> : null}
                 </TableBody>
             </Table>

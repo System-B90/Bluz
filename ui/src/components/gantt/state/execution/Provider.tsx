@@ -67,9 +67,21 @@ export function GanttExecutionProvider({
         void refreshExecution();
     }, [refreshExecution]);
 
+    const recreateOccurrence = useCallback(
+        async (ganttEventId: string, occurrenceDate: string) => {
+            await ganttApi.execution.recreateOccurrence(
+                curriculumId,
+                ganttEventId,
+                occurrenceDate,
+            );
+            await refreshExecution();
+        },
+        [curriculumId, refreshExecution],
+    );
+
     const value = useMemo(
-        () => ({ state, refreshExecution }),
-        [state, refreshExecution],
+        () => ({ state, refreshExecution, recreateOccurrence }),
+        [state, refreshExecution, recreateOccurrence],
     );
 
     return (

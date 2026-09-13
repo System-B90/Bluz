@@ -1236,6 +1236,106 @@ export async function cutCurriculumToSchedule(
     };
 }
 
+export type RecreateOccurrenceOutcome =
+    | { ok: false; error: { code: string; message: string } }
+    | { ok: true; result: { createdEvents: number } };
+
+/**
+ * Re-create the schedule event(s) for one gantt-event occurrence that was cut
+ * and later deleted from the schedule (#682). Re-runs the full materialization
+ * (same computation as a cut/reload) and inserts only the document(s) matching
+ * `(ganttEventId, occurrenceDate)`, so the recreated event matches the gantt
+ * plan exactly. Refuses when a live event already occupies that occurrence —
+ * the caller should delete it first if it wants to replace it.
+ */
+export async function recreateExecutionOccurrence(
+    curriculumId: GanttCurriculumId,
+    ganttEventId: string,
+    occurrenceDate: string,
+): Promise<RecreateOccurrenceOutcome> {
+    const curriculum = await DbCurriculum.getItem(curriculumId);
+    const iteration = await DbIterations.getByCurriculum(curriculumId);
+    if (!iteration) {
+        return {
+            ok: false,
+            error: { code: "no-iteration", message: "לא נמצא מחזור המקושר לגאנט זה" },
+        };
+    }
+
+    const controller = getDatabaseController(iteration.dbName);
+
+    const alreadyLive = await controller.events.findOne({
+        ganttEventId,
+        ganttOccurrenceDate: occurrenceDate,
+        archived: { $ne: true },
+    });
+    if (alreadyLive) {
+        return {
+            ok: false,
+            error: {
+                code: "already-exists",
+                message: "כבר קיים אירוע פעיל למופע זה",
+            },
+        };
+    }
+
+    const materialized = await materializeCurriculumEvents(
+        curriculum,
+        iteration,
+        controller,
+        { force: true },
+    );
+    if (!materialized.ok) {
+        return {
+            ok: false,
+            error: { code: "invalid-plan", message: "תוכנית הגזירה אינה תקינה" },
+        };
+    }
+
+    const documents = materialized.documents.filter(
+        (doc) =>
+            doc.ganttEventId === ganttEventId &&
+            doc.ganttOccurrenceDate === occurrenceDate,
+    );
+    if (documents.length === 0) {
+        return {
+            ok: false,
+            error: {
+                code: "not-planned",
+                message: "המופע אינו קיים עוד בתוכנית הגאנט",
+            },
+        };
+    }
+
+    await controller.events.insertMany(documents as Array<DbEventDocument>);
+    await DbEventHistory.recordBulk({
+        action: EventChangeAction.Created,
+        controller,
+        events: documents.map((document) => ({
+            after: document,
+            eventId: document.id,
+        })),
+        origin: {
+            initiator: EventChangeInitiator.GanttCut,
+            context: { curriculumId },
+        },
+    });
+    for (const document of documents) {
+        syncEventToInstructorsGoogleCalendars(document, "upsert", iteration.id);
+    }
+    const iterationId = iteration.isCurrent ? undefined : iteration.id;
+    SendServerRequestToSessionServer(
+        MessageTypes.EVENT_DATA_UPDATE,
+        {
+            events: Object.fromEntries(documents.map((d) => [d.id, d])),
+            iterationId,
+        } as EventDataUpdateMessage<DbEventDocument>,
+        iterationSyncId(iterationId),
+    );
+
+    return { ok: true, result: { createdEvents: documents.length } };
+}
+
 /**
  * Report whether a curriculum has live cut events in its linked iteration.
  * `cut: false` when there is no linked iteration or every cut event was already
