@@ -3,6 +3,7 @@ import {
     countBy,
     hours,
     percent,
+    pluralize,
     sumBy,
 } from "@/components/gantt/curriculum-view/components/insights/format";
 import { InsightGenerator } from "@/components/gantt/curriculum-view/components/insights/types";
@@ -66,7 +67,7 @@ const missingOrchestrator: InsightGenerator = (ctx) => {
         id: "missing-orchestrator",
         category: "people",
         severity: "warning",
-        title: `${missing.length} מופעים בלי אחראי`,
+        title: `${pluralize(missing.length, "מופע אחד", "מופעים")} בלי אחראי`,
         body: `הגדול מביניהם: ${[ ...missing ].sort((a, b) => b.totalMinutes - a.totalMinutes)[0].event.title}.`,
         visual: { kind: "ring", value: assigned, max: work.length, label: `${percent(assigned, work.length)}%` },
     };
@@ -97,7 +98,7 @@ const recommendedLecturers: InsightGenerator = (ctx) => {
         category: "people",
         severity: "info",
         title: `${nameOf(rows[0][0])} מומלץ/ת ב-${rows[0][1]} מופעים`,
-        body: `${rows.length} מרצים חיצוניים מומלצים בגאנט.`,
+        body: `${pluralize(rows.length, "מרצה חיצוני אחד מומלץ", "מרצים חיצוניים מומלצים")} בגאנט.`,
         visual: {
             kind: "leaderboard",
             rows: rows.slice(0, 5).map(([ id, value ]) => ({ label: nameOf(id), value, valueLabel: `${value}` })),
@@ -114,7 +115,7 @@ const lecturesWithoutLecturer: InsightGenerator = (ctx) => {
         id: "lectures-without-lecturer",
         category: "people",
         severity: "warning",
-        title: `${bare.length} הרצאות בלי מרצה מומלץ`,
+        title: `${pluralize(bare.length, "הרצאה אחת", "הרצאות")} בלי מרצה מומלץ`,
         body: "בלי המלצה, הגזירה והשיבוץ ישאירו את הבחירה פתוחה לגמרי.",
         visual: {
             kind: "ring",

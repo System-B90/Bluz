@@ -6,6 +6,7 @@ import {
     countBy,
     hours,
     percent,
+    pluralize,
     sumBy,
 } from "@/components/gantt/curriculum-view/components/insights/format";
 import {
@@ -184,7 +185,7 @@ const zeroDuration: InsightGenerator = (ctx) => {
         id: "zero-duration",
         category: "content",
         severity: "warning",
-        title: `${zero.length} מופעים ללא משך`,
+        title: `${pluralize(zero.length, "מופע אחד", "מופעים")} ללא משך`,
         body: "זמן מינימלי 0 — הם לא יתפסו מקום בגזירה.",
         visual: { kind: "chips", chips: zero.slice(0, 6).map((e) => ({ label: e.event.title })) },
     };
@@ -197,7 +198,7 @@ const allocationGap: InsightGenerator = (ctx) => {
         id: "allocation-gap",
         category: "content",
         severity: "warning",
-        title: `${under.length} מופעים קיבלו פחות מהזמן המינימלי`,
+        title: `${pluralize(under.length, "מופע אחד", "מופעים")} קיבלו פחות מהזמן המינימלי`,
         body: `הזמן המוקצב שלהם קטן מהמינימום. הפער הגדול: ${under[0].event.title}.`,
         visual: {
             kind: "chips",
@@ -235,7 +236,7 @@ const critical: InsightGenerator = (ctx) => {
         id: "critical",
         category: "content",
         severity: unplaced.length > 0 ? "warning" : "info",
-        title: `${crit.length} מופעים מסומנים קריטיים`,
+        title: `${pluralize(crit.length, "מופע אחד", "מופעים")} מסומנים קריטיים`,
         body: unplaced.length > 0
             ? `${unplaced.length} מהם עוד לא שובצו, כולל ${unplaced[0].event.title}.`
             : "כולם כבר ממוקמים ברצף הזמן.",
@@ -255,7 +256,7 @@ const paWindows: InsightGenerator = (ctx) => {
         id: "pa-windows",
         category: "content",
         severity: "info",
-        title: `${pa.length} חלונות פ"א בתוכנית`,
+        title: `${pluralize(pa.length, "חלון פ\"א אחד", "חלונות פ\"א")} בתוכנית`,
         body: `ביחד ${hours(totalMinutes(pa))} של זמן פ"א.`,
         visual: { kind: "chips", chips: countBy(pa, (e) => e.moduleTitle).slice(0, 6).map(([ label, count ]) => ({ label, count })) },
     };
@@ -282,7 +283,7 @@ const systemRequirements: InsightGenerator = (ctx) => {
         category: "content",
         severity: "info",
         title: `המערכת המבוקשת ביותר: ${rows[0][0]}`,
-        body: `${rows.length} דרישות מערכת שונות. ${rows[0][0]} נדרשת ב-${rows[0][1]} מופעים.`,
+        body: `${pluralize(rows.length, "דרישת מערכת אחת", "דרישות מערכת שונות")}. ${rows[0][0]} נדרשת ב-${rows[0][1]} מופעים.`,
         visual: { kind: "chips", chips: rows.slice(0, 8).map(([ label, count ]) => ({ label, count })) },
     };
 };

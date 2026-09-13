@@ -1,6 +1,7 @@
 import {
     countBy,
     percent,
+    pluralize,
 } from "@/components/gantt/curriculum-view/components/insights/format";
 import { InsightGenerator } from "@/components/gantt/curriculum-view/components/insights/types";
 import {
@@ -75,7 +76,7 @@ const openComments: InsightGenerator = (ctx) => {
         id: "open-comments",
         category: "structure",
         severity: "info",
-        title: `${commented.length} מופעים עם הערות`,
+        title: `${pluralize(commented.length, "מופע אחד", "מופעים")} עם הערות`,
         body: `למשל ב${commented[0].event.title}: "${commented[0].event.comment?.trim().slice(0, 60)}"`,
         visual: { kind: "chips", chips: commented.slice(0, 6).map((e) => ({ label: e.event.title })) },
     };

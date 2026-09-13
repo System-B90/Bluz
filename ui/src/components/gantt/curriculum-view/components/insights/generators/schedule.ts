@@ -4,6 +4,7 @@ import {
     dayLabel,
     hours,
     percent,
+    pluralize,
 } from "@/components/gantt/curriculum-view/components/insights/format";
 import {
     InsightContext,
@@ -80,7 +81,7 @@ const overloadedDays: InsightGenerator = (ctx) => {
         id: "overloaded-days",
         category: "schedule",
         severity: "warning",
-        title: `${days.length} ימים חורגים מהשעות שלהם`,
+        title: `${pluralize(days.length, "יום אחד", "ימים")} חורגים מהשעות שלהם`,
         body: "בימים האלה שובץ יותר זמן ממה שיש. הגזירה תדחוף את העודף הלאה.",
         visual: {
             kind: "chips",
@@ -99,7 +100,7 @@ const emptyWorkingDays: InsightGenerator = (ctx) => {
         id: "empty-days",
         category: "schedule",
         severity: "info",
-        title: `${empty.length} ימי עבודה ריקים לגמרי`,
+        title: `${pluralize(empty.length, "יום עבודה אחד", "ימי עבודה")} ריקים לגמרי`,
         body: `ביחד ${hours(empty.reduce((s, d) => s + d.capacityMinutes, 0))} שעדיין לא נוצלו. הראשון: ${dayLabel(empty[0].weekNumber, empty[0].dayIndex)}.`,
         visual: {
             kind: "bigNumber",
@@ -162,7 +163,7 @@ const unplacedEvents: InsightGenerator = (ctx) => {
         id: "unplaced-events",
         category: "schedule",
         severity: "warning",
-        title: `${unplaced.length} מופעים עוד לא שובצו`,
+        title: `${pluralize(unplaced.length, "מופע אחד", "מופעים")} עוד לא שובצו`,
         body: `ביחד ${hours(unplaced.reduce((s, e) => s + e.totalMinutes, 0))}. למשל: ${unplaced[0].event.title}.`,
         visual: {
             kind: "ring",
@@ -202,7 +203,7 @@ const holidays: InsightGenerator = (ctx) => {
         id: "holidays",
         category: "schedule",
         severity: "warning",
-        title: `${hits.length} ימי עבודה נופלים על חגים`,
+        title: `${pluralize(hits.length, "יום עבודה אחד", "ימי עבודה")} נופלים על חגים`,
         body: "כדאי לוודא שבאמת עובדים בהם, או לאפס להם את השעות.",
         visual: {
             kind: "chips",
