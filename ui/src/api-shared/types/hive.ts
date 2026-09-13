@@ -1,4 +1,4 @@
-import { Class, CourseUser, Lesson, Queue } from "@system-b90/hive-core";
+import { Class, CourseUser, Lesson, LessonId, Queue } from "@system-b90/hive-core";
 
 import { HiveRoom } from "@/api-shared/types/room";
 
@@ -12,6 +12,7 @@ export {
     Clearance,
     clearanceName,
     GenderEnum,
+    lessonModuleId,
     QueueType,
     StatusEnum,
 } from "@system-b90/hive-core";
@@ -25,39 +26,9 @@ export type {
     Queue,
 } from "@system-b90/hive-core";
 
-/**
- * A lesson id as Hive actually sends it. `@system-b90/hive-core` still types
- * `Lesson.id` as `number`, but some Hive instances have moved lesson primary
- * keys to UUID strings — the same kind of drift `module_id` went through
- * below. Bluz treats a lesson id as an opaque identifier everywhere (URL
- * path segment, storage key, equality check) and never does arithmetic on
- * it, so both shapes flow through unchanged.
- */
-export type HiveLessonId = number | string;
-
-/**
- * A Hive lesson as the *server* actually returns it.
- *
- * Hive renamed the module foreign key to `module_id` on the lesson serializer
- * (both directions: `LessonRequest.module_id` and `Lesson.module_id`), while
- * `@system-b90/hive-core` still types it as `module`. Instances of both shapes
- * are in the wild, so Bluz reads whichever is present and writes both.
- */
-export type HiveLesson = Omit<Lesson, "id"> & {
-    id: HiveLessonId;
-    module_id?: number;
-};
-
-/**
- * The module a lesson belongs to, whichever field the Hive instance uses.
- * @param lesson A lesson as returned by Hive.
- * @returns The module id, or undefined if the lesson carries neither field.
- */
-export function lessonModuleId(
-    lesson: HiveLesson | undefined,
-): number | undefined {
-    return lesson?.module_id ?? lesson?.module;
-}
+/** App-side names for hive-core's lesson id / lesson (UUID + `module_id` aware). */
+export type HiveLessonId = LessonId;
+export type HiveLesson = Lesson;
 
 export type ApiHiveStudentsGetPayload = void;
 export type ApiHiveStudentsGetResponse = Array<CourseUser>;
