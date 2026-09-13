@@ -1,4 +1,7 @@
-import { Class, ClassTypeEnum } from "@/api-shared/types/hive";
+// Imported straight from hive-core, not the app's `hive.ts` re-export, which
+// itself imports `HiveRoom` from this file — going through it would make
+// this a circular import.
+import { Class, ClassTypeEnum } from "@system-b90/hive-core";
 
 export enum RoomSource {
     Custom,

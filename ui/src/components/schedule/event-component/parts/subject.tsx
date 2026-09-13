@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 
 import { hiveModuleUrl, hiveSubjectUrl } from "@/api-shared/hive-links";
+import { HiveLessonId } from "@/api-shared/types/hive";
 import { ModuleLike } from "@/api-shared/types/module";
 import { SubjectLike } from "@/api-shared/types/subject";
 import { useHiveLessons } from "@/components/base/HiveLessonsProvider";
@@ -83,7 +84,7 @@ export function ModuleComponent({
 export function LessonComponent({
     lessonId,
     ...props
-}: { lessonId: number } & TypographyProps) {
+}: { lessonId: HiveLessonId } & TypographyProps) {
     const { getLesson } = useHiveLessons();
     const lesson = useMemo(
         () => getLesson(lessonId),

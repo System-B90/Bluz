@@ -5,12 +5,14 @@ import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import { SelectChangeEvent } from "@mui/material/Select";
 import Select from "@mui/material/Select";
+import { useId } from "react";
 
 import { CourseId } from "@/api-shared/types/course";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useCourses } from "@/components/base/CoursesProvider";
 
 export function FilterCourses({ ...props }: BoxProps) {
+    const labelId = useId();
     const { courses, getCourse } = useCourses();
     const { filteredCourses, setFilteredCourses } = useCalendarFilters();
 
@@ -33,9 +35,9 @@ export function FilterCourses({ ...props }: BoxProps) {
     return (
         <Box {...props}>
             <FormControl fullWidth={true} size="small">
-                <InputLabel size="small">סינון לפי מסלולים</InputLabel>
-                <Select
-                    label="סינון לפי מסלולים"
+                <InputLabel id={ labelId } size="small">סינון לפי מסלולים</InputLabel>
+                <Select label="סינון לפי מסלולים"
+                    labelId={ labelId }
                     MenuProps={{ disablePortal: true }}
                     multiple
                     onChange={handleChange}

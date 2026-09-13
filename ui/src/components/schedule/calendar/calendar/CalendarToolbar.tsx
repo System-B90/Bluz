@@ -163,13 +163,16 @@ export function CalendarToolbar({
                     display="flex"
                     gap={ 1 }
                     sx={ {
-                        position: { xs: "static", md: "absolute" },
+                        // Absolute centering starts at `lg`: between 900 and
+                        // ~1150px the navigation and action groups beside it
+                        // are wide enough to collide with the title (#653).
+                        position: { xs: "static", lg: "absolute" },
                         // Physical `left` on purpose: centering is
                         // direction-agnostic, but pairing the *logical* inset
                         // with a physical translate moves the box the same way
                         // twice under RTL and throws the title off-centre.
-                        left: { md: "50%" },
-                        transform: { md: "translateX(-50%)" },
+                        left: { lg: "50%" },
+                        transform: { lg: "translateX(-50%)" },
                     } }
                 >
                     <Typography

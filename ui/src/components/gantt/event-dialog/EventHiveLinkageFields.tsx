@@ -60,7 +60,7 @@ export function EventHiveLinkageFields({
                 allowEmpty
                 disabled={event.hiveModuleId === null}
                 module={event.hiveModuleId}
-                onChange={(id) => commit({ hiveLessonId: id })}
+                onChange={(id) => commit({ hiveLessonId: id ?? null })}
                 size="small"
                 sx={fieldSx}
                 value={event.hiveLessonId}

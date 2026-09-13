@@ -52,7 +52,9 @@ export const ganttEventsSchema = pgTable("e", {
     // Hive linkage copied onto schedule events by the "גזירה ללו"ז" cut; all optional.
     hiveSubjectId: integer("hive_subject_id"),
     hiveModuleId: integer("hive_module_id"),
-    hiveLessonId: integer("hive_lesson_id"),
+    // Text, not integer: some Hive instances key lessons by UUID rather than
+    // a numeric pk (#682-adjacent). Stored as whatever string Hive returned.
+    hiveLessonId: text("hive_lesson_id"),
     createdAt: timestamp("ca").defaultNow().notNull(),
     updatedAt: timestamp("ua").defaultNow().notNull(),
 });

@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
-import { enqueueSnackbar } from "notistack";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { closeSnackbar, enqueueSnackbar } from "notistack";
+import { createElement, useCallback, useEffect, useRef, useState } from "react";
 import type { SlotInfo } from "react-big-calendar";
 import type { EventInteractionArgs } from "react-big-calendar/lib/addons/dragAndDrop";
 
@@ -25,28 +25,20 @@ const MIN_WORKING_MS = MIN_SEGMENT_MINUTES * 60_000;
 export type GridInteraction = "duplicate" | "move" | "resize";
 
 /**
- * Everything of an event that a *copy* of it may carry. Strips the id plus
- * everything that identifies the source event rather than the copy:
- * locked/hidden/fake are per-event display state, and ganttEventId/
- * ganttOccurrenceDate/ganttCurriculumId are gantt-cut provenance (see
- * EventFactory.ts's invariant) — carrying them over would make the copy
- * masquerade as the original event.
+ * Everything of an event that a *copy* of it may carry. Strips only the id
+ * plus the gantt-cut provenance (ganttEventId/ganttOccurrenceDate/
+ * ganttCurriculumId, see EventFactory.ts's invariant) — carrying those over
+ * would make the copy masquerade as the original event. Everything else,
+ * including locked/hidden/fake and hiveLesson/hiveQueues, is copied as-is:
+ * it is per-event display/linkage state and multiple events are allowed to
+ * share the same Hive lesson.
  */
 function copyableFields(event: Event): Omit<
     Event,
-    | "fake"
-    | "ganttCurriculumId"
-    | "ganttEventId"
-    | "ganttOccurrenceDate"
-    | "hidden"
-    | "id"
-    | "locked"
+    "ganttCurriculumId" | "ganttEventId" | "ganttOccurrenceDate" | "id"
 > {
     const {
         id: _id,
-        locked: _locked,
-        hidden: _hidden,
-        fake: _fake,
         ganttEventId: _ganttEventId,
         ganttOccurrenceDate: _ganttOccurrenceDate,
         ganttCurriculumId: _ganttCurriculumId,
@@ -68,7 +60,10 @@ function copyableFields(event: Event): Omit<
  */
 export function useCalendarHandlers(
     events: Array<Event>,
-    handleSaveEvent: (event: Event, initiator?: EventChangeInitiator) => void,
+    handleSaveEvent: (
+        event: Event,
+        initiator?: EventChangeInitiator,
+    ) => Event | undefined | void,
     handleDeleteEvent: (
         eventId: Event["id"],
         initiator?: EventChangeInitiator,
@@ -108,10 +103,45 @@ export function useCalendarHandlers(
 
             let newRooms = changes.event.rooms;
             if (roomId) {
+                const alreadyInRoom = changes.event.rooms.some(
+                    (room) =>
+                        room.id === roomId.id && room.source === roomId.source,
+                );
                 if (roomId.id === DUMMY_ROOM_ID) {
                     newRooms = [];
                 } else if (changes.event.rooms.length <= 1) {
                     newRooms = [roomId];
+                } else if (!alreadyInRoom) {
+                    // The drop doesn't say which of the event's rooms was
+                    // dragged, so there is no safe room to replace. Keep the
+                    // time change, but say so instead of silently ignoring
+                    // the target column, and let the user jump straight to
+                    // the edit dialog to change rooms there (#653).
+                    enqueueSnackbar(
+                        createElement(
+                            "span",
+                            null,
+                            "לאירוע כמה חדרים — שינוי החדרים נעשה ",
+                            createElement(
+                                "span",
+                                {
+                                    style: {
+                                        textDecoration: "underline",
+                                        fontWeight: 700,
+                                        cursor: "pointer",
+                                    },
+                                    onClick: () => {
+                                        setSelectedEvent(changes.event);
+                                        setOpenEventDialog(true);
+                                        closeSnackbar();
+                                    },
+                                },
+                                "בחלון העריכה",
+                            ),
+                            ".",
+                        ),
+                        { variant: "info" },
+                    );
                 }
             }
 
@@ -145,7 +175,7 @@ export function useCalendarHandlers(
                     : EventChangeInitiator.DragDrop,
             );
         },
-        [handleSaveEvent],
+        [handleSaveEvent, setOpenEventDialog, setSelectedEvent],
     );
 
     /**
@@ -297,8 +327,13 @@ export function useCalendarHandlers(
                     rooms: newRooms,
                 } as Event;
 
-                handleSaveEvent(newEvent, EventChangeInitiator.CopyPaste);
-                setActiveEvent(newEvent);
+                // The saved copy carries the id the provider assigned, so
+                // Delete/Ctrl+C/Ctrl+X work on it straight away (#653).
+                const saved = handleSaveEvent(
+                    newEvent,
+                    EventChangeInitiator.CopyPaste,
+                );
+                setActiveEvent(saved ?? null);
                 setSelectedSlotInfo(null);
             }
         },

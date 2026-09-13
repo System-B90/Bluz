@@ -136,9 +136,7 @@ test.describe("Split across breaks", () => {
             );
 
             await dialog
-                .locator(".MuiFormControl-root")
-                .filter({ hasText: "סוג" })
-                .getByRole("combobox")
+                .getByRole("combobox", { name: "סוג" })
                 .click();
             await page
                 .getByRole("option", { name: "הפסקה", exact: true })
@@ -224,9 +222,7 @@ test.describe("Split across breaks", () => {
             "30",
         );
         await dialog
-            .locator(".MuiFormControl-root")
-            .filter({ hasText: "סוג" })
-            .getByRole("combobox")
+            .getByRole("combobox", { name: "סוג" })
             .click();
         await page.getByRole("option", { name: "הפסקה", exact: true }).click();
         await dialog.getByRole("button", { name: "שמירה" }).click();

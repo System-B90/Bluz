@@ -6,6 +6,7 @@ import {
 import {
     Class,
     HiveLesson,
+    HiveLessonId,
     LessonRequest,
     LessonRule,
     LessonRuleRequest,
@@ -79,7 +80,7 @@ export class HiveClient extends HiveClientBase {
         );
     }
 
-    async getLesson(id: number): Promise<HiveLesson> {
+    async getLesson(id: HiveLessonId): Promise<HiveLesson> {
         return await this._request<HiveLesson>(
             this.buildUrl(`/api/core/schedule/lessons/${id}/`),
             "GET",
@@ -94,7 +95,7 @@ export class HiveClient extends HiveClientBase {
         );
     }
 
-    async updateLesson(id: number, data: LessonRequest): Promise<HiveLesson> {
+    async updateLesson(id: HiveLessonId, data: LessonRequest): Promise<HiveLesson> {
         return await this._request<HiveLesson>(
             this.buildUrl(`/api/core/schedule/lessons/${id}/`),
             "PUT",
@@ -103,7 +104,7 @@ export class HiveClient extends HiveClientBase {
     }
 
     async patchLesson(
-        id: number,
+        id: HiveLessonId,
         data: Partial<LessonRequest>,
     ): Promise<HiveLesson> {
         return await this._request<HiveLesson>(
@@ -113,14 +114,14 @@ export class HiveClient extends HiveClientBase {
         );
     }
 
-    async deleteLesson(id: number): Promise<void> {
+    async deleteLesson(id: HiveLessonId): Promise<void> {
         return await this._request<void>(
             this.buildUrl(`/api/core/schedule/lessons/${id}/`),
             "DELETE",
         );
     }
 
-    async setLessonForClass(classId: number, lessonId: null | number): Promise<void> {
+    async setLessonForClass(classId: number, lessonId: HiveLessonId | null): Promise<void> {
         return await this._request<void>(
             this.buildUrl(`/api/core/management/classes/${classId}/lesson/`),
             "POST",
@@ -128,21 +129,21 @@ export class HiveClient extends HiveClientBase {
         );
     }
 
-    async getLessonRules(parentId: number): Promise<Array<LessonRule>> {
+    async getLessonRules(parentId: HiveLessonId): Promise<Array<LessonRule>> {
         return await this._request<Array<LessonRule>>(
             this.buildUrl(`/api/core/schedule/lessons/${parentId}/rules/`),
             "GET",
         );
     }
 
-    async getLessonRule(parentId: number, id: number): Promise<LessonRule> {
+    async getLessonRule(parentId: HiveLessonId, id: number): Promise<LessonRule> {
         return await this._request<LessonRule>(
             this.buildUrl(`/api/core/schedule/lessons/${parentId}/rules/${id}/`),
             "GET",
         );
     }
 
-    async createLessonRule(parentId: number, data: LessonRuleRequest): Promise<LessonRule> {
+    async createLessonRule(parentId: HiveLessonId, data: LessonRuleRequest): Promise<LessonRule> {
         return await this._request<LessonRule>(
             this.buildUrl(`/api/core/schedule/lessons/${parentId}/rules/`),
             "POST",
@@ -151,7 +152,7 @@ export class HiveClient extends HiveClientBase {
     }
 
     async updateLessonRule(
-        parentId: number,
+        parentId: HiveLessonId,
         id: number,
         data: LessonRuleRequest,
     ): Promise<LessonRule> {
@@ -163,7 +164,7 @@ export class HiveClient extends HiveClientBase {
     }
 
     async patchLessonRule(
-        parentId: number,
+        parentId: HiveLessonId,
         id: number,
         data: Partial<LessonRuleRequest>,
     ): Promise<LessonRule> {
@@ -174,7 +175,7 @@ export class HiveClient extends HiveClientBase {
         );
     }
 
-    async deleteLessonRule(parentId: number, id: number): Promise<void> {
+    async deleteLessonRule(parentId: HiveLessonId, id: number): Promise<void> {
         return await this._request<void>(
             this.buildUrl(`/api/core/schedule/lessons/${parentId}/rules/${id}/`),
             "DELETE",

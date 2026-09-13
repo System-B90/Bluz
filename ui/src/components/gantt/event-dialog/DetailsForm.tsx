@@ -8,6 +8,7 @@ import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { useId } from "react";
 
 import
 {
@@ -38,6 +39,7 @@ export function EventDetailsForm({
     shuffleOptions: Array<string>;
 })
 {
+    const labelId = useId();
     return (
         <Stack spacing={ 2.5 }>
             <Box alignItems="flex-start" display="flex" gap={ 2 }>
@@ -53,9 +55,9 @@ export function EventDetailsForm({
                 />
 
                 <FormControl sx={ { flex: 1, minWidth: "9rem" } }>
-                    <InputLabel>סוג</InputLabel>
-                    <Select
-                        label="סוג"
+                    <InputLabel id={ labelId }>סוג</InputLabel>
+                    <Select label="סוג"
+                        labelId={ labelId }
                         onChange={ (e) =>
                         {
                             const type = e.target.value as ModuleEventType;

@@ -15,6 +15,25 @@ export async function fetchCurriculumExecution(
     );
 }
 
+/**
+ * POST /api/gantt/curriculums/[id]/execution/recreate — re-create the schedule
+ * event for one deleted cut occurrence (#682).
+ */
+export async function recreateExecutionOccurrence(
+    curriculumId: GanttCurriculumId,
+    ganttEventId: string,
+    occurrenceDate: string,
+): Promise<{ createdEvents: number }> {
+    return await safeApiFetcher<{ createdEvents: number }>(
+        `/api/gantt/curriculums/${encodeURIComponent(curriculumId)}/execution/recreate`,
+        {
+            method: "POST",
+            body: JSON.stringify({ ganttEventId, occurrenceDate }),
+        },
+    );
+}
+
 export const curriculumExecutionApi = {
     get: fetchCurriculumExecution,
+    recreateOccurrence: recreateExecutionOccurrence,
 } as const;

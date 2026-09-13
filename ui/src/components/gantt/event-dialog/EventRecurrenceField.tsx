@@ -5,6 +5,7 @@ import Select from "@mui/material/Select";
 import Stack, { StackProps } from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { useId } from "react";
 
 import { EventRecurrence, GanttEvent } from "@/api-shared/types/gantt/models";
 
@@ -31,12 +32,13 @@ export function EventRecurrenceField({
     ...props
 }: EventRecurrenceFieldProps)
 {
+    const labelId = useId();
     return (
         <Stack spacing={ 1 } { ...props }>
             <FormControl fullWidth size="small">
-                <InputLabel>חזרה</InputLabel>
-                <Select
-                    label="חזרה"
+                <InputLabel id={ labelId }>חזרה</InputLabel>
+                <Select label="חזרה"
+                    labelId={ labelId }
                     onChange={ (e) =>
                         commit({ recurrence: e.target.value as EventRecurrence })
                     }

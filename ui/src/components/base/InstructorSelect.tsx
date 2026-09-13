@@ -2,7 +2,7 @@ import ListSubheader from "@mui/material/ListSubheader";
 import MenuItem from "@mui/material/MenuItem";
 import Select, { SelectProps } from "@mui/material/Select";
 import TextField from "@mui/material/TextField";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 
 import { useOutsiders } from "@/components/base/OutsidersProvider";
 import {
@@ -71,6 +71,7 @@ export function InstructorSelect<T = unknown>({
     const { outsiders } = useOutsiders();
 
     const [ searchQuery, setSearchQuery ] = useState("");
+    const searchInputRef = useRef<HTMLInputElement>(null);
 
     const { courseGroups, unassigned } = useGroupedInstructors({
         searchQuery,
@@ -97,15 +98,40 @@ export function InstructorSelect<T = unknown>({
 
     const handleSearchEvent = (e: React.KeyboardEvent | React.MouseEvent) =>
     {
-        if (
-            e.type === "keydown" &&
-            NAVIGATION_KEYS.includes((e as React.KeyboardEvent).key)
-        )
+        if (e.type === "keydown")
         {
-            // Let these bubble up so the Select's menu can handle
-            // navigation between options instead of them being trapped
-            // by the search field.
-            return;
+            const key = (e as React.KeyboardEvent).key;
+
+            if (key === "ArrowDown" || key === "ArrowUp")
+            {
+                // MUI's MenuList navigates via `nextElementSibling` off the
+                // currently focused element. That works between MenuItems
+                // (direct <li> children of the list) but not from the
+                // search TextField, which is nested several levels deep -
+                // so the first press has to manually hand focus to an
+                // actual option before native list traversal can take over.
+                e.preventDefault();
+                const list = (e.currentTarget as HTMLElement).closest("ul");
+                const items = list
+                    ? Array.from(
+                        list.querySelectorAll<HTMLElement>("li[tabindex]"),
+                    )
+                    : [];
+                const target =
+                    key === "ArrowDown"
+                        ? items[0]
+                        : items[items.length - 1];
+                target?.focus();
+                return;
+            }
+
+            if (NAVIGATION_KEYS.includes(key))
+            {
+                // Let these bubble up so the Select's menu can handle
+                // navigation between options instead of them being trapped
+                // by the search field.
+                return;
+            }
         }
         e.stopPropagation();
     };
@@ -121,6 +147,18 @@ export function InstructorSelect<T = unknown>({
                     sx: {
                         maxHeight: 400,
                         ...props.MenuProps?.PaperProps?.sx,
+                    },
+                },
+                TransitionProps: {
+                    ...props.MenuProps?.TransitionProps,
+                    onEntered: (...args) =>
+                    {
+                        // The TextField's own `autoFocus` fires on mount, but
+                        // MUI's Menu focus-traps back to the list right after
+                        // — this re-focuses the search box once the menu has
+                        // actually finished opening, after that trap runs.
+                        searchInputRef.current?.focus();
+                        props.MenuProps?.TransitionProps?.onEntered?.(...args);
                     },
                 },
             } }
@@ -144,6 +182,7 @@ export function InstructorSelect<T = unknown>({
                 <TextField
                     autoFocus
                     fullWidth
+                    inputRef={ searchInputRef }
                     onChange={ (e) => setSearchQuery(e.target.value) }
                     placeholder={
                         excludeTeachers ? "חיפוש מדריך..." : "חיפוש..."

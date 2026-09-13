@@ -45,7 +45,10 @@ export const GET: ServerApiSettingGet = withApi(async (request, context) => {
         controller,
     );
 
-    return ApiSuccess(data);
+    // These barely ever change and every calendar/gantt render reads them —
+    // a day-long cache cuts that to one request per browser per day. Still
+    // `private`: sits behind Hive SSO like every other API route.
+    return ApiSuccess(data, { maxAge: 60 * 60 * 24, scope: "private" });
 });
 
 export const POST: ServerApiSettingUpdate = withApi(

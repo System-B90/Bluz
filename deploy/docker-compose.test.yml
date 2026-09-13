@@ -39,7 +39,9 @@ services:
         # sign-in would fail with a bare SIGNIN_OAUTH_ERROR (#412).
         environment:
             - NODE_ENV=production
-            - MONGO_CONNECTION_STRING=mongodb://mongo_admin:${TEST_MONGO_PASSWORD:-${MONGO_ROOT_PASSWORD}}@mongodb:27017/
+            # directConnection: talk to the one member as-is instead of
+            # discovering the set by its advertised host name.
+            - MONGO_CONNECTION_STRING=mongodb://mongo_admin:${TEST_MONGO_PASSWORD:-${MONGO_ROOT_PASSWORD}}@mongodb:27017/?directConnection=true
             - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@curriculum-db:5432/${POSTGRES_DB}
             - NEXTAUTH_URL=https://${BLUZ_APP_HOST:-bluz.dev}:${TEST_PROXY_PORT_HTTPS:-8443}
             # The browser opens its WebSocket at the address rendered into the
@@ -62,18 +64,73 @@ services:
             # Service account behind the lesson activator (queue-on-live).
             - HIVE_API_USERNAME=${HIVE_API_USERNAME:-api}
             - HIVE_API_PASSWORD=${HIVE_API_PASSWORD:-Password1}
+            # Google Calendar against the in-stack stub, never real Google: a
+            # throwaway client makes the integration "configured", and the two
+            # URLs send its token exchange and Calendar calls to google-stub
+            # (#579). Set explicitly so a developer's real .env client never
+            # leaks into a test run.
+            - GOOGLE_CLIENT_ID=e2e-stub-client.apps.googleusercontent.com
+            - GOOGLE_CLIENT_SECRET=e2e-stub-secret
+            - GOOGLE_OAUTH_TOKEN_URL=http://google-stub:8080/token
+            - GOOGLE_API_ROOT_URL=http://google-stub:8080/
         depends_on:
             - curriculum-db
             - sessions
             - mongodb
+            - google-stub
+
+    google-stub:
+        image: node:22.20.0-alpine
+        container_name: ${TEST_PROJECT_NAME:-bluz-test}-google-stub
+        command: ["node", "/stub/server.mjs"]
+        volumes:
+            - ./../tests/google-stub:/stub:ro
+        networks:
+            - bluz_net
+        healthcheck:
+            test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+            interval: 5s
+            timeout: 5s
+            retries: 12
 
     curriculum-db:
         container_name: ${TEST_PROJECT_NAME:-bluz-test}-curriculum-db
         ports:
             - "127.0.0.3:${TEST_POSTGRES_PORT:-15432}:5432"
 
+    # A single-node replica set, not the base file's standalone: Mongo only
+    # allows transactions on a replica set, so against a standalone every
+    # transactional path (reservations, iteration switch) silently takes
+    # withOptionalTransaction's non-atomic fallback and e2e never exercises
+    # the code production runs (#649).
+    #
+    # Auth plus --replSet needs a keyfile; a throwaway one per container is
+    # enough for a single member. The healthcheck doubles as the one-shot
+    # rs.initiate(): rs.status() throws until the set exists.
     mongodb:
         container_name: ${TEST_PROJECT_NAME:-bluz-test}-mongodb
+        hostname: mongodb
+        entrypoint:
+            - bash
+            - -c
+            - >-
+                openssl rand -base64 756 > /tmp/mongo-keyfile &&
+                chmod 400 /tmp/mongo-keyfile &&
+                exec python3 /usr/local/bin/docker-entrypoint.py mongod
+                --replSet rs0 --keyFile /tmp/mongo-keyfile --bind_ip_all
+                --wiredTigerCacheSizeGB ${MONGO_CACHE_SIZE_GB:-0.5}
+        command: !reset []
+        healthcheck:
+            test:
+                - CMD-SHELL
+                - >-
+                    mongosh --quiet -u "$$MONGO_INITDB_ROOT_USERNAME"
+                    -p "$$MONGO_INITDB_ROOT_PASSWORD" --eval
+                    "try { rs.status().ok } catch (e) { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'mongodb:27017' }] }).ok }"
+            interval: 5s
+            timeout: 10s
+            retries: 24
+            start_period: 10s
         ports:
             - "127.0.0.3:${TEST_MONGO_PORT:-17017}:27017"
 

@@ -119,6 +119,10 @@ export const CalendarProvider = ({
     // show a "dirty" indicator. Relayed through the session server (ephemeral).
     // Re-emitting this on a heartbeat both refreshes the TTL on existing
     // listeners and informs clients that connected after the lock was taken.
+    // Always the real iteration id — useEventWebsocket subscribes to it
+    // directly (in addition to the unscoped current-run channel other
+    // broadcasts use), so this never needs the "undefined means current run"
+    // spelling.
     /** Broadcasts an EVENT_LOCK message so other clients show a presence indicator on the event. */
     const lockEvent = useCallback(
         (eventId: EventId) => {

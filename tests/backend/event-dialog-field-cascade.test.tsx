@@ -51,6 +51,7 @@ describe("SubjectField cascade (#619)", () => {
         expect(onEventChange).toHaveBeenCalledWith({
             hiveLesson: null,
             hiveModule: undefined,
+            hiveQueues: {},
             subject: 2,
         });
     });

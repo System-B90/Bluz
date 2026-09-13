@@ -37,7 +37,7 @@ import { getRangeForView } from "@/components/schedule/calendar/utils";
 import { Event } from "@/components/schedule/types/event";
 
 type BluzCalendarProps = {
-    handleSaveEvent: (event: Event, initiator?: EventChangeInitiator) => void;
+    handleSaveEvent: (event: Event, initiator?: EventChangeInitiator) => Event | undefined | void;
     handleDeleteEvent: (
         eventId: Event["id"],
         initiator?: EventChangeInitiator,
@@ -193,6 +193,19 @@ export function BluzCalendar({
     useEffect(() => {
         updateDateRange(currentDate, currentView);
     }, [currentDate, currentView, updateDateRange]);
+
+    // The view owns `currentDate` and pushes its range into the context, so a
+    // jump made through the context setters (snapshot restore) was pushed
+    // straight back. Follow a range the view didn't produce (#653).
+    useEffect(() => {
+        if (!startDate) return;
+        const { start, end } = getRangeForView(currentDate, currentView);
+        if (startDate >= start && startDate <= end) return;
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- Syncs view state to an external range change
+        setCurrentDate(startDate);
+        // Only an outside change to the context range should move the view.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [startDate]);
 
     // The calendar resolves its own split pieces back to the canonical event
     // before calling out, so these only ever see whole events.

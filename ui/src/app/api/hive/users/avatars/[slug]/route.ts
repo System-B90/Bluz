@@ -12,7 +12,7 @@ const FOUND_MAX_AGE_SECONDS = 3 * 24 * 60 * 60;
  * uploads an avatar starts showing it within a day, while still sparing Hive
  * a request per render for the many users who never upload one.
  */
-const NOT_FOUND_MAX_AGE_SECONDS = 24 * 60 * 60;
+const NOT_FOUND_MAX_AGE_SECONDS = 24 * 60 * 60; // TODO: A request is dispatched on each load since a 404 does not register Cache-Control
 
 export async function GET(
     request: NextRequest,

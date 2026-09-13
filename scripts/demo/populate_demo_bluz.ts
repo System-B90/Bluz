@@ -147,6 +147,13 @@ async function main() {
             /@([^/:]+)(:\d+)?/,
             `@${mongoHost}:${mongoPort}`
         );
+        // The test Mongo is a replica set whose member advertises the
+        // in-network host "mongodb", which the host cannot resolve. A direct
+        // connection skips that discovery; against a standalone it is a no-op
+        // (#649).
+        const url = new URL(connectionString);
+        url.searchParams.set("directConnection", "true");
+        connectionString = url.toString();
     }
 
     console.log(

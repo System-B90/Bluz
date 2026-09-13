@@ -54,6 +54,12 @@ const GOOGLE_CLIENT_ID =
 const GOOGLE_CLIENT_SECRET =
     process.env.GOOGLE_CLIENT_SECRET || DEFAULT_GOOGLE_CLIENT_SECRET;
 
+// Test-topology overrides that point the integration at a stub instead of
+// Google (#579). Unset in every real deployment, where the libraries' own
+// Google endpoints apply.
+const GOOGLE_OAUTH_TOKEN_URL = process.env.GOOGLE_OAUTH_TOKEN_URL || undefined;
+const GOOGLE_API_ROOT_URL = process.env.GOOGLE_API_ROOT_URL || undefined;
+
 const SCOPES = ["https://www.googleapis.com/auth/calendar"];
 /** Name of the calendar created before it was named after the iteration (#482). */
 const LEGACY_CALENDAR_SUMMARY = "Bluz";
@@ -86,11 +92,25 @@ export function getGoogleClientId(): string {
 function createOAuthClient(
     redirectUri?: string,
 ): InstanceType<typeof google.auth.OAuth2> {
-    return new google.auth.OAuth2(
-        GOOGLE_CLIENT_ID,
-        GOOGLE_CLIENT_SECRET,
+    return new google.auth.OAuth2({
+        clientId: GOOGLE_CLIENT_ID,
+        clientSecret: GOOGLE_CLIENT_SECRET,
         redirectUri,
-    );
+        ...(GOOGLE_OAUTH_TOKEN_URL
+            ? { endpoints: { oauth2TokenUrl: GOOGLE_OAUTH_TOKEN_URL } }
+            : {}),
+    });
+}
+
+/** Calendar API client, honouring the test stub's root URL when set. */
+function calendarFor(
+    auth: InstanceType<typeof google.auth.OAuth2>,
+): calendar_v3.Calendar {
+    return google.calendar({
+        version: "v3",
+        auth,
+        ...(GOOGLE_API_ROOT_URL ? { rootUrl: GOOGLE_API_ROOT_URL } : {}),
+    });
 }
 
 /** Deterministic, idempotent Google event id derived from the Bluz event id. */
@@ -170,7 +190,7 @@ export async function connectGoogleCalendar(
     }
     client.setCredentials(tokens);
 
-    const calendarApi = google.calendar({ version: "v3", auth: client });
+    const calendarApi = calendarFor(client);
     const summary = await resolveCalendarSummary();
     const existing = await calendarApi.calendarList.list();
     // A reconnect must reuse the calendar it already filled, whether that was
@@ -247,10 +267,7 @@ export async function pushEventToGoogle(
     try {
         const authorized = await getAuthorizedClient(userId);
         if (!authorized) return false;
-        const calendarApi = google.calendar({
-            version: "v3",
-            auth: authorized.auth,
-        });
+        const calendarApi = calendarFor(authorized.auth);
         const eventId = toGoogleEventId(event.id);
 
         if (action === "delete") {
@@ -377,10 +394,7 @@ export async function pullEventEdits(userId: string): Promise<number> {
     try {
         const authorized = await getAuthorizedClient(userId);
         if (!authorized) return 0;
-        const calendarApi = google.calendar({
-            version: "v3",
-            auth: authorized.auth,
-        });
+        const calendarApi = calendarFor(authorized.auth);
 
         const listPage = (syncToken?: string, pageToken?: string) =>
             calendarApi.events.list({
@@ -440,10 +454,7 @@ export async function pullBusyBlocks(
     try {
         const authorized = await getAuthorizedClient(userId);
         if (!authorized) return [];
-        const calendarApi = google.calendar({
-            version: "v3",
-            auth: authorized.auth,
-        });
+        const calendarApi = calendarFor(authorized.auth);
         const timeMin = new Date().toISOString();
         const timeMax = new Date(
             Date.now() + 30 * 24 * 60 * 60 * 1000,

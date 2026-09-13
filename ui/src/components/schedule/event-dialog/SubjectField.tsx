@@ -26,6 +26,8 @@ export function SubjectField({
                 onEventChange({
                     hiveLesson: null,
                     hiveModule: undefined,
+                    // Queue mappings are per module too (#653).
+                    hiveQueues: {},
                     subject: id ? Number(id) : undefined,
                 })
             }

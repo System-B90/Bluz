@@ -527,7 +527,9 @@ function SplitDragPreview({ preview }: { preview: SegmentDragPreview }) {
 
     const calloutSx = {
         position: "absolute" as const,
-        insetInlineStart: "50%",
+        // Physical `left`: a logical inset paired with a physical translate
+        // moves the badge the same way twice under RTL (#653).
+        left: "50%",
         transform: "translateX(-50%)",
         whiteSpace: "nowrap" as const,
         fontSize: "0.7rem",

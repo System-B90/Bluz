@@ -4,7 +4,7 @@ import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import { SelectChangeEvent } from "@mui/material/Select";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useId } from "react";
 
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { InstructorSelect } from "@/components/base/InstructorSelect";
@@ -30,6 +30,7 @@ function LecturerSelectionField({
     ...props
 }: LecturerSelectionFieldProps)
 {
+    const labelId = useId();
     const { getInstructor } = useHiveUsers();
     const { getOutsider } = useOutsiders();
     const currentLecturers = event?.lecturers ?? [];
@@ -75,9 +76,9 @@ function LecturerSelectionField({
                     })
                     : value;
 
-            onBlurCallback({ ...event, lecturers: newIds });
+            onBlurCallback({ lecturers: newIds });
         },
-        [ event, onBlurCallback ],
+        [ onBlurCallback ],
     );
 
     const handleDelete = useCallback(
@@ -86,9 +87,9 @@ function LecturerSelectionField({
             const newIds = (event?.lecturers ?? []).filter(
                 (id) => id !== idToDelete,
             );
-            onBlurCallback({ ...event, lecturers: newIds });
+            onBlurCallback({ lecturers: newIds });
         },
-        [ event, onBlurCallback ],
+        [ onBlurCallback ],
     );
 
     // Workshops (סדנה) reuse the lecturers field but label it "מנהלים".
@@ -99,10 +100,10 @@ function LecturerSelectionField({
     return (
         <Box { ...props }>
             <FormControl fullWidth={ true }>
-                <InputLabel>{ fieldLabel }</InputLabel>
-                <InstructorSelect
-                    favoriteOutsiders={ favoriteOutsiders }
+                <InputLabel id={ labelId }>{ fieldLabel }</InputLabel>
+                <InstructorSelect favoriteOutsiders={ favoriteOutsiders }
                     label={ fieldLabel }
+                    labelId={ labelId }
                     multiple
                     onChange={ handleChange }
                     renderValue={ (selected) => (
@@ -161,6 +162,7 @@ export function InstructorsField({
     onBlurCallback,
 }: InstructorsFieldProps)
 {
+    const labelId = useId();
     const { getInstructor } = useHiveUsers();
     const currentInstructors = event?.instructors ?? [];
 
@@ -182,9 +184,9 @@ export function InstructorsField({
                     ? value.split(",").map(Number)
                     : value;
 
-            onBlurCallback({ ...event, instructors: newIds as Array<number> });
+            onBlurCallback({ instructors: newIds as Array<number> });
         },
-        [ event, onBlurCallback ],
+        [ onBlurCallback ],
     );
 
     const handleDelete = useCallback(
@@ -193,7 +195,7 @@ export function InstructorsField({
             const newIds = (event?.instructors ?? []).filter(
                 (id) => id !== idToDelete,
             );
-            onBlurCallback({ ...event, instructors: newIds });
+            onBlurCallback({ instructors: newIds });
         },
         [ event, onBlurCallback ],
     );
@@ -209,9 +211,9 @@ export function InstructorsField({
         >
             <Box flexGrow={ 1 }>
                 <FormControl fullWidth={ true }>
-                    <InputLabel>מבוזרים</InputLabel>
-                    <InstructorSelect
-                        label="מבוזרים"
+                    <InputLabel id={ labelId }>מבוזרים</InputLabel>
+                    <InstructorSelect label="מבוזרים"
+                        labelId={ labelId }
                         multiple
                         onChange={ handleChange }
                         renderValue={ (selected) => (

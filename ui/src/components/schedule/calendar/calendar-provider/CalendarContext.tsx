@@ -38,7 +38,7 @@ export type CalendarContextState = {
      * the server can log it (see api-shared/types/event-history.ts); it
      * defaults to an event-dialog edit.
      */
-    saveEvent: (event: Partial<Event>, initiator?: EventChangeInitiator) => void;
+    saveEvent: (event: Partial<Event>, initiator?: EventChangeInitiator) => Event | undefined;
     deleteEvent: (eventId: EventId, initiator?: EventChangeInitiator) => void;
     undo: () => void;
     redo: () => void;

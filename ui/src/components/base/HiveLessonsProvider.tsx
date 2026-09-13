@@ -10,20 +10,20 @@ import {
 } from "react";
 
 import { apiGetLessons } from "@/api-client/hive";
-import { HiveLesson, lessonModuleId } from "@/api-shared/types/hive";
+import { HiveLesson, HiveLessonId, lessonModuleId } from "@/api-shared/types/hive";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 
 export type HiveLessonsContextState = {
     default: boolean;
     lessons: Array<HiveLesson>;
-    getLesson: (id: number) => HiveLesson | undefined;
+    getLesson: (id: HiveLessonId) => HiveLesson | undefined;
     getLessonsOfModule: (moduleId: number) => Array<HiveLesson>;
 };
 
 const HiveLessonsContext = createContext<HiveLessonsContextState | undefined>({
     default: true,
     lessons: [],
-    getLesson: (_id: number) => undefined,
+    getLesson: (_id: HiveLessonId) => undefined,
     getLessonsOfModule: (_moduleId: number) => [],
 });
 
@@ -32,14 +32,17 @@ export const HiveLessonsProvider = ({
 }: {
     children: React.ReactNode;
 }) => {
-    const [lessonLookup, setLessonLookup] = useState<Record<number, HiveLesson>>(
+    // Keyed by the lesson id stringified: ids can be a Hive numeric pk or a
+    // UUID depending on the instance (#682-adjacent), and a plain object's
+    // keys are strings either way.
+    const [lessonLookup, setLessonLookup] = useState<Record<string, HiveLesson>>(
         {},
     );
 
     const lessons = useMemo(() => Object.values(lessonLookup), [lessonLookup]);
 
     const getLesson = useCallback(
-        (id: number) => lessonLookup[id],
+        (id: HiveLessonId) => lessonLookup[String(id)],
         [lessonLookup],
     );
 
@@ -54,9 +57,9 @@ export const HiveLessonsProvider = ({
     const loadLessons = useCallback(() => {
         apiGetLessons()
             .then((fetchedLessons) => {
-                const lessonsMap: Record<number, HiveLesson> = {};
+                const lessonsMap: Record<string, HiveLesson> = {};
                 fetchedLessons.forEach((lesson) => {
-                    lessonsMap[lesson.id] = lesson;
+                    lessonsMap[String(lesson.id)] = lesson;
                 });
                 setLessonLookup(lessonsMap);
             })

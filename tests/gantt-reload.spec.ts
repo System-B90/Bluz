@@ -352,10 +352,22 @@ test.describe("Gantt → schedule reload", () => {
             const result = await reload(request, fixture.curriculumId);
 
             expect(result.applied).toBe(true);
-            expect(result.addedEvents).toBe(1);
-            expect(result.updatedEvents).toBe(1);
-            expect(result.removedEvents).toBe(1);
             expect(result.skippedConflicts).toBe(0);
+
+            // Counted over this test's own gantt events only. The fixture also
+            // carries the seeded meal-break syllabus, and depending on the
+            // dates the week lands on, moving A/B/C retimes those meals and
+            // adds or drops `cut-break:` rows — correct reload behaviour that
+            // made raw totals date-dependent (#683).
+            const own = new Set([ ...fixture.eventIds, newEvent.id ]);
+            const mine = (entries: Array<Json>) =>
+                entries.filter((entry) => own.has(String(entry.ganttEventId)));
+            expect(mine(result.diff.additions)).toHaveLength(1);
+            expect(mine(result.diff.updates)).toHaveLength(1);
+            expect(mine(result.diff.removals)).toHaveLength(1);
+            expect(result.addedEvents).toBe(result.diff.additions.length);
+            expect(result.updatedEvents).toBe(result.diff.updates.length);
+            expect(result.removedEvents).toBe(result.diff.removals.length);
 
             const live = await cutEvents(request, [
                 ...fixture.eventIds,

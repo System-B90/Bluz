@@ -5,7 +5,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import { useSnackbar } from "notistack";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useId } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
 import {
@@ -36,6 +36,7 @@ export function EventMappingField({
     eventId: GanttEventId;
 })
 {
+    const labelId = useId();
     const { enqueueSnackbar } = useSnackbar();
     const state = useCurriculumState();
     const curriculum = state.curriculums[curriculumId];
@@ -134,9 +135,9 @@ export function EventMappingField({
     return (
         <Stack direction="row" spacing={ 2 }>
             <FormControl disabled={ loading || saving } size="small" sx={ { flex: 1, minWidth: "8rem" } }>
-                <InputLabel>שבוע</InputLabel>
-                <Select
-                    label="שבוע"
+                <InputLabel id={ `${labelId}-1` }>שבוע</InputLabel>
+                <Select label="שבוע"
+                    labelId={ `${labelId}-1` }
                     onChange={ (e) => setWeekId(e.target.value as string) }
                     value={ weekId }
                 >
@@ -152,9 +153,9 @@ export function EventMappingField({
             </FormControl>
 
             <FormControl disabled={ loading || saving || !weekId } size="small" sx={ { flex: 1, minWidth: "8rem" } }>
-                <InputLabel>יום</InputLabel>
-                <Select
-                    label="יום"
+                <InputLabel id={ `${labelId}-2` }>יום</InputLabel>
+                <Select label="יום"
+                    labelId={ `${labelId}-2` }
                     onChange={ (e) => applyMapping(e.target.value as GanttDayId) }
                     value={ days.includes(dayId) ? dayId : "" }
                 >

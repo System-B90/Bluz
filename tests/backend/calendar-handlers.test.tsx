@@ -11,6 +11,8 @@ vi.mock("@/components/base/CalendarFilterProvider", () => ({
     }),
 }));
 
+import { enqueueSnackbar } from "notistack";
+
 import { EventChangeInitiator } from "@/api-shared/types/event-history";
 import { useCalendarHandlers } from "@/components/schedule/calendar/calendar/UseCalendarHandlers";
 import { Event } from "@/components/schedule/types/event";
@@ -29,6 +31,8 @@ const baseEvent = {
     endTime: dayjs("2026-03-01T09:00:00.000Z"),
     ganttEventId: "ge1",
     ganttCurriculumId: "c1",
+    hiveLesson: 77,
+    hiveQueues: { 1: 5 },
     locked: false,
 } as unknown as Event;
 
@@ -142,6 +146,30 @@ describe("useCalendarHandlers — drag and resize", () => {
         expect(handleSaveEvent.mock.calls[ 0 ][ 0 ].rooms).toEqual([]);
     });
 
+    it("keeps a multi-room event's rooms on a drop into another room, and says so (#653)", () => {
+        const { result, handleSaveEvent } = renderHandlers();
+        const rooms = [
+            { id: "r1", source: "Custom" },
+            { id: "r2", source: "Custom" },
+        ];
+
+        act(() =>
+            result.current.handleEventDrag({
+                ...dropAt(
+                    "2026-03-02T10:00:00.000Z",
+                    "2026-03-02T11:00:00.000Z",
+                    "Custom:r3",
+                ),
+                event: { ...baseEvent, rooms },
+            } as never),
+        );
+
+        const [ saved ] = handleSaveEvent.mock.calls[ 0 ];
+        expect(saved.rooms).toEqual(rooms);
+        expect(saved.startTime.toISOString()).toBe("2026-03-02T10:00:00.000Z");
+        expect(enqueueSnackbar).toHaveBeenCalled();
+    });
+
     it("a duplicate drop saves a brand-new event and leaves the original alone", () => {
         const { result, handleSaveEvent } = renderHandlers();
 
@@ -158,6 +186,9 @@ describe("useCalendarHandlers — drag and resize", () => {
         // Gantt provenance must not follow the copy (#575).
         expect(saved.ganttEventId).toBeUndefined();
         expect(saved.ganttCurriculumId).toBeUndefined();
+        // Nor the Hive lesson lesson-sync reconciled for the original (#653).
+        expect(saved.hiveLesson).toBeUndefined();
+        expect(saved.hiveQueues).toBeUndefined();
         expect(saved.title).toBe("מופע");
         expect(saved.startTime.toISOString()).toBe(
             "2026-03-02T10:00:00.000Z",
@@ -335,10 +366,30 @@ describe("useCalendarHandlers — keyboard", () => {
         expect(initiator).toBe(EventChangeInitiator.CopyPaste);
         expect(pasted.id).toBeUndefined();
         expect(pasted.ganttEventId).toBeUndefined();
+        expect(pasted.hiveLesson).toBeUndefined();
         expect(pasted.endTime.diff(pasted.startTime, "minute")).toBe(60);
         // With no slot selected the copy lands half an hour after the source.
         expect(pasted.startTime.toISOString()).toBe(
             "2026-03-01T08:30:00.000Z",
+        );
+    });
+
+    it("selects the pasted copy by its saved id, so Delete acts on it (#653)", () => {
+        const { result, handleSaveEvent, handleDeleteEvent } = renderHandlers();
+        handleSaveEvent.mockImplementation((event: Event) => ({
+            ...event,
+            id: "pasted",
+        }));
+
+        act(() => result.current.setActiveEvent(baseEvent));
+        press("c", { ctrlKey: true });
+        press("v", { ctrlKey: true });
+        press("Delete");
+
+        expect(result.current.activeEvent?.id).toBe("pasted");
+        expect(handleDeleteEvent).toHaveBeenCalledWith(
+            "pasted",
+            EventChangeInitiator.Keyboard,
         );
     });
 

@@ -284,16 +284,10 @@ test.describe("Calendar Page", () => {
 
     // ─── Event Color Picker ─────────────────────────────────────────────────
 
-    /**
-     * The color Select's accessible name isn't reliably exposed (its selected
-     * value renders as an icon + paragraph, not plain text), so it's located
-     * structurally via its FormControl instead of by role name.
-     */
+    /** The color Select, by the accessible name its label gives it (#643). */
     function getColorSelect(dialog: ReturnType<typeof getEventDialog>) {
         return dialog
-            .locator(".MuiFormControl-root")
-            .filter({ hasText: "צבע" })
-            .getByRole("combobox");
+            .getByRole("combobox", { name: "צבע" });
     }
 
     test("color selector defaults to no override for a new event", async ({ page }) => {

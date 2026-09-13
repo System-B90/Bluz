@@ -13,6 +13,7 @@ import {
 } from "@/api-client/iterations";
 import { Iteration, IterationUsage } from "@/api-shared/types/iteration";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
+import { noteLocalIterationSwitch } from "@/components/base/IterationProvider";
 import { SettingsTab } from "@/components/settings-dialog/tabs/global/common";
 import { useConfirmDialog } from "@/components/settings-dialog/tabs/global/common/UseConfirmDialog";
 import { useEntityForm } from "@/components/settings-dialog/tabs/global/common/UseEntityForm";
@@ -181,6 +182,7 @@ export function IterationSettings()
         (iteration: Iteration) =>
         {
             setBusyId(iteration.id);
+            noteLocalIterationSwitch(iteration.id);
             apiPatchIteration(iteration.id, { isCurrent: true })
                 .then(() =>
                 {

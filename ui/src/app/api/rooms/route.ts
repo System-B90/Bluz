@@ -64,7 +64,8 @@ export const GET: ServerApiRoomsGet = withApi(async (request) => {
     // An archived iteration is read-only end to end — its Hive snapshot and its
     // custom rooms alike — so the response is good for a week. `private`: this
     // sits behind Hive SSO and must not be held by a shared proxy.
-    return ApiSuccess(rooms, archivedIterationCacheControl(iteration));
+    // Event on a live iteration rooms do not alter too often, cache the response for 1 minute to avoid spam
+    return ApiSuccess(rooms, archivedIterationCacheControl(iteration) ?? 60);
 });
 
 export const POST: ServerApiRoomUpdate = withApi(async (request) => {

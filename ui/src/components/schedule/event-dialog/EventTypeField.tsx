@@ -12,7 +12,7 @@ import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import { SelectChangeEvent } from "@mui/material/Select";
 import Select from "@mui/material/Select";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useId } from "react";
 
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
 import {
@@ -50,6 +50,7 @@ export function EventTypeField({
     onBlurCallback,
     ...props
 }: EventTypeFieldProps & any) {
+    const labelId = useId();
     const [currentType, setCurrentType] = useState<EventType>(
         event?.type ?? EventType.EXERCISE,
     );
@@ -87,9 +88,9 @@ export function EventTypeField({
                 sx: { fontSize: 26 },
             })}
             <FormControl fullWidth sx={{ flexGrow: 1 }}>
-                <InputLabel>סוג</InputLabel>
-                <Select
-                    label="סוג"
+                <InputLabel id={ labelId }>סוג</InputLabel>
+                <Select label="סוג"
+                    labelId={ labelId }
                     onChange={onChange}
                     onClose={onClose}
                     renderValue={(selected) => (

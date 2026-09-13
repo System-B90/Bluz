@@ -25,7 +25,7 @@ export const useEventActions = (
         (
             eventPartial: Partial<Event>,
             initiator: EventChangeInitiator = EventChangeInitiator.EventDialog,
-        ) => {
+        ): Event | undefined => {
             if (!eventPartial) return;
             if (eventPartial.name === "") {
                 // A nameless event is refused, but refusing it in silence made
@@ -129,6 +129,7 @@ export const useEventActions = (
                         );
                     });
             }
+            return newEvent;
         },
         [
             events,

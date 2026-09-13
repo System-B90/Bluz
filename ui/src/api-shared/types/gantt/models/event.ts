@@ -1,5 +1,8 @@
 import { GanttConstraint } from "@/api-shared/types/gantt/models/constraint";
 import { BaseGantItem } from "@/api-shared/types/gantt/models/shared";
+import { HiveLessonId } from "@/api-shared/types/hive";
+
+export type { GanttEventId } from "@/api-shared/types/gantt/models/shared";
 
 export enum ModuleEventType {
     Lecture = "הרצאה",
@@ -68,9 +71,8 @@ export type GanttEvent = {
     /** Hive module id; null when unlinked. */
     hiveModuleId: null | number;
     /** Hive lesson id; null when unlinked. */
-    hiveLessonId: null | number;
+    hiveLessonId: HiveLessonId | null;
 } & BaseGantItem;
-export type GanttEventId = GanttEvent["id"];
 
 /**
  * Default value for `splitAcrossBreaks` when an event's type is picked/changed:

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
+import { act, cleanup, renderHook, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ITERATION_QUERY_PARAM, Iteration } from "@/api-shared/types/iteration";
@@ -77,7 +77,8 @@ vi.mock("next/navigation", () => ({
 }));
 
 // Imported after the mocks above so the module picks them up.
-const { IterationProvider, useIterationScope } = await import(
+const { IterationProvider, noteLocalIterationSwitch, useIterationScope } =
+    await import(
     "@/components/base/IterationProvider"
 );
 
@@ -340,7 +341,7 @@ describe("IterationProvider — current-iteration switch", () => {
      * twice) flip the current iteration within one request round-trip. Filed
      * as a follow-up to #666, not fixed here.
      */
-    it("known bug: a second switch arriving before the first's refetch settles is dropped", async () => {
+    it("follows a second switch that arrives before the first's refetch settles (#667)", async () => {
         searchParam = null;
         const { result } = renderScope();
         await waitFor(() => expect(result.current.iterationId).toBe("2026a"));
@@ -356,11 +357,59 @@ describe("IterationProvider — current-iteration switch", () => {
             expect(apiListIterations).toHaveBeenCalledTimes(3),
         );
 
-        // What SHOULD happen: the scope follows the current run, landing on
-        // "2026a" with isReadOnlyIteration false. This asserts what actually
-        // happens instead — remove this test once the race above is fixed,
-        // and replace it with the "should" behaviour.
+        await waitFor(() => expect(result.current.iterationId).toBe("2026a"));
+        await waitFor(() =>
+            expect(result.current.isReadOnlyIteration).toBe(false),
+        );
+    });
+});
+
+/**
+ * A switch made elsewhere changes the database under every following session,
+ * so it has to reach the user, not just the providers (#666).
+ */
+describe("IterationProvider — switch notice", () => {
+    it("shows a blocking notice naming the new iteration to a following scope", async () => {
+        searchParam = null;
+        const { result } = renderScope();
+        await waitFor(() => expect(result.current.iterationId).toBe("2026a"));
+
+        makeCurrent("2025b");
+        act(() => messageHandler?.("cic", { iterationId: "2025b" }));
+
+        const dialog = await screen.findByRole("dialog");
+        await waitFor(() => expect(dialog.textContent).toContain("מחזור ב׳"));
+        act(() => screen.getByRole("button", { name: "הבנתי" }).click());
+        await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    });
+
+    it("does not notify the tab that made the switch", async () => {
+        searchParam = null;
+        const { result } = renderScope();
+        await waitFor(() => expect(result.current.iterationId).toBe("2026a"));
+
+        noteLocalIterationSwitch("2025b");
+        makeCurrent("2025b");
+        act(() => messageHandler?.("cic", { iterationId: "2025b" }));
+
+        await waitFor(() => expect(result.current.iterationId).toBe("2025b"));
+        expect(screen.queryByRole("dialog")).toBeNull();
+        expect(screen.queryByRole("alert")).toBeNull();
+    });
+
+    it("gives a pinned read-only scope a non-blocking notice instead", async () => {
+        searchParam = "2025b";
+        const { result } = renderScope();
+        await waitFor(() =>
+            expect(result.current.currentIterationId).toBe("2026a"),
+        );
+
+        makeCurrent("2025b");
+        act(() => messageHandler?.("cic", { iterationId: "2025b" }));
+
+        const alert = await screen.findByRole("alert");
+        expect(alert.textContent).toContain("מחזור ב׳");
+        expect(screen.queryByRole("dialog")).toBeNull();
         expect(result.current.iterationId).toBe("2025b");
-        expect(result.current.isReadOnlyIteration).toBe(true);
     });
 });
