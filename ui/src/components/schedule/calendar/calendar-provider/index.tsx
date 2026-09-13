@@ -92,12 +92,18 @@ export const CalendarProvider = ({
 
     /** Applies a lock or unlock update for a single event into the lock state map. */
     const setEventLock = useCallback(
-        (eventId: EventId, lock: EventLockMessage | null) => {
+        (eventId: EventId, lock: EventLockMessage | null, unlockedById?: string) => {
             setLockState((prev) =>
-                applyLockUpdate(prev, eventId, lock, {
-                    selfId: userData.id,
-                    now: Date.now(),
-                }),
+                applyLockUpdate(
+                    prev,
+                    eventId,
+                    lock,
+                    {
+                        selfId: userData.id,
+                        now: Date.now(),
+                    },
+                    unlockedById,
+                ),
             );
         },
         [userData.id],
