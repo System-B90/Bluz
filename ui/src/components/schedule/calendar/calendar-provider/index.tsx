@@ -119,6 +119,14 @@ export const CalendarProvider = ({
     // show a "dirty" indicator. Relayed through the session server (ephemeral).
     // Re-emitting this on a heartbeat both refreshes the TTL on existing
     // listeners and informs clients that connected after the lock was taken.
+    // The server broadcasts current-run writes unscoped (no iterationId) and
+    // clients viewing the current run subscribe to that same unscoped sync
+    // object (see the #582 explanation in useEventWebsocket) — sending the
+    // current run's own real id here instead misses every listener, since
+    // nobody is subscribed to that specific id (only to "no iteration").
+    const lockBroadcastIterationId =
+        iterationId === currentIterationId ? undefined : iterationId;
+
     /** Broadcasts an EVENT_LOCK message so other clients show a presence indicator on the event. */
     const lockEvent = useCallback(
         (eventId: EventId) => {
@@ -128,11 +136,17 @@ export const CalendarProvider = ({
                     eventId,
                     lockedById: userData.id,
                     lockedByName: userData.display_name || userData.name,
-                    iterationId,
+                    iterationId: lockBroadcastIterationId,
                 },
             });
         },
-        [sendMessage, userData.id, userData.display_name, userData.name, iterationId],
+        [
+            sendMessage,
+            userData.id,
+            userData.display_name,
+            userData.name,
+            lockBroadcastIterationId,
+        ],
     );
 
     /** Broadcasts an EVENT_UNLOCK message to release the presence lock on the event. */
@@ -140,10 +154,10 @@ export const CalendarProvider = ({
         (eventId: EventId) => {
             sendMessage({
                 type: MessageTypes.EVENT_UNLOCK,
-                data: { eventId, iterationId },
+                data: { eventId, iterationId: lockBroadcastIterationId },
             });
         },
-        [sendMessage, iterationId],
+        [sendMessage, lockBroadcastIterationId],
     );
 
     // WS updates go through remoteDispatch so they don't pollute the undo stack.
