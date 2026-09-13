@@ -62,17 +62,25 @@ export const useEventWebsocket = (
     // reconnect (and dropped outright if the ticket fetch was still in flight),
     // leaving the calendar silently stale until a page reload.
     useEffect(() => {
-        // Subscribe to the channel the server actually broadcasts on: the
-        // shared current-run id when viewing the current run, the explicit
-        // per-iteration id otherwise.
-        const syncId = iterationSyncId(
-            viewingCurrentRun ? undefined : activeIterationId,
+        // Two channels can carry traffic for the run being viewed: the
+        // shared current-run id most server writes still broadcast to when
+        // viewing the current run (see the #582 note above), and the
+        // explicit per-iteration id, which lock/unlock always uses (real id,
+        // never "undefined means current") so a relay never needs to know
+        // whether the run it's relaying for happens to be the current one.
+        const syncIds = Array.from(
+            new Set(
+                viewingCurrentRun
+                    ? [iterationSyncId(undefined), iterationSyncId(activeIterationId)]
+                    : [iterationSyncId(activeIterationId)],
+            ),
         );
-        registerSyncObject(syncId);
-        // Cleanup closes over this run's syncId, so an iteration switch
-        // deregisters the old id before the next run registers the new one --
-        // React runs the previous cleanup first. No bookkeeping ref needed.
-        return () => deregisterSyncObject(syncId);
+        syncIds.forEach(registerSyncObject);
+        // Cleanup closes over this run's syncIds, so an iteration switch
+        // deregisters the old ones before the next run registers the new
+        // ones — React runs the previous cleanup first. No bookkeeping ref
+        // needed.
+        return () => syncIds.forEach(deregisterSyncObject);
     }, [
         viewingCurrentRun,
         activeIterationId,
