@@ -89,7 +89,7 @@ function LecturerSelectionField({
             );
             onBlurCallback({ lecturers: newIds });
         },
-        [ onBlurCallback ],
+        [ onBlurCallback, event?.lecturers ],
     );
 
     // Workshops (סדנה) reuse the lecturers field but label it "מנהלים".
