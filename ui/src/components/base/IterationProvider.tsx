@@ -65,7 +65,11 @@ export const IterationProvider = ({
 
     const [iterationId, setIterationIdState] = useState<
         IterationId | undefined
-    >(() => (searchParams.get(ITERATION_QUERY_PARAM) as IterationId) || undefined);
+    >(
+        () =>
+            (searchParams.get(ITERATION_QUERY_PARAM) as IterationId) ||
+            undefined,
+    );
     // Side-effect-free mirror of `iterationId`, read inside `setIterationId`
     // instead of a functional `setState` updater — React may invoke a
     // functional updater during render (bailout/replay), and `router.replace`
@@ -98,8 +102,20 @@ export const IterationProvider = ({
     // iteration was current when the message arrived rather than the value
     // captured when the handler was built.
     const currentIterationIdRef = useRef(currentIterationId);
+    // Whether the scope follows "the current run" rather than a pinned past
+    // iteration. Tracked explicitly: inferring it from `currentIterationIdRef`
+    // is racy, because that ref lags a switch until its refetch settles, and a
+    // second switch inside that window used to look like a deliberate pin
+    // (#667). Only an explicit pick of a non-current iteration clears it.
+    const followingCurrentRef = useRef(!iterationId);
     useEffect(() => {
         currentIterationIdRef.current = currentIterationId;
+        if (
+            currentIterationId &&
+            iterationIdRef.current === currentIterationId
+        ) {
+            followingCurrentRef.current = true;
+        }
     }, [currentIterationId]);
 
     // Reacts to back/forward navigation and links carrying a different param.
@@ -108,8 +124,31 @@ export const IterationProvider = ({
     useEffect(() => {
         if (paramValue === lastAppliedParam.current) return;
         lastAppliedParam.current = paramValue;
+        followingCurrentRef.current =
+            !paramValue || paramValue === currentIterationIdRef.current;
         setIterationIdState((paramValue as IterationId) || undefined);
     }, [paramValue]);
+
+    const applyIterationId = useCallback(
+        (next: IterationId | undefined) => {
+            iterationIdRef.current = next;
+
+            const params = new URLSearchParams(window.location.search);
+            if (next) {
+                params.set(ITERATION_QUERY_PARAM, next);
+            } else {
+                params.delete(ITERATION_QUERY_PARAM);
+            }
+            lastAppliedParam.current = next;
+            const query = params.toString();
+            router.replace(query ? `${pathname}?${query}` : pathname, {
+                scroll: false,
+            });
+
+            setIterationIdState(next);
+        },
+        [pathname, router],
+    );
 
     const setIterationId: Dispatch<SetStateAction<IterationId | undefined>> =
         useCallback(
@@ -118,23 +157,11 @@ export const IterationProvider = ({
                     typeof value === "function"
                         ? value(iterationIdRef.current)
                         : value;
-                iterationIdRef.current = next;
-
-                const params = new URLSearchParams(window.location.search);
-                if (next) {
-                    params.set(ITERATION_QUERY_PARAM, next);
-                } else {
-                    params.delete(ITERATION_QUERY_PARAM);
-                }
-                lastAppliedParam.current = next;
-                const query = params.toString();
-                router.replace(query ? `${pathname}?${query}` : pathname, {
-                    scroll: false,
-                });
-
-                setIterationIdState(next);
+                followingCurrentRef.current =
+                    !next || next === currentIterationIdRef.current;
+                applyIterationId(next);
             },
-            [pathname, router],
+            [applyIterationId],
         );
 
     // The current iteration changed (here or in another session). Two things
@@ -152,10 +179,11 @@ export const IterationProvider = ({
                 ?.iterationId;
             const scoped = iterationIdRef.current;
             if (!nextId || nextId === scoped) return;
-            if (scoped && scoped !== currentIterationIdRef.current) return;
-            setIterationId(nextId as IterationId);
+            if (scoped && !followingCurrentRef.current) return;
+            followingCurrentRef.current = true;
+            applyIterationId(nextId as IterationId);
         },
-        [loadIterations, setIterationId],
+        [loadIterations, applyIterationId],
     );
     useEffect(() => {
         if (typeof window === "undefined") return;

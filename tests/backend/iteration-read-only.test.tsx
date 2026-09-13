@@ -340,7 +340,7 @@ describe("IterationProvider — current-iteration switch", () => {
      * twice) flip the current iteration within one request round-trip. Filed
      * as a follow-up to #666, not fixed here.
      */
-    it("known bug: a second switch arriving before the first's refetch settles is dropped", async () => {
+    it("follows a second switch that arrives before the first's refetch settles (#667)", async () => {
         searchParam = null;
         const { result } = renderScope();
         await waitFor(() => expect(result.current.iterationId).toBe("2026a"));
@@ -356,11 +356,9 @@ describe("IterationProvider — current-iteration switch", () => {
             expect(apiListIterations).toHaveBeenCalledTimes(3),
         );
 
-        // What SHOULD happen: the scope follows the current run, landing on
-        // "2026a" with isReadOnlyIteration false. This asserts what actually
-        // happens instead — remove this test once the race above is fixed,
-        // and replace it with the "should" behaviour.
-        expect(result.current.iterationId).toBe("2025b");
-        expect(result.current.isReadOnlyIteration).toBe(true);
+        await waitFor(() => expect(result.current.iterationId).toBe("2026a"));
+        await waitFor(() =>
+            expect(result.current.isReadOnlyIteration).toBe(false),
+        );
     });
 });
