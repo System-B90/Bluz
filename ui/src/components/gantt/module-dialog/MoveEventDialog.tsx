@@ -9,7 +9,7 @@ import ListSubheader from "@mui/material/ListSubheader";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import { useSnackbar } from "notistack";
-import { useState } from "react";
+import { useState, useId } from "react";
 
 import { GanttEventId, GanttModuleId } from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
@@ -27,6 +27,7 @@ export function MoveEventDialog({
     eventId: GanttEventId;
     currentModuleId: GanttModuleId;
 }) {
+    const labelId = useId();
     const { enqueueSnackbar } = useSnackbar();
     const { moveEvent } = useModuleEventActions();
     const state = useCurriculumState();
@@ -56,9 +57,9 @@ export function MoveEventDialog({
             <DialogTitle>העבר מופע למערך אחר</DialogTitle>
             <DialogContent>
                 <FormControl fullWidth size="small" sx={{ mt: 1 }}>
-                    <InputLabel>בחירת מערך</InputLabel>
-                    <Select
-                        label="בחירת מערך"
+                    <InputLabel id={ labelId }>בחירת מערך</InputLabel>
+                    <Select label="בחירת מערך"
+                        labelId={ labelId }
                         onChange={(e) => setDestModuleId(e.target.value as GanttModuleId)}
                         value={destModuleId}
                     >

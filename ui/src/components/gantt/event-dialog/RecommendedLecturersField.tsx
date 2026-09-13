@@ -29,7 +29,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { useCallback } from "react";
+import { useCallback, useId } from "react";
 
 import { useOutsiders } from "@/components/base/OutsidersProvider";
 
@@ -96,6 +96,7 @@ export function RecommendedLecturersField({
     onChange: (ids: Array<string>) => void;
 })
 {
+    const labelId = useId();
     const { outsiders, getOutsider } = useOutsiders();
 
     const sensors = useSensors(
@@ -173,9 +174,9 @@ export function RecommendedLecturersField({
 
             { availableToAdd.length > 0 && (
                 <FormControl fullWidth size="small">
-                    <InputLabel>הוספת מרצה מומלץ</InputLabel>
-                    <Select<string>
-                        label="הוספת מרצה מומלץ"
+                    <InputLabel id={ labelId }>הוספת מרצה מומלץ</InputLabel>
+                    <Select<string> label="הוספת מרצה מומלץ"
+                        labelId={ labelId }
                         onChange={ (e) =>
                         {
                             if (e.target.value) handleAdd(e.target.value);

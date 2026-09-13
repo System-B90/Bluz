@@ -2,6 +2,7 @@ import FormControl, { FormControlProps } from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
+import { useId } from "react";
 
 import { GanttEvent, RoomRequirement } from "@/api-shared/types/gantt/models";
 
@@ -16,11 +17,12 @@ export function EventRoomRequirementsField({
     ...props
 }: EventRoomRequirementsFieldProps)
 {
+    const labelId = useId();
     return (
         <FormControl { ...props }>
-            <InputLabel>דרישת חדר</InputLabel>
-            <Select
-                label="דרישת חדר"
+            <InputLabel id={ labelId }>דרישת חדר</InputLabel>
+            <Select label="דרישת חדר"
+                labelId={ labelId }
                 onChange={ (e) =>
                     commit({
                         roomRequirement: e.target.value as RoomRequirement,

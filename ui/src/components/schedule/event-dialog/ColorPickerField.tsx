@@ -10,7 +10,7 @@ import Select from "@mui/material/Select";
 import { useTheme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { memo, useCallback, useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState, useId } from "react";
 
 import { useCustomColors } from "@/components/base/CustomColorsProvider";
 import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
@@ -97,6 +97,7 @@ export function ColorPickerField({
     ...boxProps
 }: ColorPickerFieldProps)
 {
+    const labelId = useId();
     const theme = useTheme();
     const { getSubject, subjects } = useHiveSubjects();
     const { getCustomColor, customColors } = useCustomColors();
@@ -238,9 +239,9 @@ export function ColorPickerField({
             fullWidth={ false }
             sx={ { minWidth: "5rem", ...((boxProps.sx as object) ?? {}) } }
         >
-            <InputLabel>צבע</InputLabel>
-            <Select
-                label="צבע"
+            <InputLabel id={ labelId }>צבע</InputLabel>
+            <Select label="צבע"
+                labelId={ labelId }
                 onChange={ (e) => handleSelectColor(e.target.value) }
                 value={ event.color ?? DEFAULT_COLOR_ID }
             >

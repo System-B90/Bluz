@@ -2,6 +2,7 @@ import FormControl, { FormControlProps } from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
+import { useId } from "react";
 
 import
 {
@@ -23,6 +24,7 @@ export function PrayerTypeField({
     ...props
 }: PrayerTypeFieldProps & FormControlProps)
 {
+    const labelId = useId();
     const prayerTypeItems = Object.values(PrayerType).map((prayerType) => (
         <MenuItem key={ prayerType } value={ prayerType }>
             { prayerTypeToHebrew(prayerType) }
@@ -35,9 +37,9 @@ export function PrayerTypeField({
             fullWidth={ false }
             { ...props }
         >
-            <InputLabel>תפילת</InputLabel>
-            <Select
-                label="תפילת"
+            <InputLabel id={ labelId }>תפילת</InputLabel>
+            <Select label="תפילת"
+                labelId={ labelId }
                 onChange={ (e) => onEventChange({ prayerType: e.target.value }) }
                 value={ (event as PrayerEvent)?.prayerType || "" }
             >

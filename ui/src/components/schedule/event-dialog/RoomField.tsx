@@ -4,7 +4,7 @@ import FormControl, { FormControlProps } from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useId } from "react";
 
 import {
     areRoomsEqual,
@@ -23,6 +23,7 @@ export function RoomField({
     onBlurCallback,
     ...props
 }: RoomFieldProps & FormControlProps) {
+    const labelId = useId();
     const { rooms, getRoom } = useRooms();
     const [encodedSelectedRoomIds, setEncodedSelectedRoomIds] = useState(
         Array.isArray(event?.rooms)
@@ -85,9 +86,9 @@ export function RoomField({
             {...props}
             disabled={event?.type ? !eventHasRoom(event.type) : false}
         >
-            <InputLabel>כיתות</InputLabel>
-            <Select
-                label="כיתות"
+            <InputLabel id={ labelId }>כיתות</InputLabel>
+            <Select label="כיתות"
+                labelId={ labelId }
                 multiple
                 onChange={handleChange}
                 onClose={onClose}

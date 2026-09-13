@@ -4,7 +4,7 @@ import FormHelperText from "@mui/material/FormHelperText";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import { SelectChangeEvent } from "@mui/material/Select";
-import { useCallback } from "react";
+import { useCallback, useId } from "react";
 
 import { GanttEvent } from "@/api-shared/types/gantt/models/event";
 import { InstructorSelect } from "@/components/base/InstructorSelect";
@@ -20,6 +20,7 @@ export function EventOrchestratorField({
     ...props
 }: EventOrchestratorFieldProps)
 {
+    const labelId = useId();
     const onChange = useCallback(
         (e: SelectChangeEvent<"" | number>) =>
         {
@@ -35,12 +36,13 @@ export function EventOrchestratorField({
 
     return (
         <FormControl size="small" { ...props }>
-            <InputLabel sx={ isMissing ? { color: "warning.main" } : undefined }>
+            <InputLabel id={ labelId } sx={ isMissing ? { color: "warning.main" } : undefined }>
                 אחראי
             </InputLabel>
             <InstructorSelect<"" | number>
                 excludeTeachers={ true }
                 label="אחראי"
+                labelId={ labelId }
                 onChange={ onChange }
                 sx={ isMissing
                     ? {
