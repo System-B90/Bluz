@@ -2,7 +2,7 @@ import ListSubheader from "@mui/material/ListSubheader";
 import MenuItem from "@mui/material/MenuItem";
 import Select, { SelectProps } from "@mui/material/Select";
 import TextField from "@mui/material/TextField";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 
 import { useOutsiders } from "@/components/base/OutsidersProvider";
 import {
@@ -71,6 +71,7 @@ export function InstructorSelect<T = unknown>({
     const { outsiders } = useOutsiders();
 
     const [ searchQuery, setSearchQuery ] = useState("");
+    const searchInputRef = useRef<HTMLInputElement>(null);
 
     const { courseGroups, unassigned } = useGroupedInstructors({
         searchQuery,
@@ -148,6 +149,18 @@ export function InstructorSelect<T = unknown>({
                         ...props.MenuProps?.PaperProps?.sx,
                     },
                 },
+                TransitionProps: {
+                    ...props.MenuProps?.TransitionProps,
+                    onEntered: (...args) =>
+                    {
+                        // The TextField's own `autoFocus` fires on mount, but
+                        // MUI's Menu focus-traps back to the list right after
+                        // — this re-focuses the search box once the menu has
+                        // actually finished opening, after that trap runs.
+                        searchInputRef.current?.focus();
+                        props.MenuProps?.TransitionProps?.onEntered?.(...args);
+                    },
+                },
             } }
         >
             <ListSubheader
@@ -169,6 +182,7 @@ export function InstructorSelect<T = unknown>({
                 <TextField
                     autoFocus
                     fullWidth
+                    inputRef={ searchInputRef }
                     onChange={ (e) => setSearchQuery(e.target.value) }
                     placeholder={
                         excludeTeachers ? "חיפוש מדריך..." : "חיפוש..."
