@@ -23,8 +23,10 @@ export function EventClassification({
 })
 {
     const isPrayer = event?.type === EventType.PRAYER;
-    // Fake events aren't wired to Hive — hide subject/module/lesson (#102).
-    const showHiveFields = !isPrayer && !event?.fake;
+    // Fake events aren't wired to Hive, and a break has no subject of its own
+    // — hide subject/module/lesson for both (#102).
+    const showHiveFields =
+        !isPrayer && !event?.fake && event?.type !== EventType.BREAK;
 
     return (
         <Box

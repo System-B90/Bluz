@@ -46,7 +46,7 @@ export function EventPrimaryDetails({
                 />
             </Box>
 
-            <Box display="flex" gap={ 2 } width="100%">
+            <Box alignItems="stretch" display="flex" gap={ 2 } width="100%">
                 <NotesField
                     notes={ event.notes }
                     onUpdate={ onUpdate }

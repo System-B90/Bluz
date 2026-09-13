@@ -237,12 +237,17 @@ export function ColorPickerField({
     return (
         <FormControl
             fullWidth={ false }
-            sx={ { minWidth: "5rem", ...((boxProps.sx as object) ?? {}) } }
+            sx={ {
+                minWidth: "5rem",
+                height: "100%",
+                ...((boxProps.sx as object) ?? {}),
+            } }
         >
             <InputLabel id={ labelId }>צבע</InputLabel>
             <Select label="צבע"
                 labelId={ labelId }
                 onChange={ (e) => handleSelectColor(e.target.value) }
+                sx={ { height: "100%" } }
                 value={ event.color ?? DEFAULT_COLOR_ID }
             >
                 <MenuItem key={ DEFAULT_COLOR_ID } value={ DEFAULT_COLOR_ID }>
