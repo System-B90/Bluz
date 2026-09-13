@@ -217,6 +217,18 @@ export function eventHasRoom(type: EventType): boolean
 }
 
 /**
+ * Checks if an event type is assigned to specific courses. Prayers apply to
+ * everyone, so they carry none. Deliberately its own predicate rather than a
+ * reuse of {@link eventHasRoom}: the two only coincide today.
+ * @param type The EventType to check.
+ * @returns true if the courses field applies to this event type.
+ */
+export function eventHasCourses(type: EventType): boolean
+{
+    return type !== EventType.PRAYER;
+}
+
+/**
  * Default value for `splitAcrossBreaks` when an event's type is picked/changed:
  * on for exercises and workshops, off for everything else (lectures included).
  * @param type The EventType to check.

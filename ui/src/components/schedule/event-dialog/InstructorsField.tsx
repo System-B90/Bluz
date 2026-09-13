@@ -75,7 +75,7 @@ function LecturerSelectionField({
                     })
                     : value;
 
-            onBlurCallback({ ...event, lecturers: newIds });
+            onBlurCallback({ lecturers: newIds });
         },
         [ event, onBlurCallback ],
     );
@@ -86,7 +86,7 @@ function LecturerSelectionField({
             const newIds = (event?.lecturers ?? []).filter(
                 (id) => id !== idToDelete,
             );
-            onBlurCallback({ ...event, lecturers: newIds });
+            onBlurCallback({ lecturers: newIds });
         },
         [ event, onBlurCallback ],
     );
@@ -182,7 +182,7 @@ export function InstructorsField({
                     ? value.split(",").map(Number)
                     : value;
 
-            onBlurCallback({ ...event, instructors: newIds as Array<number> });
+            onBlurCallback({ instructors: newIds as Array<number> });
         },
         [ event, onBlurCallback ],
     );
@@ -193,7 +193,7 @@ export function InstructorsField({
             const newIds = (event?.instructors ?? []).filter(
                 (id) => id !== idToDelete,
             );
-            onBlurCallback({ ...event, instructors: newIds });
+            onBlurCallback({ instructors: newIds });
         },
         [ event, onBlurCallback ],
     );

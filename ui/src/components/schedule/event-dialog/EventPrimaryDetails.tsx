@@ -24,7 +24,56 @@ export function EventPrimaryDetails({
     onUpdate: (u: Partial<Event>) => void;
 })
 {
-    const isEmpty = !event.notes;
+    return (
+        <>
+            <Box display="flex" gap={ 2 } width="100%">
+                <TextField
+                    // First meaningful field in the event dialog: without this
+                    // MUI parks focus on the dialog paper, and the first Tab
+                    // lands on the close/delete action instead of the form.
+                    autoFocus
+                    fullWidth
+                    label="שם"
+                    onChange={ (e) => onUpdate({ name: e.target.value }) }
+                    required
+                    sx={ { flexGrow: 1 } }
+                    value={ event.name ?? "" }
+                />
+                <EventTimeField
+                    event={ event }
+                    onBlurCallback={ onUpdate }
+                    sx={ { flexShrink: 1 } }
+                />
+            </Box>
+
+            <Box display="flex" gap={ 2 } width="100%">
+                <NotesField
+                    notes={ event.notes }
+                    onUpdate={ onUpdate }
+                />
+                <ColorPickerField
+                    event={ event }
+                    onUpdate={ onUpdate }
+                />
+            </Box>
+        </>
+    );
+}
+
+/**
+ * The notes field with its typewriter placeholder. Split out so the
+ * animation's ~15 state updates a second re-render only this field, not the
+ * name field and time pickers beside it (#653).
+ */
+function NotesField({
+    notes,
+    onUpdate,
+}: {
+    notes: Event["notes"] | undefined;
+    onUpdate: (u: Partial<Event>) => void;
+})
+{
+    const isEmpty = !notes;
     const [ currentWordIndex, setCurrentWordIndex ] = useState(0);
     const [ currentText, setCurrentText ] = useState("");
     const [ isDeleting, setIsDeleting ] = useState(false);
@@ -82,42 +131,14 @@ export function EventPrimaryDetails({
     }, [ currentText, isDeleting, currentWordIndex, isEmpty ]);
 
     return (
-        <>
-            <Box display="flex" gap={ 2 } width="100%">
-                <TextField
-                    // First meaningful field in the event dialog: without this
-                    // MUI parks focus on the dialog paper, and the first Tab
-                    // lands on the close/delete action instead of the form.
-                    autoFocus
-                    fullWidth
-                    label="שם"
-                    onChange={ (e) => onUpdate({ name: e.target.value }) }
-                    required
-                    sx={ { flexGrow: 1 } }
-                    value={ event.name ?? "" }
-                />
-                <EventTimeField
-                    event={ event }
-                    onBlurCallback={ onUpdate }
-                    sx={ { flexShrink: 1 } }
-                />
-            </Box>
-
-            <Box display="flex" gap={ 2 } width="100%">
-                <TextField
-                    fullWidth
-                    label="הערות"
-                    multiline
-                    onChange={ (e) => onUpdate({ notes: e.target.value }) }
-                    placeholder={ currentText ? `${currentText}|` : "" }
-                    rows={ 3 }
-                    value={ event.notes ?? "" }
-                />
-                <ColorPickerField
-                    event={ event }
-                    onUpdate={ onUpdate }
-                />
-            </Box>
-        </>
+        <TextField
+            fullWidth
+            label="הערות"
+            multiline
+            onChange={ (e) => onUpdate({ notes: e.target.value }) }
+            placeholder={ currentText ? `${currentText}|` : "" }
+            rows={ 3 }
+            value={ notes ?? "" }
+        />
     );
 }

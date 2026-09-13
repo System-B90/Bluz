@@ -10,7 +10,7 @@ import { useCallback, useState } from "react";
 import { CourseId } from "@/api-shared/types/course";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
-import { eventHasRoom } from "@/components/schedule/types/event";
+import { eventHasCourses } from "@/components/schedule/types/event";
 
 type CourseFieldProps = {} & EventFieldProps;
 
@@ -68,7 +68,7 @@ export function CourseField({
         <FormControl
             fullWidth={false}
             {...props}
-            disabled={event?.type ? !eventHasRoom(event.type) : false}
+            disabled={event?.type ? !eventHasCourses(event.type) : false}
         >
             <InputLabel>מסלולים</InputLabel>
             <Select
