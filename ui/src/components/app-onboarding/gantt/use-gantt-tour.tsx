@@ -1,6 +1,7 @@
 "use client";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
+import { Tour, useTour } from "@system-b90/onboarding";
 import { Dispatch, SetStateAction, useMemo } from "react";
 
 import { APP_ANCHORS, GANTT_ANCHORS } from "@/components/app-onboarding/anchors";
@@ -8,7 +9,6 @@ import {
     GANTT_TAB_INDEX,
     waitForTabPaint,
 } from "@/components/app-onboarding/gantt/tabs";
-import { Tour, useTour } from "@/components/onboarding";
 
 export const GANTT_TOUR_ID = "gantt.intro";
 

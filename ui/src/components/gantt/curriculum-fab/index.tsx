@@ -5,6 +5,7 @@ import List from "@mui/material/List";
 import ListSubheader from "@mui/material/ListSubheader";
 import Popover from "@mui/material/Popover";
 import Typography from "@mui/material/Typography";
+import { useTourAnchor } from "@system-b90/onboarding";
 import {
     Dispatch,
     MouseEvent,
@@ -20,7 +21,6 @@ import { GANTT_ANCHORS } from "@/components/app-onboarding/anchors";
 import { CurriculumActionItems } from "@/components/gantt/curriculum-fab/CurriculumActionItems";
 import { CurriculumListItems } from "@/components/gantt/curriculum-fab/CurriculumListItems";
 import { useCurriculumList } from "@/components/gantt/state/curriculum-list";
-import { useTourAnchor } from "@/components/onboarding";
 
 export type CurriculumDrawerProps = {
     open?: boolean;

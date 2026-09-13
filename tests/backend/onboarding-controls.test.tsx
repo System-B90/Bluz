@@ -4,17 +4,17 @@ import userEvent from "@testing-library/user-event";
 import { ReactNode, useMemo } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { withLabelOverrides } from "@/components/onboarding/labels";
-import { EN_LABELS } from "@/components/onboarding/labels/en";
-import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
+import { withLabelOverrides } from "@system-b90/onboarding";
+import { EN_LABELS } from "@system-b90/onboarding/en";
+import { OnboardingProvider } from "@system-b90/onboarding";
 import {
     HelpTopic,
     OnboardingStorage,
     Tour,
-} from "@/components/onboarding/types";
-import { useHelpTopics } from "@/components/onboarding/use-help-topics";
-import { useOnboarding } from "@/components/onboarding/use-onboarding";
-import { useTour } from "@/components/onboarding/use-tour";
+} from "@system-b90/onboarding";
+import { useHelpTopics } from "@system-b90/onboarding";
+import { useOnboarding } from "@system-b90/onboarding";
+import { useTour } from "@system-b90/onboarding";
 
 /**
  * The provider's control surface: what a host app can decide about a tour

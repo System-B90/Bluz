@@ -1,4 +1,5 @@
 import Box from "@mui/material/Box";
+import { useTourAnchor } from "@system-b90/onboarding";
 import { Dispatch, SetStateAction } from "react";
 
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
@@ -7,7 +8,6 @@ import { GanttCreationDeletionCallbackProps } from "@/components/gantt/curriculu
 import { CurriculumAboutCard } from "@/components/gantt/curriculum-view/components/curriculum-about-card";
 import { HoursCard } from "@/components/gantt/curriculum-view/components/HoursCard";
 import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
-import { useTourAnchor } from "@/components/onboarding";
 
 export function AboutTimeCurriculumViewSidebar({
     curriculumId,

@@ -8,9 +8,9 @@ import { APP_ANCHORS, GANTT_ANCHORS } from "@/components/app-onboarding/anchors"
 import { GanttOnboarding } from "@/components/app-onboarding/gantt/GanttOnboarding";
 import { GANTT_TAB_INDEX } from "@/components/app-onboarding/gantt/tabs";
 import { ONBOARDING_LABELS } from "@/components/app-onboarding/labels";
-import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
-import { useOnboarding } from "@/components/onboarding/use-onboarding";
-import { useTourAnchor } from "@/components/onboarding/use-tour-anchor";
+import { OnboardingProvider } from "@system-b90/onboarding";
+import { useOnboarding } from "@system-b90/onboarding";
+import { useTourAnchor } from "@system-b90/onboarding";
 
 /**
  * Bluz's gantt tour (#659). What matters here is not the wording of every step

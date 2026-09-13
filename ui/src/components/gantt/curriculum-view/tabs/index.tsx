@@ -4,6 +4,7 @@ import Box, { BoxProps } from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
+import { useTourAnchor } from "@system-b90/onboarding";
 import {
     Dispatch,
     Fragment,
@@ -21,7 +22,6 @@ import { CurriculumGanttView } from "@/components/gantt/curriculum-view/tabs/gan
 import { SyllabusesTab } from "@/components/gantt/curriculum-view/tabs/syllabuses-tab";
 import { TimeframeEventsTab } from "@/components/gantt/curriculum-view/tabs/timeframe-events-tab";
 import { WeeksTab } from "@/components/gantt/curriculum-view/tabs/weeks-tab";
-import { useTourAnchor } from "@/components/onboarding";
 
 type TabProps = {
     selectedTabIndex: number;
