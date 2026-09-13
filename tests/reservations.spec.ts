@@ -82,7 +82,11 @@ test.describe("Room reservations", () => {
             await expect(
                 reservationDialog.getByText("מזמין: 1234567"),
             ).toBeVisible();
-            await expect(reservationDialog.getByText("מדריך")).toBeVisible();
+            // The row's booker-type chip, not the "סוג מזמין" select above
+            // it, which shows the same word as its current value.
+            await expect(
+                reservationDialog.getByRole("listitem").getByText("מדריך"),
+            ).toBeVisible();
 
             // Cancel it — back to the empty state.
             await reservationDialog

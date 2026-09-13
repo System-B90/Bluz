@@ -46,6 +46,11 @@ function startCliLogin(baseURL: string, configHome: string): CliRun {
             PYTHONUNBUFFERED: "1",
             // typer.get_app_dir: APPDATA on Windows, XDG_CONFIG_HOME elsewhere.
             APPDATA: configHome,
+            // Windows derives the user site-packages from APPDATA too; pin it
+            // so the override does not hide packages installed with --user.
+            ...(process.env.APPDATA && !process.env.PYTHONUSERBASE
+                ? { PYTHONUSERBASE: path.join(process.env.APPDATA, "Python") }
+                : {}),
             XDG_CONFIG_HOME: configHome,
             // Never let a developer's own credentials short-circuit the flow.
             BLUZ_TOKEN: "",
@@ -83,6 +88,7 @@ test.describe("CLI login handshake", () => {
         context,
         request,
         baseURL,
+        playwright,
     }) => {
         cli = startCliLogin(baseURL!, configHome);
 
@@ -137,13 +143,25 @@ test.describe("CLI login handshake", () => {
         expect(fs.existsSync(configFile), `no config at ${configFile}`).toBe(true);
         const saved = JSON.parse(fs.readFileSync(configFile, "utf-8"));
 
-        // The stored token is the browser's own session, obtained by redeeming
-        // the handoff code — not something the page handed over directly.
+        expect(saved.url).toBe(baseURL!.replace(/\/$/, ""));
+
+        // The stored token is a working session. Not compared to the browser's
+        // cookie byte for byte: next-auth re-encrypts the session JWE as it
+        // slides, so the cookie moves on after the handoff code is minted.
         const sessionCookie = (await context.cookies()).find((cookie) =>
             cookie.name.endsWith("next-auth.session-token"),
         );
         expect(sessionCookie, "browser context has no session cookie").toBeTruthy();
-        expect(saved.token).toBe(sessionCookie!.value);
-        expect(saved.url).toBe(baseURL!.replace(/\/$/, ""));
+        const asCli = await playwright.request.newContext({
+            baseURL,
+            ignoreHTTPSErrors: true,
+            extraHTTPHeaders: { Cookie: `${sessionCookie!.name}=${saved.token}` },
+        });
+        try {
+            const authed = await asCli.get("/api/course");
+            expect(authed.status(), "stored CLI token was not accepted").toBe(200);
+        } finally {
+            await asCli.dispose();
+        }
     });
 });
