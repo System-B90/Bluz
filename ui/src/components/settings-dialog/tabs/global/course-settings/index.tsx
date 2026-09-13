@@ -5,7 +5,6 @@ import
     DragEndEvent,
     DragOverlay,
     DragStartEvent,
-    Modifier,
     useDroppable,
 } from "@dnd-kit/core";
 import LayersIcon from "@mui/icons-material/Layers";
@@ -14,7 +13,8 @@ import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { Course } from "@/api-shared/types/course";
 import { CourseUser } from "@/api-shared/types/hive";
@@ -170,20 +170,6 @@ export function CourseSettings()
         data: DraggedItemData;
     } | null>(null);
 
-    // Captured once per drag (on start) instead of measured on every pointer
-    // move, which forced a layout reflow via getBoundingClientRect().
-    const dialogRectRef = useRef<DOMRect | null>(null);
-    const dialogOffsetModifier = useMemo<Modifier>(() => ({ transform }) =>
-    {
-        const rect = dialogRectRef.current;
-        if (!rect) return transform;
-        return {
-            ...transform,
-            x: transform.x - rect.left,
-            y: transform.y - rect.top,
-        };
-    }, []);
-
     const handleCreate = useCallback(() =>
     {
         void addCourse({
@@ -196,10 +182,6 @@ export function CourseSettings()
 
     const handleDragStart = useCallback((event: DragStartEvent) =>
     {
-        dialogRectRef.current =
-            document.querySelector(".MuiDialog-paper")?.getBoundingClientRect() ??
-            null;
-
         const { active } = event;
         const data = active.data.current as DraggedItemData | undefined;
         if (data)
@@ -445,24 +427,29 @@ export function CourseSettings()
                     </Box>
                 </Box>
             </Box>
-            <DragOverlay
-                dropAnimation={ dropAnimation }
-                modifiers={ [ dialogOffsetModifier ] }
-            >
-                { activeDrag ? (
-                    activeDrag.type === "INSTRUCTOR" ? (
-                        <InstructorDragOverlay
-                            activeId={ activeDrag.id }
-                            instructors={ instructors }
-                        />
-                    ) : (
-                        <CourseDragOverlay
-                            activeId={ activeDrag.id }
-                            courses={ courses }
-                        />
-                    )
-                ) : null }
-            </DragOverlay>
+            { /* Portalled to <body>: inside the dialog, MUI's transformed Paper
+                becomes the containing block for the overlay's position: fixed,
+                so the preview (and the rect dnd-kit collides with) drifted away
+                from the pointer. A modifier subtracting the paper's offset only
+                approximated that and broke when the paper moved (#648). */ }
+            { typeof document !== "undefined" ? createPortal(
+                <DragOverlay dropAnimation={ dropAnimation } zIndex={ 2000 }>
+                    { activeDrag ? (
+                        activeDrag.type === "INSTRUCTOR" ? (
+                            <InstructorDragOverlay
+                                activeId={ activeDrag.id }
+                                instructors={ instructors }
+                            />
+                        ) : (
+                            <CourseDragOverlay
+                                activeId={ activeDrag.id }
+                                courses={ courses }
+                            />
+                        )
+                    ) : null }
+                </DragOverlay>,
+                document.body,
+            ) : null }
         </DndContext>
     );
 }
