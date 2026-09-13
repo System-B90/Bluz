@@ -40,7 +40,7 @@ vi.mock("@/api-server/db-iterations", () => ({
 const hiveStub = {
     getModules: vi.fn(async () => [{ id: "10", name: "מודול א" }]),
     getSubjects: vi.fn(async () => [
-        { id: "20", name: "subj", displayName: "מקצוע ב" },
+        { id: "20", name: "מקצוע ב" },
     ]),
     getRooms: vi.fn(async () => [{ id: 30, name: "חדר ג" }]),
 };

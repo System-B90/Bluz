@@ -130,6 +130,7 @@
     "overrides": {
         "uuid": "^14.0.1",
         "stylis": "4.2.0",
-        "gaxios": "^7.3.0"
+        "gaxios": "^7.3.0",
+        "@system-b90/hive-core": "^0.3.0"
     }
 }
