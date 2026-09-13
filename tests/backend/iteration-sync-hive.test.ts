@@ -37,7 +37,7 @@ const hiveStub = {
         { id: "11", name: "מודול חדש" },
     ]),
     getSubjects: vi.fn(async () => [
-        { id: "20", name: "subj", displayName: "מקצוע ב" },
+        { id: "20", name: "מקצוע ב" },
     ]),
     getRooms: vi.fn(async () => [{ id: 30, name: "חדר ג" }]),
 };

@@ -25,7 +25,7 @@ export async function buildHiveCache(
         return {
             modules: Object.fromEntries(modules.map((m) => [m.id, m.name])),
             subjects: Object.fromEntries(
-                subjects.map((s) => [s.id, s.displayName || s.name]),
+                subjects.map((s) => [s.id, s.name]),
             ),
             rooms: Object.fromEntries(
                 rooms.map((r) => [String(r.id), r.name]),
