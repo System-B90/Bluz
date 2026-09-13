@@ -33,15 +33,9 @@ test.describe("Room reservations", () => {
         await navigateToSettingsTab(page, "חדרים");
     });
 
-    // `db-reservations.ts` wraps creation in a Mongo `session.withTransaction`,
-    // which requires a replica set. The local/CI `test-mongodb` container runs
-    // standalone, so this always 500s here with "Transaction numbers are only
-    // allowed on a replica set member or mongos" — an infra gap, not an app or
-    // test bug. Un-skip once test-mongodb is a (single-node) replica set.
-    test.fixme(
-        true,
-        "requires test-mongodb to run as a replica set (reservations use a Mongo transaction)",
-    );
+    // Creation runs in a Mongo transaction; the test Mongo is a single-node
+    // replica set (docker-compose.test.yml), so this covers the atomic path
+    // rather than the standalone fallback (#649).
     test("creates a reservation for a room and cancels it", async ({
         page,
     }) => {
