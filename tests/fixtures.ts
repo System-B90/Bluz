@@ -978,3 +978,60 @@ export async function closeEventAndModuleDialogs(
         await expect(moduleDialog).not.toBeVisible({ timeout: 10_000 });
     }
 }
+
+/**
+ * Drags a dnd-kit draggable onto a droppable (#648).
+ *
+ * Playwright's mouse already produces real pointer events in Chromium; what
+ * made the naive drag miss is how dnd-kit decides the drop. Its default
+ * collision detection intersects the *dragged node's* rect with each
+ * droppable's rect — the pointer position is irrelevant. Moving the grabbed
+ * handle to the target's centre leaves the dragged card offset by the
+ * handle-to-card distance, so it overlaps a neighbour more than the target.
+ * Starting a drag can also mount new drop zones (the course builder's
+ * RootDropZone) that shift the layout under a target box measured earlier.
+ *
+ * So: grab the handle, nudge past any activation distance, let the drag
+ * render, re-measure, then move by the offset that lands the dragged node's
+ * centre on the target's centre, and hover before releasing so dnd-kit
+ * processes the final `over`.
+ */
+export async function dragDndKit(
+    page: Page,
+    handle: Locator,
+    dragged: Locator,
+    target: Locator,
+): Promise<void> {
+    await handle.scrollIntoViewIfNeeded();
+    const handleBox = await handle.boundingBox();
+    const draggedBox = await dragged.boundingBox();
+    if (!handleBox || !draggedBox) {
+        throw new Error("dragDndKit: source is not rendered");
+    }
+
+    const grabX = handleBox.x + handleBox.width / 2;
+    const grabY = handleBox.y + handleBox.height / 2;
+    // Where the grab sits relative to the dragged node's centre.
+    const offsetX = grabX - (draggedBox.x + draggedBox.width / 2);
+    const offsetY = grabY - (draggedBox.y + draggedBox.height / 2);
+
+    await page.mouse.move(grabX, grabY);
+    await page.mouse.down();
+    await page.mouse.move(grabX + 4, grabY + 4, { steps: 4 });
+    await page.mouse.move(grabX + 12, grabY + 12, { steps: 4 });
+    // Let the drag's own UI (overlays, extra drop zones) mount and settle.
+    await page.waitForTimeout(150);
+
+    const targetBox = await target.boundingBox();
+    if (!targetBox) {
+        await page.mouse.up();
+        throw new Error("dragDndKit: target is not rendered once dragging");
+    }
+    const endX = targetBox.x + targetBox.width / 2 + offsetX;
+    const endY = targetBox.y + targetBox.height / 2 + offsetY;
+
+    await page.mouse.move(endX, endY, { steps: 20 });
+    await page.mouse.move(endX + 1, endY + 1, { steps: 2 });
+    await page.waitForTimeout(150);
+    await page.mouse.up();
+}

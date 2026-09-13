@@ -1,9 +1,9 @@
-import { APIRequestContext, Page } from "@playwright/test";
+import { APIRequestContext, Locator, Page } from "@playwright/test";
 
 import {
     expect,
     test,
-    getEventDialog,
+    dragDndKit,
     gotoAppHome,
     openSettingsDialog,
     navigateToSettingsTab,
@@ -74,51 +74,30 @@ function getCourseCard(page: Page, name: string) {
 }
 
 /**
- * Drags a course card onto a drop target using a real low-level mouse
- * sequence. dnd-kit's pointer sensor needs an actual mousedown followed by
- * several intermediate mousemoves before it recognizes a drag has started —
- * a single dragTo()-style jump doesn't register.
+ * Drags a course card onto a drop target through dnd-kit (see dragDndKit for
+ * why a plain handle-to-target mouse drag missed). Grabs the handle, carries
+ * the card's draggable row, and lands it on the target.
  */
 async function dragCourseOnto(
     page: Page,
     source: ReturnType<typeof getCourseCard>,
-    target: {
-        scrollIntoViewIfNeeded(): Promise<void>;
-        boundingBox(): Promise<{ x: number; y: number; width: number; height: number } | null>;
-    },
+    target: Locator,
 ): Promise<void> {
-    // Drag via the drag handle icon, not the whole card (the card also
-    // contains click targets like the name field and color picker). The
-    // DragIndicatorIcon is always the first svg rendered in the card.
-    const handleIcon = source.locator("svg").first();
-    await source.scrollIntoViewIfNeeded();
-    await target.scrollIntoViewIfNeeded();
-    // Both elements share the same scrollable ancestor — scrolling the
-    // target after the source can move the source too, so re-resolve boxes
-    // only after both scrolls have settled.
-    const sourceBox = await handleIcon.boundingBox();
-    const targetBox = await target.boundingBox();
-    if (!sourceBox || !targetBox) {
-        throw new Error("Could not resolve bounding boxes for drag");
-    }
-
-    const startX = sourceBox.x + sourceBox.width / 2;
-    const startY = sourceBox.y + sourceBox.height / 2;
-    const endX = targetBox.x + targetBox.width / 2;
-    const endY = targetBox.y + targetBox.height / 2;
-
-    await page.mouse.move(startX, startY);
-    await page.mouse.down();
-    // dnd-kit needs multiple intermediate moves past its activation distance
-    // before it starts tracking the drag.
-    await page.mouse.move(startX + (endX - startX) * 0.25, startY + (endY - startY) * 0.25, { steps: 5 });
-    await page.mouse.move(startX + (endX - startX) * 0.6, startY + (endY - startY) * 0.6, { steps: 5 });
-    await page.mouse.move(endX, endY, { steps: 8 });
-    await page.mouse.move(endX, endY, { steps: 2 });
-    await page.mouse.up();
-    await page.waitForTimeout(600);
+    const handle = source.locator("svg").first().locator("..");
+    const draggedRow = source.locator(":scope > div").first();
+    await dragDndKit(page, handle, draggedRow, target);
 }
 
+/** Reads a course's current parent straight from the API. */
+async function parentIdOf(
+    request: APIRequestContext,
+    courseId: string,
+): Promise<null | string | undefined> {
+    const response = await request.get("/api/course");
+    expect(response.ok()).toBeTruthy();
+    const list = (await response.json()).data as Array<TestCourse>;
+    return list.find((course) => course.id === courseId)?.parentId ?? null;
+}
 test.describe("Course Builder settings tab", () => {
     // The shared test env accumulates a long tail of leftover course
     // fixtures from other specs (course-collapse.spec.ts etc.), which makes
@@ -189,25 +168,12 @@ test.describe("Course Builder settings tab", () => {
 
     test("dragging a course onto another nests it as a child, and the RootDropZone un-nests it", async ({
         page,
+        request,
     }) => {
-        // Confirmed working in a real browser (manual check: dragging a
-        // course's handle onto another nests it immediately, and the
-        // RootDropZone appears and un-nests it back to root). The failure is
-        // specific to Playwright's synthetic mouse sequence against dnd-kit's
-        // PointerSensor: the drag handle receives the mousedown/mousemove/
-        // mouseup, downstream UI checks even *look* like they pass (the
-        // target's expand toggle appears, the dragged card renders in the
-        // expected place), but a follow-up API check shows the dragged
-        // course's `parentId` never actually changed — the whole
-        // verification chain here was a false positive built on selectors
-        // loose enough to also match the pre-drag state. Needs a real
-        // pointer-event dispatch (or a headed-mode run) to exercise
-        // reliably; not solved within this pass.
-        test.fixme(
-            true,
-            "Playwright's synthetic mouse drag doesn't reliably trigger dnd-kit's PointerSensor here — feature verified working manually, test needs a real pointer-event based drag helper",
-        );
-
+        // Asserted through the API, not the rendered tree: the original
+        // version's UI checks were loose enough to also match the pre-drag
+        // state, so it went green while parentId never changed (#648).
+        const [ courseA, courseB ] = courses;
         await openCourseBuilderTab(page);
 
         const sourceCard = getCourseCard(page, courseAName);
@@ -216,92 +182,29 @@ test.describe("Course Builder settings tab", () => {
         await expect(targetCard).toBeVisible();
 
         await dragCourseOnto(page, sourceCard, targetCard);
+        await expect
+            .poll(() => parentIdOf(request, courseA.id), { timeout: 10_000 })
+            .toBe(courseB.id);
 
-        // Nesting collapses A under B: A only renders inside B's Collapse
-        // subtree once expanded (root-level rendering filters out courses
-        // with a present parent). Expand B via its arrow toggle (only
-        // appears once it has children).
-        const targetExpandToggle = targetCard.getByRole("button").first();
-        await expect(targetExpandToggle).toBeVisible({ timeout: 5_000 });
-        await targetExpandToggle.click();
-        await expect(getCourseCard(page, courseAName)).toBeVisible({ timeout: 5_000 });
-
-        // Confirm via the event dialog's course picker too, mirroring
-        // course-collapse.spec.ts: selecting the parent name should be the
-        // way to represent the now-nested child in the tree.
-        await verifyParentChildInPicker(page, courseBName, courseAName);
-
-        // verifyParentChildInPicker closes the settings dialog to inspect
-        // the event dialog's course picker, so reopen the course builder
-        // tab before continuing to drag inside it. A full reload (not just
-        // reopening the dialog) forces a fresh course fetch — the settings
-        // dialog's CoursesProvider cache can otherwise still reflect
-        // pre-nest state, which previously only "worked" by accident when
-        // leftover cross-test course clutter happened to already satisfy
-        // `courses.some(c => c.parentId)`.
+        // B now has a child, so it grows an expand toggle; open it to reach A.
         await gotoAppHome(page);
         await openCourseBuilderTab(page);
-        const reExpandedTargetCard = getCourseCard(page, courseBName);
-        const reExpandToggle = reExpandedTargetCard.getByRole("button").first();
-        if (await getCourseCard(page, courseAName).isHidden()) {
-            await reExpandToggle.click();
+        // B's container wraps A once nested, so A's own card is the one that
+        // does not also carry B's name.
+        const nestedCard = page
+            .locator(".course-card-container")
+            .filter({ hasText: courseAName })
+            .filter({ hasNotText: courseBName });
+        if (await nestedCard.isHidden()) {
+            await getCourseCard(page, courseBName).getByRole("button").first().click();
         }
+        await expect(nestedCard).toBeVisible({ timeout: 5_000 });
 
-        // Now un-nest: drag A onto the RootDropZone.
-        const rootDropZone = page.getByText("גרור להוצאה מהיררכיה");
+        const rootDropZone = page.getByText("גרור להוצאה מהיררכיה").locator("..");
         await expect(rootDropZone).toBeVisible();
-        const nestedSourceCard = getCourseCard(page, courseAName);
-        await dragCourseOnto(page, nestedSourceCard, rootDropZone);
-
-        // After un-nesting, A should render as a root-level card again
-        // (visible without needing B expanded).
-        await expect(getCourseCard(page, courseAName)).toBeVisible({ timeout: 5_000 });
+        await dragCourseOnto(page, nestedCard, rootDropZone);
+        await expect
+            .poll(() => parentIdOf(request, courseA.id), { timeout: 10_000 })
+            .toBeNull();
     });
 });
-
-/** Opens the event dialog's course picker and asserts both names are listed as options. */
-async function verifyParentChildInPicker(
-    page: Page,
-    parentName: string,
-    childName: string,
-): Promise<void> {
-    // Close settings, open a fresh event to inspect the course list.
-    const dialog = page.locator("[role='dialog']").filter({ hasText: "הגדרות" });
-    if (await dialog.isVisible().catch(() => false)) {
-        const closeButton = dialog.locator("button.hover-rotate-90");
-        await closeButton.click();
-        await page.waitForSelector("[role='dialog']", { state: "hidden" }).catch(() => undefined);
-    }
-
-    await page.getByRole("button", { name: "יום", exact: true }).click();
-    await page.waitForTimeout(300);
-
-    await page.evaluate(() => {
-        document.querySelectorAll(".rbc-events-container").forEach((el) => {
-            (el as HTMLElement).style.pointerEvents = "none";
-        });
-    });
-    const daySlot = page.locator(".rbc-time-content .rbc-day-slot").first();
-    await daySlot.scrollIntoViewIfNeeded();
-    const box = await daySlot.boundingBox();
-    if (!box) throw new Error("Calendar day slot not found");
-    const x = box.x + box.width / 2;
-    await page.mouse.move(x, box.y + box.height * 0.25);
-    await page.mouse.down();
-    await page.mouse.move(x, box.y + box.height * 0.4, { steps: 8 });
-    await page.mouse.up();
-    await page.waitForTimeout(500);
-
-    const eventDialog = getEventDialog(page);
-    await expect(eventDialog).toBeVisible();
-    await eventDialog
-        .getByRole("combobox", { name: "מסלולים" })
-        .click();
-
-    const listbox = page.getByRole("listbox");
-    await expect(listbox.getByRole("option", { name: parentName, exact: true })).toBeVisible();
-    await expect(listbox.getByRole("option", { name: childName, exact: true })).toBeVisible();
-
-    await page.keyboard.press("Escape");
-    await eventDialog.getByRole("button", { name: "ביטול" }).click();
-}
