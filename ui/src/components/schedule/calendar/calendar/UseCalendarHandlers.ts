@@ -30,7 +30,9 @@ export type GridInteraction = "duplicate" | "move" | "resize";
  * locked/hidden/fake are per-event display state, and ganttEventId/
  * ganttOccurrenceDate/ganttCurriculumId are gantt-cut provenance (see
  * EventFactory.ts's invariant) — carrying them over would make the copy
- * masquerade as the original event.
+ * masquerade as the original event. hiveLesson/hiveQueues are the Hive lesson
+ * lesson-sync reconciled for the source: a copy sharing them would have
+ * lesson-sync move or delete the original's lesson (#653).
  */
 function copyableFields(event: Event): Omit<
     Event,
@@ -39,6 +41,8 @@ function copyableFields(event: Event): Omit<
     | "ganttEventId"
     | "ganttOccurrenceDate"
     | "hidden"
+    | "hiveLesson"
+    | "hiveQueues"
     | "id"
     | "locked"
 > {
@@ -50,6 +54,8 @@ function copyableFields(event: Event): Omit<
         ganttEventId: _ganttEventId,
         ganttOccurrenceDate: _ganttOccurrenceDate,
         ganttCurriculumId: _ganttCurriculumId,
+        hiveLesson: _hiveLesson,
+        hiveQueues: _hiveQueues,
         ...rest
     } = event;
     return rest;
@@ -68,7 +74,10 @@ function copyableFields(event: Event): Omit<
  */
 export function useCalendarHandlers(
     events: Array<Event>,
-    handleSaveEvent: (event: Event, initiator?: EventChangeInitiator) => void,
+    handleSaveEvent: (
+        event: Event,
+        initiator?: EventChangeInitiator,
+    ) => Event | undefined | void,
     handleDeleteEvent: (
         eventId: Event["id"],
         initiator?: EventChangeInitiator,
@@ -108,10 +117,23 @@ export function useCalendarHandlers(
 
             let newRooms = changes.event.rooms;
             if (roomId) {
+                const alreadyInRoom = changes.event.rooms.some(
+                    (room) =>
+                        room.id === roomId.id && room.source === roomId.source,
+                );
                 if (roomId.id === DUMMY_ROOM_ID) {
                     newRooms = [];
                 } else if (changes.event.rooms.length <= 1) {
                     newRooms = [roomId];
+                } else if (!alreadyInRoom) {
+                    // The drop doesn't say which of the event's rooms was
+                    // dragged, so there is no safe room to replace. Keep the
+                    // time change, but say so instead of silently ignoring
+                    // the target column (#653).
+                    enqueueSnackbar(
+                        "לאירוע כמה חדרים — שינוי החדרים נעשה בחלון העריכה.",
+                        { variant: "info" },
+                    );
                 }
             }
 
@@ -297,8 +319,13 @@ export function useCalendarHandlers(
                     rooms: newRooms,
                 } as Event;
 
-                handleSaveEvent(newEvent, EventChangeInitiator.CopyPaste);
-                setActiveEvent(newEvent);
+                // The saved copy carries the id the provider assigned, so
+                // Delete/Ctrl+C/Ctrl+X work on it straight away (#653).
+                const saved = handleSaveEvent(
+                    newEvent,
+                    EventChangeInitiator.CopyPaste,
+                );
+                setActiveEvent(saved ?? null);
                 setSelectedSlotInfo(null);
             }
         },
