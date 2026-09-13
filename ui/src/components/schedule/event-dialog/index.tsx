@@ -201,7 +201,7 @@ export function EventDialog({
                                 severity="warning"
                                 variant="outlined"
                             >
-                                { `משתמש אחר (${shownLockName}) עורך כעת מופע זה. שמירה תדרוס את שינוייו.` }
+                                { `משתמש אחר (${shownLockName}) עורך כעת את המופע הזה. שמירה תדרוס את שינוייו.` }
                             </Alert>
                         </Collapse>
 
