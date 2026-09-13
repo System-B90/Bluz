@@ -59,9 +59,7 @@ async function selectCourses(
 ): Promise<void> {
     const dialog = getEventDialog(page);
     await dialog
-        .locator(".MuiFormControl-root")
-        .filter({ hasText: "מסלולים" })
-        .getByRole("combobox")
+        .getByRole("combobox", { name: "מסלולים" })
         .click();
 
     const listbox = page.getByRole("listbox");
@@ -210,9 +208,7 @@ test.describe("Course roll-up on schedule events", () => {
         const dialog = getEventDialog(page);
         await expect(dialog).toBeVisible();
         await dialog
-            .locator(".MuiFormControl-root")
-            .filter({ hasText: "מסלולים" })
-            .getByRole("combobox")
+            .getByRole("combobox", { name: "מסלולים" })
             .click();
 
         const listbox = page.getByRole("listbox");

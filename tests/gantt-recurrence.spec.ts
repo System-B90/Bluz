@@ -144,9 +144,7 @@ async function setEventRecurrence(
     await eventDialog.getByText("שיבוץ ודרישות").click();
 
     const recurrenceSelect = eventDialog
-        .locator(".MuiFormControl-root")
-        .filter({ hasText: "חזרה" })
-        .getByRole("combobox");
+        .getByRole("combobox", { name: "חזרה" });
     await expect(recurrenceSelect).toBeVisible({ timeout: 5_000 });
     await recurrenceSelect.click();
 

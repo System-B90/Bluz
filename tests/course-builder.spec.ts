@@ -295,9 +295,7 @@ async function verifyParentChildInPicker(
     const eventDialog = getEventDialog(page);
     await expect(eventDialog).toBeVisible();
     await eventDialog
-        .locator(".MuiFormControl-root")
-        .filter({ hasText: "מסלולים" })
-        .getByRole("combobox")
+        .getByRole("combobox", { name: "מסלולים" })
         .click();
 
     const listbox = page.getByRole("listbox");

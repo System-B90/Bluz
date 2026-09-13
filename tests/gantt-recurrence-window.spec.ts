@@ -96,9 +96,7 @@ async function configureRecurrence(
     await eventDialog.getByText("שיבוץ ודרישות").click();
 
     const recurrenceSelect = eventDialog
-        .locator(".MuiFormControl-root")
-        .filter({ hasText: "חזרה" })
-        .getByRole("combobox");
+        .getByRole("combobox", { name: "חזרה" });
     await expect(recurrenceSelect).toBeVisible({ timeout: 5_000 });
     await recurrenceSelect.click();
     await page.getByRole("option", { name: options.recurrenceLabel }).click();
@@ -261,9 +259,7 @@ test.describe("Gantt recurrence window and skipped occurrences (#468, #469)", ()
         await expect(eventDialog.getByLabel("תחילת חזרתיות")).toHaveCount(0);
 
         const recurrenceSelect = eventDialog
-            .locator(".MuiFormControl-root")
-            .filter({ hasText: "חזרה" })
-            .getByRole("combobox");
+            .getByRole("combobox", { name: "חזרה" });
         await recurrenceSelect.click();
         await page.getByRole("option", { name: "שבועי" }).click();
 
