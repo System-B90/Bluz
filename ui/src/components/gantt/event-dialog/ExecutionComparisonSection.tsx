@@ -169,11 +169,22 @@ export function ExecutionComparisonSection({ event }: { event: GanttEvent }) {
 
     const execution = state.events[event.id];
     const isRecurring = event.recurrence !== EventRecurrence.None;
+    // Loading is only "not cut yet" once the first fetch has actually
+    // completed — otherwise every dialog open flashes "not cut" before the
+    // real answer arrives.
+    const isLoading = state.isLoading && !state.hasLoaded;
 
     return (
         <CollapsibleSection
             chips={
-                execution ? (
+                isLoading ? (
+                    <Chip
+                        label="טוען..."
+                        size="small"
+                        sx={{ color: "text.secondary" }}
+                        variant="outlined"
+                    />
+                ) : execution ? (
                     <Chip
                         color={execution.drifted ? "warning" : "success"}
                         label={
@@ -194,7 +205,11 @@ export function ExecutionComparisonSection({ event }: { event: GanttEvent }) {
             icon={<CompareArrowsIcon />}
             title="תכנון מול ביצוע"
         >
-            {execution ? (
+            {isLoading ? (
+                <Typography color="text.secondary" variant="body2">
+                    טוען נתוני ביצוע...
+                </Typography>
+            ) : execution ? (
                 <ExecutionTable execution={execution} isRecurring={isRecurring} />
             ) : (
                 <Typography color="text.secondary" variant="body2">
