@@ -92,14 +92,17 @@ export function getGoogleClientId(): string {
 function createOAuthClient(
     redirectUri?: string,
 ): InstanceType<typeof google.auth.OAuth2> {
-    return new google.auth.OAuth2({
-        clientId: GOOGLE_CLIENT_ID,
-        clientSecret: GOOGLE_CLIENT_SECRET,
+    const client = new google.auth.OAuth2(
+        GOOGLE_CLIENT_ID,
+        GOOGLE_CLIENT_SECRET,
         redirectUri,
-        ...(GOOGLE_OAUTH_TOKEN_URL
-            ? { endpoints: { oauth2TokenUrl: GOOGLE_OAUTH_TOKEN_URL } }
-            : {}),
-    });
+    );
+    if (GOOGLE_OAUTH_TOKEN_URL) {
+        (client as unknown as { endpoint: { oauth2TokenUrl: string } }).endpoint = {
+            oauth2TokenUrl: GOOGLE_OAUTH_TOKEN_URL,
+        };
+    }
+    return client;
 }
 
 /** Calendar API client, honouring the test stub's root URL when set. */

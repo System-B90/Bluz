@@ -75,12 +75,12 @@ export const useEventWebsocket = (
                     : [iterationSyncId(activeIterationId)],
             ),
         );
-        syncIds.forEach(registerSyncObject);
+        syncIds.forEach((syncId) => registerSyncObject(syncId));
         // Cleanup closes over this run's syncIds, so an iteration switch
         // deregisters the old ones before the next run registers the new
         // ones — React runs the previous cleanup first. No bookkeeping ref
         // needed.
-        return () => syncIds.forEach(deregisterSyncObject);
+        return () => syncIds.forEach((syncId) => deregisterSyncObject(syncId));
     }, [
         viewingCurrentRun,
         activeIterationId,

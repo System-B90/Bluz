@@ -25,23 +25,29 @@ const MIN_WORKING_MS = MIN_SEGMENT_MINUTES * 60_000;
 export type GridInteraction = "duplicate" | "move" | "resize";
 
 /**
- * Everything of an event that a *copy* of it may carry. Strips only the id
- * plus the gantt-cut provenance (ganttEventId/ganttOccurrenceDate/
- * ganttCurriculumId, see EventFactory.ts's invariant) — carrying those over
- * would make the copy masquerade as the original event. Everything else,
- * including locked/hidden/fake and hiveLesson/hiveQueues, is copied as-is:
- * it is per-event display/linkage state and multiple events are allowed to
- * share the same Hive lesson.
+ * Everything of an event that a *copy* of it may carry. Strips the id, the
+ * gantt-cut provenance (ganttEventId/ganttOccurrenceDate/ganttCurriculumId,
+ * see EventFactory.ts's invariant) — carrying those over would make the copy
+ * masquerade as the original event — and the Hive linkage (hiveLesson/
+ * hiveQueues), which lesson-sync reconciled for the original event only
+ * (#653). Everything else, including locked/hidden/fake, is copied as-is.
  */
 function copyableFields(event: Event): Omit<
     Event,
-    "ganttCurriculumId" | "ganttEventId" | "ganttOccurrenceDate" | "id"
+    | "ganttCurriculumId"
+    | "ganttEventId"
+    | "ganttOccurrenceDate"
+    | "hiveLesson"
+    | "hiveQueues"
+    | "id"
 > {
     const {
         id: _id,
         ganttEventId: _ganttEventId,
         ganttOccurrenceDate: _ganttOccurrenceDate,
         ganttCurriculumId: _ganttCurriculumId,
+        hiveLesson: _hiveLesson,
+        hiveQueues: _hiveQueues,
         ...rest
     } = event;
     return rest;
