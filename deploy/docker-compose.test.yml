@@ -64,10 +64,34 @@ services:
             # Service account behind the lesson activator (queue-on-live).
             - HIVE_API_USERNAME=${HIVE_API_USERNAME:-api}
             - HIVE_API_PASSWORD=${HIVE_API_PASSWORD:-Password1}
+            # Google Calendar against the in-stack stub, never real Google: a
+            # throwaway client makes the integration "configured", and the two
+            # URLs send its token exchange and Calendar calls to google-stub
+            # (#579). Set explicitly so a developer's real .env client never
+            # leaks into a test run.
+            - GOOGLE_CLIENT_ID=e2e-stub-client.apps.googleusercontent.com
+            - GOOGLE_CLIENT_SECRET=e2e-stub-secret
+            - GOOGLE_OAUTH_TOKEN_URL=http://google-stub:8080/token
+            - GOOGLE_API_ROOT_URL=http://google-stub:8080/
         depends_on:
             - curriculum-db
             - sessions
             - mongodb
+            - google-stub
+
+    google-stub:
+        image: node:22.20.0-alpine
+        container_name: ${TEST_PROJECT_NAME:-bluz-test}-google-stub
+        command: ["node", "/stub/server.mjs"]
+        volumes:
+            - ./../tests/google-stub:/stub:ro
+        networks:
+            - bluz_net
+        healthcheck:
+            test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+            interval: 5s
+            timeout: 5s
+            retries: 12
 
     curriculum-db:
         container_name: ${TEST_PROJECT_NAME:-bluz-test}-curriculum-db
