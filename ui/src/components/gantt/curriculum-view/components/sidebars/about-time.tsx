@@ -6,6 +6,7 @@ import { GANTT_ANCHORS } from "@/components/app-onboarding/anchors";
 import { GanttCreationDeletionCallbackProps } from "@/components/gantt/curriculum-fab/CurriculumActionItems";
 import { CurriculumAboutCard } from "@/components/gantt/curriculum-view/components/curriculum-about-card";
 import { HoursCard } from "@/components/gantt/curriculum-view/components/HoursCard";
+import { InsightsCard } from "@/components/gantt/curriculum-view/components/insights/InsightsCard";
 import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
 import { useTourAnchor } from "@/components/onboarding";
 
@@ -43,6 +44,7 @@ export function AboutTimeCurriculumViewSidebar({
                 setCurrentCurriculum={ setCurrentCurriculum }
             />
             <HoursCard curriculum={ curriculum } />
+            <InsightsCard curriculum={ curriculum } />
         </Box>
     );
 }
