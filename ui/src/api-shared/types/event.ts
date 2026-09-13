@@ -1,6 +1,7 @@
 import { Dayjs } from "dayjs";
 
 import { CourseId } from "@/api-shared/types/course";
+import { HiveLessonId } from "@/api-shared/types/hive";
 import { ResolvableRoom } from "@/api-shared/types/room";
 
 /**
@@ -37,7 +38,7 @@ export type Event = {
     name: string;
     subject: number; // Subject ID
     hiveModule: number; // Module ID
-    hiveLesson?: null | number; // Lesson ID
+    hiveLesson?: HiveLessonId | null; // Lesson ID
     /**
      * Per-shuffle Hive queue mapping: Bluz course id → Hive queue id. A course
      * is a shuffle, which is 1:1 with a Hive student group, so this is what
@@ -173,7 +174,11 @@ export function eventHasSubject(type: EventType): boolean
         type === EventType.EXERCISE ||
         type === EventType.LECTURE ||
         type === EventType.WORKSHOP ||
-        type === EventType.SELF_TEACHING
+        type === EventType.SELF_TEACHING ||
+        // "אחר" events can still carry a Hive module/lesson so they get
+        // queue mapping (#682-adjacent ask) — only prayer/break truly have
+        // no subject.
+        type === EventType.OTHER
     );
 }
 

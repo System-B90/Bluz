@@ -10,7 +10,7 @@ import {
     eventOpensHiveQueue,
     eventQueueCourseIds,
 } from "@/api-shared/types/event";
-import { Class, LessonRule } from "@/api-shared/types/hive";
+import { Class, HiveLessonId, LessonRule } from "@/api-shared/types/hive";
 import { logger } from "@/logging/pino";
 
 /**
@@ -141,7 +141,7 @@ export async function reconcileEventLesson(
     event: DbEventDocument,
     action: "delete" | "upsert",
     controller: DatabaseController = databaseController,
-): Promise<null | number> {
+): Promise<HiveLessonId | null> {
     const wanted =
         action === "upsert" && !event.archived && eventOpensHiveQueue(event);
 
@@ -247,7 +247,7 @@ export function syncEventLessonToHive(
 async function findOwnedLesson(
     client: HiveClient,
     event: DbEventDocument,
-): Promise<null | number> {
+): Promise<HiveLessonId | null> {
     if (event.hiveLesson) {
         const byId = await client.getLesson(event.hiveLesson).catch(() => null);
         if (byId && isLessonOwnedByEvent(byId.description, event.id)) {
@@ -273,7 +273,7 @@ async function findOwnedLesson(
 async function ensureLesson(
     client: HiveClient,
     event: DbEventDocument,
-): Promise<number> {
+): Promise<HiveLessonId> {
     const payload = {
         description: buildLessonDescription(event),
         module: event.hiveModule,

@@ -1,6 +1,10 @@
 import { GanttConstraint } from "@/api-shared/types/gantt/models/constraint";
-import { GanttEventId } from "@/api-shared/types/gantt/models/event";
-import { BaseGantItem } from "@/api-shared/types/gantt/models/shared";
+import {
+    BaseGantItem,
+    GanttEventId,
+} from "@/api-shared/types/gantt/models/shared";
+
+export type { GanttModuleId } from "@/api-shared/types/gantt/models/shared";
 
 export type GanttModule = {
     title: string;
@@ -14,4 +18,3 @@ export type GanttModule = {
      */
     shuffles?: Array<string>;
 } & BaseGantItem;
-export type GanttModuleId = GanttModule["id"];

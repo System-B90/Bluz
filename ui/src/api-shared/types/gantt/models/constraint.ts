@@ -1,6 +1,8 @@
 import { GanttDayIndex } from "@/api-shared/types/gantt/models/day";
-import { GanttEventId } from "@/api-shared/types/gantt/models/event";
-import { GanttModuleId } from "@/api-shared/types/gantt/models/module";
+import {
+    GanttEventId,
+    GanttModuleId,
+} from "@/api-shared/types/gantt/models/shared";
 
 export enum ConstraintType {
     Relational = "RELATIONAL",

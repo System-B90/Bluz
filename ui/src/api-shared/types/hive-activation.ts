@@ -6,6 +6,7 @@
  */
 
 import { EventId } from "@/api-shared/types/event";
+import { HiveLessonId } from "@/api-shared/types/hive";
 
 /**
  * One recorded queue opening: the activator pushed `lessonId` onto Hive class
@@ -21,7 +22,7 @@ export type HiveLessonActivation = {
     hiveClassId: number;
     /** ISO timestamp of the event start this activation belongs to. */
     occurrenceStart: string;
-    lessonId: number;
+    lessonId: HiveLessonId;
     /** When Hive accepted the assignment. */
     activatedAt: Date;
 };

@@ -26,6 +26,16 @@ export type {
 } from "@system-b90/hive-core";
 
 /**
+ * A lesson id as Hive actually sends it. `@system-b90/hive-core` still types
+ * `Lesson.id` as `number`, but some Hive instances have moved lesson primary
+ * keys to UUID strings — the same kind of drift `module_id` went through
+ * below. Bluz treats a lesson id as an opaque identifier everywhere (URL
+ * path segment, storage key, equality check) and never does arithmetic on
+ * it, so both shapes flow through unchanged.
+ */
+export type HiveLessonId = number | string;
+
+/**
  * A Hive lesson as the *server* actually returns it.
  *
  * Hive renamed the module foreign key to `module_id` on the lesson serializer
@@ -33,7 +43,10 @@ export type {
  * `@system-b90/hive-core` still types it as `module`. Instances of both shapes
  * are in the wild, so Bluz reads whichever is present and writes both.
  */
-export type HiveLesson = Lesson & { module_id?: number };
+export type HiveLesson = Omit<Lesson, "id"> & {
+    id: HiveLessonId;
+    module_id?: number;
+};
 
 /**
  * The module a lesson belongs to, whichever field the Hive instance uses.
@@ -62,7 +75,7 @@ export type ApiHiveLessonsGetPayload = {
     module__id?: number;
     module__parent_subject__parent_program_id__in?: Array<number> | string;
 } | void;
-export type ApiHiveLessonsGetResponse = Array<Lesson>;
+export type ApiHiveLessonsGetResponse = Array<HiveLesson>;
 
 /** Queues of a single Hive module — the queues a lesson rule may point at. */
 export type ApiHiveQueuesGetPayload = { module: number };

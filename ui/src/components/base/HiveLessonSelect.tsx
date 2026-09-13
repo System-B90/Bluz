@@ -1,14 +1,15 @@
 import { FormControlProps } from "@mui/material/FormControl";
 import { useMemo } from "react";
 
+import { HiveLessonId } from "@/api-shared/types/hive";
 import { EntitySelect } from "@/components/base/EntitySelect";
 import { useHiveLessons } from "@/components/base/HiveLessonsProvider";
 
 export type HiveLessonSelectProps = {
     /** Selected lesson id (controlled). Use null for no selection. */
-    value: null | number;
+    value: HiveLessonId | null;
     /** Fired with the picked lesson id, or null when cleared. */
-    onChange: (lessonId: null | number) => void;
+    onChange: (lessonId: HiveLessonId | null) => void;
     /**
      * Scope the options to a single module. When omitted, every lesson is
      * offered. Passing a module enables cascading module → lesson picking.
@@ -34,7 +35,7 @@ export function HiveLessonSelect({
 }: HiveLessonSelectProps) {
     const { lessons, getLessonsOfModule } = useHiveLessons();
 
-    const options = useMemo(
+    const scoped = useMemo(
         () =>
             module !== undefined && module !== null
                 ? getLessonsOfModule(Number(module))
@@ -42,13 +43,26 @@ export function HiveLessonSelect({
         [module, lessons, getLessonsOfModule],
     );
 
+    // EntitySelect needs one uniform id type for its options and its
+    // controlled value; lesson ids can be a Hive numeric pk or a UUID
+    // depending on the instance, so everything is normalized to a string
+    // here rather than coerced with Number() (#682-adjacent — that coercion
+    // is exactly what made a UUID lesson id turn into NaN and never match).
+    const options = useMemo(
+        () =>
+            scoped.map((lesson) => ({ id: String(lesson.id), name: lesson.name })),
+        [scoped],
+    );
+
     return (
-        <EntitySelect<number>
+        <EntitySelect<string>
+            {...rest}
             emptyLabel={emptyLabel}
             label={label}
+            onChange={(id) => rest.onChange(id)}
             options={options}
-            parseValue={Number}
-            {...rest}
+            parseValue={String}
+            value={rest.value != null ? String(rest.value) : null}
         />
     );
 }
