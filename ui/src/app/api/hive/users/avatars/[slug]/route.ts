@@ -12,7 +12,46 @@ const FOUND_MAX_AGE_SECONDS = 3 * 24 * 60 * 60;
  * uploads an avatar starts showing it within a day, while still sparing Hive
  * a request per render for the many users who never upload one.
  */
-const NOT_FOUND_MAX_AGE_SECONDS = 24 * 60 * 60; // TODO: A request is dispatched on each load since a 404 does not register Cache-Control
+const NOT_FOUND_MAX_AGE_SECONDS = 24 * 60 * 60;
+
+/**
+ * Server-side mirror of the miss TTL above (#685). Browsers only honor
+ * Cache-Control on a 404 opportunistically — Chrome and Firefox both skip
+ * the disk cache for many non-2xx `<img>` loads, so the header alone still
+ * left every render of a user without an avatar re-asking Hive. This process-
+ * local negative cache is the actual backstop: a slug confirmed missing
+ * within the TTL is served straight from memory, no Hive round trip.
+ *
+ * Per-instance and reset on redeploy — acceptable here since the cost of a
+ * false negative is one extra Hive request, not a correctness issue.
+ */
+const missCache = new Map<string, { status: number; expiresAt: number }>();
+
+function getCachedMiss(slug: string): number | undefined {
+    const entry = missCache.get(slug);
+    if (entry === undefined) return undefined;
+    if (entry.expiresAt <= Date.now()) {
+        missCache.delete(slug);
+        return undefined;
+    }
+    return entry.status;
+}
+
+function rememberMiss(slug: string, status: number): void {
+    missCache.set(slug, {
+        status,
+        expiresAt: Date.now() + NOT_FOUND_MAX_AGE_SECONDS * 1000,
+    });
+}
+
+function notFoundResponse(statusText: string, status: number): NextResponse {
+    return new NextResponse(`Failed to fetch avatar: ${statusText}`, {
+        status,
+        headers: {
+            "Cache-Control": `private, max-age=${NOT_FOUND_MAX_AGE_SECONDS}`,
+        },
+    });
+}
 
 export async function GET(
     request: NextRequest,
@@ -51,6 +90,12 @@ export async function GET(
 
     const accessToken = extraData.accessToken;
 
+    // A miss already confirmed within the TTL skips Hive entirely (#685).
+    const cachedMissStatus = getCachedMiss(slug);
+    if (cachedMissStatus !== undefined) {
+        return notFoundResponse("Not Found (cached)", cachedMissStatus);
+    }
+
     // 4. Use the requested slug for the target URL instead of the current user's ID
     const targetUrl = `${getHiveBaseUrl()}/api/core/management/users/${slug}/avatar/`;
 
@@ -68,15 +113,8 @@ export async function GET(
         //    A miss is cached too — most users never upload an avatar, and
         //    without this every list re-asks Hive for each of them.
         if (!hiveResponse.ok) {
-            return new NextResponse(
-                `Failed to fetch avatar: ${hiveResponse.statusText}`,
-                {
-                    status: hiveResponse.status,
-                    headers: {
-                        "Cache-Control": `private, max-age=${NOT_FOUND_MAX_AGE_SECONDS}`,
-                    },
-                },
-            );
+            rememberMiss(slug, hiveResponse.status);
+            return notFoundResponse(hiveResponse.statusText, hiveResponse.status);
         }
 
         // 7. Extract the raw binary image data
