@@ -19,6 +19,19 @@ export const PREVIEW_BUTTON_GROUP_SX = {
     "& .MuiButton-root": { height: 32 },
 } as const;
 
+/**
+ * Compact status badge Alerts in the preview toolbar. Alert's default icon
+ * padding (7px 0) and message padding (8px 0) are tuned for its default
+ * root padding — squashing the root to `py: 0` without also centering
+ * leaves the icon glyph pinned to the top while the text sits below it.
+ */
+export const PREVIEW_STATUS_ALERT_SX = {
+    alignItems: "center",
+    py: 0,
+    "& .MuiAlert-icon": { py: 0 },
+    "& .MuiAlert-message": { py: 0.5 },
+} as const;
+
 function describeValidationError(error: CutValidationError): string {
     switch (error.type) {
     case "missing-start-date":
