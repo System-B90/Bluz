@@ -11,7 +11,7 @@ import TableRow from "@mui/material/TableRow";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import dayjs from "dayjs";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import {
     GanttEventExecution,
@@ -42,14 +42,14 @@ function OccurrenceRow({
     // occurrence to recreate from.
     const canRecreate = !occurrence.actual && Boolean(occurrence.planned);
 
-    const handleRecreate = async () => {
+    const handleRecreate = useCallback(async () => {
         setIsRecreating(true);
         try {
             await recreateOccurrence(ganttEventId, occurrence.occurrenceDate);
         } finally {
             setIsRecreating(false);
         }
-    };
+    }, [ganttEventId, occurrence.occurrenceDate, recreateOccurrence]);
 
     return (
         <TableRow

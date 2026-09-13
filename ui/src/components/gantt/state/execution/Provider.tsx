@@ -69,11 +69,17 @@ export function GanttExecutionProvider({
 
     const recreateOccurrence = useCallback(
         async (ganttEventId: string, occurrenceDate: string) => {
-            await ganttApi.execution.recreateOccurrence(
-                curriculumId,
-                ganttEventId,
-                occurrenceDate,
-            );
+            dispatch({ type: "SET_LOADING" });
+            try {
+                await ganttApi.execution.recreateOccurrence(
+                    curriculumId,
+                    ganttEventId,
+                    occurrenceDate,
+                );
+            } catch (error) {
+                dispatch({ type: "SET_FAILED" });
+                throw error;
+            }
             await refreshExecution();
         },
         [curriculumId, refreshExecution],
