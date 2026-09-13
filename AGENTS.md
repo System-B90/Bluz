@@ -294,7 +294,11 @@ Runtime config comes from the root **`.env`** (consumed by docker-compose and co
   carry real payloads) and may subscribe only to `STUDENT_SYNC_ID`. Nothing but an empty
   ping is ever broadcast there — students refetch through the projection endpoint. Never
   put event data on that channel, and never add a per-iteration student channel: the
-  absence of one is what keeps iterations invisible to students.
+  absence of one is what keeps iterations invisible to students. The emptiness is
+  enforced by the core, not by the call sites: `STUDENT_SYNC_ID` is listed in
+  `payloadFreeSyncObjects`, so a broadcast that tries to carry a payload there is
+  stripped on the wire. Tickets are also single-use, so an observed one cannot be
+  replayed into a second socket.
 - **Don't edit generated artifacts:** files in `drizzle/*.sql` (regenerate with
   `db:generate`), `ui/.next/`, `node_modules/`, `playwright-report/`, `test-results/`,
   `tsconfig.tsbuildinfo`.

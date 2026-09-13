@@ -70,7 +70,7 @@ describe("GET /api/ws-ticket", () => {
         // signWsTicket with the right id, the ticket it returns must actually
         // verify as that id -- catching a mismatch between what's signed and
         // what's put on the wire.
-        expect(verifyWsTicketIdentity(body.ticket)).toEqual({
+        expect(verifyWsTicketIdentity(body.ticket)).toMatchObject({
             scope: WsScope.Segel,
             userId: "user-42",
         });
@@ -107,7 +107,7 @@ describe("ticket scope follows clearance", () => {
         const res = await WsTicketRoute.GET();
         const { ticket } = await res.json();
 
-        expect(verifyWsTicketIdentity(ticket)).toEqual({
+        expect(verifyWsTicketIdentity(ticket)).toMatchObject({
             scope: WsScope.Hanich,
             userId: "student-1",
         });

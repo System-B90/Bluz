@@ -31,6 +31,25 @@ process.on("unhandledRejection", (reason) => {
 const server = startSessionServer({
     validMessageTypes: Object.values(MessageTypes),
     /*
+     * The student channel carries pings and nothing else — enforced on the
+     * wire rather than trusted to every call site. `NotifyStudentsOfCalendarChange`
+     * is careful today, but it is one `targets` argument away from shipping a
+     * DbEventDocument to every student socket, and that mistake would look
+     * exactly like a working broadcast. The core strips `data` from anything
+     * aimed here, so the projection endpoint stays the only way a student
+     * learns what changed.
+     */
+    payloadFreeSyncObjects: [STUDENT_SYNC_ID],
+    /*
+     * Assume the ticket is observed. It is short-lived, but within its TTL a
+     * replay opens a second socket carrying the victim's *scope* — which for a
+     * staff ticket is the whole calendar wire. Both Bluz clients mint a ticket
+     * per connect attempt (the React hook fetches /api/ws-ticket on every
+     * connect, and the server-sender signs one per reconnect), so nothing here
+     * reuses one.
+     */
+    singleUseTickets: true,
+    /*
      * Students hold real sessions as of #656, so a ticketed connection is no
      * longer proof of staff clearance. A registered session receives every
      * *untargeted* broadcast — COURSES_UPDATE, OUTSIDERS_UPDATE and friends
