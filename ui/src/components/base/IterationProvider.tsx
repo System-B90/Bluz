@@ -1,5 +1,13 @@
 "use client";
 
+import Alert from "@mui/material/Alert";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+import Snackbar from "@mui/material/Snackbar";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSnackbar } from "notistack";
 import {
@@ -171,15 +179,22 @@ export const IterationProvider = ({
     // that was following "the current run" has to follow the switch instead of
     // silently becoming a read-only view of the demoted iteration. A scope
     // deliberately pointed at some *other* past iteration is left alone.
+    const [switchNotice, setSwitchNotice] = useState<null | SwitchNotice>(
+        null,
+    );
     const onIterationChanged: MessageHandlerType = useCallback(
         (messageType: MessageTypes, data: unknown) => {
             if (messageType !== MessageTypes.CURRENT_ITERATION_CHANGED) return;
             loadIterations();
             const nextId = (data as { iterationId?: string } | null)
                 ?.iterationId;
+            if (!nextId) return;
             const scoped = iterationIdRef.current;
-            if (!nextId || nextId === scoped) return;
-            if (scoped && !followingCurrentRef.current) return;
+            const pinned = Boolean(scoped) && !followingCurrentRef.current;
+            // The session that made the switch already got its own snackbar.
+            if (localSwitchId === nextId) localSwitchId = undefined;
+            else setSwitchNotice({ iterationId: nextId as IterationId, pinned });
+            if (nextId === scoped || pinned) return;
             followingCurrentRef.current = true;
             applyIterationId(nextId as IterationId);
         },
@@ -215,11 +230,59 @@ export const IterationProvider = ({
         [iterationId, setIterationId, iterations, currentIterationId],
     );
 
+    const noticeLabel = switchNotice
+        ? (iterations.find(({ id }) => id === switchNotice.iterationId)
+            ?.label ?? switchNotice.iterationId)
+        : "";
+    const closeNotice = () => setSwitchNotice(null);
+
     return (
         <IterationContext.Provider value={value}>
             {children}
+            {/* A following scope's database changed under it: blocking, so it
+                cannot be lost to a snackbar timeout mid-edit (#666). */}
+            <Dialog
+                aria-labelledby="iteration-switch-notice-title"
+                open={Boolean(switchNotice && !switchNotice.pinned)}
+            >
+                <DialogTitle id="iteration-switch-notice-title">
+                    המחזור הפעיל הוחלף
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        {`"${noticeLabel}" הוגדר כמחזור הפעיל, והמערכת עברה אליו. עבודה שלא נשמרה במחזור הקודם אינה בטוחה — סגרו חלונות עריכה פתוחים ובדקו את השינויים מחדש.`}
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button autoFocus onClick={closeNotice} variant="contained">
+                        הבנתי
+                    </Button>
+                </DialogActions>
+            </Dialog>
+            {/* A pinned read-only scope keeps its data; a lighter, still
+                non-expiring notice is enough. */}
+            <Snackbar
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+                open={Boolean(switchNotice?.pinned)}
+            >
+                <Alert onClose={closeNotice} severity="info">
+                    {`"${noticeLabel}" הוגדר כמחזור הפעיל. התצוגה נשארת במחזור שנבחר.`}
+                </Alert>
+            </Snackbar>
         </IterationContext.Provider>
     );
+};
+
+type SwitchNotice = { iterationId: IterationId; pinned: boolean };
+
+// Id of a switch this tab itself requested, so its own broadcast echo does
+// not notify the actor twice. Module-level: one per browser tab, which is the
+// unit that made the request.
+let localSwitchId: string | undefined;
+
+/** Call before requesting a current-iteration switch from this tab. */
+export const noteLocalIterationSwitch = (iterationId: string) => {
+    localSwitchId = iterationId;
 };
 
 export const useIterationScope = () => {
