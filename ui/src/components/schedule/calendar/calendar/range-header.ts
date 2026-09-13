@@ -18,6 +18,15 @@ export function dayRangeHeaderFormat({
 {
     const s = dayjs(start).tz(APP_TIMEZONE).locale("he");
     const e = dayjs(end).tz(APP_TIMEZONE).locale("he");
+    if (s.year() !== e.year())
+    {
+        // A week across New Year needs both years, or the start reads as
+        // belonging to the end's year (#653).
+        return isolateRtl(
+            isolateRtl(`${s.format("DD")} ב${s.format("MMMM")} ${s.format("YYYY")}`) + ' - ' +
+            isolateRtl(`${e.format("DD")} ב${e.format("MMMM")} ${e.format("YYYY")}`),
+        );
+    }
     if (s.month() === e.month())
     {
         // Only the two day numbers form the numeric range; the month and year
