@@ -1,4 +1,5 @@
-import { getHolidayComment } from "@/api-shared/gantt/holidays";
+import { flags, HDate, HebrewCalendar } from "@hebcal/core";
+
 import { getDayNameDisplay, HEBREW_DAYS_SHORT } from "@/api-shared/types/gantt/models";
 import {
     dayLabel,
@@ -195,8 +196,11 @@ const weekdayLoad: InsightGenerator = (ctx) => {
 const holidays: InsightGenerator = (ctx) => {
     const hits = ctx.days.flatMap((day) => {
         if (!day.date || day.capacityMinutes === 0) return [];
-        const name = getHolidayComment(new Date(`${day.date.format("YYYY-MM-DD")}T00:00:00Z`));
-        return name ? [ { day, name: name.split("\n")[0] } ] : [];
+        // Only yom tov (CHAG): Rosh Chodesh, minor fasts and chol hamoed are
+        // ordinary working days and would drown the real conflicts.
+        const chag = HebrewCalendar.getHolidaysOnDate(new HDate(day.date.toDate()), true)
+            ?.find((event) => event.getFlags() & flags.CHAG);
+        return chag ? [ { day, name: chag.render("he-x-NoNikud") } ] : [];
     });
     if (hits.length === 0) return null;
     return {

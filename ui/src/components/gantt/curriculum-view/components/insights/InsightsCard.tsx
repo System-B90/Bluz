@@ -87,6 +87,11 @@ export function InsightsCard({ curriculum }: { curriculum: GanttCurriculumDocume
             sx={ {
                 p: 2,
                 flexShrink: 0,
+                // Size to the sidebar, never widen it: chips and long titles
+                // would otherwise stretch the whole column.
+                width: 0,
+                minWidth: "100%",
+                boxSizing: "border-box",
                 borderInlineStart: 4,
                 borderInlineStartColor: color,
                 transition: "border-color 300ms ease",

@@ -13,6 +13,7 @@ import {
     InsightEvent,
     InsightGenerator,
 } from "@/components/gantt/curriculum-view/components/insights/types";
+import { formatHours } from "@/components/gantt/curriculum-view/gantt-time-utils";
 
 const TYPE_PLURAL: Record<ModuleEventType, string> = {
     [ ModuleEventType.Lecture ]: "הרצאות",
@@ -39,7 +40,7 @@ const typeShare: InsightGenerator = (ctx) => {
         visual: {
             kind: "donut",
             slices: slices.map(([ label, value ]) => ({ label, value })),
-            centerLabel: hours(total),
+            centerLabel: `${formatHours(total)} ש׳`,
         },
     };
 };

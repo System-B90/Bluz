@@ -32,7 +32,7 @@ export function InsightBars({ bars }: VisualOf<"bars">) {
                                         bottom: 0,
                                         height: `${(100 * bar.max) / scale}%`,
                                         borderRadius: 0.5,
-                                        bgcolor: alpha(theme.palette.text.primary, 0.06),
+                                        bgcolor: alpha(theme.palette.text.primary, 0.12),
                                     } }
                                 />
                                 <Box
@@ -100,7 +100,7 @@ export function InsightDonut({ slices, centerLabel }: VisualOf<"donut">) {
                     )) }
                 </svg>
                 <Typography
-                    sx={ { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 600, textAlign: "center" } }
+                    sx={ { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 600, lineHeight: 1.1, textAlign: "center", paddingInline: "14px" } }
                 >
                     { centerLabel }
                 </Typography>
@@ -127,7 +127,7 @@ export function InsightRing({ value, max, label }: VisualOf<"ring">) {
         <Box sx={ { position: "relative", width: size, height: size, marginInline: "auto" } }>
             <CircularProgress
                 size={ size }
-                sx={ { position: "absolute", color: (t) => alpha(t.palette.text.primary, 0.08) } }
+                sx={ { position: "absolute", color: (t) => alpha(t.palette.text.primary, 0.18) } }
                 thickness={ 5 }
                 value={ 100 }
                 variant="determinate"
@@ -175,7 +175,7 @@ export function InsightWeekdayHeatmap({ cells }: VisualOf<"weekdayHeatmap">) {
 export function InsightTimeline({ startLabel, endLabel, progress }: VisualOf<"timeline">) {
     return (
         <Box sx={ { pt: 2.5 } }>
-            <Box sx={ { position: "relative", height: 8, borderRadius: 4, bgcolor: (t) => alpha(t.palette.text.primary, 0.08) } }>
+            <Box sx={ { position: "relative", height: 8, borderRadius: 4, bgcolor: (t) => alpha(t.palette.text.primary, 0.18) } }>
                 <Box
                     sx={ {
                         position: "absolute",
@@ -188,7 +188,10 @@ export function InsightTimeline({ startLabel, endLabel, progress }: VisualOf<"ti
                     } }
                 />
                 { progress !== null ? (
-                    <Box sx={ { position: "absolute", insetInlineStart: `${100 * progress}%`, top: -22, transform: "translateX(50%)", textAlign: "center" } }>
+                    // Zero-width anchor centred with flex, not translateX: the RTL
+                    // stylis plugin mirrors transforms, which pushed the marker off
+                    // the fill's edge.
+                    <Box sx={ { position: "absolute", insetInlineStart: `${100 * progress}%`, top: -22, width: 0, display: "flex", flexDirection: "column", alignItems: "center" } }>
                         <Typography color="primary" sx={ { fontSize: 10, fontWeight: 600, lineHeight: 1.2 } }>היום</Typography>
                         <Box sx={ { width: 2, height: 14, bgcolor: "primary.dark", marginInline: "auto" } } />
                     </Box>
