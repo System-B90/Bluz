@@ -48,7 +48,7 @@ export type RecurrenceOccurrenceContext = {
  * unplaced event, otherwise 1 (its mapped start day) plus every surviving
  * echoed occurrence — skipping days recorded as recurrence exceptions (#111).
  */
-function countEventOccurrences(
+export function countEventOccurrences(
     event: GanttEvent,
     eventId: string,
     state: NormalizedStore,
