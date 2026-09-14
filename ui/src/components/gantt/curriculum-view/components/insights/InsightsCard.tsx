@@ -3,6 +3,7 @@ import CalendarMonthOutlined from "@mui/icons-material/CalendarMonthOutlined";
 import CategoryOutlined from "@mui/icons-material/CategoryOutlined";
 import ChevronLeft from "@mui/icons-material/ChevronLeft";
 import ChevronRight from "@mui/icons-material/ChevronRight";
+import CompareArrowsOutlined from "@mui/icons-material/CompareArrowsOutlined";
 import EmojiEmotionsOutlined from "@mui/icons-material/EmojiEmotionsOutlined";
 import PauseRounded from "@mui/icons-material/PauseRounded";
 import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
@@ -30,6 +31,7 @@ const ROTATE_MS = 9000;
 
 const CATEGORY_ICON: Record<InsightCategory, typeof CategoryOutlined> = {
     content: CategoryOutlined,
+    execution: CompareArrowsOutlined,
     fun: EmojiEmotionsOutlined,
     people: PeopleAltOutlined,
     schedule: CalendarMonthOutlined,

@@ -1,4 +1,5 @@
 import { CONTENT_INSIGHTS } from "@/components/gantt/curriculum-view/components/insights/generators/content";
+import { EXECUTION_INSIGHTS } from "@/components/gantt/curriculum-view/components/insights/generators/execution";
 import { FUN_INSIGHTS } from "@/components/gantt/curriculum-view/components/insights/generators/fun";
 import { PEOPLE_INSIGHTS } from "@/components/gantt/curriculum-view/components/insights/generators/people";
 import { SCHEDULE_INSIGHTS } from "@/components/gantt/curriculum-view/components/insights/generators/schedule";
@@ -13,6 +14,7 @@ import {
 export const INSIGHT_GENERATORS: ReadonlyArray<InsightGenerator> = [
     ...SCHEDULE_INSIGHTS,
     ...CONTENT_INSIGHTS,
+    ...EXECUTION_INSIGHTS,
     ...PEOPLE_INSIGHTS,
     ...STRUCTURE_INSIGHTS,
     ...FUN_INSIGHTS,

@@ -2,13 +2,14 @@ import { Dayjs } from "dayjs";
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
+import { GanttEventExecution } from "@/api-shared/types/gantt/execution";
 import { GanttDayIndex } from "@/api-shared/types/gantt/models";
 
 /** Drives the card accent colour and the rotation order (warnings first). */
 export type InsightSeverity = "fun" | "info" | "success" | "warning";
 
 /** Drives the card's header icon. */
-export type InsightCategory = "content" | "fun" | "people" | "schedule" | "structure";
+export type InsightCategory = "content" | "execution" | "fun" | "people" | "schedule" | "structure";
 
 /**
  * A visual is plain data so generators stay pure `.ts` functions; the card maps
@@ -112,4 +113,6 @@ export type InsightContext = {
     now: Dayjs;
     instructorName: (id: number) => string;
     outsiderName: (id: string) => string | undefined;
+    /** תכנון מול ביצוע, keyed by gantt event id; empty ⇒ not cut yet. */
+    execution: Record<string, GanttEventExecution>;
 };

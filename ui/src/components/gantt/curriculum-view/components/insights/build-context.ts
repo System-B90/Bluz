@@ -37,6 +37,7 @@ export type BuildInsightContextInput = {
     now: Dayjs;
     instructorName: InsightContext["instructorName"];
     outsiderName: InsightContext["outsiderName"];
+    execution: InsightContext["execution"];
 };
 
 function buildWeeks(
@@ -119,6 +120,7 @@ export function buildInsightContext({
     now,
     instructorName,
     outsiderName,
+    execution,
 }: BuildInsightContextInput): InsightContext {
     const linearDays = curriculum.weeks.flatMap((weekId) => state.weeks[weekId]?.days ?? []);
     const spans = computeEventDaySpans({ mappings, state, linearDays });
@@ -150,5 +152,6 @@ export function buildInsightContext({
         now,
         instructorName,
         outsiderName,
+        execution,
     };
 }
