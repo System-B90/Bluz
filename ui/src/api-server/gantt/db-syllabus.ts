@@ -145,7 +145,7 @@ async function reorderModules(
     const order = sql.join(
         moduleIds.map(
             (moduleId, index) =>
-                sql`when ${ganttSyllabus2ModulesSchema.moduleId} = ${moduleId} then ${index}`,
+                sql`when ${ganttSyllabus2ModulesSchema.moduleId} = ${moduleId} then ${index}::integer`,
         ),
         sql` `,
     );
