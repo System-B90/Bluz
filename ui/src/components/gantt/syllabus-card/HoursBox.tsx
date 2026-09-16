@@ -20,6 +20,7 @@ import {
     calculateMinimumRequiredTimeForSyllabus,
     doShuffleTotalsDiffer,
     getSyllabusShuffleTotals,
+    sumCollapsingShuffleGroups,
 } from "@/components/gantt/utils";
 
 /**
@@ -113,16 +114,21 @@ export function HoursBox({ syllabusId, ...props }: HoursBoxProps) {
         // 0 if none allocated, partial if only some are. An event mapped
         // across multiple days produces one mapping row per day; count once.
         const seen = new Set<string>();
-        let totalMinutes = 0;
+        const entries: Array<{ eventId: string; minutes: number }> = [];
         for (const mapping of Object.values(mappings)) {
             if (!moduleIdsSet.has(mapping.moduleId)) continue;
             if (!mapping.eventId) continue;
             if (seen.has(mapping.eventId)) continue;
             seen.add(mapping.eventId);
 
-            totalMinutes += state.events[mapping.eventId]?.minimumDuration ?? 0;
+            entries.push({
+                eventId: mapping.eventId,
+                minutes: state.events[mapping.eventId]?.minimumDuration ?? 0,
+            });
         }
-        return totalMinutes;
+        // Collapsed the same way the minimum below it is, so a lesson split
+        // across shuffles cannot push the gauge past 100% (#699).
+        return sumCollapsingShuffleGroups(entries, state);
     }, [syllabus, mappings, state]);
 
     const progressPercentage =

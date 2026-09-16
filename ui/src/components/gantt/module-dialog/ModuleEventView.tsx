@@ -5,6 +5,8 @@ import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import DriveFileMoveIcon from "@mui/icons-material/DriveFileMove";
 import EditIcon from "@mui/icons-material/Edit";
 import FileCopyIcon from "@mui/icons-material/FileCopy";
+import GroupsIcon from "@mui/icons-material/Groups";
+import Chip from "@mui/material/Chip";
 import FormControl from "@mui/material/FormControl";
 import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
@@ -150,6 +152,20 @@ export function ModuleEventView({
                     key={ `${moduleEvent?.title ?? "-title"}` }
                     moduleEvent={ moduleEvent }
                 />
+                {/* Sibling copies of one lesson, one per shuffle (#699): the
+                    tag is what tells them apart in a list of identical names. */}
+                { moduleEvent?.groupId
+                    ? (moduleEvent.shuffles ?? []).map((shuffle) => (
+                        <Chip
+                            icon={ <GroupsIcon /> }
+                            key={ shuffle }
+                            label={ shuffle }
+                            size="small"
+                            sx={ { marginInlineEnd: 0.5, mt: 0.25 } }
+                            variant="outlined"
+                        />
+                    ))
+                    : null }
             </TableCell>
             <TableCell>
                 <FormControl disabled={ !moduleEvent } fullWidth size="small">
