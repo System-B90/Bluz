@@ -32,22 +32,39 @@ import {
     EVENT_ANCHOR_PREFIX,
     HIGHLIGHT_DURATION_MS,
 } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
+import { ModuleEventGroupRow } from "@/components/gantt/module-dialog/ModuleEventGroupRow";
 import { ModuleEventView } from "@/components/gantt/module-dialog/ModuleEventView";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
-import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
+import {
+    useCurriculumProviderActions,
+    useCurriculumState,
+} from "@/components/gantt/state/provider";
 
 function CreateModuleEventButton({ moduleId }: { moduleId: GanttModuleId }) {
     const { enqueueSnackbar } = useSnackbar();
     const { createEvent } = useModuleEventActions();
+    const state = useCurriculumState();
     const clickHandler = useCallback(() => {
-        createEvent("מופע חדש", moduleId).catch((error) =>
+        const defaultOrchestratorId =
+            state.modules[moduleId]?.defaultOrchestratorId ?? null;
+        createEvent(
+            "מופע חדש",
+            moduleId,
+            undefined,
+            undefined,
+            undefined,
+            null,
+            null,
+            null,
+            defaultOrchestratorId,
+        ).catch((error) =>
             enqueueApiErrorSnackbar(
                 enqueueSnackbar,
                 "יצירת המופע נכשלה!",
                 error,
             ),
         );
-    }, [moduleId, createEvent, enqueueSnackbar]);
+    }, [moduleId, createEvent, enqueueSnackbar, state.modules]);
 
     return (
         <IconButton onClick={clickHandler} size="small">
@@ -67,10 +84,22 @@ export function ModuleEventsView({
 }) {
     const { enqueueSnackbar } = useSnackbar();
     const { dispatch } = useCurriculumProviderActions();
+    const state = useCurriculumState();
 
     const [highlightedEventId, setHighlightedEventId] =
         useState<GanttEventId | null>(null);
     const clearTimerRef = useRef<null | number>(null);
+    const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
+        new Set(),
+    );
+    const toggleGroup = useCallback((groupId: string) => {
+        setExpandedGroups((prev) => {
+            const next = new Set(prev);
+            if (next.has(groupId)) next.delete(groupId);
+            else next.add(groupId);
+            return next;
+        });
+    }, []);
 
     // When the dialog is opened from search targeting a specific event, scroll
     // it into view and briefly highlight it. The list lives behind a mount
@@ -174,14 +203,37 @@ export function ModuleEventsView({
                     </TableHead>
                     <TableBody>
                         <SortableContext items={eventIds} strategy={verticalListSortingStrategy}>
-                            {eventIds.map((eventId) => (
-                                <ModuleEventView
-                                    eventId={eventId}
-                                    isHighlighted={eventId === highlightedEventId}
-                                    key={eventId}
-                                    moduleId={moduleId}
-                                />
-                            ))}
+                            {(() => {
+                                const renderedGroups = new Set<string>();
+                                return eventIds.map((eventId) => {
+                                    const groupId = state.events[eventId]?.groupId;
+                                    if (groupId) {
+                                        if (renderedGroups.has(groupId)) return null;
+                                        renderedGroups.add(groupId);
+                                        const groupEventIds = eventIds.filter(
+                                            (id) => state.events[id]?.groupId === groupId,
+                                        );
+                                        return (
+                                            <ModuleEventGroupRow
+                                                eventIds={groupEventIds}
+                                                expanded={expandedGroups.has(groupId)}
+                                                highlightedEventId={highlightedEventId}
+                                                key={groupId}
+                                                moduleId={moduleId}
+                                                onToggle={() => toggleGroup(groupId)}
+                                            />
+                                        );
+                                    }
+                                    return (
+                                        <ModuleEventView
+                                            eventId={eventId}
+                                            isHighlighted={eventId === highlightedEventId}
+                                            key={eventId}
+                                            moduleId={moduleId}
+                                        />
+                                    );
+                                });
+                            })()}
                         </SortableContext>
                     </TableBody>
                 </Table>

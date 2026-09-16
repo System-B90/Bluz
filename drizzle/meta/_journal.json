@@ -134,6 +134,13 @@
       "when": 1789571144314,
       "tag": "0018_shuffle_event_groups",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1789577689787,
+      "tag": "0019_freezing_puff_adder",
+      "breakpoints": true
     }
   ]
 }
