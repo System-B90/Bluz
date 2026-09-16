@@ -109,6 +109,51 @@ describe("normalizeApiSyllabus", () => {
         expect(events[ 1 ].allocatedDuration).toBe(0);
     });
 
+    it("keeps the shuffle tags of the syllabus and its modules (#699)", () => {
+        // Dropping them here is what made every shuffle vanish on refresh
+        // while the database still held them.
+        const { syllabus: doc, modules, events } = normalizeApiSyllabus(
+            {
+                id: "s2",
+                title: "סילבוס",
+                shuffles: [ "ניצה", "לחם" ],
+                s2m: [
+                    {
+                        module: {
+                            id: "m2",
+                            title: "מודול",
+                            shuffles: [ "ניצה" ],
+                            m2e: [
+                                {
+                                    event: {
+                                        id: "e3",
+                                        title: "אירוע",
+                                        shuffles: [ "לחם" ],
+                                    },
+                                },
+                            ],
+                        },
+                    },
+                ],
+            } as unknown as ApiSyllabus,
+            "c1" as GanttCurriculumId,
+        );
+
+        expect(doc.shuffles).toEqual([ "ניצה", "לחם" ]);
+        expect(modules[ 0 ].shuffles).toEqual([ "ניצה" ]);
+        expect(events[ 0 ].shuffles).toEqual([ "לחם" ]);
+    });
+
+    it("defaults missing shuffle tags to empty rather than undefined", () => {
+        const { syllabus: doc, modules } = normalizeApiSyllabus(
+            syllabus,
+            "c1" as GanttCurriculumId,
+        );
+
+        expect(doc.shuffles).toEqual([]);
+        expect(modules[ 0 ].shuffles).toEqual([]);
+    });
+
     it("survives a syllabus with no modules and a module with no events", () => {
         const bare = normalizeApiSyllabus(
             {

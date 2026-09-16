@@ -94,6 +94,9 @@ export function normalizeApiSyllabus(
             updatedAt: apiModule.updatedAt,
             createdAt: apiModule.createdAt,
             hiveIds: [...(apiModule.hiveIds ?? [])],
+            // Shuffle tags must survive normalization: dropping them here made
+            // every shuffle vanish on refresh while the DB still held them (#699).
+            shuffles: [...(apiModule.shuffles ?? [])],
             events: moduleEventIds,
             syllabusId: apiSyllabus.id,
             constraints: [],
@@ -107,6 +110,7 @@ export function normalizeApiSyllabus(
             updatedAt: apiSyllabus.updatedAt,
             createdAt: apiSyllabus.createdAt,
             hiveIds: [...(apiSyllabus.hiveIds ?? [])],
+            shuffles: [...(apiSyllabus.shuffles ?? [])],
             modules: syllabusModuleIds,
             curriculumId,
         },

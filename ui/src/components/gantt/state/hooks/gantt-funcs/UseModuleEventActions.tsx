@@ -122,6 +122,7 @@ export function useModuleEventActions() {
                         isPaWindow: false,
                         splitAcrossBreaks: defaultModuleEventSplitAcrossBreaks(type),
                         comment: null,
+                        groupId: null,
                         hiveSubjectId,
                         hiveModuleId,
                         hiveLessonId,
@@ -145,6 +146,7 @@ export function useModuleEventActions() {
                         splitAcrossBreaks: defaultModuleEventSplitAcrossBreaks(type),
                         comment: null,
                         constraints: [],
+                        groupId: null,
                         hiveSubjectId,
                         hiveModuleId,
                         hiveLessonId,
@@ -175,6 +177,54 @@ export function useModuleEventActions() {
         [dispatch, revealCreatedEvent],
     );
 
+    /**
+     * Makes the event's shuffle group cover exactly `shuffles`: one sibling
+     * event per shuffle, so the same lesson can sit at a different time for
+     * each of them (#699). Fewer than two shuffles ungroups the event.
+     */
+    const applyEventShuffleGroup = useCallback(
+        async (
+            eventId: GanttEventId,
+            moduleId: GanttModuleId,
+            shuffles: Array<string>,
+        ) => {
+            return await withGantErrorHandling(async () => {
+                const { members, removedIds } =
+                    await ganttApi.event.apiApplyShuffleGroup(
+                        eventId,
+                        moduleId,
+                        shuffles,
+                    );
+
+                for (const removedId of removedIds) {
+                    dispatch({
+                        type: "REMOVE_EVENT",
+                        payload: { moduleId, eventId: removedId },
+                    });
+                }
+                for (const member of members) {
+                    // Members that already existed are updated in place; the
+                    // reducer's ADD_EVENT would append them to the module a
+                    // second time.
+                    if (stateRef.current.events[member.id]) {
+                        dispatch({
+                            type: "UPDATE_EVENT",
+                            payload: { id: member.id, updates: member },
+                        });
+                    } else {
+                        dispatch({
+                            type: "ADD_EVENT",
+                            payload: { event: member, moduleId },
+                        });
+                    }
+                }
+
+                return members;
+            }, `Failed to group event (ID: ${eventId}) across shuffles:`);
+        },
+        [dispatch],
+    );
+
     const moveEvent = useCallback(
         async (
             eventId: GanttEventId,
@@ -202,5 +252,6 @@ export function useModuleEventActions() {
         allocateTimeToModuleEvent: actions.allocateTime,
         duplicateEvent,
         moveEvent,
+        applyEventShuffleGroup,
     } as const;
 }

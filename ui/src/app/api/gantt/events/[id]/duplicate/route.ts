@@ -52,6 +52,10 @@ export const POST = withApi(
             isPaWindow: originalEvent.isPaWindow,
             splitAcrossBreaks: originalEvent.splitAcrossBreaks,
             comment: originalEvent.comment,
+            shuffles: originalEvent.shuffles,
+            // A duplicate is a new lesson, not another shuffle's copy of the
+            // original one, so it starts outside the group (#699).
+            groupId: null,
             hiveSubjectId: originalEvent.hiveSubjectId,
             hiveModuleId: originalEvent.hiveModuleId,
             hiveLessonId: originalEvent.hiveLessonId,

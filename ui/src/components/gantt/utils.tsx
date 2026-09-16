@@ -91,11 +91,18 @@ function calculateSumValueForModuleByField(
     shuffle?: string,
     occurrenceCtx?: RecurrenceOccurrenceContext,
 ): number {
-    return (module.events ?? []).reduce((evtTotal, eventId) => {
+    // Events sharing a groupId are one lesson held once per shuffle, so the
+    // module costs the longest member - not the sum of all of them (#699). No
+    // shuffle sits through more than one member, so summing would inflate every
+    // grouped lesson by the number of shuffles it covers.
+    const groupMaxima = new Map<string, number>();
+    let total = 0;
+
+    for (const eventId of module.events ?? []) {
         const event = state.events[eventId];
-        if (!event) return evtTotal;
+        if (!event) continue;
         if (shuffle !== undefined && !appliesToShuffle(event.shuffles, shuffle)) {
-            return evtTotal;
+            continue;
         }
 
         const occurrences = countEventOccurrences(
@@ -104,8 +111,47 @@ function calculateSumValueForModuleByField(
             state,
             occurrenceCtx,
         );
-        return evtTotal + (event[fieldName] ?? 0) * occurrences;
-    }, 0);
+        const value = (event[fieldName] ?? 0) * occurrences;
+
+        if (!event.groupId) {
+            total += value;
+            continue;
+        }
+        groupMaxima.set(
+            event.groupId,
+            Math.max(groupMaxima.get(event.groupId) ?? 0, value),
+        );
+    }
+
+    for (const groupMax of groupMaxima.values()) total += groupMax;
+
+    return total;
+}
+
+/**
+ * Sums per-event minutes the way module/syllabus totals do: events sharing a
+ * shuffle group count once, at their longest member, since the group is one
+ * lesson repeated per shuffle rather than several lessons (#699).
+ */
+export function sumCollapsingShuffleGroups(
+    entries: Iterable<{ eventId: string; minutes: number }>,
+    state: NormalizedStore,
+): number {
+    const groupMaxima = new Map<string, number>();
+    let total = 0;
+
+    for (const { eventId, minutes } of entries) {
+        const groupId = state.events[eventId]?.groupId;
+        if (!groupId) {
+            total += minutes;
+            continue;
+        }
+        groupMaxima.set(groupId, Math.max(groupMaxima.get(groupId) ?? 0, minutes));
+    }
+
+    for (const groupMax of groupMaxima.values()) total += groupMax;
+
+    return total;
 }
 
 /**
