@@ -18,7 +18,6 @@ import
 } from "@/api-shared/types/gantt/models";
 import { NumberSpinner } from "@/components/base/NumberSpinner";
 import { EventOrchestratorField } from "@/components/gantt/event-dialog/EventOrchestratorField";
-import { ShuffleSelect } from "@/components/gantt/ShuffleSelect";
 
 /**
  * The always-visible core of the event dialog: identity (name / type /
@@ -30,13 +29,11 @@ export function EventDetailsForm({
     localTitle,
     setLocalTitle,
     commit,
-    shuffleOptions,
 }: {
     event: GanttEvent;
     localTitle: string;
     setLocalTitle: (v: string) => void;
     commit: (updates: Partial<GanttEvent>) => void;
-    shuffleOptions: Array<string>;
 })
 {
     const labelId = useId();
@@ -101,16 +98,6 @@ export function EventDetailsForm({
                     event={ event }
                     sx={ { flex: 1, minWidth: "10rem" } }
                 />
-
-                { shuffleOptions.length > 0 && (
-                    <Box sx={ { flex: 1, minWidth: "10rem" } }>
-                        <ShuffleSelect
-                            onChange={ (shuffles) => commit({ shuffles }) }
-                            options={ shuffleOptions }
-                            value={ event.shuffles ?? [] }
-                        />
-                    </Box>
-                ) }
 
                 <Stack direction="row" spacing={ 1 } sx={ { flexShrink: 0, pt: 0.25 } }>
                     <FormControlLabel
