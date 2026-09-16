@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm";
 import {
     boolean,
     date,
+    index,
     integer,
     pgTable,
     text,
@@ -60,7 +61,11 @@ export const ganttEventsSchema = pgTable("e", {
     hiveLessonId: text("hive_lesson_id"),
     createdAt: timestamp("ca").defaultNow().notNull(),
     updatedAt: timestamp("ua").defaultNow().notNull(),
-});
+}, (table) => [
+    // Resolving a group walks every sibling by this id, on each open of the
+    // event dialog and on each regrouping (#699).
+    index("e_group_id_idx").on(table.groupId),
+]);
 export const ganttEventsRelationsSchema = relations(
     ganttEventsSchema,
     ({ many }) => ({

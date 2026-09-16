@@ -1,5 +1,5 @@
 {
-  "id": "fb89b25c-8686-4e74-a895-87d32eddf31b",
+  "id": "858f7591-6830-409c-a11d-fdf4919536e1",
   "prevId": "82150cfb-961b-46e1-8bad-257cffe2d00e",
   "version": "7",
   "dialect": "postgresql",
@@ -815,7 +815,7 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'\u05d1\u05d7\u05d3\u05e8 \u05de\u05e1\u05d5\u05d5\u05d2'"
+          "default": "'בחדר מסווג'"
         },
         "recurrence": {
           "name": "recurrence",
@@ -871,6 +871,12 @@
           "notNull": true,
           "default": "'{}'"
         },
+        "group_id": {
+          "name": "group_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "hive_subject_id": {
           "name": "hive_subject_id",
           "type": "integer",
@@ -902,12 +908,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        },
-        "group_id": {
-          "name": "group_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {
@@ -1308,10 +1308,10 @@
       "name": "module_event_type",
       "schema": "public",
       "values": [
-        "\u05d4\u05e8\u05e6\u05d0\u05d4",
-        "\u05e2\"\u05e2",
-        "\u05dc\"\u05e2",
-        "\u05d0\u05d7\u05e8"
+        "הרצאה",
+        "ע\"ע",
+        "ל\"ע",
+        "אחר"
       ]
     },
     "public.recurrence": {
@@ -1335,11 +1335,11 @@
       "name": "room_requirement",
       "schema": "public",
       "values": [
-        "\u05d1\u05d7\u05d3\u05e8 \u05de\u05e1\u05d5\u05d5\u05d2",
-        "\u05d1\u05d7\u05d5\u05e5",
-        "\u05db\u05de\u05d4 \u05db\u05d9\u05ea\u05d5\u05ea",
-        "\u05de\u05d7\u05d5\u05e5 \u05dc\u05d1\u05e1\u05d9\u05e1",
-        "\u05d1\u05d0\u05d5\u05e4\u05df \u05de\u05e7\u05d5\u05d5\u05df"
+        "בחדר מסווג",
+        "בחוץ",
+        "כמה כיתות",
+        "מחוץ לבסיס",
+        "באופן מקוון"
       ]
     }
   },
