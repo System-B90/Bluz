@@ -152,10 +152,10 @@ export function ModuleEventView({
                     key={ `${moduleEvent?.title ?? "-title"}` }
                     moduleEvent={ moduleEvent }
                 />
-                {/* Sibling copies of one lesson, one per shuffle (#699): the
-                    tag is what tells them apart in a list of identical names. */}
-                { moduleEvent?.groupId
-                    ? (moduleEvent.shuffles ?? []).map((shuffle) => (
+                {/* Standalone (ungrouped) events still show their own shuffle
+                    tag; grouped siblings show it once on the group header row. */}
+                { !moduleEvent?.groupId
+                    ? (moduleEvent?.shuffles ?? []).map((shuffle) => (
                         <Chip
                             icon={ <GroupsIcon /> }
                             key={ shuffle }

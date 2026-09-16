@@ -5,6 +5,9 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
 import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
@@ -28,6 +31,7 @@ import {
     ModuleEventType,
 } from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
+import { InstructorSelect } from "@/components/base/InstructorSelect";
 import { ModuleConstraintsView } from "@/components/gantt/module-dialog/constraints/ModuleConstraintsView";
 import { ModuleEventsView } from "@/components/gantt/module-dialog/ModuleEventsView";
 import {
@@ -200,6 +204,8 @@ type ModuleDetailsFormProps = {
     shuffleOptions: Array<string>;
     shuffles: Array<string>;
     onShufflesChange: (shuffles: Array<string>) => void;
+    defaultOrchestratorId: null | number;
+    onDefaultOrchestratorChange: (id: null | number) => void;
 }
 
 function ModuleDetailsForm({
@@ -214,6 +220,8 @@ function ModuleDetailsForm({
     shuffleOptions,
     shuffles,
     onShufflesChange,
+    defaultOrchestratorId,
+    onDefaultOrchestratorChange,
 }: ModuleDetailsFormProps) {
     return (
         <Stack spacing={2} width="30%">
@@ -248,6 +256,24 @@ function ModuleDetailsForm({
                 options={shuffleOptions}
                 value={shuffles}
             />
+
+            <FormControl fullWidth size="small">
+                <InputLabel>אחראי ברירת מחדל</InputLabel>
+                <InstructorSelect<"" | number>
+                    excludeTeachers
+                    label="אחראי ברירת מחדל"
+                    onChange={(e) =>
+                        onDefaultOrchestratorChange(
+                            e.target.value === "" ? null : Number(e.target.value),
+                        )
+                    }
+                    value={defaultOrchestratorId ?? ""}
+                >
+                    <MenuItem value="">
+                        <em>ללא ברירת מחדל</em>
+                    </MenuItem>
+                </InstructorSelect>
+            </FormControl>
 
             <HiveModuleLinker
                 hiveModules={hiveModules}
@@ -410,11 +436,15 @@ function ModuleDialogInner({
                     {isContentReady ? (
                         <>
                             <ModuleDetailsForm
+                                defaultOrchestratorId={moduleDoc?.defaultOrchestratorId ?? null}
                                 hiveModules={moduleDoc?.hiveIds ?? []}
                                 localDescription={localDescription}
                                 localTitle={localTitle}
                                 onCommitDescription={() => handleCommit({ description: localDescription })}
                                 onCommitTitle={() => handleCommit({ title: localTitle })}
+                                onDefaultOrchestratorChange={(defaultOrchestratorId) =>
+                                    handleCommit({ defaultOrchestratorId })
+                                }
                                 onHiveModulesChange={(hiveIds) =>
                                     handleCommit({ hiveIds })
                                 }

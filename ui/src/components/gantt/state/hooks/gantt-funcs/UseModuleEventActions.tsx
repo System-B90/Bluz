@@ -102,6 +102,7 @@ export function useModuleEventActions() {
             hiveSubjectId: null | number = null,
             hiveModuleId: null | number = null,
             hiveLessonId: null | number = null,
+            orchestratorId: null | number = null,
         ) =>
             actions
                 .create(
@@ -111,7 +112,7 @@ export function useModuleEventActions() {
                         type,
                         minimumDuration,
                         allocatedDuration,
-                        orchestratorId: null,
+                        orchestratorId,
                         recommendedLecturerIds: [],
                         systemRequirements: [],
                         roomRequirement: RoomRequirement.Classified,
@@ -134,7 +135,7 @@ export function useModuleEventActions() {
                         type,
                         minimumDuration,
                         allocatedDuration,
-                        orchestratorId: null,
+                        orchestratorId,
                         recommendedLecturerIds: [],
                         systemRequirements: [],
                         roomRequirement: RoomRequirement.Classified,

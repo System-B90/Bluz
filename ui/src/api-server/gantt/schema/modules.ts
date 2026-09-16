@@ -16,6 +16,8 @@ export const ganttModulesSchema = pgTable("m", {
     hiveIds: integer("hive_ids").array().notNull().default([]),
     // Shuffle names this module applies to. Empty ⇒ all shuffles.
     shuffles: text("shuffles").array().notNull().default([]),
+    // Orchestrating instructor new events in this module are pre-filled with.
+    defaultOrchestratorId: integer("default_orchestrator_id"),
     createdAt: timestamp("ca").defaultNow().notNull(),
     updatedAt: timestamp("ua").defaultNow().notNull(),
 });
