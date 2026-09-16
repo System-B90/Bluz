@@ -86,7 +86,6 @@ export function EventDialogContent({
                         event={ event }
                         localTitle={ localTitle }
                         setLocalTitle={ setLocalTitle }
-                        shuffleOptions={ syllabus?.shuffles ?? [] }
                     />
 
                     <Stack spacing={ 1.5 }>
