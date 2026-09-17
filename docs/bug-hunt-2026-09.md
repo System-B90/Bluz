@@ -343,6 +343,29 @@ when `BLUZ_TOKEN` is set.
 
 ---
 
+## Second pass (same day) — UI follow-ups
+
+A second commit closed the remaining UI findings from the schedule/header/
+settings review:
+
+- **Iteration-scoped loads unsequenced** (`SettingsProvider.tsx`,
+  `create-collection-provider.tsx`): a fast A→B switch let A's late response
+  overwrite B's state and the refs the next save reads from. Generation
+  token / sequence guard on every loader.
+- **PersonalSettings PUTs raced**: chained so writes land in order.
+- **Dark-mode branches were dead**: under MUI CSS-variable theming
+  `theme.palette.mode` is always `"light"`; converted to
+  `theme.applyStyles("dark", …)` across the settings dialog, instructor cards
+  and calendar toolbar.
+- **CourseItem indentation on the wrong edge**: physical `mr`/`borderRight`/
+  `pr` flipped by stylis-rtl; now logical inline-start properties.
+- **Keyboard Delete** clears the active event so a repeat cannot fire a
+  second failing delete (`UseCalendarHandlers.ts`).
+- **FilterIcon badge** ignored the staffing-gaps toggle.
+- **NameUtils** unique prefix returned a trailing space.
+- **AuthProvider fetch patch** restores only its own wrapper, keeps `this`.
+- **ImportExport** revoked the object URL before the click.
+
 ## Reviewed and deliberately left alone
 
 - **SSE unterminated tail** (`api-shared/sse.ts`): a trailing `data:` line
