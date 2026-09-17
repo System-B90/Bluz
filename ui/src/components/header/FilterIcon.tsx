@@ -15,6 +15,7 @@ export function FilterIcon() {
         filteredInstructors,
         filteredRoom,
         hidePrayers,
+        showMisconfigurations,
     } = useCalendarFilters();
 
     const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
@@ -35,13 +36,15 @@ export function FilterIcon() {
             filteredCourses.length !== 0 ||
             filteredInstructors.length !== 0 ||
             filteredRoom !== null ||
-            showPAsFor !== null,
+            showPAsFor !== null ||
+            showMisconfigurations,
         [
             filteredCourses,
             filteredInstructors,
             filteredRoom,
             showPAsFor,
             hidePrayers,
+            showMisconfigurations,
         ],
     );
 

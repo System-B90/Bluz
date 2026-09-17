@@ -124,15 +124,13 @@ export function CalendarToolbar({
                 justifyContent="space-between"
                 px={ 2 }
                 py={ 1.5 }
-                sx={ {
+                sx={ (theme) => ({
                     position: "relative",
                     borderBottom: "1px solid",
                     borderColor: "divider",
-                    bgcolor: (theme) =>
-                        theme.palette.mode === "dark"
-                            ? "background.default"
-                            : "transparent",
-                } }
+                    bgcolor: "transparent",
+                    ...theme.applyStyles("dark", { bgcolor: "background.default" }),
+                }) }
                 width="100%"
             >
                 <Box

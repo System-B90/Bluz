@@ -384,13 +384,16 @@ describe("useCalendarHandlers — keyboard", () => {
         act(() => result.current.setActiveEvent(baseEvent));
         press("c", { ctrlKey: true });
         press("v", { ctrlKey: true });
-        press("Delete");
-
         expect(result.current.activeEvent?.id).toBe("pasted");
+
+        press("Delete");
         expect(handleDeleteEvent).toHaveBeenCalledWith(
             "pasted",
             EventChangeInitiator.Keyboard,
         );
+        // Delete clears the selection so a repeat keypress cannot fire a
+        // second (failing) delete for an id that is already gone.
+        expect(result.current.activeEvent).toBeNull();
     });
 
     it("pastes into the selected slot when there is one", () => {

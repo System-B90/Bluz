@@ -76,7 +76,7 @@ export function SettingsListCardContent({ items, isLoading = false, headerProps,
     ), [ isLoading, items, searchQuery, searchMessages, setSearchQuery, handleStartCreate ]);
 
     return (
-        <Box sx={ { ...settingsCardSx, flex: 1.4 } }>
+        <Box sx={ (theme) => ({ ...settingsCardSx(theme), flex: 1.4 }) }>
             <SettingsSectionHeader { ...headerProps } />
 
             <SettingsSearchField

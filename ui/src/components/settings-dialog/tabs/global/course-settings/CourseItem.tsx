@@ -252,23 +252,25 @@ export function CourseItem({
                 onMouseEnter={ () => setIsHovered(true) }
                 onMouseLeave={ () => setIsHovered(false) }
                 ref={ setDropRef }
-                sx={ {
+                sx={ (theme) => ({
                     display: "flex",
                     flexDirection: "column",
-                    mr: depth > 0 ? 0.5 : 0, // In RTL, indentation works via mr (margin-right)
+                    // Logical: stylis-plugin-rtl flips physical `mr` to
+                    // margin-left, which put the indent on the wrong edge.
+                    marginInlineStart: depth > 0 ? 0.5 : 0,
                     border: "1px solid",
                     borderStyle: isOver ? "dashed" : "solid",
                     borderColor: isOver ? "primary.main" : "divider",
-                    bgcolor: (theme) =>
-                        isOver
-                            ? "action.selected"
-                            : theme.palette.mode === "light"
-                                ? `rgb(${theme.vars.palette.primary.mainChannel} / 0.04)`
-                                : "rgba(255, 255, 255, 0.02)",
+                    bgcolor: isOver
+                        ? "action.selected"
+                        : `rgb(${theme.vars.palette.primary.mainChannel} / 0.04)`,
                     borderRadius: "16px",
                     p: 1.5,
                     transition: "all 0.2s ease",
-                } }
+                    ...(isOver
+                        ? {}
+                        : theme.applyStyles("dark", { bgcolor: "rgba(255, 255, 255, 0.02)" })),
+                }) }
             >
                 <Box
                     ref={ setDragRef }
@@ -446,7 +448,7 @@ export function CourseItem({
                 {/* Description Field */ }
                 <Box onClick={ () =>
                     !isEditingDescription && setIsEditingDescription(true) }
-                sx={ { mt: 1, mr: 4, cursor: "pointer" } }
+                sx={ { mt: 1, marginInlineStart: 4, cursor: "pointer" } }
                 >
                     { isEditingDescription ? (
                         <TextField
@@ -487,7 +489,7 @@ export function CourseItem({
                             flexWrap: "wrap",
                             gap: 0.8,
                             mt: 1.5,
-                            mr: 4, // Indent inside RTL card
+                            marginInlineStart: 4, // Indent inside the card
                         } }
                     >
                         { assignedIds.map((id) =>
@@ -538,10 +540,10 @@ export function CourseItem({
                         display: "flex",
                         flexDirection: "column",
                         gap: 1,
-                        mr: 3.5, // Indentation for the children (in RTL margin-right indents)
-                        borderRight: "1px dashed",
+                        marginInlineStart: 3.5, // Indentation for the children
+                        borderInlineStart: "1px dashed",
                         borderColor: "divider",
-                        pr: 1.5, // Padding between the vertical line and the sub-courses
+                        paddingInlineStart: 1.5, // Padding between the vertical line and the sub-courses
                         mt: 1,
                     } }
                 >

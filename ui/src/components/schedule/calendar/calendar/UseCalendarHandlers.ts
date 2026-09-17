@@ -291,6 +291,9 @@ export function useCalendarHandlers(
                     currentActive.id,
                     EventChangeInitiator.Keyboard,
                 );
+                // The event is gone; a second Delete must not fire another
+                // (failing) delete for the same id.
+                setActiveEvent(null);
             }
 
             if (isCmdOrCtrl && e.key === "c" && currentActive) {

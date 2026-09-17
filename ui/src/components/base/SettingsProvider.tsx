@@ -208,12 +208,22 @@ export const SettingsProvider = ({
         prayerTimesRef.current = state.prayerTimes;
     }, [ state.prayerTimes ]);
 
+    // Iteration-scoped loads have no cancellation: a fast A→B switch let A's
+    // late response land after B's and overwrite B's state *and* the
+    // scheduleSettingsRef/mealSettingsRef the next save reads from, so the
+    // next edit wrote A's values into B's database. Each loader captures the
+    // generation current when it was issued and ignores its result if a newer
+    // scope has taken over since.
+    const loadGenerationRef = useRef(0);
+
     const loadPrayerSettings = useCallback(() =>
     {
+        const generation = loadGenerationRef.current;
         dispatch({ type: "SET_LOADING", payload: true });
         apiGetPrayerSettings(iterationId)
             .then((fetchedPrayerSettings) =>
             {
+                if (generation !== loadGenerationRef.current) return;
                 // Only the default database is seeded at startup, so an
                 // iteration that never had prayer times returns null — keep
                 // the defaults rather than choking on the date fixup.
@@ -232,6 +242,7 @@ export const SettingsProvider = ({
             })
             .catch((error) =>
             {
+                if (generation !== loadGenerationRef.current) return;
                 dispatch({ type: "SET_LOADING", payload: false });
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
@@ -324,9 +335,11 @@ export const SettingsProvider = ({
 
     const loadScheduleSettings = useCallback(() =>
     {
+        const generation = loadGenerationRef.current;
         apiGetScheduleSettings(iterationId)
             .then((fetchedScheduleSettings) =>
             {
+                if (generation !== loadGenerationRef.current) return;
                 setDayStartTime(
                     fetchedScheduleSettings?.dayStartTime ??
                         DEFAULT_DAY_START_TIME,
@@ -361,6 +374,7 @@ export const SettingsProvider = ({
             })
             .catch((error) =>
             {
+                if (generation !== loadGenerationRef.current) return;
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     "טעינת הגדרות הלו\"ז נכשלה.",
@@ -529,9 +543,11 @@ export const SettingsProvider = ({
 
     const loadMealSettings = useCallback(() =>
     {
+        const generation = loadGenerationRef.current;
         apiGetMealSettings(iterationId)
             .then((fetchedMealSettings) =>
             {
+                if (generation !== loadGenerationRef.current) return;
                 const nextBreakfastTime =
                     fetchedMealSettings?.breakfastTime ??
                         DEFAULT_BREAKFAST_TIME;
@@ -550,6 +566,7 @@ export const SettingsProvider = ({
             })
             .catch((error) =>
             {
+                if (generation !== loadGenerationRef.current) return;
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     "טעינת הגדרות זמני ארוחות נכשלה.",
@@ -644,6 +661,8 @@ export const SettingsProvider = ({
 
     useEffect(() =>
     {
+        // New scope: retire every in-flight load from the previous one.
+        loadGenerationRef.current += 1;
         loadPrayerSettings();
         loadScheduleSettings();
         loadMealSettings();

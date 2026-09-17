@@ -21,6 +21,7 @@ import
     useEffect,
     useMemo,
     useReducer,
+    useRef,
     useState,
     type ReactNode,
 } from "react";
@@ -157,7 +158,7 @@ const SelectionCard = memo(function SelectionCard({
 {
     return (
         <Box
-            sx={ { ...settingsCardSx, flex: 1, minWidth: 0, gap: 3, height: "100%" } }
+            sx={ (theme) => ({ ...settingsCardSx(theme), flex: 1, minWidth: 0, gap: 3, height: "100%" }) }
         >
             <Box alignItems="center" display="flex" gap={ 1.5 }>
                 <Box sx={ iconBadgeSx(colorTheme) }>
@@ -315,17 +316,24 @@ export function PersonalSettings()
         // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount only
     }, []);
 
-    // Persist preferences whenever state changes (skip the initial load)
+    // Persist preferences whenever state changes (skip the initial load).
+    // Writes are chained so they reach the server in order: two quick edits
+    // fired two concurrent PUTs, and when the older one resolved last the
+    // server kept the older snapshot (e.g. a group just removed came back).
+    const persistQueueRef = useRef<Promise<unknown>>(Promise.resolve());
     useEffect(() =>
     {
         if (!isLoaded) return;
-        apiSetPersonalSettings(state, {}).catch((e) =>
-            enqueueApiErrorSnackbar(
-                enqueueSnackbar,
-                "כשל בשמירת העדפות אישיות",
-                e,
-            ),
-        );
+        persistQueueRef.current = persistQueueRef.current
+            .catch(() => undefined)
+            .then(() => apiSetPersonalSettings(state, {}))
+            .catch((e) =>
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "כשל בשמירת העדפות אישיות",
+                    e,
+                ),
+            );
     }, [ state, isLoaded, enqueueSnackbar ]);
 
     // Load student groups from Hive
@@ -605,7 +613,7 @@ export function PersonalSettings()
                 />
             </Box>
             <Box sx={ { display: "flex", width: "100%" } }>
-                <Box sx={ { ...settingsCardSx, flex: 1, minWidth: 0, gap: 2 } }>
+                <Box sx={ (theme) => ({ ...settingsCardSx(theme), flex: 1, minWidth: 0, gap: 2 }) }>
                     <Box alignItems="center" display="flex" gap={ 1.5 }>
                         <Box sx={ iconBadgeSx("info") }>
                             <EventIcon className="text-[20px]" />
@@ -675,7 +683,7 @@ export function PersonalSettings()
                 </Box>
             </Box>
             <Box sx={ { display: "flex", width: "100%" } }>
-                <Box sx={ { ...settingsCardSx, flex: 1, minWidth: 0, gap: 2 } }>
+                <Box sx={ (theme) => ({ ...settingsCardSx(theme), flex: 1, minWidth: 0, gap: 2 }) }>
                     <Box alignItems="center" display="flex" gap={ 1.5 }>
                         <Box sx={ iconBadgeSx("secondary") }>
                             <AutoAwesomeIcon className="text-[20px]" />
