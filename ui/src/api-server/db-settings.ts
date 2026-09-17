@@ -5,6 +5,7 @@ import {
     DatabaseController,
 } from "@/api-server/mongo-db-controller";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
+import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 import {
     DEFAULT_BREAKFAST_TIME,
     DEFAULT_DINNER_TIME,
@@ -76,9 +77,11 @@ async function initDbSettings(
         await setDbSetting(
             PRAYER_TIMES_SETTING_KEY,
             {
-                arvit: new Date(1970, 0, 1, 18, 0, 0, 0),
-                mincha: new Date(1970, 0, 1, 12, 0, 0, 0),
-                shacharit: new Date(1970, 0, 1, 6, 0, 0, 0),
+                // Wall-clock in the venue's zone: `new Date(1970,0,1,18)` is
+                // server-local, i.e. 18:00Z in a UTC container -> 20:00 Israel.
+                arvit: dayjs.tz("1970-01-01 18:00", APP_TIMEZONE).toDate(),
+                mincha: dayjs.tz("1970-01-01 12:00", APP_TIMEZONE).toDate(),
+                shacharit: dayjs.tz("1970-01-01 06:00", APP_TIMEZONE).toDate(),
             } as Setting,
             { upsert: true },
             controller,

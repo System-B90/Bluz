@@ -93,6 +93,9 @@ export const useGanttDrag = ({
             mDays.forEach((dayId) =>
             {
                 const currentIdx = linearDays.indexOf(dayId);
+                // Unknown day (stale mapping): -1 + delta would land on an
+                // unrelated day.
+                if (currentIdx === -1) return;
                 const newIdx = currentIdx + deltaDays;
                 const targetDayId = linearDays[ newIdx ];
                 if (targetDayId)
@@ -116,6 +119,7 @@ export const useGanttDrag = ({
                     if (currentDayId)
                     {
                         const currentIdx = linearDays.indexOf(currentDayId);
+                        if (currentIdx === -1) return;
                         const newIdx = currentIdx + deltaDays;
                         const targetDayId = linearDays[ newIdx ];
                         if (targetDayId)

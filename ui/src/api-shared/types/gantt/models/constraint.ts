@@ -148,9 +148,11 @@ export function constraintToHumanReadableString(
 
         let ownerName = " ";
         if (constraint.ownerType === "event") {
-            ownerName = state.events[constraint.ownerEventId].title;
+            ownerName =
+                state.events[constraint.ownerEventId]?.title ?? "*לא נמצא*";
         } else {
-            ownerName = state.modules[constraint.ownerModuleId].title;
+            ownerName =
+                state.modules[constraint.ownerModuleId]?.title ?? "*לא נמצא*";
         }
 
         if (constraint.relation === "after") {

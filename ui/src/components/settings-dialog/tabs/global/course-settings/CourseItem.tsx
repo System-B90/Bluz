@@ -71,10 +71,40 @@ export function CourseItem({
 
     // Debounce for color picker to avoid server commits on every pixel change
     const colorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    // Mirrors "a debounced colour commit is pending" as state, because the
+    // prop-resync below runs during render, where a ref cannot be read.
+    const [ isPickingColor, setIsPickingColor ] = useState<boolean>(false);
     useEffect(() => () =>
     {
         if (colorTimeoutRef.current) clearTimeout(colorTimeoutRef.current);
     }, []);
+
+    // The row's local copies are seeded once from props; a failed optimistic
+    // update rolls the provider back but left the row showing the rejected
+    // value. Resync from props whenever they change outside an active edit.
+    // Done during render (prev-prop tracking) rather than in an effect so the
+    // stale value never reaches the screen for a frame.
+    const [ prevCourse, setPrevCourse ] = useState(course);
+    if (course !== prevCourse)
+    {
+        setPrevCourse(course);
+        if (!isEditing && course.name !== prevCourse.name)
+        {
+            setTitle(course.name);
+        }
+        if (
+            !isEditingDescription &&
+            course.description !== prevCourse.description
+        )
+        {
+            setDescription(course.description ?? "");
+        }
+        // A pending debounce means the user is still picking; leave it alone.
+        if (!isPickingColor && course.color !== prevCourse.color)
+        {
+            setColor(course.color ?? "#e0e0e0");
+        }
+    }
 
     // Filter children courses
     const subCourses = allCourses.filter((c) => c.parentId === course.id);
@@ -157,12 +187,15 @@ export function CourseItem({
         {
             const hex = colors.hex;
             setColor(hex);
+            setIsPickingColor(true);
             if (colorTimeoutRef.current)
             {
                 clearTimeout(colorTimeoutRef.current);
             }
             colorTimeoutRef.current = setTimeout(() =>
             {
+                colorTimeoutRef.current = null;
+                setIsPickingColor(false);
                 void updateCoursePartial(course.id, { color: hex });
             }, 600);
         },

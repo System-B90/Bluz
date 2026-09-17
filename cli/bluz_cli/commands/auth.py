@@ -8,6 +8,7 @@ Author: Michael K. Steinberg
 
 from __future__ import annotations
 
+import os
 import random
 import socket
 import string
@@ -24,7 +25,13 @@ import typer
 from InquirerPy import inquirer
 
 from bluz_cli.client import BluzClient
-from bluz_cli.config import Config, config_location, load_config
+from bluz_cli.config import (
+    ENV_TOKEN,
+    Config,
+    _load_file,
+    config_location,
+    load_config,
+)
 from bluz_cli.context import state
 from bluz_cli.errors import BluzApiError
 from bluz_cli.output import success, warn
@@ -483,7 +490,10 @@ def login(
                 except Exception as exc:
                     warn(f"Could not redeem handoff code: {exc}")
             if not token:
-                token = existing.token
+                # Keep only what the config *file* holds. `existing.token` may
+                # come from BLUZ_TOKEN (env / cwd .env) and must not be copied
+                # into the user config file.
+                token = _load_file().get("token")
 
     if insecure is None:
         insecure = inquirer.confirm(
@@ -501,10 +511,21 @@ def login(
 @app.command()
 def logout() -> None:
     """Forget the stored session token (keeps the server URL)."""
-    config = load_config()
-    config.token = None
+    # Work from the file alone: `load_config()` merges BLUZ_* from the env and
+    # cwd .env, and saving that back would persist env-derived values.
+    file_data = _load_file()
+    config = Config(
+        url=file_data.get("url"),
+        token=None,
+        insecure=bool(file_data.get("insecure", False)),
+    )
     config.save()
     success("Logged out — session token cleared.")
+    if os.getenv(ENV_TOKEN):
+        warn(
+            f"{ENV_TOKEN} is set in the environment (or a cwd .env) and still "
+            "authenticates; unset it to fully log out."
+        )
 
 
 @app.command("config")

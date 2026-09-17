@@ -128,12 +128,17 @@ export function withPersonRemoved(
  * @param events All events currently in state.
  * @param personId The person being assigned.
  * @param target The event being dropped onto.
+ * @param excludeEventIds Events to leave out of the scan besides the target.
+ * A move runs the target assign before the source unassign, so without this
+ * the source event itself — still holding the person in state — reported as
+ * a conflict on every move between overlapping events.
  * @returns Overlapping events the person is already busy in.
  */
 export function findPersonConflicts(
     events: Array<Event>,
     personId: PersonId,
     target: Event,
+    excludeEventIds: ReadonlyArray<Event["id"]> = [],
 ): Array<Event> {
     // "איש חוץ" is a generic placeholder rather than one person, so two events
     // carrying it are not the same body double-booked.
@@ -150,6 +155,7 @@ export function findPersonConflicts(
     return events.filter(
         (candidate) =>
             candidate.id !== target.id &&
+            !excludeEventIds.includes(candidate.id) &&
             isBusy(candidate) &&
             candidate.startTime.isBefore(target.endTime) &&
             target.startTime.isBefore(candidate.endTime),

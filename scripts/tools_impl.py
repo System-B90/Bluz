@@ -192,7 +192,10 @@ def _hive_token() -> str | None:
         token = os.environ.get(var)
         if token:
             return token
-    gh = subprocess.run(["gh", "auth", "token"], capture_output=True, text=True)
+    try:
+        gh = subprocess.run(["gh", "auth", "token"], capture_output=True, text=True)
+    except (FileNotFoundError, OSError):
+        return None
     if gh.returncode == 0 and gh.stdout.strip():
         return gh.stdout.strip()
     return None

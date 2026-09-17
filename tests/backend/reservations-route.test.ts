@@ -55,6 +55,50 @@ describe("GET /api/reservations", () => {
         );
     });
 
+    it("coerces a numeric Hive room id back to the number PUT stored", async () => {
+        vi.mocked(DbReservations.get).mockResolvedValueOnce([] as never);
+
+        await ReservationsRoute.GET(
+            request("GET", "?roomId=123&roomSource=1"),
+            undefined as never,
+        );
+
+        expect(DbReservations.get).toHaveBeenCalledWith(
+            123,
+            1,
+            undefined,
+            undefined,
+            CONTROLLER,
+        );
+    });
+
+    it("keeps a custom room id as a string even when it looks numeric", async () => {
+        vi.mocked(DbReservations.get).mockResolvedValueOnce([] as never);
+
+        await ReservationsRoute.GET(
+            request("GET", "?roomId=123&roomSource=0"),
+            undefined as never,
+        );
+
+        expect(DbReservations.get).toHaveBeenCalledWith(
+            "123",
+            0,
+            undefined,
+            undefined,
+            CONTROLLER,
+        );
+    });
+
+    it("rejects an unknown room source instead of filtering on NaN", async () => {
+        const response = await ReservationsRoute.GET(
+            request("GET", "?roomSource=abc"),
+            undefined as never,
+        );
+
+        expect(response.status).toBe(400);
+        expect(DbReservations.get).not.toHaveBeenCalled();
+    });
+
     it("leaves every absent filter undefined rather than null or NaN", async () => {
         vi.mocked(DbReservations.get).mockResolvedValueOnce([] as never);
 

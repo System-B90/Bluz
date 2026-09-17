@@ -35,9 +35,11 @@ async function setDbOutsider(
     options?: UpdateOptions,
     controller: DatabaseController = databaseController,
 ) {
-    const { _id: _, id: outsiderId, ...outsiderData } = outsider as Outsider & {
-        _id?: unknown;
-    };
+    // Same allow-list as create: the payload is client-supplied (#538 item 4).
+    const { id: outsiderId, ...outsiderData } = pickFields(
+        outsider,
+        OUTSIDER_FIELDS,
+    );
     const data = await controller.outsiders.updateOne(
         { id: outsiderId },
         { $set: outsiderData },

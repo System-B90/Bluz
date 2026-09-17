@@ -296,7 +296,9 @@ async function describeIterationUsage(
     }
     const events = await getDatabaseController(
         iteration.dbName,
-    ).events.countDocuments({}, { limit: 1 });
+        // Soft-deleted events are not "owned" - counting them made an
+        // iteration undeletable forever once anything had ever been created.
+    ).events.countDocuments({ archived: { $ne: true } }, { limit: 1 });
     const curriculums = iteration.ganttCurriculumId ? 1 : 0;
     return {
         curriculums,

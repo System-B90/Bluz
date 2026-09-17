@@ -195,6 +195,19 @@ export const SettingsProvider = ({
         isLoading: true,
     });
 
+    // Same rapid-double-save hazard as scheduleSettingsRef / mealSettingsRef
+    // below: `updatePrayerTime` used to build its payload and rollback from
+    // the render-closure `state.prayerTimes`, so two quick edits before a
+    // re-render made the second PUT revert the first. The ref always holds
+    // the latest known value; it is written eagerly on every optimistic
+    // update and re-synced from the reducer after each commit (rollbacks,
+    // loads).
+    const prayerTimesRef = useRef(state.prayerTimes);
+    useEffect(() =>
+    {
+        prayerTimesRef.current = state.prayerTimes;
+    }, [ state.prayerTimes ]);
+
     const loadPrayerSettings = useCallback(() =>
     {
         dispatch({ type: "SET_LOADING", payload: true });
@@ -260,24 +273,24 @@ export const SettingsProvider = ({
     const updatePrayerTimes = useCallback(
         async (newPrayerTimes: PrayerSettings) =>
         {
-            const previousPrayerTimes = state.prayerTimes;
+            const previousPrayerTimes = prayerTimesRef.current;
+            prayerTimesRef.current = newPrayerTimes;
             dispatch({ type: "SET_PRAYER_TIMES", payload: newPrayerTimes });
             await persistPrayerTimes(newPrayerTimes, previousPrayerTimes);
         },
-        [ state.prayerTimes, dispatch, persistPrayerTimes ],
+        [ dispatch, persistPrayerTimes ],
     );
 
     const updatePrayerTime = useCallback(
         async (key: keyof PrayerSettings, value: Date | Dayjs) =>
         {
-            const previousPrayerTimes = state.prayerTimes;
+            const previousPrayerTimes = prayerTimesRef.current;
+            const nextPrayerTimes = { ...previousPrayerTimes, [ key ]: value };
+            prayerTimesRef.current = nextPrayerTimes;
             dispatch({ type: "UPDATE_PRAYER_TIME", payload: { key, value } });
-            await persistPrayerTimes(
-                { ...state.prayerTimes, [ key ]: value },
-                previousPrayerTimes,
-            );
+            await persistPrayerTimes(nextPrayerTimes, previousPrayerTimes);
         },
-        [ state.prayerTimes, dispatch, persistPrayerTimes ],
+        [ dispatch, persistPrayerTimes ],
     );
 
     const [ dayStartTime, setDayStartTime ] = useState<string>(

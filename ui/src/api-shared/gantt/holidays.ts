@@ -13,7 +13,12 @@ export function getHolidayComment(date: Date): string | undefined {
         return NOVI_GOD_COMMENT;
     }
 
-    const hDate = new HDate(date);
+    // Callers pass UTC-midnight dates (`YYYY-MM-DDT00:00:00Z`). `new HDate(date)`
+    // reads *local* getters, so on a host west of UTC it would resolve the
+    // previous civil day. Re-anchor the same civil date at local midnight.
+    const hDate = new HDate(
+        new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+    );
     // `il: true` - Bluz users are in Israel - avoids double-listing holidays
     // that differ only by Diaspora vs. Israel observance (e.g. one-day vs.
     // two-day Pesach).

@@ -2,9 +2,10 @@ import Box, { BoxProps } from "@mui/material/Box";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { PickerValue } from "@mui/x-date-pickers/internals";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
-import dayjs, { Dayjs } from "dayjs";
+import { Dayjs } from "dayjs";
 import { useCallback, useMemo } from "react";
 
+import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
 
 type EventTimeFieldProps = {} & EventFieldProps;
@@ -74,10 +75,14 @@ export function EventTimeField({
         (date: PickerValue) =>
         {
             if (!date || !startTime) return;
-            const newStart = startTime
-                .year(date.year())
-                .month(date.month())
-                .date(date.date());
+            // Rebuilt from wall-clock strings rather than via
+            // `.year().month().date()`: those setters keep the *current*
+            // UTC offset on a `.tz()` instance, so moving across a DST
+            // boundary shifted the time of day by an hour.
+            const newStart = dayjs.tz(
+                `${date.format("YYYY-MM-DD")} ${startTime.format("HH:mm")}`,
+                APP_TIMEZONE,
+            );
             onBlurCallback({ startTime: newStart, endTime: newStart.add(duration) });
         },
         [ startTime, duration, onBlurCallback ],

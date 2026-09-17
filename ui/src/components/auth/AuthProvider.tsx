@@ -55,6 +55,7 @@ export const AuthProvider = ({
         sendMessage,
         registerSyncObject,
         deregisterSyncObject,
+        ws,
     } = useSessionWebSocketContext();
     const { enqueueSnackbar } = useSnackbar();
     const { data: session } = useSession();
@@ -182,7 +183,7 @@ export const AuthProvider = ({
         <AuthContext.Provider value={contextValue}>
             {/* Renders nothing visible — it publishes the socket's state so a
                 dead realtime layer is detectable rather than silent (#636). */}
-            <RealtimeStatus />
+            <RealtimeStatus ws={ws} />
             {children}
         </AuthContext.Provider>
     );

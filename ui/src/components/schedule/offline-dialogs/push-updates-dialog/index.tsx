@@ -203,8 +203,11 @@ export function PushOfflineUpdatesDialog() {
         ],
     );
 
+    // Resolves `null` when the server state could not be fetched. That is a
+    // distinct outcome from "no edits" (`{}`): the caller must keep the
+    // captured edits and stay offline instead of purging them.
     const checkEventCollisionStates =
-        useCallback(async (): Promise<CollisionStates> => {
+        useCallback(async (): Promise<CollisionStates | null> => {
             const states: CollisionStates = {};
 
             // Find all event IDs that are in localEvents or in the captured offline state
@@ -245,7 +248,7 @@ export function PushOfflineUpdatesDialog() {
             );
 
             if (serverEvents === null) {
-                return {};
+                return null;
             }
 
             editedIds.forEach((id) => {
@@ -287,6 +290,18 @@ export function PushOfflineUpdatesDialog() {
         }
         checkRef.current()
             .then((states) => {
+                if (states === null) {
+                    // Fetch failed: keep the edits, fall back to offline mode
+                    // so the user can retry later. Purging here would silently
+                    // discard every offline change (#157).
+                    setOfflineMode(true);
+                    setPushDialogOpen(false);
+                    enqueueSnackbar(
+                        "לא ניתן לבדוק את מצב השרת. נשארת במצב אופליין — נסה לצאת שוב מאוחר יותר.",
+                        { variant: "warning" },
+                    );
+                    return;
+                }
                 const keys = Object.keys(states);
                 if (keys.length === 0) {
                     setPushDialogOpen(false);

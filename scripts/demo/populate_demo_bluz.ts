@@ -556,9 +556,14 @@ async function main() {
         console.log("Database seeding completed successfully!");
     } catch (err) {
         console.error("An error occurred during database seeding:", err);
+        // A silent exit 0 let run_tests.py proceed against an empty DB.
+        process.exitCode = 1;
     } finally {
         await client.close();
     }
 }
 
-main().catch(console.error);
+main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+});

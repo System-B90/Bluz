@@ -8,7 +8,7 @@ import { AiToolContext } from "@/api-server/ai/tools";
 import {
     ApiErrorMaker,
     catchHandler,
-    parseJsonBody,
+    requireJsonObjectBody,
 } from "@/api-server/common";
 import {
     resolveIterationDb,
@@ -120,7 +120,7 @@ export async function POST(request: Request): Promise<Response> {
                 429,
             );
         }
-        payload = parseJsonBody<ApiAiChatPayload>(await request.text());
+        payload = await requireJsonObjectBody<ApiAiChatPayload>(request);
         const messages = validateMessages(payload.messages);
         const approvedToolCallIds = validateApprovedToolCallIds(
             payload.approvedToolCallIds,

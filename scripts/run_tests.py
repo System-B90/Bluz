@@ -7,6 +7,7 @@ Author: Antigravity
 import hashlib
 import os
 import secrets
+import shlex
 import socket
 import ssl
 import subprocess
@@ -310,8 +311,8 @@ def main(
         # Register temporary SSO client app with Hive
         hive_url = root_env.get("NEXT_PUBLIC_HIVE_URL", "https://hive.org")
         if not hive_url:
-            typer.secho("Hive URL not found. Aborting!")
-            return
+            typer.secho("Hive URL not found. Aborting!", fg=typer.colors.RED)
+            raise typer.Exit(1)
         typer.secho(
             "Registering temporary SSO client with Hive...", fg=typer.colors.CYAN
         )
@@ -492,10 +493,10 @@ def main(
         test_env["TEST_VISUAL"] = "1"
 
     if grep:
-        playwright_cmd += f' --grep "{grep}"'
+        playwright_cmd += f" --grep {shlex.quote(grep)}"
 
     if spec:
-        playwright_cmd += f" tests/{spec}.spec.ts"
+        playwright_cmd += f" tests/{shlex.quote(spec)}.spec.ts"
 
     if shard:
         playwright_cmd += f" --shard={shard}"

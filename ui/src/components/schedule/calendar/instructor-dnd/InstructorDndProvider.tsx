@@ -129,6 +129,7 @@ export function InstructorDndProvider({
             personId: PersonId,
             withModifier: boolean,
             sourceField?: PersonField,
+            sourceEventId?: Event["id"],
         ): boolean => {
             const field = targetFieldFor(target, withModifier, sourceField);
             // Only `lecturers` can hold an outsider. Dropping one where it
@@ -152,7 +153,14 @@ export function InstructorDndProvider({
                 return false;
             }
 
-            const conflicts = findPersonConflicts(events, personId, target);
+            // On a move the source still holds the person at this point (the
+            // unassign runs after), so it must not count as a conflict.
+            const conflicts = findPersonConflicts(
+                events,
+                personId,
+                target,
+                sourceEventId === undefined ? [] : [sourceEventId],
+            );
             handleSaveEvent(updated, EventChangeInitiator.InstructorAssign);
 
             if (conflicts.length > 0) {
@@ -240,8 +248,15 @@ export function InstructorDndProvider({
                 return;
             }
 
-            if (assignToEvent(target, data.personId, withModifier, data.field))
-            {
+            if (
+                assignToEvent(
+                    target,
+                    data.personId,
+                    withModifier,
+                    data.field,
+                    data.eventId,
+                )
+            ) {
                 unassignFromEvent(data.eventId, data.personId);
             }
         },

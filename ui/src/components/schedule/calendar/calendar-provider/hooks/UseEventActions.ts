@@ -20,6 +20,7 @@ export const useEventActions = (
     dispatch: (action: CalendarAction) => void,
     remoteDispatch: (action: CalendarAction) => void,
     markEventCreatedLocally: (eventId: EventId) => void,
+    isEventCreatedLocally: (eventId: EventId) => boolean,
 ) => {
     const saveEvent = useCallback(
         (
@@ -51,7 +52,10 @@ export const useEventActions = (
                     // locally" apart from "modified locally" without
                     // guessing from id shape.
                     markEventCreatedLocally(newEvent.id);
-                } else {
+                } else if (!isEventCreatedLocally(newEvent.id)) {
+                    // Editing an event that was itself created offline must
+                    // not demote it to "modified": reconciliation would then
+                    // try to diff it against a server copy that never existed.
                     const oldEvent = events.find((ev) => ev.id === newEvent.id);
                     if (oldEvent) captureEventBeforeEdit(oldEvent);
                 }
@@ -136,6 +140,7 @@ export const useEventActions = (
             offlineMode,
             captureEventBeforeEdit,
             markEventCreatedLocally,
+            isEventCreatedLocally,
             dispatch,
             remoteDispatch,
         ],

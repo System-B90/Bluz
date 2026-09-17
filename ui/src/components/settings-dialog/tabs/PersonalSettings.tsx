@@ -300,6 +300,10 @@ export function PersonalSettings()
             .then((settings) =>
             {
                 dispatch({ type: "INITIALIZE", payload: settings });
+                // Only a successful load may arm the persist effect: arming
+                // it after a failure PUT the reducer defaults and wiped the
+                // user's saved groups/instructors/favourites.
+                setIsLoaded(true);
             })
             .catch((e) =>
                 enqueueApiErrorSnackbar(
@@ -307,8 +311,7 @@ export function PersonalSettings()
                     "כשל בטעינת העדפות אישיות",
                     e,
                 ),
-            )
-            .finally(() => setIsLoaded(true));
+            );
         // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount only
     }, []);
 

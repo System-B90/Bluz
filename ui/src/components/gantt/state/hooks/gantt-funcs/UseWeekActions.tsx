@@ -64,6 +64,11 @@ export function useWeekActions(): UseWeekActionsReturn {
         stateRef.current = state;
     }, [state]);
 
+    // Per-id sequence guarding against out-of-order responses: a slow PATCH must
+    // not clobber a newer edit made while it was in flight (mirrors
+    // MakeEntityActions.updateSeqById).
+    const updateSeqById = useRef(new Map<GanttWeekId, number>());
+
     const createWeek = useCallback(
         async (payload: CreateGanttWeekPayload) => {
             // Optimistically render the new week (plus its seven placeholder
@@ -142,6 +147,7 @@ export function useWeekActions(): UseWeekActionsReturn {
                                 dayIndex: dayLink.day.dayIndex,
                                 totalWorkingMinutes:
                                     dayLink.day.totalWorkingMinutes,
+                                dayEndTime: dayLink.day.dayEndTime ?? null,
                                 comment: dayLink.day.comment,
                             },
                         },
@@ -187,6 +193,10 @@ export function useWeekActions(): UseWeekActionsReturn {
             // Optimistically apply the change so toggles/inputs react instantly
             // instead of waiting on the server round-trip. Snapshot the prior
             // values for the touched keys so we can roll back on failure.
+            const seq = (updateSeqById.current.get(weekId) ?? 0) + 1;
+            updateSeqById.current.set(weekId, seq);
+            const isLatest = () => updateSeqById.current.get(weekId) === seq;
+
             const existing = stateRef.current.weeks[weekId];
             const rollback: Partial<{ comment?: string; weekendDuty?: boolean }> =
                 {};
@@ -205,17 +215,25 @@ export function useWeekActions(): UseWeekActionsReturn {
                     ...updates,
                 });
                 const { comment, weekendDuty } = updatedWeek;
-                dispatch({
-                    type: "UPDATE_WEEK",
-                    payload: { id: weekId, updates: { comment, weekendDuty } },
-                });
+                // Skip a stale response that a newer edit has already superseded.
+                if (isLatest()) {
+                    dispatch({
+                        type: "UPDATE_WEEK",
+                        payload: {
+                            id: weekId,
+                            updates: { comment, weekendDuty },
+                        },
+                    });
+                }
                 return updatedWeek;
             } catch (error) {
-                // Revert the optimistic change before surfacing the error.
-                dispatch({
-                    type: "UPDATE_WEEK",
-                    payload: { id: weekId, updates: rollback },
-                });
+                // Revert the optimistic change, unless a newer edit is pending.
+                if (isLatest()) {
+                    dispatch({
+                        type: "UPDATE_WEEK",
+                        payload: { id: weekId, updates: rollback },
+                    });
+                }
                 console.error(`Failed to update week (ID: ${weekId}):`, error);
                 throw error;
             }

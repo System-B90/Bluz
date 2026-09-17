@@ -36,8 +36,11 @@ export function EventClassification({
             justifyContent="flex-start"
             width="100%"
         >
+            {/* Keyed per event: the field seeds its type state once from the
+                event, and the dialog swaps events without remounting. */}
             <EventTypeField
                 event={ event }
+                key={ event?.id }
                 onBlurCallback={ onUpdate }
                 sx={ { width: "15%" } }
             />

@@ -11,6 +11,7 @@ const PERSONAL_SETTINGS_FIELDS = [
     "favoriteOutsiders",
     "googleCalendarEnabled",
     "googleCalendarSyncAllEvents",
+    "aiAssistantEnabled",
 ] as const;
 
 async function getPersonalSettings(

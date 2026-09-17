@@ -143,7 +143,12 @@ export const PATCH = withApi(
         if (newValues.forbiddenDays !== undefined)
             updateData.forbiddenDays = newValues.forbiddenDays;
 
-        if (newValues.type === "RELATIONAL") {
+        // The client sends Partial payloads without `type`, so key the target
+        // rewrite off the target fields themselves rather than the type.
+        if (
+            newValues.targetId !== undefined ||
+            newValues.targetType !== undefined
+        ) {
             // Nullify both to clear previous relations properly
             updateData.targetEventId = null;
             updateData.targetModuleId = null;

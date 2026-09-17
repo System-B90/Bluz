@@ -22,6 +22,7 @@ import {
     ApiReservationsGetPayload,
     ApiReservationsGetResponse,
 } from "@/api-shared/types/reservation";
+import { RoomSource } from "@/api-shared/types/room";
 
 type ServerApiReservationsGet = ServerApi<
     ApiReservationsGetPayload,
@@ -39,10 +40,25 @@ type ServerApiReservationDelete = ServerApi<
 export const GET: ServerApiReservationsGet = withApi(async (request) => {
     await requireStaffSession();
     const { searchParams } = new URL(request.url);
-    const roomId = searchParams.get("roomId") ?? undefined;
+    const rawRoomId = searchParams.get("roomId") ?? undefined;
     const roomSourceStr = searchParams.get("roomSource");
     const roomSource =
         roomSourceStr !== null ? Number(roomSourceStr) : undefined;
+    if (
+        roomSource !== undefined &&
+        !Object.values(RoomSource).includes(roomSource)
+    ) {
+        throw new ClientApiError(`מקור חדר לא תקין: ${roomSourceStr}`);
+    }
+    // Hive room ids are stored as numbers (that is what PUT persists from the
+    // JSON body); the query string always arrives as a string, so a Hive
+    // lookup with the raw value matched nothing.
+    const roomId =
+        rawRoomId !== undefined &&
+        roomSource === RoomSource.Hive &&
+        /^\d+$/.test(rawRoomId)
+            ? Number(rawRoomId)
+            : rawRoomId;
     const from = searchParams.get("from") ?? undefined;
     const to = searchParams.get("to") ?? undefined;
     const { controller } = await resolveIterationFromRequest(request);

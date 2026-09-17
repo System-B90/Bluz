@@ -155,6 +155,36 @@ describe("Gantt Constraints API Route", () => {
         expect(data.data).toEqual({ id: "con3", relation: "FS" });
     });
 
+    it("PATCH - re-points the target without a type in the body", async () => {
+        vi.mocked(updateConstraint).mockResolvedValueOnce([
+            { id: "con3" } as Awaited<ReturnType<typeof updateConstraint>>[number],
+        ]);
+        const request = new NextRequest("http://localhost/api/gantt/curriculums/c1/constraints", {
+            method: "PATCH",
+            body: JSON.stringify({ id: "con3", targetId: "e9", targetType: "event" }),
+        });
+        const response = await ConstraintsRoute.PATCH(request, routeContext);
+        expect(response.status).toBe(200);
+        expect(vi.mocked(updateConstraint)).toHaveBeenLastCalledWith("con3", {
+            targetEventId: "e9",
+            targetModuleId: null,
+        });
+    });
+
+    it("PATCH - passes a null delay through so it can be cleared", async () => {
+        vi.mocked(updateConstraint).mockResolvedValueOnce([
+            { id: "con3" } as Awaited<ReturnType<typeof updateConstraint>>[number],
+        ]);
+        const request = new NextRequest("http://localhost/api/gantt/curriculums/c1/constraints", {
+            method: "PATCH",
+            body: JSON.stringify({ id: "con3", minDelayDays: null }),
+        });
+        await ConstraintsRoute.PATCH(request, routeContext);
+        expect(vi.mocked(updateConstraint)).toHaveBeenLastCalledWith("con3", {
+            minDelayDays: null,
+        });
+    });
+
     it("DELETE - removes a constraint", async () => {
         vi.mocked(deleteConstraint).mockResolvedValueOnce(
             { id: "con3" } as unknown as Awaited<ReturnType<typeof deleteConstraint>>,
