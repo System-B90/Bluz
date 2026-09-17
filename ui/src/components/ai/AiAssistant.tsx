@@ -6,21 +6,25 @@
  *
  * RTL throughout — the launcher and the panel are pinned with logical inset
  * properties, so they sit on the correct edge without a direction check.
+ *
+ * The panel renders one flat, chronological timeline. Prose, reasoning, tool
+ * calls, approval cards and questions are all entries in the same list, in the
+ * order the server emitted them, because a turn that reads out of order is a
+ * turn the user cannot audit.
  */
 
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
+import CloseFullscreenIcon from "@mui/icons-material/CloseFullscreen";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 import SendIcon from "@mui/icons-material/Send";
 import StopIcon from "@mui/icons-material/Stop";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
-import Collapse from "@mui/material/Collapse";
 import Fab from "@mui/material/Fab";
 import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
@@ -36,7 +40,12 @@ import remarkGfm from "remark-gfm";
 import { fetchAiTools } from "@/api-client/ai";
 import { apiGetPersonalSettings } from "@/api-client/personal-settings";
 import { CURRICULUM_QUERY_PARAM } from "@/api-shared/types/gantt/models";
+import { ApprovalCard } from "@/components/ai/ApprovalCard";
+import { ChoicePrompt } from "@/components/ai/ChoicePrompt";
+import { ThinkingBlock } from "@/components/ai/ThinkingBlock";
+import { ToolCallChip } from "@/components/ai/ToolCallChip";
 import {
+    AiChatStats,
     AiTimelineItem,
     AiTimelineKind,
     useAiChat,
@@ -44,12 +53,17 @@ import {
 import { useIterationScope } from "@/components/base/IterationProvider";
 
 const PANEL_WIDTH = 420;
+const PANEL_WIDTH_WIDE = 680;
+/** Clears the launcher, which sits above the Gantt screen's curriculum FAB. */
+const PANEL_BOTTOM = 168;
 /** Stacks above the Gantt screen's curriculum FAB (bottom: 16, 56px tall). */
 const LAUNCHER_BOTTOM = 88;
-/** Bottom-aligns the panel with the launcher FAB, sitting beside it rather than covering it. */
-const PANEL_BOTTOM = LAUNCHER_BOTTOM;
-/** Launcher FAB diameter (56) + inset (16) + a gap, so the panel clears it sideways. */
-const PANEL_INSET_END = 16 + 56 + 16;
+/**
+ * How close to the bottom the user must be for a new message to scroll the
+ * view. Past that, they are reading history and yanking them back down every
+ * time a token arrives makes the panel unusable mid-answer.
+ */
+const AUTOSCROLL_SLACK_PX = 80;
 
 const SUGGESTIONS = [
     'מה יש בלו"ז השבוע?',
@@ -102,42 +116,38 @@ const MARKDOWN_SX = {
     },
     "& pre code": { bgcolor: "transparent", px: 0 },
     "& a": { color: "primary.main" },
+    "& table": { borderCollapse: "collapse", width: "100%" },
+    "& th, & td": {
+        border: 1,
+        borderColor: "divider",
+        fontSize: "0.78rem",
+        px: 0.75,
+        py: 0.25,
+        textAlign: "start",
+    },
 } as const;
 
-/**
- * Some backends (reasoning models like the self-hosted Kimi gateway) emit
- * their chain-of-thought inline as a `<think>…</think>` block ahead of the
- * real answer, rather than on a separate wire field. Split it out so it can
- * be rendered collapsed, the way Claude Desktop hides its own thinking.
- *
- * Mid-stream the closing tag hasn't arrived yet — everything after `<think>`
- * is still "thinking" and `content` is "" until `</think>` shows up.
- */
-function splitThinking(text: string): { thinking?: string; content: string } {
-    const match = /^\s*<think>([\s\S]*?)(?:<\/think>([\s\S]*)|$)/i.exec(text);
-    if (!match) return { content: text };
-    return { thinking: match[1], content: match[2] ?? "" };
-}
+function AssistantBubble({ text }: { text: string }) {
+    const [copied, setCopied] = React.useState(false);
 
-function AssistantBubble({
-    text,
-    reasoning,
-}: {
-    text: string;
-    /** Chain-of-thought sent on its own wire field (the common case). */
-    reasoning?: string;
-}) {
-    const [thinkingOpen, setThinkingOpen] = React.useState(false);
-    // Prefer the structured field; fall back to splitting inline <think>
-    // tags for a backend that sends reasoning mixed into the answer instead.
-    const split = reasoning === undefined ? splitThinking(text) : undefined;
-    const thinking = reasoning ?? split?.thinking;
-    const content = split ? split.content : text;
+    const copy = () => {
+        void navigator.clipboard?.writeText(text).then(() => {
+            setCopied(true);
+            window.setTimeout(() => setCopied(false), 1500);
+        });
+    };
 
     return (
-        // RTL: the logical "end" (justifyContent: flex-end) is the visual
-        // left, which is where the assistant's replies belong.
-        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+        <Box
+            sx={{
+                display: "flex",
+                justifyContent: "flex-start",
+                // The copy button only appears on hover/focus: it is useful
+                // often enough to keep, and not often enough to sit
+                // permanently next to every paragraph.
+                "&:hover .ai-copy, & .ai-copy:focus-visible": { opacity: 1 },
+            }}
+        >
             <Paper
                 elevation={0}
                 sx={{
@@ -148,107 +158,121 @@ function AssistantBubble({
                     maxWidth: "90%",
                 }}
             >
-                { thinking ? (
-                    <Box sx={{ mb: content ? 1 : 0 }}>
-                        <Box
-                            component="button"
-                            onClick={() => setThinkingOpen((v) => !v)}
-                            sx={{
-                                appearance: "none",
-                                border: "none",
-                                background: "none",
-                                p: 0,
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 0.5,
-                                cursor: "pointer",
-                                color: "text.secondary",
-                                font: "inherit",
-                            }}
-                        >
-                            <Typography
-                                sx={{ fontStyle: "italic" }}
-                                variant="caption"
-                            >
-                                { thinkingOpen ? "הסתר תהליך חשיבה" : "תהליך חשיבה" }
-                            </Typography>
-                        </Box>
-                        <Collapse in={thinkingOpen}>
-                            <Typography
-                                color="text.secondary"
-                                sx={{
-                                    whiteSpace: "pre-wrap",
-                                    fontStyle: "italic",
-                                    borderInlineStart: "2px solid",
-                                    borderColor: "divider",
-                                    paddingInlineStart: 1,
-                                    mt: 0.5,
-                                }}
-                                variant="caption"
-                            >
-                                { thinking }
-                            </Typography>
-                        </Collapse>
-                    </Box>
-                ) : null }
                 <Box sx={MARKDOWN_SX}>
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {content}
+                        {text}
                     </ReactMarkdown>
                 </Box>
             </Paper>
+            <Tooltip title={copied ? "הועתק" : "העתקה"}>
+                <IconButton
+                    aria-label="העתקת התשובה"
+                    className="ai-copy"
+                    onClick={copy}
+                    size="small"
+                    sx={{
+                        alignSelf: "flex-end",
+                        opacity: 0,
+                        transition: "opacity 150ms",
+                    }}
+                >
+                    <ContentCopyIcon sx={{ fontSize: 14 }} />
+                </IconButton>
+            </Tooltip>
         </Box>
     );
 }
 
-function ToolChip({
-    name,
-    summary,
-    state,
+function TimelineEntry({
+    item,
+    busy,
+    isLast,
+    onApprove,
+    onReject,
+    onAnswer,
 }: {
-    name: string;
-    summary: string;
-    state: "failed" | "ok" | "running";
+    item: AiTimelineItem;
+    busy: boolean;
+    /** Only the newest reasoning block can still be streaming. */
+    isLast: boolean;
+    onApprove: () => void;
+    onReject: () => void;
+    onAnswer: (value: string) => void;
 }) {
-    return (
-        <Chip
-            color={state === "failed" ? "error" : "default"}
-            icon={
-                state === "running" ? (
-                    <CircularProgress size={12} sx={{ marginInlineStart: 1 }} />
-                ) : state === "failed" ? (
-                    <ErrorOutlineIcon />
-                ) : (
-                    <CheckIcon />
-                )
-            }
-            label={`${name}: ${summary}`}
-            size="small"
-            sx={{ alignSelf: "flex-start", maxWidth: "100%" }}
-            variant="outlined"
-        />
-    );
-}
+    // Computed rather than inlined in the JSX: the lint autofixer rewrites a
+    // `&&` inside a prop into a ternary with a `null` branch, which this
+    // boolean prop does not accept.
+    const streaming = Boolean(busy && isLast);
 
-function TimelineEntry({ item }: { item: AiTimelineItem }) {
     switch (item.kind) {
     case AiTimelineKind.User:
         return <UserBubble text={item.text} />;
     case AiTimelineKind.Assistant:
-        return <AssistantBubble reasoning={item.reasoning} text={item.text} />;
+        return <AssistantBubble text={item.text} />;
+    case AiTimelineKind.Thinking:
+        return <ThinkingBlock streaming={streaming} text={item.text} />;
     case AiTimelineKind.Tool:
         return (
-            <ToolChip
-                name={item.name}
+            <ToolCallChip
+                detail={item.detail}
+                durationMs={item.durationMs}
                 state={item.state}
                 summary={item.summary}
+                title={item.title}
             />
         );
+    case AiTimelineKind.Approval:
+        return (
+            <ApprovalCard
+                args={item.arguments}
+                busy={busy}
+                danger={item.danger}
+                impact={item.impact}
+                onApprove={onApprove}
+                onReject={onReject}
+                state={item.state}
+                summary={item.summary}
+                title={item.title}
+            />
+        );
+    case AiTimelineKind.Choice:
+        return (
+            <ChoicePrompt
+                allowFreeText={item.allowFreeText}
+                answer={item.answer}
+                busy={busy}
+                onAnswer={onAnswer}
+                options={item.options}
+                question={item.question}
+            />
+        );
+    case AiTimelineKind.Failure:
+        return <Alert severity="error">{item.message}</Alert>;
     }
+}
+
+/** Model and cumulative token cost, so the bill is never invisible. */
+function StatsFooter({ stats }: { stats: AiChatStats }) {
+    if (!stats.model) return null;
+    return (
+        <Tooltip
+            title={
+                stats.usage
+                    ? `קלט ${stats.usage.promptTokens} · פלט ${stats.usage.completionTokens}`
+                    : ""
+            }
+        >
+            <Typography color="text.disabled" variant="caption">
+                {stats.model}
+                {stats.usage ? ` · ${stats.usage.totalTokens} טוקנים` : ""}
+            </Typography>
+        </Tooltip>
+    );
 }
 
 export function AiAssistant() {
     const [open, setOpen] = React.useState(false);
+    const [wide, setWide] = React.useState(false);
     const [enabled, setEnabled] = React.useState<boolean | null>(null);
     const [userEnabled, setUserEnabled] = React.useState(true);
     const [draft, setDraft] = React.useState("");
@@ -262,16 +286,22 @@ export function AiAssistant() {
     const {
         timeline,
         busy,
-        error,
+        stats,
         pendingApproval,
+        pendingChoice,
         send,
         approve,
         reject,
+        answerChoice,
         stop,
         reset,
     } = useAiChat({ iterationId, curriculumId });
 
     const scrollRef = React.useRef<HTMLDivElement>(null);
+    // Tracked on scroll rather than read during the effect: by the time the
+    // new content has rendered, the measurement that decides whether to follow
+    // it is already contaminated by the content itself.
+    const followRef = React.useRef(true);
 
     // A deployment with no API key must not advertise a launcher that fails on
     // first use, so the capability is probed once per mount.
@@ -304,11 +334,22 @@ export function AiAssistant() {
     }, []);
 
     React.useEffect(() => {
+        if (!followRef.current) return;
         scrollRef.current?.scrollTo({
             top: scrollRef.current.scrollHeight,
             behavior: "smooth",
         });
-    }, [timeline, pendingApproval]);
+    }, [timeline]);
+
+    // Esc closes the panel, the convention every other overlay here follows.
+    React.useEffect(() => {
+        if (!open) return;
+        const onKey = (event: KeyboardEvent) => {
+            if (event.key === "Escape") setOpen(false);
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [open]);
 
     const submit = () => {
         send(draft);
@@ -316,6 +357,10 @@ export function AiAssistant() {
     };
 
     if (!enabled || !userEnabled) return null;
+
+    // A turn that stopped on a question or an approval is not "thinking" — it
+    // is waiting on the user, and a spinner there reads as a hung panel.
+    const waiting = Boolean(pendingApproval || pendingChoice);
 
     return (
         <>
@@ -341,13 +386,18 @@ export function AiAssistant() {
                     sx={{
                         position: "fixed",
                         bottom: PANEL_BOTTOM,
-                        insetInlineEnd: PANEL_INSET_END,
-                        width: { xs: "calc(100vw - 48px)", sm: PANEL_WIDTH },
+                        insetInlineEnd: 24,
+                        width: {
+                            xs: "calc(100vw - 48px)",
+                            sm: wide ? PANEL_WIDTH_WIDE : PANEL_WIDTH,
+                        },
+                        maxWidth: "calc(100vw - 48px)",
                         maxHeight: `calc(100vh - ${PANEL_BOTTOM + 48}px)`,
                         display: "flex",
                         flexDirection: "column",
                         borderRadius: 3,
                         overflow: "hidden",
+                        transition: "width 180ms",
                         zIndex: 1200,
                     }}
                 >
@@ -358,9 +408,23 @@ export function AiAssistant() {
                         sx={{ px: 2, py: 1.5, bgcolor: "background.paper" }}
                     >
                         <AutoAwesomeIcon color="primary" fontSize="small" />
-                        <Typography sx={{ flexGrow: 1 }} variant="subtitle2">
-                            עוזר בלוז
-                        </Typography>
+                        <Typography variant="subtitle2">עוזר בלוז</Typography>
+                        <Box sx={{ flexGrow: 1 }} />
+                        <StatsFooter stats={stats} />
+                        <Tooltip title={wide ? "הקטנה" : "הרחבה"}>
+                            <IconButton
+                                aria-label={wide ? "הקטנת החלון" : "הרחבת החלון"}
+                                onClick={() => setWide((value) => !value)}
+                                size="small"
+                                sx={{ display: { xs: "none", sm: "inline-flex" } }}
+                            >
+                                {wide ? (
+                                    <CloseFullscreenIcon fontSize="small" />
+                                ) : (
+                                    <OpenInFullIcon fontSize="small" />
+                                )}
+                            </IconButton>
+                        </Tooltip>
                         <Tooltip title="שיחה חדשה">
                             <span>
                                 <IconButton
@@ -376,6 +440,14 @@ export function AiAssistant() {
                     </Stack>
 
                     <Box
+                        onScroll={(event) => {
+                            const element = event.currentTarget;
+                            followRef.current =
+                                element.scrollHeight -
+                                    element.scrollTop -
+                                    element.clientHeight <
+                                AUTOSCROLL_SLACK_PX;
+                        }}
                         ref={scrollRef}
                         sx={{
                             flexGrow: 1,
@@ -409,44 +481,20 @@ export function AiAssistant() {
                                     ))}
                                 </Stack>
                             ) : (
-                                timeline.map((item) => (
-                                    <TimelineEntry item={item} key={item.id} />
+                                timeline.map((item, index) => (
+                                    <TimelineEntry
+                                        busy={busy}
+                                        isLast={index === timeline.length - 1}
+                                        item={item}
+                                        key={item.id}
+                                        onAnswer={answerChoice}
+                                        onApprove={approve}
+                                        onReject={reject}
+                                    />
                                 ))
                             )}
 
-                            {pendingApproval ? (
-                                <Alert
-                                    action={
-                                        <Stack direction="row" spacing={1}>
-                                            <Button
-                                                color="inherit"
-                                                disabled={busy}
-                                                onClick={reject}
-                                                size="small"
-                                            >
-                                                ביטול
-                                            </Button>
-                                            <Button
-                                                color="warning"
-                                                disabled={busy}
-                                                onClick={approve}
-                                                size="small"
-                                                variant="contained"
-                                            >
-                                                אישור
-                                            </Button>
-                                        </Stack>
-                                    }
-                                    severity="warning"
-                                    sx={{ alignItems: "center" }}
-                                >
-                                    <Typography variant="body2">
-                                        {pendingApproval.summary}
-                                    </Typography>
-                                </Alert>
-                            ) : null}
-
-                            {busy && !pendingApproval ? (
+                            {busy && !waiting ? (
                                 // The backing model reasons before it emits any
                                 // visible text, so without this the panel sits
                                 // blank for seconds after a question.
@@ -461,10 +509,6 @@ export function AiAssistant() {
                                         חושב…
                                     </Typography>
                                 </Stack>
-                            ) : null}
-
-                            {error ? (
-                                <Alert severity="error">{error}</Alert>
                             ) : null}
                         </Stack>
                     </Box>

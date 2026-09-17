@@ -11,7 +11,7 @@ import { previewCurriculumCut, cutCurriculumToSchedule } from "@/api-server/gant
 import { DbCurriculum } from "@/api-server/gantt/db-curriculum";
 import { getCurriculumExecution } from "@/api-server/gantt/execution";
 import { ClientApiError } from "@/api-shared/errors";
-import { AiToolKind } from "@/api-shared/types/ai";
+import { AiToolDanger, AiToolKind } from "@/api-shared/types/ai";
 import { EventChangeInitiator } from "@/api-shared/types/event-history";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models/curriculum";
 
@@ -41,6 +41,8 @@ const CURRICULUM_ID_PARAM = {
 
 export const listCurriculumsTool: AiTool<Record<string, never>> = {
     name: "list_curriculums",
+    title: "רשימת גאנטים",
+    danger: AiToolDanger.Safe,
     description: "מחזיר את כל הגאנטים (תוכניות הלימוד) עם המזהה והשם שלהם.",
     kind: AiToolKind.Read,
     parameters: { type: "object", properties: {}, additionalProperties: false },
@@ -59,6 +61,8 @@ type CurriculumArgs = { curriculumId?: string };
 
 export const getCurriculumTool: AiTool<CurriculumArgs> = {
     name: "get_curriculum",
+    title: "מבנה הגאנט",
+    danger: AiToolDanger.Safe,
     description:
         "מחזיר את עץ הגאנט המלא: סילבוסים, מודולים, שבועות וימים. " +
         "השתמש בזה כדי לענות על שאלות מבניות לפני כל שינוי.",
@@ -81,6 +85,12 @@ export const getCurriculumTool: AiTool<CurriculumArgs> = {
 
 export const previewCutTool: AiTool<CurriculumArgs> = {
     name: "preview_curriculum_cut",
+    title: "תצוגה מקדימה לגזירה",
+    danger: AiToolDanger.Safe,
+    nextSteps: [
+        "הצג למשתמש בעברית כמה אירועים ייווצרו ואילו התנגשויות נמצאו.",
+        "אל תקרא ל-cut_curriculum לפני שהמשתמש ראה את הסיכום הזה.",
+    ],
     description:
         'מריץ הרצה יבשה של גזירת הגאנט ללו"ז ומחזיר את האירועים שייווצרו ואת ' +
         "ההתנגשויות שנמצאו, בלי לשנות דבר. הרץ את זה לפני cut_curriculum.",
@@ -100,6 +110,8 @@ export const previewCutTool: AiTool<CurriculumArgs> = {
 
 export const curriculumExecutionTool: AiTool<CurriculumArgs> = {
     name: "get_curriculum_execution",
+    title: "תכנון מול ביצוע",
+    danger: AiToolDanger.Safe,
     description:
         'מחזיר את פער התכנון מול הביצוע: לכל אירוע גאנט, מה תוכנן ומה בפועל בלו"ז.',
     kind: AiToolKind.Read,
@@ -121,6 +133,12 @@ export const curriculumExecutionTool: AiTool<CurriculumArgs> = {
 
 export const cutCurriculumTool: AiTool<CurriculumArgs> = {
     name: "cut_curriculum",
+    title: 'גזירת הגאנט ללו"ז',
+    danger: AiToolDanger.Destructive,
+    recovery: [
+        "אם הגזירה נכשלה בגלל טיוטה או התנגשות — אל תנסה שוב.",
+        "הסבר למשתמש מה חסם ומה עליו לתקן בגאנט לפני גזירה חוזרת.",
+    ],
     description:
         'גוזר את הגאנט ללו"ז בפועל — יוצר ומעדכן אירועים במחזור. פעולה ' +
         "משמעותית: הרץ preview_curriculum_cut קודם והצג למשתמש מה עומד לקרות.",
@@ -133,6 +151,14 @@ export const cutCurriculumTool: AiTool<CurriculumArgs> = {
 
     describe(args, context) {
         return `גזירת הגאנט ${args.curriculumId ?? context.curriculumId} ללו"ז`;
+    },
+
+    impact() {
+        return [
+            'הגזירה יוצרת ומעדכנת אירועים בלו"ז של המחזור בפועל.',
+            "אירועים קיימים שנוצרו מגזירה קודמת יוחלפו.",
+            "לא ניתן לבטל את הגזירה בלחיצה אחת — רק לתקן אירוע-אירוע.",
+        ];
     },
 
     async execute(args, context) {

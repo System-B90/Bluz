@@ -8,11 +8,14 @@ import { readSseData } from "@/api-shared/sse";
 import {
     AiStreamEvent,
     AiStreamEventType,
+    AiToolSummary,
     ApiAiChatPayload,
 } from "@/api-shared/types/ai";
+import { AiBenchmarkResult } from "@/api-shared/types/ai-benchmark";
 
 const CHAT_ENDPOINT = "/api/ai/chat";
 const TOOLS_ENDPOINT = "/api/ai/tools";
+const BENCHMARK_ENDPOINT = "/api/ai/benchmark";
 
 /**
  * Opens a turn and yields its events as they arrive.
@@ -69,7 +72,7 @@ export async function* streamAiChat(
 export async function fetchAiTools(): Promise<{
     enabled: boolean;
     model: null | string;
-    tools: Array<{ name: string; description: string; kind: string }>;
+    tools: Array<AiToolSummary>;
 }> {
     const response = await fetch(TOOLS_ENDPOINT);
     if (!response.ok) {
@@ -86,4 +89,25 @@ export async function fetchAiTools(): Promise<{
     // stay hidden, not crash the page it's mounted on.
     const body = await response.json().catch(() => null);
     return body?.data ?? { enabled: false, model: null, tools: [] };
+}
+
+/**
+ * Runs the assistant self-test and returns its report (#704).
+ *
+ * Slow by nature — several complete agent turns against the configured model —
+ * so callers must show progress rather than waiting silently. The throttle
+ * (one run per hour per user) arrives as a 429 with a readable message.
+ */
+export async function runAiBenchmark(
+    signal?: AbortSignal,
+): Promise<AiBenchmarkResult> {
+    const response = await fetch(BENCHMARK_ENDPOINT, { method: "POST", signal });
+    const body = await response.json().catch(() => null);
+
+    if (!response.ok) {
+        throw constructErrorFromNetworkMessage(
+            body?.error ?? { name: "Error", message: "בדיקת הסוכן נכשלה" },
+        );
+    }
+    return body.data as AiBenchmarkResult;
 }
