@@ -29,11 +29,13 @@ export function EventDetailsForm({
     localTitle,
     setLocalTitle,
     commit,
+    leadInstructorIds,
 }: {
     event: GanttEvent;
     localTitle: string;
     setLocalTitle: (v: string) => void;
     commit: (updates: Partial<GanttEvent>) => void;
+    leadInstructorIds: Array<number>;
 })
 {
     const labelId = useId();
@@ -96,6 +98,7 @@ export function EventDetailsForm({
                 <EventOrchestratorField
                     commit={ commit }
                     event={ event }
+                    leadInstructorIds={ leadInstructorIds }
                     sx={ { flex: 1, minWidth: "10rem" } }
                 />
 

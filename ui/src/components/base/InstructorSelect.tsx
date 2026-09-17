@@ -4,6 +4,8 @@ import Select, { SelectProps } from "@mui/material/Select";
 import TextField from "@mui/material/TextField";
 import React, { useMemo, useRef, useState } from "react";
 
+import { CourseUser } from "@/api-shared/types/hive";
+import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { useOutsiders } from "@/components/base/OutsidersProvider";
 import {
     sortHe,
@@ -14,13 +16,24 @@ type CustomInstructorSelectProps<T> = {
     showOutsiders?: boolean;
     favoriteOutsiders?: Array<string>;
     excludeTeachers?: boolean;
+    /** Instructors listed first under their own heading (e.g. אחראי מקצוע). */
+    pinnedIds?: Array<number>;
+    pinnedLabel?: string;
 } & SelectProps<T>;
+
+const NO_PINNED: Array<number> = [];
 
 const styles = {
     subheaderWarning: {
         fontWeight: "bold",
         lineHeight: "36px",
         color: "warning.main",
+        bgcolor: "background.paper",
+    },
+    subheaderPinned: {
+        fontWeight: "bold",
+        lineHeight: "36px",
+        color: "primary.main",
         bgcolor: "background.paper",
     },
     subheaderDefault: {
@@ -65,10 +78,13 @@ export function InstructorSelect<T = unknown>({
     showOutsiders = false,
     favoriteOutsiders = [],
     excludeTeachers = false,
+    pinnedIds = NO_PINNED,
+    pinnedLabel = "אחראי מקצוע",
     ...props
 }: CustomInstructorSelectProps<T>)
 {
     const { outsiders } = useOutsiders();
+    const { getInstructor } = useHiveUsers();
 
     const [ searchQuery, setSearchQuery ] = useState("");
     const searchInputRef = useRef<HTMLInputElement>(null);
@@ -83,6 +99,19 @@ export function InstructorSelect<T = unknown>({
         searchQuery,
         favoriteOutsiders,
     );
+
+    const pinned = useMemo(() =>
+    {
+        const query = searchQuery.trim().toLowerCase();
+        return pinnedIds
+            .map(getInstructor)
+            .filter(
+                (inst): inst is CourseUser =>
+                    inst !== undefined &&
+                    inst.display_name.toLowerCase().includes(query),
+            )
+            .sort((a, b) => sortHe(a.display_name, b.display_name));
+    }, [ pinnedIds, getInstructor, searchQuery ]);
 
     const NAVIGATION_KEYS = [
         "Escape",
@@ -193,6 +222,23 @@ export function InstructorSelect<T = unknown>({
             </ListSubheader>
 
             { children }
+
+            { pinned.length > 0
+                ? [
+                    <ListSubheader
+                        disableSticky
+                        key="group-pinned"
+                        sx={ styles.subheaderPinned }
+                    >
+                        { pinnedLabel }
+                    </ListSubheader>,
+                    ...pinned.map((inst) => (
+                        <MenuItem key={ `pinned-${inst.id}` } value={ inst.id }>
+                            { inst.display_name }
+                        </MenuItem>
+                    )),
+                ]
+                : null }
 
             { showOutsiders && favorites.length > 0
                 ? [

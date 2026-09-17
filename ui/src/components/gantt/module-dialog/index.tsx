@@ -192,6 +192,8 @@ function SiblingModuleNav({
     );
 }
 
+const EMPTY_LEADS: Array<number> = [];
+
 type ModuleDetailsFormProps = {
     localTitle: string;
     localDescription: string;
@@ -206,6 +208,7 @@ type ModuleDetailsFormProps = {
     onShufflesChange: (shuffles: Array<string>) => void;
     defaultOrchestratorId: null | number;
     onDefaultOrchestratorChange: (id: null | number) => void;
+    leadInstructorIds: Array<number>;
 }
 
 function ModuleDetailsForm({
@@ -222,6 +225,7 @@ function ModuleDetailsForm({
     onShufflesChange,
     defaultOrchestratorId,
     onDefaultOrchestratorChange,
+    leadInstructorIds,
 }: ModuleDetailsFormProps) {
     return (
         <Stack spacing={2} width="30%">
@@ -267,6 +271,7 @@ function ModuleDetailsForm({
                             e.target.value === "" ? null : Number(e.target.value),
                         )
                     }
+                    pinnedIds={leadInstructorIds}
                     value={defaultOrchestratorId ?? ""}
                 >
                     <MenuItem value="">
@@ -438,6 +443,7 @@ function ModuleDialogInner({
                             <ModuleDetailsForm
                                 defaultOrchestratorId={moduleDoc?.defaultOrchestratorId ?? null}
                                 hiveModules={moduleDoc?.hiveIds ?? []}
+                                leadInstructorIds={syllabus?.leadInstructorIds ?? EMPTY_LEADS}
                                 localDescription={localDescription}
                                 localTitle={localTitle}
                                 onCommitDescription={() => handleCommit({ description: localDescription })}

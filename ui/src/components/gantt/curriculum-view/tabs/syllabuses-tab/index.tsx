@@ -12,7 +12,9 @@ import
 import { EmptyState } from "@/components/base/EmptyState";
 import { SyllabusesActionsBox } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box";
 import { useProgressiveItemCount } from "@/components/gantt/curriculum-view/tabs/UseProgressiveItemCount";
+import { useGanttFilters } from "@/components/gantt/state/filters/Provider";
 import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
+import { useCurriculumState } from "@/components/gantt/state/provider";
 import { SyllabusCard } from "@/components/gantt/syllabus-card";
 
 type SyllabusesTabProps = {
@@ -66,7 +68,21 @@ export const SyllabusesTab = memo(function SyllabusesTab({
 }: SyllabusesTabProps)
 {
     const curriculum = useCurriculum(curriculumId);
-    const syllabuses = curriculum?.syllabuses ?? EMPTY_SYLLABUS_IDS;
+    const state = useCurriculumState();
+    const { syllabusMatches, hasActiveFilters, description, clearFilters } =
+        useGanttFilters();
+    const allSyllabuses = curriculum?.syllabuses ?? EMPTY_SYLLABUS_IDS;
+    const syllabuses = useMemo(
+        () =>
+            hasActiveFilters
+                ? allSyllabuses.filter((id) =>
+                {
+                    const syllabus = state.syllabuses[ id ];
+                    return syllabus ? syllabusMatches(syllabus) : false;
+                })
+                : allSyllabuses,
+        [ allSyllabuses, hasActiveFilters, syllabusMatches, state.syllabuses ],
+    );
     const visibleSyllabusCount = useProgressiveItemCount(syllabuses.length, {
         batchSize: SYLLABUS_CARD_BATCH_SIZE,
         initialCount: INITIAL_SYLLABUS_CARD_COUNT,
@@ -151,10 +167,18 @@ export const SyllabusesTab = memo(function SyllabusesTab({
                     pt={ 1 }
                     sx={ { overflowX: "scroll" } }
                 >
-                    { syllabuses.length === 0 ? (
+                    { allSyllabuses.length === 0 ? (
                         <EmptyState
                             hint="הוספת סילבוס תתחיל את בניית הגאנט."
                             message="לגאנט הזה אין עדיין סילבוסים"
+                        />
+                    ) : syllabuses.length === 0 ? (
+                        <EmptyState
+                            actionLabel="ניקוי מסננים"
+                            hint={ description }
+                            message="אין סילבוסים שתואמים למסננים"
+                            onAction={ clearFilters }
+                            variant="filtered"
                         />
                     ) : null }
                     { syllabusCards }

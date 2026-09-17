@@ -12,11 +12,13 @@ import { InstructorSelect } from "@/components/base/InstructorSelect";
 export type EventOrchestratorFieldProps = {
     event: GanttEvent;
     commit: (updates: Partial<GanttEvent>) => void;
+    leadInstructorIds: Array<number>;
 } & FormControlProps;
 
 export function EventOrchestratorField({
     event,
     commit,
+    leadInstructorIds,
     ...props
 }: EventOrchestratorFieldProps)
 {
@@ -44,6 +46,7 @@ export function EventOrchestratorField({
                 label="אחראי"
                 labelId={ labelId }
                 onChange={ onChange }
+                pinnedIds={ leadInstructorIds }
                 sx={ isMissing
                     ? {
                         "& .MuiOutlinedInput-notchedOutline": {

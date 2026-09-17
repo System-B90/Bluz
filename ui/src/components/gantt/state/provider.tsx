@@ -31,6 +31,7 @@ import { ModuleDialog } from "@/components/gantt/module-dialog";
 import { ShuffleDialog } from "@/components/gantt/shuffle-dialog";
 import { GanttExecutionProvider } from "@/components/gantt/state/execution/Provider";
 import { Action, curriculumReducer } from "@/components/gantt/state/reducer";
+import { SyllabusLinksDialog } from "@/components/gantt/syllabus-links-dialog";
 
 export type OpenModuleDialog = (
     syllabusId: GanttSyllabusId,
@@ -41,6 +42,8 @@ export type CloseModuleDialog = () => void;
 
 export type OpenShuffleDialog = (syllabusId: GanttSyllabusId) => void;
 export type CloseShuffleDialog = () => void;
+
+export type OpenSyllabusLinksDialog = (syllabusId: GanttSyllabusId) => void;
 
 export type OpenEventDialog = (
     syllabusId: GanttSyllabusId,
@@ -75,6 +78,7 @@ const CurriculumActionsContext = createContext<{
     closeEventDialog: CloseEventDialog;
     openShuffleDialog: OpenShuffleDialog;
     closeShuffleDialog: CloseShuffleDialog;
+    openSyllabusLinksDialog: OpenSyllabusLinksDialog;
     requestReveal: RevealGanttItem;
     registerRevealHandler: (handler: RevealGanttItem) => () => void;
         } | null>(null);
@@ -120,6 +124,10 @@ function ModuleDialogManager({
         useState<GanttSyllabusId | null>(null);
     const [ shuffleDialogOpen, setShuffleDialogOpen ] = useState<boolean>(false);
 
+    const [ linksDialogSyllabusId, setLinksDialogSyllabusId ] =
+        useState<GanttSyllabusId | null>(null);
+    const [ linksDialogOpen, setLinksDialogOpen ] = useState<boolean>(false);
+
     // This function is passed to the Actions context
     const openModuleDialog: OpenModuleDialog = useCallback<OpenModuleDialog>((syllabusId, moduleId, eventId) =>
     {
@@ -148,6 +156,12 @@ function ModuleDialogManager({
     }, []);
 
     const closeShuffleDialog: CloseShuffleDialog = useCallback(() => setShuffleDialogOpen(false), []);
+
+    const openSyllabusLinksDialog: OpenSyllabusLinksDialog = useCallback((syllabusId) =>
+    {
+        setLinksDialogSyllabusId(syllabusId);
+        setLinksDialogOpen(true);
+    }, []);
 
     // Restore both dialogs from the URL on load/refresh (or a deep link
     // landing on an already-mounted page, #576): opens the module dialog
@@ -211,6 +225,7 @@ function ModuleDialogManager({
             openEventDialog={ openEventDialog }
             openModuleDialog={ openModuleDialog }
             openShuffleDialog={ openShuffleDialog }
+            openSyllabusLinksDialog={ openSyllabusLinksDialog }
         >
             { children }
             {/* No module-scoped key: keeping a single persistent instance lets
@@ -238,6 +253,11 @@ function ModuleDialogManager({
                 setOpen={ setShuffleDialogOpen }
                 syllabusId={ shuffleDialogSyllabusId }
             />
+            <SyllabusLinksDialog
+                open={ linksDialogOpen }
+                setOpen={ setLinksDialogOpen }
+                syllabusId={ linksDialogSyllabusId }
+            />
         </CurriculumUIProviderInternal>
     );
 }
@@ -251,6 +271,7 @@ function CurriculumUIProviderInternal({
     closeEventDialog,
     openShuffleDialog,
     closeShuffleDialog,
+    openSyllabusLinksDialog,
 }: {
     children: ReactNode;
     openModuleDialog: OpenModuleDialog;
@@ -259,6 +280,7 @@ function CurriculumUIProviderInternal({
     closeEventDialog: CloseEventDialog;
     openShuffleDialog: OpenShuffleDialog;
     closeShuffleDialog: CloseShuffleDialog;
+    openSyllabusLinksDialog: OpenSyllabusLinksDialog;
 })
 {
     const { dispatch, requestReveal, registerRevealHandler } =
@@ -273,6 +295,7 @@ function CurriculumUIProviderInternal({
             closeEventDialog,
             openShuffleDialog,
             closeShuffleDialog,
+            openSyllabusLinksDialog,
             requestReveal,
             registerRevealHandler,
         }),
@@ -284,6 +307,7 @@ function CurriculumUIProviderInternal({
             closeEventDialog,
             openShuffleDialog,
             closeShuffleDialog,
+            openSyllabusLinksDialog,
             requestReveal,
             registerRevealHandler,
         ],
@@ -354,6 +378,7 @@ export function CurriculumProvider({
                     closeEventDialog: () => { },
                     openShuffleDialog: () => { },
                     closeShuffleDialog: () => { },
+                    openSyllabusLinksDialog: () => { },
                     requestReveal,
                     registerRevealHandler,
                 } }

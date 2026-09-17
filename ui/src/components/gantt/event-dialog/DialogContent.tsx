@@ -39,6 +39,8 @@ export type EventDialogContentProps = {
 };
 
 /** A muted outlined chip used to summarize an empty/quiet section state. */
+const EMPTY_LEADS: Array<number> = [];
+
 function QuietChip({ label }: { label: string })
 {
     return (
@@ -84,6 +86,7 @@ export function EventDialogContent({
                     <EventDetailsForm
                         commit={ commit }
                         event={ event }
+                        leadInstructorIds={ syllabus?.leadInstructorIds ?? EMPTY_LEADS }
                         localTitle={ localTitle }
                         setLocalTitle={ setLocalTitle }
                     />

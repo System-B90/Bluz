@@ -100,6 +100,7 @@ export function normalizeApiSyllabus(
             events: moduleEventIds,
             syllabusId: apiSyllabus.id,
             constraints: [],
+            defaultOrchestratorId: apiModule.defaultOrchestratorId ?? null,
         });
     }
 
@@ -111,6 +112,8 @@ export function normalizeApiSyllabus(
             createdAt: apiSyllabus.createdAt,
             hiveIds: [...(apiSyllabus.hiveIds ?? [])],
             shuffles: [...(apiSyllabus.shuffles ?? [])],
+            courseIds: [...(apiSyllabus.courseIds ?? [])],
+            leadInstructorIds: [...(apiSyllabus.leadInstructorIds ?? [])],
             modules: syllabusModuleIds,
             curriculumId,
         },

@@ -55,6 +55,8 @@ function ModuleEventTitle({
     );
 }
 
+const EMPTY_LEADS: Array<number> = [];
+
 export function ModuleEventView({
     moduleId,
     eventId,
@@ -71,6 +73,10 @@ export function ModuleEventView({
     const { openEventDialog } = useCurriculumProviderActions();
     const state = useCurriculumState();
     const [ moveDialogOpen, setMoveDialogOpen ] = useState(false);
+    const parentSyllabusId = state.modules[ moduleId ]?.syllabusId;
+    const leadInstructorIds =
+        (parentSyllabusId && state.syllabuses[ parentSyllabusId ]?.leadInstructorIds) ||
+        EMPTY_LEADS;
 
     const handleEditClick = useCallback(() =>
     {
@@ -219,6 +225,7 @@ export function ModuleEventView({
                                         : Number(e.target.value),
                             })
                         }
+                        pinnedIds={ leadInstructorIds }
                         value={ moduleEvent?.orchestratorId ?? "" }
                     >
                         <MenuItem value="">

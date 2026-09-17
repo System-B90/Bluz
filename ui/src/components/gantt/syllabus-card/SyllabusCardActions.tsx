@@ -1,4 +1,5 @@
 import GroupsIcon from "@mui/icons-material/Groups";
+import LabelIcon from "@mui/icons-material/Label";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
 import Badge from "@mui/material/Badge";
 import CardActions, { CardActionsProps } from "@mui/material/CardActions";
@@ -30,9 +31,12 @@ export function SyllabusCardActions({
 {
     const { enqueueSnackbar } = useSnackbar();
     const { unlinkSyllabusFromCurriculum } = useSyllabusActions();
-    const { openShuffleDialog } = useCurriculumProviderActions();
+    const { openShuffleDialog, openSyllabusLinksDialog } =
+        useCurriculumProviderActions();
     const syllabus = useSyllabus(syllabusId);
     const shuffleCount = (syllabus?.shuffles ?? []).length;
+    const courseCount = (syllabus?.courseIds ?? []).length;
+    const linkCount = courseCount + (syllabus?.leadInstructorIds ?? []).length;
 
     const deleteHandler = useCallback(() =>
     {
@@ -53,6 +57,11 @@ export function SyllabusCardActions({
     const shufflesHandler = useCallback(
         () => openShuffleDialog(syllabusId),
         [ syllabusId, openShuffleDialog ],
+    );
+
+    const linksHandler = useCallback(
+        () => openSyllabusLinksDialog(syllabusId),
+        [ syllabusId, openSyllabusLinksDialog ],
     );
 
     return (
@@ -76,6 +85,26 @@ export function SyllabusCardActions({
                 >
                     <Badge badgeContent={ shuffleCount } color="primary">
                         <GroupsIcon fontSize="small" />
+                    </Badge>
+                </IconButton>
+            </Tooltip>
+            <Tooltip
+                title={
+                    courseCount === 0
+                        ? "שיוך מקצוע — מומלץ לשייך לפחות מסלול אחד"
+                        : "שיוך מקצוע (מסלולים ואחראי מקצוע)"
+                }
+            >
+                <IconButton
+                    color={ courseCount === 0 ? "warning" : "primary" }
+                    onClick={ linksHandler }
+                    size="small"
+                >
+                    <Badge
+                        badgeContent={ linkCount }
+                        color={ courseCount === 0 ? "warning" : "primary" }
+                    >
+                        <LabelIcon fontSize="small" />
                     </Badge>
                 </IconButton>
             </Tooltip>

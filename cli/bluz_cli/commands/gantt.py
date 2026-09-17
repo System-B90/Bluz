@@ -690,6 +690,39 @@ def syllabus_shuffle_usages(
         )
 
 
+@syllabuses_app.command("set-links")
+def syllabus_set_links(
+    syllabus_id: str = typer.Argument(..., help="Syllabus id."),
+    courses: str | None = typer.Option(
+        None,
+        "--courses",
+        help="Comma-separated course ids (מסלולים). Empty string clears.",
+    ),
+    leads: str | None = typer.Option(
+        None,
+        "--leads",
+        help="Comma-separated Hive instructor ids (אחראי מקצוע). Empty string clears.",
+    ),
+) -> None:
+    """Set the courses and/or lead instructors a syllabus is linked to (#702).
+
+    Omitted options are left untouched; pass an empty string to clear one.
+    """
+    payload: dict[str, list[str] | list[int]] = {}
+    if courses is not None:
+        payload["courseIds"] = [c.strip() for c in courses.split(",") if c.strip()]
+    if leads is not None:
+        payload["leadInstructorIds"] = [
+            int(i.strip()) for i in leads.split(",") if i.strip()
+        ]
+    if not payload:
+        raise typer.BadParameter("Pass --courses and/or --leads.")
+    with state.client() as client:
+        result = client.patch(f"{_BASE}/syllabuses/{syllabus_id}", json=payload)
+    success(f"Updated links on syllabus {syllabus_id}")
+    show(result)
+
+
 @syllabuses_app.command("set-shuffles")
 def syllabus_set_shuffles(
     syllabus_id: str = typer.Argument(..., help="Syllabus id."),
