@@ -1,3 +1,4 @@
+import GroupsIcon from "@mui/icons-material/Groups";
 import LinkIcon from "@mui/icons-material/Link";
 import NotesIcon from "@mui/icons-material/Notes";
 import RecordVoiceOverOutlinedIcon from "@mui/icons-material/RecordVoiceOverOutlined";
@@ -19,6 +20,10 @@ import { EventHiveLinkageFields } from "@/components/gantt/event-dialog/EventHiv
 import { EventMappingField } from "@/components/gantt/event-dialog/EventMappingField";
 import { EventRecurrenceField, RECURRENCE_LABELS } from "@/components/gantt/event-dialog/EventRecurrenceField";
 import { EventRoomRequirementsField } from "@/components/gantt/event-dialog/EventRoomRequirementsField";
+import {
+    EventShuffleGroupField,
+    useShuffleGroupMembers,
+} from "@/components/gantt/event-dialog/EventShuffleGroupField";
 import { ExecutionComparisonSection } from "@/components/gantt/event-dialog/ExecutionComparisonSection";
 import { RecommendedLecturersField } from "@/components/gantt/event-dialog/RecommendedLecturersField";
 import { SystemRequirementsField } from "@/components/gantt/event-dialog/SystemRequirementsField";
@@ -57,6 +62,7 @@ export function EventDialogContent({
 {
     const { enqueueSnackbar } = useSnackbar();
     const { updateEvent } = useModuleEventActions();
+    const groupMembers = useShuffleGroupMembers(event, moduleId);
     const [ localTitle, setLocalTitle ] = useState(event?.title ?? "");
     const [ localComment, setLocalComment ] = useState(event?.comment ?? "");
 
@@ -80,10 +86,34 @@ export function EventDialogContent({
                         event={ event }
                         localTitle={ localTitle }
                         setLocalTitle={ setLocalTitle }
-                        shuffleOptions={ syllabus?.shuffles ?? [] }
                     />
 
                     <Stack spacing={ 1.5 }>
+                        <CollapsibleSection
+                            chips={
+                                groupMembers.length > 1 ? (
+                                    <Chip
+                                        color="primary"
+                                        label={ `${groupMembers.length} שאפלים` }
+                                        size="small"
+                                        variant="outlined"
+                                    />
+                                ) : (
+                                    <QuietChip label="לא מפוצל" />
+                                )
+                            }
+                            icon={ <GroupsIcon /> }
+                            title="פיצול לשאפלים"
+                        >
+                            <EventShuffleGroupField
+                                event={ event }
+                                eventId={ eventId }
+                                moduleId={ moduleId }
+                                shuffleOptions={ syllabus?.shuffles ?? [] }
+                                syllabusId={ syllabus?.id ?? null }
+                            />
+                        </CollapsibleSection>
+
                         <CollapsibleSection
                             chips={
                                 event.recommendedLecturerIds.length > 0 ? (

@@ -53,6 +53,9 @@ export const POST = withApi(
             splitAcrossBreaks: originalEvent.splitAcrossBreaks,
             comment: originalEvent.comment,
             shuffles: originalEvent.shuffles,
+            // A duplicate is a new lesson, not another shuffle's copy of the
+            // original one, so it starts outside the group (#699).
+            groupId: null,
             hiveSubjectId: originalEvent.hiveSubjectId,
             hiveModuleId: originalEvent.hiveModuleId,
             // A duplicate is a new event, not another occurrence of the same

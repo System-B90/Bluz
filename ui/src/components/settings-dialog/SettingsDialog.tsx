@@ -9,6 +9,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import Box from "@mui/material/Box";
 import Dialog from "@mui/material/Dialog";
 import IconButton from "@mui/material/IconButton";
+import { alpha, Theme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 
 import { ThemeSelectorIcon } from "@/components/header/ThemeSelector";
@@ -22,6 +23,13 @@ import { PersonalSettings } from "@/components/settings-dialog/tabs/PersonalSett
 import {
     SettingsTab,
 } from "@/components/settings-dialog/UseSettingsDialogUrl";
+
+/** Translucent primary colour, matching the command palette's selection tint. */
+function primaryAlpha(theme: Theme, opacity: number): string {
+    const channel = theme.vars?.palette.primary.mainChannel;
+    if (channel) return `rgb(${channel} / ${opacity})`;
+    return alpha(theme.palette.primary.main, opacity);
+}
 
 type SettingsDialogProps = {
     activeTab: SettingsTab;
@@ -155,10 +163,10 @@ export function SettingsDialog({
                                     position: "relative",
                                     userSelect: "none",
                                     bgcolor: isActive
-                                        ? "primary.main"
+                                        ? primaryAlpha(theme, 0.16)
                                         : "transparent",
                                     color: isActive
-                                        ? "primary.contrastText"
+                                        ? "primary.main"
                                         : "text.secondary",
                                     // Logical: the active-tab accent sits on
                                     // the inline-start edge, matching the
@@ -167,17 +175,15 @@ export function SettingsDialog({
                                         ? "4px solid"
                                         : "0px solid",
                                     borderInlineStartColor: isActive
-                                        ? "primary.dark"
+                                        ? "primary.main"
                                         : "transparent",
-                                    boxShadow: isActive
-                                        ? "0 4px 12px rgb(var(--mui-palette-primary-mainChannel) / 0.25)"
-                                        : "none",
+                                    boxShadow: "none",
                                     "&:hover": {
                                         bgcolor: isActive
-                                            ? "primary.main"
+                                            ? primaryAlpha(theme, 0.22)
                                             : "action.hover",
                                         color: isActive
-                                            ? "primary.contrastText"
+                                            ? "primary.main"
                                             : "text.primary",
                                         // Nudge toward the inline-start edge
                                         // (where the accent border lives)

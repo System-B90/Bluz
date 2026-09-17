@@ -66,6 +66,16 @@ export type GanttEvent = {
      * Empty/undefined ⇒ applies to all shuffles.
      */
     shuffles?: Array<string>;
+    /**
+     * Shuffle group this event belongs to, or null when it stands alone.
+     *
+     * The same lesson given to different shuffles at different times is stored
+     * as one event per shuffle - separate rows, so each can be placed, cut and
+     * linked to Hive independently - tied together by a shared `groupId`. The
+     * group is what lets the UI show them as one row and lets time totals count
+     * the longest member once instead of summing every member (#699).
+     */
+    groupId: null | string;
     /** Hive subject id; null when unlinked. */
     hiveSubjectId: null | number;
     /** Hive module id; null when unlinked. */

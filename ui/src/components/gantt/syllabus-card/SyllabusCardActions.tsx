@@ -1,9 +1,11 @@
+import GroupsIcon from "@mui/icons-material/Groups";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
+import Badge from "@mui/material/Badge";
 import CardActions, { CardActionsProps } from "@mui/material/CardActions";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import { useSnackbar } from "notistack";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 
 import
 {
@@ -12,7 +14,8 @@ import
 } from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
-import { SyllabusShuffles } from "@/components/gantt/syllabus-card/SyllabusShuffles";
+import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
+import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
 
 export type SyllabusCardActionsProps = {
     curriculumId: GanttCurriculumId;
@@ -27,7 +30,9 @@ export function SyllabusCardActions({
 {
     const { enqueueSnackbar } = useSnackbar();
     const { unlinkSyllabusFromCurriculum } = useSyllabusActions();
-    const [ isHovered, setIsHovered ] = useState(false);
+    const { openShuffleDialog } = useCurriculumProviderActions();
+    const syllabus = useSyllabus(syllabusId);
+    const shuffleCount = (syllabus?.shuffles ?? []).length;
 
     const deleteHandler = useCallback(() =>
     {
@@ -45,8 +50,13 @@ export function SyllabusCardActions({
         enqueueSnackbar,
     ]);
 
+    const shufflesHandler = useCallback(
+        () => openShuffleDialog(syllabusId),
+        [ syllabusId, openShuffleDialog ],
+    );
+
     return (
-        <CardActions onMouseEnter={ () => setIsHovered(true) } onMouseLeave={ () => setIsHovered(false) } { ...props }>
+        <CardActions { ...props }>
             <Tooltip title="הסרת סילבוס מהגאנט">
                 <IconButton
                     color="warning"
@@ -56,7 +66,19 @@ export function SyllabusCardActions({
                     <LinkOffIcon fontSize="small" />
                 </IconButton>
             </Tooltip>
-            <SyllabusShuffles isHovered={ isHovered } syllabusId={ syllabusId } />
+            {/* The shuffles used to be an inline chip field that only appeared
+                on hover; they now have a dialog of their own (#699). */}
+            <Tooltip title="שאפלים במקצוע">
+                <IconButton
+                    color="primary"
+                    onClick={ shufflesHandler }
+                    size="small"
+                >
+                    <Badge badgeContent={ shuffleCount } color="primary">
+                        <GroupsIcon fontSize="small" />
+                    </Badge>
+                </IconButton>
+            </Tooltip>
         </CardActions>
     );
 }

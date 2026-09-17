@@ -49,9 +49,7 @@ export const HiveModulesProvider = ({
             modules.filter(
                 (module) =>
                     module.parent_subject ===
-                    (subject instanceof Object
-                        ? subject.id
-                        : (subject as number)),
+                    Number(subject instanceof Object ? subject.id : subject),
             ),
         [modules],
     );

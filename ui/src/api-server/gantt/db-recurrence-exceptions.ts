@@ -85,6 +85,10 @@ export async function materializeRecurrenceOccurrence(data: {
             splitAcrossBreaks: sourceEvent.splitAcrossBreaks,
             comment: sourceEvent.comment,
             shuffles: sourceEvent.shuffles,
+            // Materializing one occurrence detaches it from the recurrence,
+            // not from its shuffle group: the standalone copy belongs to the
+            // same shuffle's timeline as the event it came from (#699).
+            groupId: sourceEvent.groupId,
             hiveSubjectId: sourceEvent.hiveSubjectId,
             hiveModuleId: sourceEvent.hiveModuleId,
             hiveLessonId: sourceEvent.hiveLessonId,

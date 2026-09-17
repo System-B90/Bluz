@@ -240,7 +240,7 @@ async function reorderEvents(
     const order = sql.join(
         eventIds.map(
             (eventId, index) =>
-                sql`when ${ganttModule2EventsSchema.eventId} = ${eventId} then ${index}`,
+                sql`when ${ganttModule2EventsSchema.eventId} = ${eventId} then ${index}::integer`,
         ),
         sql` `,
     );
