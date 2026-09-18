@@ -3,6 +3,7 @@
  * answers — the route hides that entirely.
  */
 
+import { safeApiFetcher } from "@/api-client/common";
 import { constructErrorFromNetworkMessage } from "@/api-shared/errors";
 import { readSseData } from "@/api-shared/sse";
 import {
@@ -16,6 +17,14 @@ import { AiBenchmarkResult } from "@/api-shared/types/ai-benchmark";
 const CHAT_ENDPOINT = "/api/ai/chat";
 const TOOLS_ENDPOINT = "/api/ai/tools";
 const BENCHMARK_ENDPOINT = "/api/ai/benchmark";
+
+/**
+ * A self-test is several full agent turns end to end, so it routinely outlives
+ * the 30s ceiling `safeApiFetcher` puts on an ordinary API call. The route's
+ * own per-run budget is what actually bounds the work; this only keeps the
+ * browser from giving up before the server has answered.
+ */
+const BENCHMARK_TIMEOUT_MS = 10 * 60 * 1000; // 10 Minutes
 
 /**
  * Opens a turn and yields its events as they arrive.
@@ -95,19 +104,16 @@ export async function fetchAiTools(): Promise<{
  * Runs the assistant self-test and returns its report (#704).
  *
  * Slow by nature — several complete agent turns against the configured model —
- * so callers must show progress rather than waiting silently. The throttle
- * (one run per hour per user) arrives as a 429 with a readable message.
+ * so callers must show progress rather than waiting silently, and the request
+ * gets its own ceiling well above the shared API default. The throttle (one
+ * run per hour per user) arrives as a 429 with a readable message.
  */
 export async function runAiBenchmark(
     signal?: AbortSignal,
 ): Promise<AiBenchmarkResult> {
-    const response = await fetch(BENCHMARK_ENDPOINT, { method: "POST", signal });
-    const body = await response.json().catch(() => null);
-
-    if (!response.ok) {
-        throw constructErrorFromNetworkMessage(
-            body?.error ?? { name: "Error", message: "בדיקת הסוכן נכשלה" },
-        );
-    }
-    return body.data as AiBenchmarkResult;
+    return await safeApiFetcher<AiBenchmarkResult>(
+        BENCHMARK_ENDPOINT,
+        { method: "POST", signal },
+        { timeoutMs: BENCHMARK_TIMEOUT_MS },
+    );
 }

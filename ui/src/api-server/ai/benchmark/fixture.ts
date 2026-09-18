@@ -14,56 +14,99 @@
  * anything, anywhere.
  */
 
+// Type-only: the benchmark test mocks this module down to `CALENDAR_TOOLS`,
+// and an `import type` is erased rather than resolved against that mock.
+import type { AiEventSummary } from "@/api-server/ai/tools/calendar";
 import { AiTool } from "@/api-server/ai/tools/types";
+import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 import { AiToolDanger, AiToolKind } from "@/api-shared/types/ai";
+import { EventType } from "@/api-shared/types/event";
+import { CustomRoom, HiveRoom, RoomSource } from "@/api-shared/types/room";
 
-/** Anchors the fixture to "this week" so date reasoning is exercised. */
+/**
+ * Anchors the fixture to "this week" so date reasoning is exercised.
+ *
+ * Goes through the app's dayjs setup rather than raw `Date` arithmetic: these
+ * are school hours, which means Israel wall-clock, and only `APP_TIMEZONE`
+ * gets that right on both sides of a DST transition. Raw UTC arithmetic would
+ * place a "09:00" lesson at a different wall-clock hour depending on the week
+ * the self-test happened to run, grading the model on our date math instead of
+ * its own.
+ */
 function isoAt(dayOffset: number, hour: number): string {
-    const date = new Date();
-    date.setUTCHours(hour, 0, 0, 0);
-    date.setUTCDate(date.getUTCDate() + dayOffset);
-    return date.toISOString();
+    return dayjs()
+        .tz(APP_TIMEZONE)
+        .add(dayOffset, "day")
+        .startOf("day")
+        .hour(hour)
+        .toISOString();
 }
 
-export const FIXTURE_ROOMS = [
-    { id: 101, source: "custom", name: "כיתת הבדיקה" },
-    { id: 102, source: "custom", name: "מעבדת הבדיקה" },
+/**
+ * What `list_rooms` answers with. The real tool returns whole `Room`
+ * documents, but a `HiveRoom` carries the entire hive-core `Class` shape for
+ * fields the assistant never reads, so the fixture answers with the projection
+ * the model actually uses — still pinned to the real room types, so a rename
+ * on either kind breaks this file instead of quietly drifting from production.
+ */
+type FixtureRoom =
+    | Pick<CustomRoom, "id" | "name" | "source">
+    | Pick<HiveRoom, "id" | "name" | "source">;
+
+/**
+ * One room of each kind on purpose. Hive room ids are numbers, custom room ids
+ * are strings, and a model that assumes every id is numeric round-trips a
+ * custom room into a broken update — so the fixture makes it handle both.
+ */
+export const FIXTURE_ROOMS: Array<FixtureRoom> = [
+    { id: 101, source: RoomSource.Hive, name: "כיתת הבדיקה" },
+    { id: "fx-room-lab", source: RoomSource.Custom, name: "מעבדת הבדיקה" },
 ];
 
 /**
- * Two events share a course on purpose: a model asked to change "the מתמטיקה
+ * Two events share a name on purpose: a model asked to change "the מתמטיקה
  * lesson" has to notice the ambiguity and ask rather than pick one.
+ *
+ * Typed as the production projection so the fixture cannot answer with a shape
+ * the real `list_events` would never produce — which is how the `type` field
+ * here was caught carrying "lesson", a value `EventType` does not contain.
  */
-export const FIXTURE_EVENTS = [
+export const FIXTURE_EVENTS: Array<AiEventSummary> = [
     {
         id: "fx-1",
         name: "מתמטיקה בדידה",
-        type: "lesson",
+        type: EventType.LECTURE,
         startTime: isoAt(1, 9),
         endTime: isoAt(1, 11),
-        rooms: [{ id: 101, source: "custom" }],
-        instructors: ["אורי בדיקה"],
+        rooms: [{ id: 101, source: RoomSource.Hive }],
+        courses: ["fx-course-a"],
+        instructors: [9001],
         locked: false,
+        notes: "",
     },
     {
         id: "fx-2",
         name: "מתמטיקה בדידה",
-        type: "lesson",
+        type: EventType.LECTURE,
         startTime: isoAt(3, 9),
         endTime: isoAt(3, 11),
-        rooms: [{ id: 102, source: "custom" }],
-        instructors: ["אורי בדיקה"],
+        rooms: [{ id: "fx-room-lab", source: RoomSource.Custom }],
+        courses: ["fx-course-a"],
+        instructors: [9001],
         locked: false,
+        notes: "",
     },
     {
         id: "fx-3",
         name: "סדנת רשתות",
-        type: "lesson",
+        type: EventType.WORKSHOP,
         startTime: isoAt(2, 13),
         endTime: isoAt(2, 16),
-        rooms: [{ id: 102, source: "custom" }],
-        instructors: ["נועה בדיקה"],
+        rooms: [{ id: "fx-room-lab", source: RoomSource.Custom }],
+        courses: ["fx-course-b"],
+        instructors: [9002],
         locked: true,
+        notes: "",
     },
 ];
 
