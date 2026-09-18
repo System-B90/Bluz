@@ -156,8 +156,15 @@ export function ModuleEventsView({
             ganttApi
                 .reorderEvents(moduleId, newOrder)
                 .catch((error) =>
-                    enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת סדר המופעים נכשלה!", error),
-                );
+                {
+                    // Put the rows back where the server still has them,
+                    // or the list shows an order that never persisted.
+                    dispatch({
+                        type: "REORDER_EVENTS",
+                        payload: { moduleId, eventIds },
+                    });
+                    enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת סדר המופעים נכשלה!", error);
+                });
         },
         [dispatch, eventIds, moduleId, enqueueSnackbar],
     );

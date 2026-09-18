@@ -10,14 +10,24 @@ import { useCallback, useEffect, useRef } from "react";
 /** Maximum drag actions remembered for Ctrl+Z. */
 const UNDO_STACK_LIMIT = 50;
 
-/** True when the keystroke happened inside a text-entry element. */
+/**
+ * True when the keystroke belongs to something other than the timeline: a
+ * text-entry element, a MUI Select/Autocomplete (which take focus without
+ * being an input), or any open dialog. With the event dialog open over the
+ * timeline and focus on one of its selects, Ctrl+Z used to undo the last
+ * *drag* on the timeline behind it — invisible under the dialog, and
+ * already committed to the server by the time it was noticed.
+ */
 function isTypingTarget(target: EventTarget | null): boolean
 {
+    if (document.querySelector(".MuiDialog-root") !== null) return true;
     if (!(target instanceof HTMLElement)) return false;
     return (
         target.isContentEditable ||
         target.tagName === "INPUT" ||
-        target.tagName === "TEXTAREA"
+        target.tagName === "TEXTAREA" ||
+        target.closest('[role="combobox"], [role="listbox"], [role="textbox"]') !==
+            null
     );
 }
 
