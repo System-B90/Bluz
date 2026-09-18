@@ -58,21 +58,11 @@ export function CalendarToolbar({
 {
     const { offlineMode, setOfflineMode } = useOffline();
     const { startDate, endDate } = useCalendar();
-    const { showPAsFor, filteredCourses, filteredInstructors, hidePrayers } =
-        useCalendarFilters();
+    const { hasActiveFilters: hasAnyFilter } = useCalendarFilters();
     const [ open, setOpen ] = useState(false);
     const [ filterAnchorEl, setFilterAnchorEl ] =
         useState<HTMLButtonElement | null>(null);
     const filterOpen = Boolean(filterAnchorEl);
-
-    const hasAnyFilter = useMemo(
-        () =>
-            hidePrayers ||
-            filteredCourses.length !== 0 ||
-            filteredInstructors.length !== 0 ||
-            showPAsFor !== null,
-        [ filteredCourses, filteredInstructors, showPAsFor, hidePrayers ],
-    );
 
     const handleDateChange = useCallback(
         (val: dayjs.Dayjs | null) =>

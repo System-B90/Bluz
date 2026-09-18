@@ -27,6 +27,7 @@ import
 } from "@/api-shared/interval-layout";
 import { GanttDayIndex, getDayNameDisplay, HEBREW_DAYS_SHORT } from "@/api-shared/types/gantt/models/day";
 import { Room, roomLikeToResourceKey, RoomSource } from "@/api-shared/types/room"; // Import the full Room type and the stable resource-key helper
+import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useSettings } from "@/components/base/SettingsProvider";
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
 import { CalendarToolbar } from "@/components/schedule/calendar/calendar/CalendarToolbar";
@@ -328,16 +329,23 @@ export function CalendarView({
 
     // Scope to the visible range so websocket traffic for off-screen events
     // doesn't force the grid to re-lay-out. Filtering happens on the *drawn*
-    // range, which for a split event runs past its stored end.
+    // range, which for a split event runs past its stored end. Events a
+    // filter hides outright (hidden prayers, a room filter) leave the grid
+    // too: drawn at opacity 0 they still claimed a column, squeezing the
+    // events beside them for something nobody could see.
+    const { eventFilteredOpacity } = useCalendarFilters();
     const visibleSegments = useMemo(() =>
     {
-        if (!startDate || !endDate) return segments;
+        const inRange = (segment: EventSegment) =>
+            !startDate ||
+            !endDate ||
+            (segment.to.toDate() >= startDate &&
+                segment.from.toDate() <= endDate);
         return segments.filter(
             (segment) =>
-                segment.to.toDate() >= startDate &&
-                segment.from.toDate() <= endDate,
+                inRange(segment) && eventFilteredOpacity(segment.event) > 0,
         );
-    }, [ segments, startDate, endDate ]);
+    }, [ segments, startDate, endDate, eventFilteredOpacity ]);
 
     const splitCalendar = useMemo(
         () => ({

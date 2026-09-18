@@ -91,17 +91,10 @@ export function BluzCalendar({
     const { rooms } = useRooms();
     const { startDate, endDate, setStartDate, setEndDate, isReadOnlyIteration } =
         useCalendar();
-    const { showPAsFor, filteredCourses, filteredInstructors, hidePrayers } =
-        useCalendarFilters();
-
-    const hasAnyFilter = useMemo(
-        () =>
-            hidePrayers ||
-            filteredCourses.length !== 0 ||
-            filteredInstructors.length !== 0 ||
-            showPAsFor !== null,
-        [filteredCourses, filteredInstructors, showPAsFor, hidePrayers],
-    );
+    // The provider's own flag, so the room filter counts too — the local
+    // copy this replaced left it out and the indicator stayed dark with only
+    // a room filter active.
+    const { hasActiveFilters: hasAnyFilter } = useCalendarFilters();
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
