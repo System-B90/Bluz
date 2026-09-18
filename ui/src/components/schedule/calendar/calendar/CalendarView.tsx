@@ -228,6 +228,12 @@ function resizableAccessor(segment: EventSegment)
     return !segment.event.locked;
 }
 
+/** A past iteration is reference material: no tile moves or resizes. */
+function nothingDraggable()
+{
+    return false;
+}
+
 function resourceAccessor(segment: EventSegment)
 {
     return segment.event.rooms.length > 0
@@ -314,7 +320,7 @@ export function CalendarView({
         [ showToolbar, onToggleFullscreen, onToggleToolbar, onExportIcs ],
     );
 
-    const { startDate, endDate } = useCalendar();
+    const { startDate, endDate, isReadOnlyIteration } = useCalendar();
     const [ hoveredEventId, setHoveredEventId ] = useState<EventId | null>(null);
     const [ selectedEventId, setSelectedEventId ] = useState<EventId | null>(null);
     const [ activeDrag, setActiveDrag ] = useState<ActiveDrag | null>(null);
@@ -611,7 +617,9 @@ export function CalendarView({
                     date={ date }
                     dayLayoutAlgorithm={ splitAwareDayLayout }
                     defaultView={ Views.WEEK }
-                    draggableAccessor={ draggableAccessor }
+                    draggableAccessor={
+                        isReadOnlyIteration ? nothingDraggable : draggableAccessor
+                    }
                     endAccessor={ endAccessor }
                     eventPropGetter={ segmentPropGetter }
                     events={ visibleSegments }
@@ -628,7 +636,9 @@ export function CalendarView({
                     onSelectEvent={ handleSelectSegment }
                     onSelectSlot={ handleSelectSlot }
                     onView={ onView }
-                    resizableAccessor={ resizableAccessor }
+                    resizableAccessor={
+                        isReadOnlyIteration ? nothingDraggable : resizableAccessor
+                    }
                     resourceAccessor={ resourceAccessor }
                     resourceIdAccessor={ resourceIdAccessor }
                     // Resource logic

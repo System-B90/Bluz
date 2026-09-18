@@ -177,6 +177,7 @@ export const CalendarProvider = ({
         remoteDispatch,
         markEventCreatedLocally,
         isEventCreatedLocally,
+        { iterationId, isReadOnlyIteration },
     );
     useLayoutEffect(() => {
         onTravelRef.current = syncHistoryTravel;
