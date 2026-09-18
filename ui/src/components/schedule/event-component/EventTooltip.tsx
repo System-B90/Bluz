@@ -40,7 +40,7 @@ export function EventTooltipContent({ event }: { event: Event }) {
     const { getCourse } = useCourses();
     const { getRoom } = useRooms();
 
-    const { start, end, hours, minutes } = useEventDuration(event);
+    const { timeRange, hours, minutes } = useEventDuration(event);
     const durationLabel =
         hours && minutes
             ? `${hours} ש׳ ${minutes} ד׳`
@@ -55,7 +55,11 @@ export function EventTooltipContent({ event }: { event: Event }) {
     const hiveModule = event.hiveModule ? getModule(event.hiveModule) : null;
     const hiveLesson = event.hiveLesson ? getLesson(event.hiveLesson) : null;
     const courses = event.courses.map(getCourse).filter((v) => !!v);
-    const rooms = event.rooms.map(getRoom).filter((v) => !!v);
+    // A room the room list no longer carries still *is* the event's room:
+    // falling back to its id keeps the row instead of claiming "no room".
+    const roomNames = event.rooms.map(
+        (room) => getRoom(room)?.name ?? String(room.id),
+    );
     const instructors = getPresentInstructors(event)
         .map(getInstructor)
         .filter((v) => !!v);
@@ -107,7 +111,7 @@ export function EventTooltipContent({ event }: { event: Event }) {
             {/* Time */}
             <TooltipRow
                 icon={<ScheduleIcon fontSize="inherit" />}
-                text={`${start.format("HH:mm")} – ${end.format("HH:mm")}  (${durationLabel})`}
+                text={`${timeRange}  (${durationLabel})`}
             />
 
             {/* Subject / Module / Lesson */}
@@ -131,10 +135,10 @@ export function EventTooltipContent({ event }: { event: Event }) {
             )}
 
             {/* Rooms */}
-            {rooms.length > 0 ? (
+            {roomNames.length > 0 ? (
                 <TooltipRow
                     icon={<MeetingRoomIcon fontSize="inherit" />}
-                    text={rooms.map((r) => r.name).join(", ")}
+                    text={roomNames.join(", ")}
                 />
             ) : !isPrayer && !isBreak ? (
                 <TooltipRow

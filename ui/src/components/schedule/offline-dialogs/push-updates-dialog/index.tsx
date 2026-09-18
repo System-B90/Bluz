@@ -42,7 +42,9 @@ export function PushOfflineUpdatesDialog() {
         isEventCreatedLocally,
     } = useOffline();
 
-    const { events: localEvents, dispatch } = useCalendar();
+    // The push targets the iteration being viewed, same as every other
+    // write: without the id the server resolved it to the current run.
+    const { events: localEvents, dispatch, iterationId } = useCalendar();
 
     const [collisionStates, setCollisionStates] = useState<CollisionStates>({});
     const [selectedIds, setSelectedIds] = useState<Array<EventId>>([]);
@@ -142,16 +144,22 @@ export function PushOfflineUpdatesDialog() {
                                 apiCreateEvent(
                                     event,
                                     EventChangeInitiator.OfflinePush,
+                                    undefined,
+                                    iterationId,
                                 ),
                             updateEvent: (event) =>
                                 apiUpdateEvent(
                                     event,
                                     EventChangeInitiator.OfflinePush,
+                                    undefined,
+                                    iterationId,
                                 ),
                             deleteEvent: (eventId) =>
                                 apiDeleteEvent(
                                     eventId,
                                     EventChangeInitiator.OfflinePush,
+                                    undefined,
+                                    iterationId,
                                 ),
                         },
                     );
@@ -200,6 +208,7 @@ export function PushOfflineUpdatesDialog() {
             purgeCapturedEvents,
             setPushDialogOpen,
             enqueueSnackbar,
+            iterationId,
         ],
     );
 
@@ -236,7 +245,10 @@ export function PushOfflineUpdatesDialog() {
                 return {};
             }
 
-            const serverEvents = await apiGetMultipleEvents(editedIds).catch(
+            const serverEvents = await apiGetMultipleEvents(
+                editedIds,
+                iterationId,
+            ).catch(
                 (error) => {
                     enqueueApiErrorSnackbar(
                         enqueueSnackbar,
@@ -277,6 +289,7 @@ export function PushOfflineUpdatesDialog() {
             getCapturedState,
             isEventCreatedLocally,
             enqueueSnackbar,
+            iterationId,
         ]);
 
     const checkRef = useRef(checkEventCollisionStates);
