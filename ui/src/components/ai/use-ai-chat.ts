@@ -26,7 +26,13 @@ export enum AiTimelineKind {
 }
 
 export type AiTimelineItem =
-    | { kind: AiTimelineKind.Assistant; id: string; text: string }
+    | {
+          kind: AiTimelineKind.Assistant;
+          id: string;
+          text: string;
+          /** Chain-of-thought on a separate wire channel, if the model sent one. */
+          reasoning?: string;
+      }
     | {
           kind: AiTimelineKind.Tool;
           id: string;
@@ -138,6 +144,38 @@ export function useAiChat(scope: AiChatScope) {
                                         kind: AiTimelineKind.Assistant,
                                         id: assistantId,
                                         text: event.text,
+                                    },
+                                ],
+                        );
+                        break;
+                    }
+                    case AiStreamEventType.ReasoningDelta: {
+                        // Same shape as Delta above, appending to `reasoning`
+                        // instead of `text` — reasoning can arrive before any
+                        // visible-answer delta, so the bubble may not exist yet.
+                        setTimeline((items) =>
+                            items.some(
+                                (item) =>
+                                    item.id === assistantId &&
+                                    item.kind === AiTimelineKind.Assistant,
+                            )
+                                ? items.map((item) =>
+                                    item.id === assistantId &&
+                                        item.kind === AiTimelineKind.Assistant
+                                        ? {
+                                            ...item,
+                                            reasoning:
+                                                (item.reasoning ?? "") + event.text,
+                                        }
+                                        : item,
+                                )
+                                : [
+                                    ...items,
+                                    {
+                                        kind: AiTimelineKind.Assistant,
+                                        id: assistantId,
+                                        text: "",
+                                        reasoning: event.text,
                                     },
                                 ],
                         );

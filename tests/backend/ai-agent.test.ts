@@ -67,7 +67,7 @@ import {
     AiToolCall,
 } from "@/api-shared/types/ai";
 
-type Turn = { text?: string; toolCalls?: Array<AiToolCall> };
+type Turn = { text?: string; reasoning?: string; toolCalls?: Array<AiToolCall> };
 
 /** A provider that replays scripted turns and records what it was asked. */
 function fakeProvider(turns: Array<Turn>): AiProvider & {
@@ -84,6 +84,9 @@ function fakeProvider(turns: Array<Turn>): AiProvider & {
         async *streamChat(request: AiChatRequest): AsyncIterable<AiProviderEvent> {
             requests.push(request);
             const turn = turns[index++] ?? { text: "done" };
+            if (turn.reasoning) {
+                yield { kind: "reasoning", text: turn.reasoning };
+            }
             if (turn.text) yield { kind: "text", text: turn.text };
             yield {
                 kind: "final",
@@ -147,6 +150,26 @@ describe("runAiAgent", () => {
         ]);
         const done = events.at(-1);
         expect(done).toMatchObject({ awaitingApproval: false });
+    });
+
+    it("streams reasoning on its own event type, ahead of the visible answer", async () => {
+        const events = await drain(
+            runAiAgent({
+                provider: fakeProvider([
+                    { reasoning: "חושב...", text: "שלום" },
+                ]),
+                messages: userTurn("היי"),
+                context,
+                approvedToolCallIds: new Set(),
+            }),
+        );
+
+        expect(events.map((event) => event.type)).toEqual([
+            AiStreamEventType.ReasoningDelta,
+            AiStreamEventType.Delta,
+            AiStreamEventType.Done,
+        ]);
+        expect(events[0]).toMatchObject({ text: "חושב..." });
     });
 
     it("caps every model call with a max_tokens ceiling", async () => {

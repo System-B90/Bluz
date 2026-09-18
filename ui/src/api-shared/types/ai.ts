@@ -103,6 +103,11 @@ export type AiChatResult = {
 export enum AiStreamEventType {
     /** A fragment of the assistant's visible answer. */
     Delta = "delta",
+    /**
+     * A fragment of a reasoning model's chain-of-thought, sent on a wire
+     * channel separate from the visible answer. Shown collapsed by default.
+     */
+    ReasoningDelta = "reasoning_delta",
     /** A read tool started running. */
     ToolStart = "tool_start",
     /** A read tool finished; carries a short human-readable summary. */
@@ -146,6 +151,7 @@ export type AiStreamEvent =
            */
           messages?: Array<AiMessage>;
       }
+    | { type: AiStreamEventType.ReasoningDelta; text: string }
     | {
           type: AiStreamEventType.ToolProposal;
           toolCallId: string;

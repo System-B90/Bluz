@@ -14,6 +14,12 @@ export type PersonalSettings = {
     googleCalendarSyncAllEvents: boolean;
     /** Shows/hides the AI assistant FAB. On by default where AI is configured. */
     aiAssistantEnabled: boolean;
+    /**
+     * Per-user OpenRouter API key. Empty string means "use the server's
+     * default key" (`OPENROUTER_API_KEY`), so a deployment with no personal
+     * key still works when the server itself is configured.
+     */
+    aiApiToken: string;
 };
 
 export const EMPTY_PERSONAL_SETTINGS: PersonalSettings = {
@@ -23,6 +29,7 @@ export const EMPTY_PERSONAL_SETTINGS: PersonalSettings = {
     googleCalendarEnabled: false,
     googleCalendarSyncAllEvents: false,
     aiAssistantEnabled: true,
+    aiApiToken: "",
 };
 
 export type ApiPersonalSettingsGetResponse = PersonalSettings;

@@ -7,6 +7,8 @@ vi.mock("@/api-server/mongo-db-controller", () => ({
 import { getMetaController } from "@/api-server/mongo-db-controller";
 import { DbPersonalSettings } from "@/api-server/db-personal-settings";
 
+process.env.NEXTAUTH_SECRET ??= "test-secret-for-personal-settings-encryption";
+
 function makeController() {
     return {
         personalSettings: {
@@ -35,6 +37,7 @@ describe("DbPersonalSettings", () => {
             googleCalendarEnabled: false,
             googleCalendarSyncAllEvents: false,
             aiAssistantEnabled: true,
+            aiApiToken: "",
         });
     });
 
@@ -54,6 +57,7 @@ describe("DbPersonalSettings", () => {
             googleCalendarEnabled: true,
             googleCalendarSyncAllEvents: false,
             aiAssistantEnabled: true,
+            aiApiToken: "",
         });
     });
 
@@ -69,6 +73,42 @@ describe("DbPersonalSettings", () => {
         expect(result.aiAssistantEnabled).toBe(false);
     });
 
+    it("respects a stored aiApiToken", async () => {
+        controller.personalSettings.findOne.mockResolvedValueOnce({
+            userId: "u1",
+            groups: [],
+            instructors: [],
+            favoriteOutsiders: [],
+            aiApiToken: "sk-or-test",
+        });
+        const result = await DbPersonalSettings.get("u1");
+        expect(result.aiApiToken).toBe("sk-or-test");
+    });
+
+    it("encrypts aiApiToken at rest, and decrypts it back on get", async () => {
+        await DbPersonalSettings.set("u1", {
+            groups: [],
+            instructors: [],
+            favoriteOutsiders: [],
+            aiApiToken: "sk-or-plaintext",
+        } as never);
+
+        const storedCall = controller.personalSettings.updateOne.mock.calls[0];
+        const storedToken = storedCall[1].$set.aiApiToken;
+        expect(storedToken).not.toBe("sk-or-plaintext");
+        expect(storedToken).toMatch(/^enc:v1:/);
+
+        controller.personalSettings.findOne.mockResolvedValueOnce({
+            userId: "u1",
+            groups: [],
+            instructors: [],
+            favoriteOutsiders: [],
+            aiApiToken: storedToken,
+        });
+        const result = await DbPersonalSettings.get("u1");
+        expect(result.aiApiToken).toBe("sk-or-plaintext");
+    });
+
     it("upserts settings on set", async () => {
         const settings = {
             groups: [ "g1" ],
@@ -78,7 +118,7 @@ describe("DbPersonalSettings", () => {
         const result = await DbPersonalSettings.set("u1", settings);
         expect(controller.personalSettings.updateOne).toHaveBeenCalledWith(
             { userId: "u1" },
-            { $set: { userId: "u1", ...settings } },
+            { $set: { userId: "u1", ...settings, aiApiToken: "" } },
             { upsert: true },
         );
         // A copy of what was stored, not the caller's object (#538 item 4).
@@ -101,6 +141,7 @@ describe("DbPersonalSettings", () => {
                     groups: [ "g1" ],
                     instructors: [],
                     userId: "u1",
+                    aiApiToken: "",
                 },
             },
             { upsert: true },

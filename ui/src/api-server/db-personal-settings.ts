@@ -1,4 +1,5 @@
 import { pickFields } from "@/api-server/common";
+import { decryptSecret, encryptSecret } from "@/api-server/crypto";
 import { getMetaController } from "@/api-server/mongo-db-controller";
 import {
     EMPTY_PERSONAL_SETTINGS,
@@ -12,6 +13,7 @@ const PERSONAL_SETTINGS_FIELDS = [
     "googleCalendarEnabled",
     "googleCalendarSyncAllEvents",
     "aiAssistantEnabled",
+    "aiApiToken",
 ] as const;
 
 async function getPersonalSettings(
@@ -28,6 +30,7 @@ async function getPersonalSettings(
         googleCalendarEnabled: doc.googleCalendarEnabled ?? false,
         googleCalendarSyncAllEvents: doc.googleCalendarSyncAllEvents ?? false,
         aiAssistantEnabled: doc.aiAssistantEnabled ?? true,
+        aiApiToken: decryptSecret(doc.aiApiToken ?? ""),
     };
 }
 
@@ -41,7 +44,13 @@ async function setPersonalSettings(
     const stored = pickFields(settings, PERSONAL_SETTINGS_FIELDS);
     await getMetaController().personalSettings.updateOne(
         { userId },
-        { $set: { userId, ...stored } },
+        {
+            $set: {
+                userId,
+                ...stored,
+                aiApiToken: encryptSecret(stored.aiApiToken ?? ""),
+            },
+        },
         { upsert: true },
     );
     return stored as PersonalSettings;

@@ -4,14 +4,14 @@ import { DbSettings } from "@/api-server/db-settings";
 import { startLessonActivationLoop } from "@/api-server/hive/lesson-activation";
 
 export function register() {
-    // Self-signed Hive/dev proxies need this off, and `.env` (setup.py) owns
-    // that knob. Hardcoding "0" here overrode the operator's choice and left
-    // production accepting any certificate on every outbound TLS call
-    // (Hive SSO token exchange, Google Calendar).
-    if (
-        process.env.NODE_ENV !== "production" &&
-        process.env.NODE_TLS_REJECT_UNAUTHORIZED === undefined
-    ) {
+    // Bluz ships for airgapped networks by default (see SECURITY.md): Hive and
+    // the reverse proxy in front of it are typically self-signed internally,
+    // and the network boundary — not TLS — is what actually keeps the
+    // deployment safe. `.env` (setup.py) sets this explicitly for every
+    // generated deployment, including production; this is only a fallback
+    // for a hand-rolled `.env` that omits it, and still respects an operator
+    // who set it explicitly (e.g. a non-airgapped, internet-facing install).
+    if (process.env.NODE_TLS_REJECT_UNAUTHORIZED === undefined) {
         process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
     }
 

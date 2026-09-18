@@ -53,6 +53,32 @@ documented in [`docs/student-boundary.md`](../docs/student-boundary.md).
 - The WebSocket session server broadcasts edits between clients; auth bypasses
   there are in scope.
 
+## TLS Certificate Verification Is Intentionally Disabled
+
+`NODE_TLS_REJECT_UNAUTHORIZED=0` is set by `setup.py` for every deployment
+(dev and production) and defaulted in `ui/src/instrumentation.ts` for a
+hand-rolled `.env` that omits it. **This is deliberate, not an oversight.**
+
+Bluz ships for airgapped networks by default: Hive and the reverse proxy in
+front of it are typically self-signed internally, with no route to a public
+CA. In that topology, TLS certificate validation is not the security
+boundary — network isolation is. Requiring a real (or internally-issued and
+distributed) CA chain for every internal hop would either block install on a
+disconnected network or push operators toward `--insecure`/`curl -k`-style
+workarounds scattered through the codebase instead of one documented knob.
+
+This is **not** appropriate for an internet-facing deployment. An operator
+running Bluz outside an airgapped network, or terminating TLS to services
+across a boundary they don't control, should set
+`NODE_TLS_REJECT_UNAUTHORIZED=1` (or unset it and supply proper trusted
+certificates) — `instrumentation.ts` only fills in `"0"` when the variable is
+completely unset, so an explicit value in `.env` is always respected.
+
+Do not report the presence of `NODE_TLS_REJECT_UNAUTHORIZED=0` in the default
+config as a vulnerability on its own; a report is in scope only if it shows a
+concrete attack achievable *within* the airgapped topology this default
+assumes (e.g. a rogue host already inside the network).
+
 ## Supported Versions
 
 Only the latest released version (latest `BLUZ_VERSION` tag) receives security fixes.

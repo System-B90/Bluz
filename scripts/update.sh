@@ -371,19 +371,41 @@ else
     BLUZ_VERSION="${TARGET_VERSION}" compose pull \
         || abort_with_rollback "image pull"
     ok "images pulled"
+
+    # An online upgrade only ever refreshed the images: setup.py, update.sh
+    # itself, install.sh etc. were left at whatever version first installed
+    # the deployment, silently drifting forever (setup.py never picking up
+    # later fixes). Every release also publishes a "bluz-online-<tag>.tar.gz"
+    # asset carrying exactly the same bundle files as the offline package
+    # (see release-pipeline.yml's craft-release job) — pull that down and
+    # feed it into the same bundle-file refresh below.
+    log "fetching ${TARGET_VERSION} bundle files (scripts, compose, etc.)..."
+    ONLINE_BUNDLE_ARCHIVE="$(mktemp "${TMPDIR:-/tmp}/bluz-online-bundle.XXXXXX.tar.gz")"
+    ONLINE_EXTRACT_DIR="$(mktemp -d "${TMPDIR:-/tmp}/bluz-online-bundle.XXXXXX")"
+    EXTRACT_DIR="${ONLINE_EXTRACT_DIR}"
+    curl -fsSL --max-time 60 \
+        "https://github.com/${RELEASE_REPO}/releases/download/${TARGET_VERSION}/bluz-online-${TARGET_VERSION}.tar.gz" \
+        -o "${ONLINE_BUNDLE_ARCHIVE}" \
+        || abort_with_rollback "downloading bluz-online-${TARGET_VERSION}.tar.gz"
+    tar -xzf "${ONLINE_BUNDLE_ARCHIVE}" -C "${ONLINE_EXTRACT_DIR}" \
+        || abort_with_rollback "extracting bluz-online-${TARGET_VERSION}.tar.gz"
+    rm -f "${ONLINE_BUNDLE_ARCHIVE}"
+    PACKAGE_ROOT="${ONLINE_EXTRACT_DIR}/bluz"
+    [ -f "${PACKAGE_ROOT}/setup.py" ] \
+        || abort_with_rollback "bluz-online-${TARGET_VERSION}.tar.gz did not contain the expected bundle layout"
 fi
 
 # ---------------------------------------------------------------------------
-# 3. Bundle files (offline only) — the package is a FULL bundle, so the
-#    deployment's scripts, compose file and backup helpers are replaced with
-#    the new release's. An online upgrade cannot do this (it has no new bundle
-#    to copy from), which is the one real asymmetry between the two modes.
+# 3. Bundle files — the deployment's scripts, compose file and backup helpers
+#    are replaced with the new release's. For --package this is the package
+#    the operator handed us; for a plain online upgrade it is the matching
+#    "bluz-online-<tag>.tar.gz" release asset, downloaded just above.
 #
 #    Everything host-specific is deliberately excluded: .env holds this
 #    deployment's secrets, nginx/ssl/ its certificates, and images/ is bulk
 #    that has already been loaded into Docker.
 # ---------------------------------------------------------------------------
-if [ -n "${PACKAGE_ARG}" ]; then
+if [ -n "${PACKAGE_ROOT}" ]; then
     BUNDLE_BACKUP_DIR="${INSTALL_DIR}/.bundle-bak-${PREVIOUS_VERSION}"
     log "refreshing bundle files (previous copies -> ${BUNDLE_BACKUP_DIR})..."
     mkdir -p "${BUNDLE_BACKUP_DIR}"

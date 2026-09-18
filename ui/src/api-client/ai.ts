@@ -68,6 +68,7 @@ export async function* streamAiChat(
  */
 export async function fetchAiTools(): Promise<{
     enabled: boolean;
+    model: null | string;
     tools: Array<{ name: string; description: string; kind: string }>;
 }> {
     const response = await fetch(TOOLS_ENDPOINT);
@@ -84,5 +85,5 @@ export async function fetchAiTools(): Promise<{
     // throw here — the launcher probes this once per mount and should just
     // stay hidden, not crash the page it's mounted on.
     const body = await response.json().catch(() => null);
-    return body?.data ?? { enabled: false, tools: [] };
+    return body?.data ?? { enabled: false, model: null, tools: [] };
 }

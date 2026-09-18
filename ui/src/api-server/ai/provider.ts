@@ -36,6 +36,11 @@ export type AiChatRequest = {
  */
 export type AiProviderEvent =
     | { kind: "final"; result: AiChatResult }
+    | { kind: "reasoning"; text: string }
+    // A reasoning model's chain-of-thought, sent on a separate wire channel
+    // (`delta.reasoning_content` / `delta.reasoning`) rather than mixed into
+    // the visible answer — distinct from the "answer wrapped in <think> tags"
+    // case, which arrives as ordinary `text` and is split client-side instead.
     | { kind: "text"; text: string };
 
 export type AiProvider = {

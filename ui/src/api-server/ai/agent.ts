@@ -151,6 +151,13 @@ export async function* runAiAgent(
                     yield { type: AiStreamEventType.Delta, text: event.text };
                     continue;
                 }
+                if (event.kind === "reasoning") {
+                    yield {
+                        type: AiStreamEventType.ReasoningDelta,
+                        text: event.text,
+                    };
+                    continue;
+                }
                 content = event.result.content;
                 toolCalls = event.result.toolCalls;
                 model = event.result.model;

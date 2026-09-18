@@ -49,14 +49,16 @@ function sentBody(fetchMock: ReturnType<typeof vi.fn>) {
 
 async function collectText(
     stream: AsyncIterable<{ kind: string }>,
-): Promise<{ text: string; final: any }> {
+): Promise<{ text: string; reasoning: string; final: any }> {
     let text = "";
+    let reasoning = "";
     let final: any;
     for await (const event of stream as AsyncIterable<any>) {
         if (event.kind === "text") text += event.text;
+        else if (event.kind === "reasoning") reasoning += event.text;
         else final = event.result;
     }
-    return { text, final };
+    return { text, reasoning, final };
 }
 
 afterEach(() => {
@@ -188,6 +190,33 @@ describe("OpenRouterProvider", () => {
         });
     });
 
+    it("streams reasoning_content separately from the visible answer", async () => {
+        mockStream([
+            '{"choices":[{"delta":{"reasoning_content":"חו"}}]}',
+            '{"choices":[{"delta":{"reasoning_content":"שב"}}]}',
+            '{"choices":[{"delta":{"content":"שלום"}}]}',
+        ]);
+
+        const { text, reasoning } = await collectText(
+            provider.streamChat({ messages: [] }),
+        );
+        expect(reasoning).toBe("חושב");
+        expect(text).toBe("שלום");
+    });
+
+    it("also reads OpenRouter's own `reasoning` field name", async () => {
+        mockStream([
+            '{"choices":[{"delta":{"reasoning":"חושב"}}]}',
+            '{"choices":[{"delta":{"content":"שלום"}}]}',
+        ]);
+
+        const { text, reasoning } = await collectText(
+            provider.streamChat({ messages: [] }),
+        );
+        expect(reasoning).toBe("חושב");
+        expect(text).toBe("שלום");
+    });
+
     it("skips a malformed frame rather than dropping the answer", async () => {
         mockStream([
             '{"choices":[{"delta":{"content":"a"}}]}',
@@ -211,6 +240,13 @@ describe("OpenRouterProvider", () => {
         await expect(provider.chat({ messages: [] })).rejects.toThrow(
             AiProviderError,
         );
+    });
+
+    it("names the model on a 404, since that status always means an unknown/retired model slug", async () => {
+        mockJson({ error: { message: "not found" } }, 404);
+        await expect(
+            provider.chat({ messages: [], model: "stealth/ox-alpha" }),
+        ).rejects.toThrow(/stealth\/ox-alpha/);
     });
 
     it("does not leak the upstream error body to the caller", async () => {

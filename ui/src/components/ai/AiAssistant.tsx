@@ -20,6 +20,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
+import Collapse from "@mui/material/Collapse";
 import Fab from "@mui/material/Fab";
 import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
@@ -43,10 +44,12 @@ import {
 import { useIterationScope } from "@/components/base/IterationProvider";
 
 const PANEL_WIDTH = 420;
-/** Clears the launcher, which sits above the Gantt screen's curriculum FAB. */
-const PANEL_BOTTOM = 168;
 /** Stacks above the Gantt screen's curriculum FAB (bottom: 16, 56px tall). */
 const LAUNCHER_BOTTOM = 88;
+/** Bottom-aligns the panel with the launcher FAB, sitting beside it rather than covering it. */
+const PANEL_BOTTOM = LAUNCHER_BOTTOM;
+/** Launcher FAB diameter (56) + inset (16) + a gap, so the panel clears it sideways. */
+const PANEL_INSET_END = 16 + 56 + 16;
 
 const SUGGESTIONS = [
     'מה יש בלו"ז השבוע?',
@@ -56,7 +59,9 @@ const SUGGESTIONS = [
 
 function UserBubble({ text }: { text: string }) {
     return (
-        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+        // RTL: the logical "start" (justifyContent: flex-start) is the visual
+        // right, which is where the user's own messages belong.
+        <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
             <Paper
                 elevation={0}
                 sx={{
@@ -99,9 +104,40 @@ const MARKDOWN_SX = {
     "& a": { color: "primary.main" },
 } as const;
 
-function AssistantBubble({ text }: { text: string }) {
+/**
+ * Some backends (reasoning models like the self-hosted Kimi gateway) emit
+ * their chain-of-thought inline as a `<think>…</think>` block ahead of the
+ * real answer, rather than on a separate wire field. Split it out so it can
+ * be rendered collapsed, the way Claude Desktop hides its own thinking.
+ *
+ * Mid-stream the closing tag hasn't arrived yet — everything after `<think>`
+ * is still "thinking" and `content` is "" until `</think>` shows up.
+ */
+function splitThinking(text: string): { thinking?: string; content: string } {
+    const match = /^\s*<think>([\s\S]*?)(?:<\/think>([\s\S]*)|$)/i.exec(text);
+    if (!match) return { content: text };
+    return { thinking: match[1], content: match[2] ?? "" };
+}
+
+function AssistantBubble({
+    text,
+    reasoning,
+}: {
+    text: string;
+    /** Chain-of-thought sent on its own wire field (the common case). */
+    reasoning?: string;
+}) {
+    const [thinkingOpen, setThinkingOpen] = React.useState(false);
+    // Prefer the structured field; fall back to splitting inline <think>
+    // tags for a backend that sends reasoning mixed into the answer instead.
+    const split = reasoning === undefined ? splitThinking(text) : undefined;
+    const thinking = reasoning ?? split?.thinking;
+    const content = split ? split.content : text;
+
     return (
-        <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
+        // RTL: the logical "end" (justifyContent: flex-end) is the visual
+        // left, which is where the assistant's replies belong.
+        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
             <Paper
                 elevation={0}
                 sx={{
@@ -112,9 +148,52 @@ function AssistantBubble({ text }: { text: string }) {
                     maxWidth: "90%",
                 }}
             >
+                { thinking ? (
+                    <Box sx={{ mb: content ? 1 : 0 }}>
+                        <Box
+                            component="button"
+                            onClick={() => setThinkingOpen((v) => !v)}
+                            sx={{
+                                appearance: "none",
+                                border: "none",
+                                background: "none",
+                                p: 0,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.5,
+                                cursor: "pointer",
+                                color: "text.secondary",
+                                font: "inherit",
+                            }}
+                        >
+                            <Typography
+                                sx={{ fontStyle: "italic" }}
+                                variant="caption"
+                            >
+                                { thinkingOpen ? "הסתר תהליך חשיבה" : "תהליך חשיבה" }
+                            </Typography>
+                        </Box>
+                        <Collapse in={thinkingOpen}>
+                            <Typography
+                                color="text.secondary"
+                                sx={{
+                                    whiteSpace: "pre-wrap",
+                                    fontStyle: "italic",
+                                    borderInlineStart: "2px solid",
+                                    borderColor: "divider",
+                                    paddingInlineStart: 1,
+                                    mt: 0.5,
+                                }}
+                                variant="caption"
+                            >
+                                { thinking }
+                            </Typography>
+                        </Collapse>
+                    </Box>
+                ) : null }
                 <Box sx={MARKDOWN_SX}>
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {text}
+                        {content}
                     </ReactMarkdown>
                 </Box>
             </Paper>
@@ -156,7 +235,7 @@ function TimelineEntry({ item }: { item: AiTimelineItem }) {
     case AiTimelineKind.User:
         return <UserBubble text={item.text} />;
     case AiTimelineKind.Assistant:
-        return <AssistantBubble text={item.text} />;
+        return <AssistantBubble reasoning={item.reasoning} text={item.text} />;
     case AiTimelineKind.Tool:
         return (
             <ToolChip
@@ -262,7 +341,7 @@ export function AiAssistant() {
                     sx={{
                         position: "fixed",
                         bottom: PANEL_BOTTOM,
-                        insetInlineEnd: 24,
+                        insetInlineEnd: PANEL_INSET_END,
                         width: { xs: "calc(100vw - 48px)", sm: PANEL_WIDTH },
                         maxHeight: `calc(100vh - ${PANEL_BOTTOM + 48}px)`,
                         display: "flex",
