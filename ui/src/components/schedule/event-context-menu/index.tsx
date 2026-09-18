@@ -32,10 +32,10 @@ import { useCalendar } from "@/components/schedule/calendar/calendar-provider/Ca
 import {
     duplicateOf,
     postponedByAWeek,
-    reassignedToInstructor,
     reassignedToRoom,
     triStateOf,
     withCourseMembership,
+    withInstructorMembership,
 } from "@/components/schedule/event-context-menu/actions";
 import {
     PickerOption,
@@ -184,15 +184,6 @@ export function EventContextMenu({
         [rooms],
     );
 
-    const instructorOptions = useMemo<Array<PickerOption>>(
-        () =>
-            instructors.map((instructor) => ({
-                id: String(instructor.id),
-                label: instructor.display_name,
-            })),
-        [instructors],
-    );
-
     const pickRoom = useCallback(
         (resourceKey: null | string) => {
             const room = resourceKey ? resourceKeyToResolvable(resourceKey) : null;
@@ -201,12 +192,17 @@ export function EventContextMenu({
         [applyToTargets],
     );
 
-    const pickInstructor = useCallback(
-        (instructorId: null | string) => {
-            const id = instructorId === null ? null : Number(instructorId);
-            applyToTargets((event) => reassignedToInstructor(event, id));
+    const toggleInstructor = useCallback(
+        (instructorId: number) => {
+            const next =
+                triStateOf(targets, (event) =>
+                    event.instructors.includes(instructorId),
+                ) !== "all";
+            applyToTargets((event) =>
+                withInstructorMembership(event, instructorId, next),
+            );
         },
-        [applyToTargets],
+        [targets, applyToTargets],
     );
 
     /* ── Markers & shuffles ─────────────────────────────────── */
@@ -296,17 +292,45 @@ export function EventContextMenu({
                 options={roomOptions}
             />
 
-            <PickerSubmenu
-                clearLabel="ללא מדריך"
-                emptyLabel="אין מדריכים"
+            {/* Marker, shuffle and instructor submenus stay open on click:
+                these are the entries a user flips two or three of in a row. */}
+            <Submenu
                 icon={<PersonOutlineIcon fontSize="small" />}
-                label="שיוך מדריך"
-                onPick={(id) => runAndClose(() => pickInstructor(id))}
-                options={instructorOptions}
-            />
+                label="שיוך מבזר"
+            >
+                {instructors.length === 0 ? (
+                    <Typography
+                        sx={{ px: 2, py: 1, color: "text.secondary" }}
+                        variant="body2"
+                    >
+                        אין מבזרים
+                    </Typography>
+                ) : (
+                    instructors.map((instructor) => {
+                        const state = triStateOf(targets, (event) =>
+                            event.instructors.includes(instructor.id),
+                        );
+                        return (
+                            <MenuItem
+                                key={instructor.id}
+                                onClick={() => toggleInstructor(instructor.id)}
+                            >
+                                <ListItemIcon>
+                                    <Checkbox
+                                        checked={state === "all"}
+                                        disableRipple
+                                        indeterminate={state === "some"}
+                                        size="small"
+                                        sx={{ p: 0 }}
+                                    />
+                                </ListItemIcon>
+                                <ListItemText>{instructor.display_name}</ListItemText>
+                            </MenuItem>
+                        );
+                    })
+                )}
+            </Submenu>
 
-            {/* Marker and shuffle submenus stay open on click: these are the
-                entries a user flips two or three of in a row. */}
             <Submenu
                 icon={<GroupsIcon fontSize="small" />}
                 label="שיוך מסלולים"

@@ -103,25 +103,25 @@ export function reassignedToRoom(
 }
 
 /**
- * Reassigns the event to exactly one instructor, or clears its instructors.
- * Replaces for the same reason {@link reassignedToRoom} does. `lecturers` is
- * filtered down to whoever is still on the event, so a lecture cannot keep
- * naming a lecturer who is no longer assigned to it.
+ * Adds or removes one instructor (מבזר) from an event, leaving the rest of
+ * its roster alone. `lecturers` is filtered down to whoever is still on the
+ * event, so a lecture cannot keep naming a lecturer who is no longer
+ * assigned to it.
  * @param event The event to change.
- * @param instructorId The instructor to move it to, or null to leave it unstaffed.
+ * @param instructorId The instructor being toggled.
+ * @param member Whether the event should end up staffed by them.
  * @returns The updated event.
  */
-export function reassignedToInstructor(
+export function withInstructorMembership(
     event: Event,
-    instructorId: null | number,
+    instructorId: number,
+    member: boolean,
 ): Event {
-    const instructors = instructorId === null ? [] : [instructorId];
-    if (
-        event.instructors.length === instructors.length &&
-        event.instructors.every((id, index) => id === instructors[index])
-    ) {
-        return event;
-    }
+    const has = event.instructors.includes(instructorId);
+    if (has === member) return event;
+    const instructors = member
+        ? [...event.instructors, instructorId]
+        : event.instructors.filter((id) => id !== instructorId);
     const lecturers = Array.isArray(event.lecturers)
         ? event.lecturers.filter(
             (person) => typeof person !== "number" || instructors.includes(person),
