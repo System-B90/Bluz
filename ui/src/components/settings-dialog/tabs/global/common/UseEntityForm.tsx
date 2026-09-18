@@ -3,7 +3,7 @@ import { useSnackbar } from "notistack";
 import { useCallback, useMemo, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
-import { useConfirmDialog } from "@/components/settings-dialog/tabs/global/common/UseConfirmDialog";
+import { useConfirmDialog } from "@/components/base/UseConfirmDialog";
 
 /**
  * A validation failure: the message shown to the user as a warning snackbar.

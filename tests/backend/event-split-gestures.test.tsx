@@ -3,13 +3,19 @@ import { cleanup, fireEvent, render } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 /**
- * Middle-click / Shift+click split wiring (#657) in
- * `event-component/base.tsx`. Everything BluzEventComponent pulls in besides
- * the split gesture — theming, subjects, custom colours, filters, locks,
- * instructor-drop targets — is mocked to its simplest working shape so the
- * test exercises only `handleClick`/`handleAuxClick`/`handleMouseDown`.
+ * Pointer-gesture wiring in `event-component/base.tsx`: the middle-click /
+ * Shift+click split (#657) and the right-click context menu (#706).
+ * Everything BluzEventComponent pulls in besides those gestures — theming,
+ * subjects, custom colours, filters, locks, instructor-drop targets — is
+ * mocked to its simplest working shape so the test exercises only
+ * `handleClick`/`handleAuxClick`/`handleMouseDown`/`handleContextMenu`.
  */
 const splitEventAt = vi.fn();
+const openContextMenu = vi.fn();
+// Swapped to null to stand in for a read-only iteration, which hands the tile
+// no opener at all.
+let contextMenuOpener: null | typeof openContextMenu = openContextMenu;
+let selectedEventIds = new Set<string>();
 
 vi.mock("@/components/base/HiveSubjectsProvider", () => ({
     useHiveSubjects: () => ({ getSubject: () => undefined }),
@@ -41,9 +47,11 @@ vi.mock("@/components/schedule/calendar/split/SplitCalendarContext", () => ({
     useSplitCalendar: () => ({
         hoveredEventId: null,
         selectedEventId: null,
+        selectedEventIds,
         activeDrag: null,
         setHoveredEventId: () => undefined,
         splitEventAt,
+        openContextMenu: contextMenuOpener,
     }),
 }));
 
@@ -110,6 +118,9 @@ function renderTile(event: Event) {
 afterEach(() => {
     cleanup();
     splitEventAt.mockReset();
+    openContextMenu.mockReset();
+    contextMenuOpener = openContextMenu;
+    selectedEventIds = new Set<string>();
 });
 
 describe("event tile split gestures (#657)", () => {
@@ -196,5 +207,55 @@ describe("event tile split gestures (#657)", () => {
         );
 
         expect(splitEventAt).not.toHaveBeenCalled();
+    });
+});
+
+describe("event tile right-click menu (#706)", () => {
+    it("opens the menu at the pointer and suppresses the browser's own", () => {
+        const { tile } = renderTile(baseEvent);
+
+        const contextmenu = new MouseEvent("contextmenu", {
+            bubbles: true,
+            cancelable: true,
+            clientX: 120,
+            clientY: 240,
+        });
+        tile.dispatchEvent(contextmenu);
+
+        expect(contextmenu.defaultPrevented).toBe(true);
+        expect(openContextMenu).toHaveBeenCalledWith(baseEvent, 120, 240);
+    });
+
+    it("does not split — right-click is the menu gesture, not a cut", () => {
+        const { tile } = renderTile(baseEvent);
+
+        fireEvent.contextMenu(tile, { clientX: 10, clientY: 20 });
+
+        expect(splitEventAt).not.toHaveBeenCalled();
+    });
+
+    it("opens for a locked event: the menu is how you unlock it", () => {
+        const locked = { ...baseEvent, locked: true } as Event;
+        const { tile } = renderTile(locked);
+
+        fireEvent.contextMenu(tile, { clientX: 10, clientY: 20 });
+
+        expect(openContextMenu).toHaveBeenCalledTimes(1);
+    });
+
+    it("leaves the native menu alone when the calendar is read-only", () => {
+        // A past iteration hands the tile no opener, so the gesture must not
+        // be swallowed — the browser's own menu stays available.
+        contextMenuOpener = null;
+        const { tile } = renderTile(baseEvent);
+
+        const contextmenu = new MouseEvent("contextmenu", {
+            bubbles: true,
+            cancelable: true,
+        });
+        tile.dispatchEvent(contextmenu);
+
+        expect(contextmenu.defaultPrevented).toBe(false);
+        expect(openContextMenu).not.toHaveBeenCalled();
     });
 });

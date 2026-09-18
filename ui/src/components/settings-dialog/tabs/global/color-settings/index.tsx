@@ -9,7 +9,7 @@ import { ColorFormCard, ColorFormCardProps } from "@/components/settings-dialog/
 import { ColorListCard } from "@/components/settings-dialog/tabs/global/color-settings/ColorListCard";
 import { ColorEntry } from "@/components/settings-dialog/tabs/global/color-settings/types";
 import { SettingsTab } from "@/components/settings-dialog/tabs/global/common";
-import { useConfirmDialog } from "@/components/settings-dialog/tabs/global/common/UseConfirmDialog";
+import { useConfirmDialog } from "@/components/base/UseConfirmDialog";
 
 const DEFAULT_NEW_COLOR_HEX = "#3f51b5";
 

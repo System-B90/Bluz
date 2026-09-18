@@ -1,6 +1,6 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, SyntheticEvent, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import
 {
     CalendarProps,
@@ -56,6 +56,7 @@ import
 import
 {
     ActiveDrag,
+    OpenEventContextMenu,
     SplitCalendarProvider,
 } from "@/components/schedule/calendar/split/SplitCalendarContext";
 import { BluzEventComponent } from "@/components/schedule/event-component/base";
@@ -259,6 +260,15 @@ type CalendarViewProps = {
     onSelectEvent: (event: Event) => void;
     onDoubleClickEvent: (event: Event) => void;
     onSelectSlot: (slotInfo: SlotInfo) => void;
+    /** Ids in the right-click multi-selection; the tiles ring them (#706). */
+    selectedEventIds: ReadonlySet<EventId>;
+    /** Ctrl/Cmd+click on a tile: add it to, or drop it from, the selection. */
+    onToggleEventSelection: (eventId: EventId) => void;
+    /** Plain click on a tile or on empty grid: the selection collapses. */
+    onSelectOnly: (eventId: EventId) => void;
+    onClearSelection: () => void;
+    /** Right-click on a tile; null while the calendar is read-only. */
+    onContextMenuEvent: null | OpenEventContextMenu;
     /**
      * Reports a committed grid interaction in event-space. `interaction`
      * distinguishes a move from a resize from a Ctrl-held duplicate so the
@@ -286,6 +296,11 @@ export function CalendarView({
     onSelectEvent,
     onDoubleClickEvent,
     onSelectSlot,
+    selectedEventIds,
+    onToggleEventSelection,
+    onSelectOnly,
+    onClearSelection,
+    onContextMenuEvent,
     onEventDrop,
     onSplitEvent,
     onToggleFullscreen,
@@ -330,10 +345,20 @@ export function CalendarView({
             activeDrag,
             hoveredEventId,
             selectedEventId,
+            selectedEventIds,
             setHoveredEventId,
             splitEventAt: onSplitEvent,
+            openContextMenu: onContextMenuEvent,
         }),
-        [ breakWindows, activeDrag, hoveredEventId, selectedEventId, onSplitEvent ],
+        [
+            breakWindows,
+            activeDrag,
+            hoveredEventId,
+            selectedEventId,
+            selectedEventIds,
+            onSplitEvent,
+            onContextMenuEvent,
+        ],
     );
 
     // A drag that ends outside the grid resolves through neither drop handler,
@@ -489,17 +514,43 @@ export function CalendarView({
     );
 
     const handleSelectSegment = useCallback(
-        (segment: EventSegment) =>
+        (segment: EventSegment, pointer: SyntheticEvent<HTMLElement>) =>
         {
-            setSelectedEventId(segment.event.id);
-            onSelectEvent(segment.event);
+            const { event } = segment;
+            setSelectedEventId(event.id);
+
+            // Ctrl/Cmd+click builds a multi-selection for the right-click menu
+            // to act on in bulk (#706), and must not also open the event in the
+            // side panel — picking a second event would otherwise replace what
+            // the first one put there.
+            const native = pointer?.nativeEvent;
+            const additive =
+                native instanceof MouseEvent && (native.ctrlKey || native.metaKey);
+            if (additive)
+            {
+                onToggleEventSelection(event.id);
+                return;
+            }
+
+            onSelectOnly(event.id);
+            onSelectEvent(event);
         },
-        [ onSelectEvent ],
+        [ onSelectEvent, onSelectOnly, onToggleEventSelection ],
     );
 
     const handleDoubleClickSegment = useCallback(
         (segment: EventSegment) => onDoubleClickEvent(segment.event),
         [ onDoubleClickEvent ],
+    );
+
+    // Clicking the grid itself is the universal "never mind" for a selection.
+    const handleSelectSlot = useCallback(
+        (slotInfo: SlotInfo) =>
+        {
+            onClearSelection();
+            onSelectSlot(slotInfo);
+        },
+        [ onClearSelection, onSelectSlot ],
     );
 
     const { calendarDayStartTime, calendarDayEndTime } = useSettings();
@@ -542,7 +593,7 @@ export function CalendarView({
                     onEventResize={ handleSegmentResize }
                     onNavigate={ onNavigate }
                     onSelectEvent={ handleSelectSegment }
-                    onSelectSlot={ onSelectSlot }
+                    onSelectSlot={ handleSelectSlot }
                     onView={ onView }
                     resizableAccessor={ resizableAccessor }
                     resourceAccessor={ resourceAccessor }

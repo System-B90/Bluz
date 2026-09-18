@@ -16,6 +16,7 @@ import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
 import RestoreIcon from "@mui/icons-material/Restore";
 import SelfImprovementIcon from "@mui/icons-material/SelfImprovement";
 import SyncIcon from "@mui/icons-material/Sync";
+import TouchAppIcon from "@mui/icons-material/TouchApp";
 import UndoIcon from "@mui/icons-material/Undo";
 import { ReactElement } from "react";
 
@@ -70,6 +71,10 @@ const PRESENTATION: Record<EventChangeInitiator, InitiatorPresentation> = {
     [EventChangeInitiator.Keyboard]: {
         color: "secondary",
         icon: <KeyboardIcon fontSize="small" />,
+    },
+    [EventChangeInitiator.ContextMenu]: {
+        color: "secondary",
+        icon: <TouchAppIcon fontSize="small" />,
     },
     [EventChangeInitiator.OfflinePush]: {
         color: "info",

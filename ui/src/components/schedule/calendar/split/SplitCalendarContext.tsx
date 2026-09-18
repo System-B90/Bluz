@@ -12,6 +12,13 @@ export type ActiveDrag = DragModifiers & {
     direction?: "DOWN" | "LEFT" | "RIGHT" | "UP";
 };
 
+/** Right-click on a tile, in viewport coordinates (#706). */
+export type OpenEventContextMenu = (
+    event: Event,
+    clientX: number,
+    clientY: number,
+) => void;
+
 /**
  * Shared state that makes the separate grid boxes of one split event behave as
  * a single object: hovering, selecting or dragging any piece lights up all of
@@ -23,7 +30,19 @@ export type SplitCalendarContextValue = {
     activeDrag: ActiveDrag | null;
     hoveredEventId: EventId | null;
     selectedEventId: EventId | null;
+    /**
+     * Events the user has Ctrl/Cmd+clicked into a multi-selection (#706). The
+     * tiles draw a selection ring for these exactly as for `selectedEventId`,
+     * so a selection of many reads like a selection of one.
+     */
+    selectedEventIds: ReadonlySet<EventId>;
     setHoveredEventId: (eventId: EventId | null) => void;
+    /**
+     * `null` while the calendar is read-only — a past iteration has nothing to
+     * offer a menu whose every entry is a write, and the tiles then leave the
+     * browser's own menu alone.
+     */
+    openContextMenu: null | OpenEventContextMenu;
     /** Middle-click / Shift+click on a tile: cut the event in two at `atMs` (#657). */
     splitEventAt: (event: Event, atMs: number) => void;
 };
@@ -33,7 +52,9 @@ const EMPTY: SplitCalendarContextValue = {
     activeDrag: null,
     hoveredEventId: null,
     selectedEventId: null,
+    selectedEventIds: new Set<EventId>(),
     setHoveredEventId: () => undefined,
+    openContextMenu: null,
     splitEventAt: () => undefined,
 };
 
