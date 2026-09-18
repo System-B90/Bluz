@@ -197,20 +197,13 @@ export async function* runAiAgent(
             })) {
                 if (event.kind === "reasoning") {
                     yield {
-                        type: AiStreamEventType.Reasoning,
+                        type: AiStreamEventType.ReasoningDelta,
                         text: event.text,
                     };
                     continue;
                 }
                 if (event.kind === "text") {
                     yield { type: AiStreamEventType.Delta, text: event.text };
-                    continue;
-                }
-                if (event.kind === "reasoning") {
-                    yield {
-                        type: AiStreamEventType.ReasoningDelta,
-                        text: event.text,
-                    };
                     continue;
                 }
                 content = event.result.content;
