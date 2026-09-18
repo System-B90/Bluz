@@ -355,3 +355,32 @@ def test_hive_lessons_forwards_both_filters_as_query_params(stub_bluz, run_cli):
         "module__id": ["m1"],
         "module__parent_subject__parent_program_id__in": ["p1,p2"],
     }
+
+
+# --- bluz hive avatar / bluz auth ws-ticket ----------------------------------
+
+
+def test_hive_avatar_saves_the_proxied_image_bytes(stub_bluz, run_cli, tmp_path):
+    from wire_types import Raw
+
+    stub = stub_bluz()
+    stub.route("GET", "/api/hive/users/avatars/42", Raw(b"\x89PNG-bytes", "image/png"))
+    destination = tmp_path / "avatar.png"
+
+    result = run_cli(stub, "hive", "avatar", "42", "-o", str(destination))
+
+    assert result.exit_code == 0
+    assert stub.last().path == "/api/hive/users/avatars/42"
+    assert destination.read_bytes() == b"\x89PNG-bytes"
+
+
+def test_ws_ticket_reads_the_bare_ticket_body(stub_bluz, run_cli):
+    stub = stub_bluz()
+    # /api/ws-ticket does not speak the response envelope.
+    stub.route("GET", "/api/ws-ticket", {"ticket": "signed.ticket"})
+
+    result = run_cli(stub, "auth", "ws-ticket")
+
+    assert result.exit_code == 0
+    assert stub.last().path == "/api/ws-ticket"
+    assert _json_out(result) == {"ticket": "signed.ticket"}

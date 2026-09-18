@@ -90,3 +90,28 @@ def test_end_to_end_trailing_json_flag_reaches_the_root_callback(stub_bluz) -> N
 
     assert result.exit_code == 0, result.output
     assert stub.last().query.get("withParents") == ["1"]
+
+
+def test_an_option_value_spelling_a_global_flag_is_left_alone() -> None:
+    """
+    Only passes when the command tree is actually introspected.
+
+    Typer vendors its own Click, so the old `isinstance(param, click.Option)`
+    walk recognised no command options at all and quietly fell back to the
+    globals — which hoists `--json` here, both enabling an output mode nobody
+    asked for and leaving `--label` holding nothing.
+    """
+    argv = ["iterations", "register", "2026b", "--label", "--json"]
+    assert _reorder_global_flags(argv) == argv
+
+
+def test_the_tree_walk_finds_a_nested_commands_value_option() -> None:
+    from bluz_cli.main import _value_taking_options
+
+    options = _value_taking_options()
+
+    assert "--label" in options
+    assert "--curriculum-id" in options
+    # Boolean flags must stay out of it, or they swallow the next token.
+    assert "--with-parents" not in options
+    assert "--yes" not in options
