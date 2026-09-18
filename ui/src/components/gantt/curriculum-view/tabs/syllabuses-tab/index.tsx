@@ -89,49 +89,52 @@ export const SyllabusesTab = memo(function SyllabusesTab({
         resetKey: curriculumId,
     });
     const hiddenSyllabusCount = syllabuses.length - visibleSyllabusCount;
-    const [ expandedCards, setExpandedCards ] = useState<Set<GanttSyllabusId>>(
-        new Set(syllabuses.slice(0, visibleSyllabusCount))
+    // Cards are open unless the user closed them. Tracking the *collapsed*
+    // set (rather than seeding an "expanded" set once on mount) keeps cards
+    // that stream in later, and the cards of a curriculum switched to, open
+    // like the first two instead of arriving shut.
+    const [ collapsedCards, setCollapsedCards ] = useState<Set<GanttSyllabusId>>(
+        () => new Set(),
     );
+    const visibleSyllabusIds = useMemo(
+        () => syllabuses.slice(0, visibleSyllabusCount),
+        [ syllabuses, visibleSyllabusCount ],
+    );
+    const expandedCount = visibleSyllabusIds.filter(
+        (id) => !collapsedCards.has(id),
+    ).length;
 
     const syllabusCards = useMemo(() =>
     {
-        return syllabuses
-            .slice(0, visibleSyllabusCount)
-            .map((syllabusId) => (
-                <SyllabusCard
-                    curriculumId={ curriculumId }
-                    expanded={ expandedCards.has(syllabusId) }
-                    key={ syllabusId }
-                    onExpandChange={ (expanded) =>
+        return visibleSyllabusIds.map((syllabusId) => (
+            <SyllabusCard
+                curriculumId={ curriculumId }
+                expanded={ !collapsedCards.has(syllabusId) }
+                key={ syllabusId }
+                onExpandChange={ (expanded) =>
+                {
+                    setCollapsedCards((prev) =>
                     {
-                        setExpandedCards((prev) =>
+                        const next = new Set(prev);
+                        if (expanded)
                         {
-                            const next = new Set(prev);
-                            if (expanded)
-                            {
-                                next.add(syllabusId);
-                            } else
-                            {
-                                next.delete(syllabusId);
-                            }
-                            return next;
-                        });
-                    } }
-                    syllabusId={ syllabusId }
-                />
-            ));
-    }, [ curriculumId, syllabuses, visibleSyllabusCount, expandedCards ]);
+                            next.delete(syllabusId);
+                        } else
+                        {
+                            next.add(syllabusId);
+                        }
+                        return next;
+                    });
+                } }
+                syllabusId={ syllabusId }
+            />
+        ));
+    }, [ curriculumId, visibleSyllabusIds, collapsedCards ]);
 
     const toggleAllExpanded = () =>
     {
-        const allExpanded = expandedCards.size === visibleSyllabusCount;
-        if (allExpanded)
-        {
-            setExpandedCards(new Set());
-        } else
-        {
-            setExpandedCards(new Set(syllabuses.slice(0, visibleSyllabusCount)));
-        }
+        const allExpanded = expandedCount === visibleSyllabusCount;
+        setCollapsedCards(allExpanded ? new Set(visibleSyllabusIds) : new Set());
     };
 
     return (
@@ -151,7 +154,7 @@ export const SyllabusesTab = memo(function SyllabusesTab({
             >
                 <SyllabusesActionsBox
                     curriculumId={ curriculumId }
-                    expandedCount={ expandedCards.size }
+                    expandedCount={ expandedCount }
                     mb={ 0 }
                     onToggleAllExpanded={ toggleAllExpanded }
                     visibleSyllabusCount={ visibleSyllabusCount }

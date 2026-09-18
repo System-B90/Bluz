@@ -693,8 +693,10 @@ describe("runAiAgent", () => {
             }),
         );
 
+        // Streamed reasoning arrives as deltas (the loop forwards each
+        // provider chunk as it comes), never as one assembled block.
         expect(events[0]).toMatchObject({
-            type: AiStreamEventType.Reasoning,
+            type: AiStreamEventType.ReasoningDelta,
             text: "אני חושב",
         });
         const done = events.at(-1);
