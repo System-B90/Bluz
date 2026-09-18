@@ -56,7 +56,6 @@ export enum AiApprovalState {
 }
 
 export type AiTimelineItem =
-    | { kind: AiTimelineKind.Assistant; id: string; text: string }
     | {
           kind: AiTimelineKind.Approval;
           id: string;
@@ -69,6 +68,7 @@ export type AiTimelineItem =
           arguments: unknown;
           state: AiApprovalState;
       }
+    | { kind: AiTimelineKind.Assistant; id: string; text: string }
     | {
           kind: AiTimelineKind.Choice;
           id: string;

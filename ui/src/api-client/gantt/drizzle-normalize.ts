@@ -103,7 +103,6 @@ export function normalizeApiSyllabus(
             // from the UI on refresh while the DB still holds it.
             defaultOrchestratorId: apiModule.defaultOrchestratorId ?? null,
             constraints: [],
-            defaultOrchestratorId: apiModule.defaultOrchestratorId ?? null,
         });
     }
 

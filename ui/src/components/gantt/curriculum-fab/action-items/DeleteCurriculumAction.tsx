@@ -3,10 +3,10 @@ import { Fragment, useCallback } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { useConfirmDialog } from "@/components/base/UseConfirmDialog";
 import { ActionItemButton } from "@/components/gantt/curriculum-fab/action-items/ActionItemButton";
 import { CurriculumAwareActionItemProps } from "@/components/gantt/curriculum-fab/action-items/ActionItemProps";
 import { useAsyncAction } from "@/components/gantt/curriculum-fab/action-items/use-async-action";
-import { useConfirmDialog } from "@/components/base/UseConfirmDialog";
 
 export type DeleteCurriculumActionProps = {
     onDelete: (deletedCurriculumId: GanttCurriculumId) => void;
