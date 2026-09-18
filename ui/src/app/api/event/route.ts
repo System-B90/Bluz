@@ -122,6 +122,9 @@ export const POST: ServerApiEventUpdate = withApi(async (request) => {
     if (!event) {
         throw new ClientApiError("No data provided!");
     }
+    // The stored copy lets the Google fan-out drop the event from calendars
+    // that wanted the old assignment but not the new one.
+    const previous = await DbEvent.get(event.id, undefined, controller);
     const updated = await DbEvent.set(
         event,
         undefined,
@@ -133,7 +136,12 @@ export const POST: ServerApiEventUpdate = withApi(async (request) => {
             ),
         },
     );
-    syncEventToInstructorsGoogleCalendars(updated, "upsert", iterationId);
+    syncEventToInstructorsGoogleCalendars(
+        updated,
+        "upsert",
+        iterationId,
+        previous ?? undefined,
+    );
     syncEventLessonToHive(updated, "upsert", controller);
     return ApiSuccess(updated);
 });

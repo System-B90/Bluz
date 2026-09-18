@@ -250,6 +250,7 @@ def main(
         ports["mongo"] = get_running_port(project_name, "mongodb", 27017)
         ports["http"] = get_running_port(project_name, "proxy", 80)
         ports["https"] = get_running_port(project_name, "proxy", 443)
+        ports["google_stub"] = get_running_port(project_name, "google-stub", 8080)
 
         # Verify we successfully retrieved all ports
         if not all(ports.values()):
@@ -294,9 +295,10 @@ def main(
         ports["mongo"] = find_free_port()
         ports["http"] = find_free_port()
         ports["https"] = find_free_port()
+        ports["google_stub"] = find_free_port()
 
         typer.echo(
-            f"Assigned ports: Postgres={ports['postgres']}, Mongo={ports['mongo']}, HTTP={ports['http']}, HTTPS={ports['https']}"
+            f"Assigned ports: Postgres={ports['postgres']}, Mongo={ports['mongo']}, HTTP={ports['http']}, HTTPS={ports['https']}, GoogleStub={ports['google_stub']}"
         )
 
         compose_env.update(
@@ -305,6 +307,7 @@ def main(
                 "TEST_MONGO_PORT": str(ports["mongo"]),
                 "TEST_PROXY_PORT_HTTP": str(ports["http"]),
                 "TEST_PROXY_PORT_HTTPS": str(ports["https"]),
+                "TEST_GOOGLE_STUB_PORT": str(ports["google_stub"]),
             }
         )
 
@@ -401,6 +404,10 @@ def main(
         "TEST_MONGO_PORT": str(ports["mongo"]),
         "TEST_PROXY_PORT_HTTP": str(ports["http"]),
         "TEST_PROXY_PORT_HTTPS": str(ports["https"]),
+        "TEST_GOOGLE_STUB_PORT": str(ports["google_stub"]),
+        # The Google stub's test-only control surface, for the specs that
+        # seed a shared calendar or inspect what the integration wrote.
+        "GOOGLE_STUB_URL": f"http://127.0.0.3:{ports['google_stub']}",
     }
 
     # Drizzle Schema Generate/Push

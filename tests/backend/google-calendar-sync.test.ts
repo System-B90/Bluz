@@ -15,34 +15,35 @@ vi.mock("@/logging/pino", () => ({
 
 /**
  * Unit tests for the fire-and-forget Google Calendar sync fan-out: which
- * users an event is mirrored to (assigned instructors who opted in, plus
- * "sync everything" users), and the per-user background-pull throttle. The
- * service layer is mocked at its boundary; the never-throws contract is the
- * point — a Google outage must never touch the Bluz event write it hangs off.
+ * *calendars* an event is mirrored to (grouping the opted-in users' links by
+ * calendar, so a calendar several users share receives each event once),
+ * how a link's bound iteration gates it, the failover between links on one
+ * calendar, the delete-on-scope-exit for updates, and the per-user
+ * background-pull throttle. The service layer is mocked at its boundary; the
+ * never-throws contract is the point — a Google outage must never touch the
+ * Bluz event write it hangs off.
  */
 
 const { pushService, personalSettings } = vi.hoisted(() => ({
     pushService: {
-        pushEventToGoogle: vi.fn(async () => undefined),
+        pushEventToGoogle: vi.fn(async () => true),
         pullEventEdits: vi.fn(async () => 0),
+        listGoogleCalendarLinks: vi.fn(async () => [] as Array<unknown>),
     },
     personalSettings: {
-        find: vi.fn(() => ({ toArray: async () => [] })),
+        find: vi.fn(() => ({ toArray: async () => [] as Array<unknown> })),
     },
 }));
 
 vi.mock("@/api-server/google/google-calendar-service", () => ({
     pushEventToGoogle: pushService.pushEventToGoogle,
     pullEventEdits: pushService.pullEventEdits,
+    listGoogleCalendarLinks: pushService.listGoogleCalendarLinks,
 }));
 vi.mock("@/api-server/mongo-db-controller", () => ({
     getMetaController: vi.fn(() => ({ personalSettings })),
 }));
 
-import {
-    pullGoogleEditsInBackground,
-    syncEventToInstructorsGoogleCalendars,
-} from "@/api-server/google/google-calendar-sync";
 import { EventType } from "@/api-shared/types/event";
 
 const event = {
@@ -67,67 +68,226 @@ const event = {
     splitAcrossBreaks: false,
 };
 
+const settings = (userId: string, syncAll = false) => ({
+    userId,
+    googleCalendarEnabled: true,
+    googleCalendarSyncAllEvents: syncAll,
+});
+const link = (userId: string, calendarId: string, iterationId?: string) => ({
+    userId,
+    calendarId,
+    ...(iterationId ? { iterationId } : {}),
+});
+
+function arrange(
+    settingsDocs: Array<ReturnType<typeof settings>>,
+    links: Array<ReturnType<typeof link>>,
+) {
+    personalSettings.find.mockReturnValue({ toArray: async () => settingsDocs });
+    pushService.listGoogleCalendarLinks.mockResolvedValue(links);
+}
+
 const flushAsyncWork = () =>
     new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+const pushedTo = () =>
+    pushService.pushEventToGoogle.mock.calls.map(
+        ([userId, , action]) => `${userId}:${action}`,
+    );
 
 beforeEach(() => {
     // Fresh module per case: the pull throttle lives in a module-level map.
     vi.resetModules();
     vi.clearAllMocks();
+    pushService.pushEventToGoogle.mockResolvedValue(true);
+    arrange([], []);
 });
 
 describe("syncEventToInstructorsGoogleCalendars", () => {
     const importSync = async () =>
         await import("@/api-server/google/google-calendar-sync");
 
-    it("queries only opted-in settings via the instructor ∪ sync-all filter", async () => {
+    it("loads every opted-in user, then only their links", async () => {
         const { syncEventToInstructorsGoogleCalendars } = await importSync();
-        personalSettings.find.mockReturnValueOnce({
-            toArray: async () => [],
-        });
+        arrange([settings("1"), settings("9")], []);
 
         syncEventToInstructorsGoogleCalendars(event, "upsert");
         await flushAsyncWork();
 
         expect(personalSettings.find).toHaveBeenCalledWith({
             googleCalendarEnabled: true,
-            $or: [
-                {
-                    userId: {
-                        // Numeric instructors and lecturers, stringified and
-                        // deduped; the outsider lecturer is dropped.
-                        $in: ["1", "2", "3"],
-                    },
-                },
-                { googleCalendarSyncAllEvents: true },
-            ],
         });
+        expect(pushService.listGoogleCalendarLinks).toHaveBeenCalledWith(["1", "9"]);
     });
 
-    it("pushes to every matching user with the action passed through", async () => {
+    it("skips the link lookup entirely when nobody opted in", async () => {
         const { syncEventToInstructorsGoogleCalendars } = await importSync();
-        personalSettings.find.mockReturnValueOnce({
-            toArray: async () => [{ userId: "1" }, { userId: "9" }],
-        });
+
+        syncEventToInstructorsGoogleCalendars(event, "upsert");
+        await flushAsyncWork();
+
+        expect(pushService.listGoogleCalendarLinks).not.toHaveBeenCalled();
+        expect(pushService.pushEventToGoogle).not.toHaveBeenCalled();
+    });
+
+    it("pushes once per calendar: an assigned instructor's, a lecturer's, and a sync-all user's", async () => {
+        const { syncEventToInstructorsGoogleCalendars } = await importSync();
+        arrange(
+            [settings("1"), settings("3"), settings("9", true), settings("5")],
+            [link("1", "cal-1"), link("3", "cal-3"), link("9", "cal-9"), link("5", "cal-5")],
+        );
+
+        syncEventToInstructorsGoogleCalendars(event, "upsert", "2026a");
+        await flushAsyncWork();
+
+        // User 5 is neither assigned nor sync-all: their calendar is untouched.
+        expect(pushedTo().sort()).toEqual(["1:upsert", "3:upsert", "9:upsert"]);
+        // pushEventToGoogle(userId, event, action, iterationId).
+        expect(pushService.pushEventToGoogle).toHaveBeenCalledWith(
+            "1",
+            event,
+            "upsert",
+            "2026a",
+        );
+    });
+
+    it("writes a shared calendar exactly once however many users point at it", async () => {
+        const { syncEventToInstructorsGoogleCalendars } = await importSync();
+        arrange(
+            [settings("1"), settings("2"), settings("9", true)],
+            [link("1", "shared"), link("2", "shared"), link("9", "shared")],
+        );
+
+        syncEventToInstructorsGoogleCalendars(event, "upsert");
+        await flushAsyncWork();
+
+        expect(pushService.pushEventToGoogle).toHaveBeenCalledTimes(1);
+    });
+
+    it("a shared calendar gets the event when any of its users qualifies", async () => {
+        const { syncEventToInstructorsGoogleCalendars } = await importSync();
+        // User 5 is unassigned; user 1 is an instructor. Both on "shared".
+        arrange([settings("5"), settings("1")], [link("5", "shared"), link("1", "shared")]);
+
+        syncEventToInstructorsGoogleCalendars(event, "upsert");
+        await flushAsyncWork();
+
+        expect(pushService.pushEventToGoogle).toHaveBeenCalledTimes(1);
+    });
+
+    it("fails over to the next link on the same calendar when the first push is refused", async () => {
+        const { syncEventToInstructorsGoogleCalendars } = await importSync();
+        arrange([settings("1"), settings("2")], [link("1", "shared"), link("2", "shared")]);
+        // User 1 revoked Bluz in their Google account → the push is a no-op.
+        pushService.pushEventToGoogle
+            .mockResolvedValueOnce(false)
+            .mockResolvedValueOnce(true);
+
+        syncEventToInstructorsGoogleCalendars(event, "upsert");
+        await flushAsyncWork();
+
+        expect(pushedTo()).toEqual(["1:upsert", "2:upsert"]);
+    });
+
+    it("stops after the first link that works", async () => {
+        const { syncEventToInstructorsGoogleCalendars } = await importSync();
+        arrange(
+            [settings("1"), settings("2"), settings("3")],
+            [link("1", "shared"), link("2", "shared"), link("3", "shared")],
+        );
 
         syncEventToInstructorsGoogleCalendars(event, "delete");
         await flushAsyncWork();
 
-        expect(pushService.pushEventToGoogle).toHaveBeenCalledTimes(2);
-        // pushEventToGoogle(userId, event, action, iterationId) — the fan-out
-        // passes the event's iteration through as the fourth argument.
-        expect(pushService.pushEventToGoogle).toHaveBeenCalledWith(
-            "1",
-            event,
-            "delete",
-            undefined,
+        expect(pushedTo()).toEqual(["1:delete"]);
+    });
+
+    it("leaves a calendar bound to another iteration alone", async () => {
+        const { syncEventToInstructorsGoogleCalendars } = await importSync();
+        arrange(
+            [settings("1"), settings("2")],
+            [link("1", "cal-old", "2025b"), link("2", "cal-now", "2026a")],
         );
-        expect(pushService.pushEventToGoogle).toHaveBeenCalledWith(
-            "9",
-            event,
-            "delete",
-            undefined,
-        );
+
+        syncEventToInstructorsGoogleCalendars(event, "upsert", "2026a");
+        await flushAsyncWork();
+
+        expect(pushedTo()).toEqual(["2:upsert"]);
+    });
+
+    it("treats an unbound (legacy) link as matching any iteration", async () => {
+        const { syncEventToInstructorsGoogleCalendars } = await importSync();
+        arrange([settings("1")], [link("1", "cal-legacy")]);
+
+        syncEventToInstructorsGoogleCalendars(event, "upsert", "2026a");
+        await flushAsyncWork();
+
+        expect(pushedTo()).toEqual(["1:upsert"]);
+    });
+
+    it("does not gate on iteration when the write carries none", async () => {
+        const { syncEventToInstructorsGoogleCalendars } = await importSync();
+        arrange([settings("1")], [link("1", "cal-1", "2025b")]);
+
+        syncEventToInstructorsGoogleCalendars(event, "upsert");
+        await flushAsyncWork();
+
+        expect(pushedTo()).toEqual(["1:upsert"]);
+    });
+
+    it("deletes from every calendar on a delete, assigned or not", async () => {
+        const { syncEventToInstructorsGoogleCalendars } = await importSync();
+        // User 5 never qualified for this event — but a delete is cheap and
+        // a stale copy is worse than a 404.
+        arrange([settings("1"), settings("5")], [link("1", "cal-1"), link("5", "cal-5")]);
+
+        syncEventToInstructorsGoogleCalendars(event, "delete", "2026a");
+        await flushAsyncWork();
+
+        expect(pushedTo().sort()).toEqual(["1:delete", "5:delete"]);
+    });
+
+    it("on an update, removes the event from a calendar that wanted the old assignment only", async () => {
+        const { syncEventToInstructorsGoogleCalendars } = await importSync();
+        arrange([settings("1"), settings("7")], [link("1", "cal-1"), link("7", "cal-7")]);
+        const previous = { ...event, instructors: [7], lecturers: [] };
+        const updated = { ...event, instructors: [1], lecturers: [] };
+
+        syncEventToInstructorsGoogleCalendars(updated, "upsert", "2026a", previous);
+        await flushAsyncWork();
+
+        expect(pushedTo().sort()).toEqual(["1:upsert", "7:delete"]);
+    });
+
+    it("on an update, ignores calendars that wanted neither version", async () => {
+        const { syncEventToInstructorsGoogleCalendars } = await importSync();
+        arrange([settings("1"), settings("5")], [link("1", "cal-1"), link("5", "cal-5")]);
+        const previous = { ...event, instructors: [1], lecturers: [] };
+
+        syncEventToInstructorsGoogleCalendars(event, "upsert", "2026a", previous);
+        await flushAsyncWork();
+
+        expect(pushedTo()).toEqual(["1:upsert"]);
+    });
+
+    it("without a previous version, never issues speculative deletes", async () => {
+        const { syncEventToInstructorsGoogleCalendars } = await importSync();
+        arrange([settings("5")], [link("5", "cal-5")]);
+
+        syncEventToInstructorsGoogleCalendars(event, "upsert");
+        await flushAsyncWork();
+
+        expect(pushService.pushEventToGoogle).not.toHaveBeenCalled();
+    });
+
+    it("ignores opted-in users who never linked an account", async () => {
+        const { syncEventToInstructorsGoogleCalendars } = await importSync();
+        arrange([settings("1"), settings("2")], [link("2", "cal-2")]);
+
+        syncEventToInstructorsGoogleCalendars(event, "upsert");
+        await flushAsyncWork();
+
+        expect(pushedTo()).toEqual(["2:upsert"]);
     });
 
     it("swallows a settings-store failure instead of rejecting", async () => {
@@ -141,6 +301,22 @@ describe("syncEventToInstructorsGoogleCalendars", () => {
         expect(() =>
             syncEventToInstructorsGoogleCalendars(event, "upsert"),
         ).not.toThrow();
+        await flushAsyncWork();
+
+        expect(logger.warn).toHaveBeenCalledWith(
+            expect.objectContaining({ err: expect.anything() }),
+            "Google Calendar sync skipped:",
+        );
+    });
+
+    it("swallows a link-store failure instead of rejecting", async () => {
+        const { syncEventToInstructorsGoogleCalendars } = await importSync();
+        arrange([settings("1")], []);
+        pushService.listGoogleCalendarLinks.mockRejectedValueOnce(
+            new Error("mongo down"),
+        );
+
+        syncEventToInstructorsGoogleCalendars(event, "upsert");
         await flushAsyncWork();
 
         expect(logger.warn).toHaveBeenCalledWith(

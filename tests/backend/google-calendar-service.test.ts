@@ -10,11 +10,13 @@ import { logger } from "@/logging/pino";
  * a safe no-op (never a rejection) when Google is unreachable.
  */
 
-const { gapi, links, dbEvent, dbIterations } = vi.hoisted(() => {
+const { gapi, links, personalSettings, mongo, dbEvent, dbIterations } =
+    vi.hoisted(() => {
     /** Every API surface the service reaches for, as one shared fake. */
     const calendarApi = {
         calendarList: {
             list: vi.fn(async () => ({ data: { items: [] } })),
+            get: vi.fn(async () => ({ data: {} })),
         },
         calendars: {
             insert: vi.fn(async () => ({ data: { id: "cal-new" } })),
@@ -93,13 +95,26 @@ const { gapi, links, dbEvent, dbIterations } = vi.hoisted(() => {
             findOne: vi.fn(),
             updateOne: vi.fn(async () => undefined),
             deleteOne: vi.fn(async () => undefined),
+            find: vi.fn(() => ({ toArray: async () => [] })),
+            countDocuments: vi.fn(async () => 1),
+        },
+        personalSettings: {
+            find: vi.fn(() => ({ toArray: async () => [] })),
+        },
+        mongo: {
+            resolveIterationDb: vi.fn(async (id?: string) => ({
+                dbName: id ? `db-${id}` : "db-current",
+            })),
+            getDatabaseController: vi.fn((dbName: string) => ({ dbName })),
         },
         dbEvent: {
             get: vi.fn(),
+            getMultiple: vi.fn(async () => []),
             set: vi.fn(async () => undefined),
         },
         dbIterations: {
             currentOrNull: vi.fn(),
+            get: vi.fn(async () => null),
         },
     };
 });
@@ -120,12 +135,11 @@ vi.mock("@/api-server/db-event", () => ({ DbEvent: dbEvent }));
 vi.mock("@/api-server/db-iterations", () => ({ DbIterations: dbIterations }));
 vi.mock("@/api-server/mongo-db-controller", () => ({
     getMetaController: vi.fn(() => ({
-        googleCalendarLinks: {
-            findOne: links.findOne,
-            updateOne: links.updateOne,
-            deleteOne: links.deleteOne,
-        },
+        googleCalendarLinks: links,
+        personalSettings,
     })),
+    resolveIterationDb: mongo.resolveIterationDb,
+    getDatabaseController: mongo.getDatabaseController,
 }));
 
 import * as service from "@/api-server/google/google-calendar-service";
@@ -190,6 +204,17 @@ const flushAsyncWork = () =>
 
 beforeEach(() => {
     vi.clearAllMocks();
+    // Backoff is exercised explicitly below; everywhere else it must not
+    // slow the suite down or turn a one-off rejection into a silent retry.
+    service.googleRetryPolicy.attempts = 1;
+    service.googleRetryPolicy.baseDelayMs = 0;
+    service.googleRetryPolicy.maxDelayMs = 0;
+    links.find.mockReturnValue({ toArray: async () => [] });
+    links.countDocuments.mockResolvedValue(1);
+    personalSettings.find.mockReturnValue({ toArray: async () => [] });
+    dbEvent.getMultiple.mockResolvedValue([]);
+    dbIterations.get.mockResolvedValue(null);
+    gapi.api.calendarList.get.mockResolvedValue({ data: {} });
     gapi.nextTokens.access_token = "access-token";
     gapi.nextTokens.refresh_token = "refresh-token";
     gapi.nextTokens.expiry_date = 1_900_000_000_000;
@@ -831,5 +856,686 @@ describe("pullBusyBlocks", () => {
         const unconfigured = await loadUnconfigured();
 
         await expect(unconfigured.pullBusyBlocks("u1")).resolves.toEqual([]);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// Google API conduct: backoff + idempotent ids
+// ---------------------------------------------------------------------------
+
+describe("withBackoff / retry classification", () => {
+    beforeEach(() => {
+        service.googleRetryPolicy.attempts = 3;
+        service.googleRetryPolicy.baseDelayMs = 0;
+        service.googleRetryPolicy.maxDelayMs = 0;
+    });
+
+    it("classifies per Google's error guide", () => {
+        expect(service.isRetryableGoogleError({ code: 429 })).toBe(true);
+        expect(service.isRetryableGoogleError({ code: 500 })).toBe(true);
+        expect(service.isRetryableGoogleError({ response: { status: 503 } })).toBe(true);
+        expect(
+            service.isRetryableGoogleError({
+                code: 403,
+                errors: [{ reason: "rateLimitExceeded" }],
+            }),
+        ).toBe(true);
+        expect(
+            service.isRetryableGoogleError({
+                code: 403,
+                errors: [{ reason: "userRateLimitExceeded" }],
+            }),
+        ).toBe(true);
+        // A plain forbidden, a bad request, a 404, a 409 and a 410 are the
+        // caller's problem, not something a retry fixes.
+        expect(
+            service.isRetryableGoogleError({ code: 403, errors: [{ reason: "forbidden" }] }),
+        ).toBe(false);
+        expect(service.isRetryableGoogleError({ code: 400 })).toBe(false);
+        expect(service.isRetryableGoogleError({ code: 404 })).toBe(false);
+        expect(service.isRetryableGoogleError({ code: 409 })).toBe(false);
+        expect(service.isRetryableGoogleError({ code: 410 })).toBe(false);
+        expect(service.isRetryableGoogleError(new Error("ECONNRESET"))).toBe(false);
+    });
+
+    it("reads a string status code the way gaxios sometimes reports it", () => {
+        expect(service.googleErrorStatus({ code: "429" })).toBe(429);
+        expect(service.googleErrorStatus({ code: "ENOTFOUND" })).toBeUndefined();
+    });
+
+    it("retries a rate limit until it clears, within the attempt budget", async () => {
+        const call = vi
+            .fn()
+            .mockRejectedValueOnce({ code: 429 })
+            .mockRejectedValueOnce({ code: 503 })
+            .mockResolvedValueOnce("ok");
+
+        await expect(service.withBackoff(call)).resolves.toBe("ok");
+        expect(call).toHaveBeenCalledTimes(3);
+    });
+
+    it("gives up after the last attempt with the final error", async () => {
+        const call = vi.fn().mockRejectedValue({ code: 500 });
+
+        await expect(service.withBackoff(call)).rejects.toEqual({ code: 500 });
+        expect(call).toHaveBeenCalledTimes(3);
+    });
+
+    it("does not retry a client error at all", async () => {
+        const call = vi.fn().mockRejectedValue({ code: 404 });
+
+        await expect(service.withBackoff(call)).rejects.toEqual({ code: 404 });
+        expect(call).toHaveBeenCalledTimes(1);
+    });
+
+    it("pushes through a transient 503 on the update", async () => {
+        gapi.api.events.update
+            .mockRejectedValueOnce({ code: 503 })
+            .mockResolvedValueOnce({ data: {} });
+
+        await expect(
+            service.pushEventToGoogle("u1", eventFixture(), "upsert"),
+        ).resolves.toBe(true);
+        expect(gapi.api.events.update).toHaveBeenCalledTimes(2);
+    });
+});
+
+describe("pushEventToGoogle — id conduct", () => {
+    it("derives a base32hex-safe id from the Bluz id", () => {
+        expect(service.toGoogleEventId("A1B2-C3D4-e5f6")).toBe("a1b2c3d4e5f6");
+        expect(service.toGoogleEventId("a1b2c3d4e5f6")).toMatch(/^[a-v0-9]{5,1024}$/);
+    });
+
+    it("marks the copy confirmed and bluz-managed", async () => {
+        await service.pushEventToGoogle("u1", eventFixture(), "upsert", "2026a");
+
+        const [args] = gapi.api.events.update.mock.calls[0];
+        expect(args.requestBody.status).toBe("confirmed");
+        expect(args.requestBody.extendedProperties.private).toEqual({
+            bluzManaged: "true",
+            bluzEventId: "abc-def-123",
+            bluzIterationId: "2026a",
+        });
+    });
+
+    it("recovers from a 409 on insert by updating the existing holder of the id", async () => {
+        // First update: nothing there. Insert: the id is held (a tombstone or
+        // a concurrent push). Second update: lands.
+        gapi.api.events.update
+            .mockRejectedValueOnce({ code: 404 })
+            .mockResolvedValueOnce({ data: {} });
+        gapi.api.events.insert.mockRejectedValueOnce({ code: 409 });
+
+        await expect(
+            service.pushEventToGoogle("u1", eventFixture(), "upsert"),
+        ).resolves.toBe(true);
+        expect(gapi.api.events.insert).toHaveBeenCalledTimes(1);
+        expect(gapi.api.events.update).toHaveBeenCalledTimes(2);
+    });
+
+    it("surfaces a non-409 insert failure as a skipped push", async () => {
+        gapi.api.events.update.mockRejectedValueOnce({ code: 404 });
+        gapi.api.events.insert.mockRejectedValueOnce({
+            code: 403,
+            errors: [{ reason: "forbidden" }],
+        });
+
+        await expect(
+            service.pushEventToGoogle("u1", eventFixture(), "upsert"),
+        ).resolves.toBe(false);
+    });
+
+    it("treats a 410 on delete as already gone", async () => {
+        gapi.api.events.delete.mockRejectedValueOnce({ code: 410 });
+
+        await expect(
+            service.pushEventToGoogle("u1", eventFixture(), "delete"),
+        ).resolves.toBe(true);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// Shared calendars + iteration binding
+// ---------------------------------------------------------------------------
+
+describe("connectGoogleCalendar — shared calendars and iteration binding", () => {
+    beforeEach(() => {
+        dbIterations.currentOrNull.mockResolvedValue({
+            id: "2026a",
+            label: ITERATION_LABEL,
+        });
+    });
+
+    it("asks Google for writable calendars only", async () => {
+        await service.connectGoogleCalendar("u1", "code");
+
+        expect(gapi.api.calendarList.list).toHaveBeenCalledWith(
+            expect.objectContaining({ minAccessRole: "writer" }),
+        );
+    });
+
+    it("joins a colleague's shared calendar already named after the iteration", async () => {
+        gapi.api.calendarList.list.mockResolvedValueOnce({
+            data: {
+                items: [
+                    { id: "shared-1", summary: ITERATION_LABEL, accessRole: "writer" },
+                ],
+            },
+        });
+
+        await service.connectGoogleCalendar("u1", "code");
+
+        const [, update] = links.updateOne.mock.calls[0];
+        expect(update.$set).toMatchObject({
+            calendarId: "shared-1",
+            calendarSummary: ITERATION_LABEL,
+            calendarAccessRole: "writer",
+            iterationId: "2026a",
+        });
+        expect(gapi.api.calendars.insert).not.toHaveBeenCalled();
+    });
+
+    it("prefers the user's own calendar over a shared one of the same name", async () => {
+        gapi.api.calendarList.list.mockResolvedValueOnce({
+            data: {
+                items: [
+                    { id: "shared-1", summary: ITERATION_LABEL, accessRole: "writer" },
+                    { id: "own-1", summary: ITERATION_LABEL, accessRole: "owner" },
+                ],
+            },
+        });
+
+        await service.connectGoogleCalendar("u1", "code");
+
+        expect(links.updateOne.mock.calls[0][1].$set.calendarId).toBe("own-1");
+    });
+
+    it("never renames a shared calendar it does not own", async () => {
+        gapi.api.calendarList.list.mockResolvedValueOnce({
+            data: {
+                items: [{ id: "shared-legacy", summary: "Bluz", accessRole: "writer" }],
+            },
+        });
+
+        await service.connectGoogleCalendar("u1", "code");
+
+        expect(gapi.api.calendars.patch).not.toHaveBeenCalled();
+        expect(links.updateOne.mock.calls[0][1].$set.calendarSummary).toBe("Bluz");
+    });
+
+    it("skips read-only calendars even if they carry the iteration's name", async () => {
+        gapi.api.calendarList.list.mockResolvedValueOnce({
+            data: {
+                items: [{ id: "ro", summary: ITERATION_LABEL, accessRole: "reader" }],
+            },
+        });
+
+        await service.connectGoogleCalendar("u1", "code");
+
+        expect(gapi.api.calendars.insert).toHaveBeenCalled();
+        expect(links.updateOne.mock.calls[0][1].$set.calendarId).toBe("cal-new");
+    });
+
+    it("binds the link to the current iteration and drops any stale cursor", async () => {
+        await service.connectGoogleCalendar("u1", "code");
+
+        const [, update] = links.updateOne.mock.calls[0];
+        expect(update.$set.iterationId).toBe("2026a");
+        expect(update.$unset).toEqual({ syncToken: "" });
+    });
+
+    it("stores no iteration when none is registered", async () => {
+        dbIterations.currentOrNull.mockResolvedValue(null);
+
+        await service.connectGoogleCalendar("u1", "code");
+
+        expect(links.updateOne.mock.calls[0][1].$set).not.toHaveProperty(
+            "iterationId",
+        );
+    });
+});
+
+describe("listGoogleCalendarOptions", () => {
+    it("throws a client error when not connected", async () => {
+        links.findOne.mockResolvedValue(null);
+
+        await expect(service.listGoogleCalendarOptions("u1")).rejects.toThrow(
+            /Google/,
+        );
+    });
+
+    it("returns writable calendars with shared/primary flags and the current pick", async () => {
+        gapi.api.calendarList.list.mockResolvedValueOnce({
+            data: {
+                items: [
+                    { id: "primary-id", summary: "me@x", accessRole: "owner", primary: true },
+                    { id: "shared-1", summary: "צוות", accessRole: "writer" },
+                    { id: "ro", summary: "חגים", accessRole: "reader" },
+                ],
+            },
+        });
+
+        const result = await service.listGoogleCalendarOptions("u1");
+
+        expect(result.selectedId).toBe("cal-bluz");
+        expect(result.calendars).toEqual([
+            {
+                id: "primary-id",
+                summary: "me@x",
+                accessRole: "owner",
+                primary: true,
+                shared: false,
+            },
+            {
+                id: "shared-1",
+                summary: "צוות",
+                accessRole: "writer",
+                primary: false,
+                shared: true,
+            },
+        ]);
+    });
+
+    it("follows calendarList pagination", async () => {
+        gapi.api.calendarList.list
+            .mockResolvedValueOnce({
+                data: { items: [{ id: "a", summary: "A" }], nextPageToken: "p2" },
+            })
+            .mockResolvedValueOnce({ data: { items: [{ id: "b", summary: "B" }] } });
+
+        const result = await service.listGoogleCalendarOptions("u1");
+
+        expect(result.calendars.map((c) => c.id)).toEqual(["a", "b"]);
+        expect(gapi.api.calendarList.list).toHaveBeenLastCalledWith(
+            expect.objectContaining({ pageToken: "p2" }),
+        );
+    });
+
+    it("honours a summaryOverride the user gave a shared calendar", async () => {
+        gapi.api.calendarList.list.mockResolvedValueOnce({
+            data: {
+                items: [
+                    {
+                        id: "s",
+                        summary: "Original",
+                        summaryOverride: "השם שלי",
+                        accessRole: "writer",
+                    },
+                ],
+            },
+        });
+
+        const result = await service.listGoogleCalendarOptions("u1");
+
+        expect(result.calendars[0].summary).toBe("השם שלי");
+    });
+});
+
+describe("selectGoogleCalendar", () => {
+    beforeEach(() => {
+        dbIterations.currentOrNull.mockResolvedValue({
+            id: "2026a",
+            label: ITERATION_LABEL,
+        });
+        dbIterations.get.mockResolvedValue({ id: "2026a", label: ITERATION_LABEL });
+        links.countDocuments.mockResolvedValue(3);
+    });
+
+    it("re-points the link at a writable existing calendar and resets the cursor", async () => {
+        gapi.api.calendarList.get.mockResolvedValueOnce({
+            data: { id: "shared-1", summary: "צוות", accessRole: "writer" },
+        });
+
+        const selection = await service.selectGoogleCalendar("u1", {
+            calendarId: "shared-1",
+        });
+
+        expect(gapi.api.calendarList.get).toHaveBeenCalledWith({
+            calendarId: "shared-1",
+        });
+        expect(links.updateOne).toHaveBeenCalledWith(
+            { userId: "u1" },
+            {
+                $set: {
+                    calendarId: "shared-1",
+                    calendarSummary: "צוות",
+                    calendarAccessRole: "writer",
+                    iterationId: "2026a",
+                },
+                $unset: { syncToken: "" },
+            },
+            { upsert: true },
+        );
+        expect(selection).toEqual({
+            id: "shared-1",
+            summary: "צוות",
+            accessRole: "writer",
+            iterationId: "2026a",
+            iterationLabel: ITERATION_LABEL,
+            linkedUsers: 3,
+        });
+    });
+
+    it("rejects a calendar the user cannot write to", async () => {
+        gapi.api.calendarList.get.mockResolvedValueOnce({
+            data: { id: "ro", summary: "חגים", accessRole: "reader" },
+        });
+
+        await expect(
+            service.selectGoogleCalendar("u1", { calendarId: "ro" }),
+        ).rejects.toThrow(/הרשאת כתיבה/);
+        expect(links.updateOne).not.toHaveBeenCalled();
+    });
+
+    it("rejects a calendar Google does not know (404)", async () => {
+        gapi.api.calendarList.get.mockRejectedValueOnce({ code: 404 });
+
+        await expect(
+            service.selectGoogleCalendar("u1", { calendarId: "nope" }),
+        ).rejects.toThrow(/הרשאת כתיבה/);
+    });
+
+    it("rejects an empty calendar id", async () => {
+        await expect(
+            service.selectGoogleCalendar("u1", { calendarId: "  " }),
+        ).rejects.toThrow(/calendarId/);
+    });
+
+    it("creates a fresh calendar named after the current iteration on createNew", async () => {
+        const selection = await service.selectGoogleCalendar("u1", {
+            createNew: true,
+        });
+
+        expect(gapi.api.calendars.insert).toHaveBeenCalledWith({
+            requestBody: { summary: ITERATION_LABEL },
+        });
+        expect(selection.id).toBe("cal-new");
+        expect(selection.accessRole).toBe("owner");
+    });
+
+    it("throws when not connected", async () => {
+        links.findOne.mockResolvedValue(null);
+
+        await expect(
+            service.selectGoogleCalendar("u1", { createNew: true }),
+        ).rejects.toThrow(/Google/);
+    });
+});
+
+describe("getGoogleCalendarSelection", () => {
+    it("is null while disconnected", async () => {
+        links.findOne.mockResolvedValue(null);
+
+        await expect(service.getGoogleCalendarSelection("u1")).resolves.toBeNull();
+    });
+
+    it("describes the linked calendar, its iteration and how many users share it", async () => {
+        links.findOne.mockResolvedValue(
+            makeLink({
+                calendarSummary: "צוות",
+                calendarAccessRole: "writer",
+                iterationId: "2026a",
+            }),
+        );
+        dbIterations.get.mockResolvedValue({ id: "2026a", label: ITERATION_LABEL });
+        links.countDocuments.mockResolvedValue(4);
+
+        await expect(service.getGoogleCalendarSelection("u1")).resolves.toEqual({
+            id: "cal-bluz",
+            summary: "צוות",
+            accessRole: "writer",
+            iterationId: "2026a",
+            iterationLabel: ITERATION_LABEL,
+            linkedUsers: 4,
+        });
+        expect(links.countDocuments).toHaveBeenCalledWith({ calendarId: "cal-bluz" });
+    });
+
+    it("falls back to the legacy name and no iteration on a pre-upgrade link", async () => {
+        const selection = await service.getGoogleCalendarSelection("u1");
+
+        expect(selection).toMatchObject({ summary: "Bluz", iterationId: undefined });
+        expect(dbIterations.get).not.toHaveBeenCalled();
+    });
+});
+
+describe("pullEventEdits — iteration resolution", () => {
+    const copy = (privateProps: Record<string, string>) => ({
+        extendedProperties: { private: privateProps },
+        summary: "חדש",
+    });
+
+    it("resolves an untagged copy against the link's bound iteration", async () => {
+        links.findOne.mockResolvedValue(makeLink({ iterationId: "2025b" }));
+        dbEvent.get.mockResolvedValue(eventFixture());
+        gapi.api.events.list.mockResolvedValueOnce({
+            data: { items: [copy({ bluzEventId: "abc-def-123" })] },
+        });
+
+        await service.pullEventEdits("u1");
+
+        expect(mongo.resolveIterationDb).toHaveBeenCalledWith("2025b");
+        expect(dbEvent.get).toHaveBeenCalledWith("abc-def-123", undefined, {
+            dbName: "db-2025b",
+        });
+    });
+
+    it("lets the copy's own iteration tag win over the link's", async () => {
+        links.findOne.mockResolvedValue(makeLink({ iterationId: "2025b" }));
+        dbEvent.get.mockResolvedValue(eventFixture());
+        gapi.api.events.list.mockResolvedValueOnce({
+            data: {
+                items: [
+                    copy({ bluzEventId: "abc-def-123", bluzIterationId: "2026a" }),
+                ],
+            },
+        });
+
+        await service.pullEventEdits("u1");
+
+        expect(mongo.resolveIterationDb).toHaveBeenCalledWith("2026a");
+    });
+
+    it("requests the largest page size the API allows", async () => {
+        await service.pullEventEdits("u1");
+
+        expect(gapi.api.events.list).toHaveBeenCalledWith(
+            expect.objectContaining({ maxResults: 2500, showDeleted: true }),
+        );
+    });
+});
+
+// ---------------------------------------------------------------------------
+// Purge
+// ---------------------------------------------------------------------------
+
+describe("purgeGoogleEvents", () => {
+    const managed = (id: string, bluzEventId: string, iteration?: string) => ({
+        id,
+        status: "confirmed",
+        extendedProperties: {
+            private: {
+                bluzEventId,
+                ...(iteration ? { bluzIterationId: iteration } : {}),
+            },
+        },
+    });
+    const handMade = { id: "hand", summary: "רופא שיניים" };
+
+    beforeEach(() => {
+        links.findOne.mockResolvedValue(makeLink({ iterationId: "2026a" }));
+        links.find.mockReturnValue({
+            toArray: async () => [{ userId: "u1", calendarId: "cal-bluz" }],
+        });
+        personalSettings.find.mockReturnValue({
+            toArray: async () => [
+                {
+                    userId: "u1",
+                    googleCalendarEnabled: true,
+                    googleCalendarSyncAllEvents: false,
+                },
+            ],
+        });
+    });
+
+    it("throws when not connected", async () => {
+        links.findOne.mockResolvedValue(null);
+
+        await expect(service.purgeGoogleEvents("u1", "all")).rejects.toThrow(
+            /Google/,
+        );
+    });
+
+    it("scope=all removes every Bluz-tagged copy and nothing hand-made", async () => {
+        gapi.api.events.list.mockResolvedValueOnce({
+            data: { items: [managed("g1", "e1"), handMade, managed("g2", "e2")] },
+        });
+
+        const result = await service.purgeGoogleEvents("u1", "all");
+
+        expect(result).toEqual({ scanned: 2, removed: 2, failed: 0 });
+        expect(
+            gapi.api.events.delete.mock.calls.map(([a]) => a.eventId),
+        ).toEqual(["g1", "g2"]);
+        expect(gapi.api.events.list).toHaveBeenCalledWith(
+            expect.objectContaining({ showDeleted: false, maxResults: 2500 }),
+        );
+    });
+
+    it("scope=orphaned keeps copies backed by a live, in-scope event", async () => {
+        gapi.api.events.list.mockResolvedValueOnce({
+            data: {
+                items: [
+                    managed("g-live", "e-live", "2026a"),
+                    managed("g-gone", "e-gone", "2026a"),
+                ],
+            },
+        });
+        // e-live still exists and user 1 is assigned; e-gone was deleted in Bluz.
+        dbEvent.getMultiple.mockResolvedValue([
+            eventFixture({ id: "e-live", instructors: [1] }),
+        ]);
+        personalSettings.find.mockReturnValue({
+            toArray: async () => [
+                {
+                    userId: "1",
+                    googleCalendarEnabled: true,
+                    googleCalendarSyncAllEvents: false,
+                },
+            ],
+        });
+
+        const result = await service.purgeGoogleEvents("u1", "orphaned");
+
+        expect(result).toEqual({ scanned: 2, removed: 1, failed: 0 });
+        expect(gapi.api.events.delete).toHaveBeenCalledTimes(1);
+        expect(gapi.api.events.delete.mock.calls[0][0].eventId).toBe("g-gone");
+        // Looked the ids up in the calendar's iteration, in one batch.
+        expect(mongo.resolveIterationDb).toHaveBeenCalledWith("2026a");
+        expect(dbEvent.getMultiple).toHaveBeenCalledWith(
+            ["e-live", "e-gone"],
+            undefined,
+            { dbName: "db-2026a" },
+        );
+    });
+
+    it("scope=orphaned treats a copy from another iteration as an orphan without a lookup", async () => {
+        gapi.api.events.list.mockResolvedValueOnce({
+            data: { items: [managed("g-old", "e-old", "2025b")] },
+        });
+
+        const result = await service.purgeGoogleEvents("u1", "orphaned");
+
+        expect(result.removed).toBe(1);
+        expect(dbEvent.getMultiple).not.toHaveBeenCalled();
+    });
+
+    it("scope=orphaned removes a copy no linked user wants any more", async () => {
+        gapi.api.events.list.mockResolvedValueOnce({
+            data: { items: [managed("g-x", "e-x", "2026a")] },
+        });
+        // The event lives, but its instructor is user 7 and only user 1 (not
+        // sync-all) mirrors into this calendar.
+        dbEvent.getMultiple.mockResolvedValue([
+            eventFixture({ id: "e-x", instructors: [7] }),
+        ]);
+        personalSettings.find.mockReturnValue({
+            toArray: async () => [
+                {
+                    userId: "1",
+                    googleCalendarEnabled: true,
+                    googleCalendarSyncAllEvents: false,
+                },
+            ],
+        });
+
+        const result = await service.purgeGoogleEvents("u1", "orphaned");
+
+        expect(result.removed).toBe(1);
+    });
+
+    it("scope=orphaned keeps everything for a sync-all subscriber of the calendar", async () => {
+        gapi.api.events.list.mockResolvedValueOnce({
+            data: { items: [managed("g-x", "e-x", "2026a")] },
+        });
+        dbEvent.getMultiple.mockResolvedValue([
+            eventFixture({ id: "e-x", instructors: [7] }),
+        ]);
+        personalSettings.find.mockReturnValue({
+            toArray: async () => [
+                {
+                    userId: "1",
+                    googleCalendarEnabled: true,
+                    googleCalendarSyncAllEvents: true,
+                },
+            ],
+        });
+
+        const result = await service.purgeGoogleEvents("u1", "orphaned");
+
+        expect(result).toEqual({ scanned: 1, removed: 0, failed: 0 });
+        expect(gapi.api.events.delete).not.toHaveBeenCalled();
+    });
+
+    it("resolves untagged legacy copies against the link's iteration", async () => {
+        gapi.api.events.list.mockResolvedValueOnce({
+            data: { items: [managed("g-legacy", "e-legacy")] },
+        });
+
+        await service.purgeGoogleEvents("u1", "orphaned");
+
+        expect(mongo.resolveIterationDb).toHaveBeenCalledWith("2026a");
+    });
+
+    it("follows pagination across the whole calendar", async () => {
+        gapi.api.events.list
+            .mockResolvedValueOnce({
+                data: { items: [managed("g1", "e1")], nextPageToken: "p2" },
+            })
+            .mockResolvedValueOnce({ data: { items: [managed("g2", "e2")] } });
+
+        const result = await service.purgeGoogleEvents("u1", "all");
+
+        expect(result.scanned).toBe(2);
+        expect(gapi.api.events.list).toHaveBeenLastCalledWith(
+            expect.objectContaining({ pageToken: "p2" }),
+        );
+    });
+
+    it("counts a delete Google refuses, and keeps going", async () => {
+        gapi.api.events.list.mockResolvedValueOnce({
+            data: {
+                items: [managed("g1", "e1"), managed("g2", "e2"), managed("g3", "e3")],
+            },
+        });
+        gapi.api.events.delete
+            .mockResolvedValueOnce({ data: {} })
+            .mockRejectedValueOnce({ code: 403, errors: [{ reason: "forbidden" }] })
+            .mockRejectedValueOnce({ code: 404 });
+
+        const result = await service.purgeGoogleEvents("u1", "all");
+
+        // 404 = already gone = removed; the forbidden one is the failure.
+        expect(result).toEqual({ scanned: 3, removed: 2, failed: 1 });
     });
 });

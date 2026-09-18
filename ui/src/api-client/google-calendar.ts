@@ -5,6 +5,11 @@ import {
 } from "@/api-client/common";
 import {
     ApiGoogleCalendarConnectPayload,
+    ApiGoogleCalendarListResponse,
+    ApiGoogleCalendarPurgePayload,
+    ApiGoogleCalendarPurgeResponse,
+    ApiGoogleCalendarSelectPayload,
+    ApiGoogleCalendarSelectResponse,
     ApiGoogleCalendarStatusResponse,
     ApiGoogleCalendarSyncResponse,
 } from "@/api-shared/types/google-calendar";
@@ -44,5 +49,37 @@ export const apiSyncGoogleCalendarNow: ClientApiNoPayload<
     return await safeApiFetcher<ApiGoogleCalendarSyncResponse>(
         "/api/integrations/google-calendar/sync",
         { ...props, method: "POST" },
+    );
+};
+
+/** Calendars the connected account can mirror into (own + shared with write access). */
+export const apiListGoogleCalendars: ClientApiNoPayload<
+    ApiGoogleCalendarListResponse
+> = async (props) => {
+    return await safeApiFetcher<ApiGoogleCalendarListResponse>(
+        "/api/integrations/google-calendar/calendars",
+        props,
+    );
+};
+
+/** Re-points the link at an existing calendar, or a fresh Bluz-created one. */
+export const apiSelectGoogleCalendar: ClientApi<
+    ApiGoogleCalendarSelectPayload,
+    ApiGoogleCalendarSelectResponse
+> = async (payload, props) => {
+    return await safeApiFetcher<ApiGoogleCalendarSelectResponse>(
+        "/api/integrations/google-calendar/calendars",
+        { ...props, method: "POST", body: JSON.stringify(payload) },
+    );
+};
+
+/** Removes Bluz-tagged events from the linked calendar (orphans, or all). */
+export const apiPurgeGoogleCalendar: ClientApi<
+    ApiGoogleCalendarPurgePayload,
+    ApiGoogleCalendarPurgeResponse
+> = async (payload, props) => {
+    return await safeApiFetcher<ApiGoogleCalendarPurgeResponse>(
+        "/api/integrations/google-calendar/purge",
+        { ...props, method: "POST", body: JSON.stringify(payload) },
     );
 };

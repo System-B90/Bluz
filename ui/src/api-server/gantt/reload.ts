@@ -318,7 +318,12 @@ export async function reloadCurriculumSchedule(
         });
         updated.push(after);
         historyUpdates.push({ after, before, eventId: update.eventId });
-        syncEventToInstructorsGoogleCalendars(after, "upsert", iteration.id);
+        syncEventToInstructorsGoogleCalendars(
+            after,
+            "upsert",
+            iteration.id,
+            before,
+        );
     }
 
     if (eventWrites.length > 0) {
