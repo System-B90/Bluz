@@ -40,6 +40,9 @@ import { useEventContextMenu } from "@/components/schedule/event-context-menu/us
 import { useEventSelection } from "@/components/schedule/event-context-menu/use-event-selection";
 import { Event } from "@/components/schedule/types/event";
 
+/** Keys the schedule's global hotkeys use (see use-schedule-commands). */
+const SCHEDULE_HOTKEYS = new Set(["z", "y", "arrowleft", "arrowright"]);
+
 type BluzCalendarProps = {
     handleSaveEvent: (event: Event, initiator?: EventChangeInitiator) => Event | undefined | void;
     handleDeleteEvent: (
@@ -105,6 +108,25 @@ export function BluzCalendar({
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [isFullscreen]);
+
+    // The palette's hotkeys (Ctrl+Z/Y undo, Ctrl+←/→ paging) are window
+    // listeners that only skip plain text inputs. With the event dialog
+    // open and focus on a Select, a chip or the dialog paper, Ctrl+Z undid
+    // the *calendar's* last edit — and pushed that undo to the server —
+    // while the user believed they were undoing inside the form. Any open
+    // dialog owns those keys; swallow them in the capture phase before the
+    // hotkey listener sees them (the browser's own text undo is untouched).
+    useEffect(() => {
+        const swallowScheduleHotkeys = (e: KeyboardEvent) => {
+            if (!(e.ctrlKey || e.metaKey)) return;
+            if (!SCHEDULE_HOTKEYS.has(e.key.toLowerCase())) return;
+            if (document.querySelector(".MuiDialog-root") === null) return;
+            e.stopPropagation();
+        };
+        window.addEventListener("keydown", swallowScheduleHotkeys, true);
+        return () =>
+            window.removeEventListener("keydown", swallowScheduleHotkeys, true);
+    }, []);
 
     const { handleEventDrag, handleSplitEvent, handleSlotSelect, setActiveEvent } =
         useCalendarHandlers(
