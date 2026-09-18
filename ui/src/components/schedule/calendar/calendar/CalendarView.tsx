@@ -553,6 +553,31 @@ export function CalendarView({
         [ onClearSelection, onSelectSlot ],
     );
 
+    // Day view lays events out by room column, and react-big-calendar drops
+    // any event whose resource matches no column. An event assigned to a room
+    // the room list no longer carries (a Hive room removed since, or a Hive
+    // that is unreachable and answered with nothing) would simply vanish
+    // from the day view with no trace, so those rooms get a placeholder
+    // column of their own instead.
+    const dayResources = useMemo<Array<Room>>(() =>
+    {
+        const known = new Set(rooms.map((room) => roomLikeToResourceKey(room)));
+        const orphans = new Map<string, Room>();
+        for (const event of events)
+        {
+            for (const room of event.rooms)
+            {
+                const key = roomLikeToResourceKey(room);
+                if (known.has(key) || orphans.has(key)) continue;
+                orphans.set(key, {
+                    ...room,
+                    name: `חדר לא מוכר (${room.id})`,
+                } as Room);
+            }
+        }
+        return [ NO_ROOM_RESOURCE, ...rooms, ...orphans.values() ];
+    }, [ rooms, events ]);
+
     const { calendarDayStartTime, calendarDayEndTime } = useSettings();
     const calendarMin = useMemo(
         () => dayjs(calendarDayStartTime, "HH:mm").toDate(),
@@ -600,9 +625,7 @@ export function CalendarView({
                     resourceIdAccessor={ resourceIdAccessor }
                     // Resource logic
                     resources={
-                        currentView === Views.DAY
-                            ? [ NO_ROOM_RESOURCE, ...rooms ]
-                            : undefined
+                        currentView === Views.DAY ? dayResources : undefined
                     }
                     resourceTitleAccessor="name"
                     rtl={ true }

@@ -57,7 +57,7 @@ export function EventClassification({
                     display: "flex",
                     alignItems: "flex-start",
                     visibility: isPrayer ? "visible" : "hidden",
-                    mr: isPrayer ? 0 : -2,
+                    marginInlineEnd: isPrayer ? 0 : -2,
                     pt: 1.5,
                     mt: -1.5,
                 } }
@@ -82,7 +82,7 @@ export function EventClassification({
                     gap: 2,
                     alignItems: "flex-start",
                     visibility: showHiveFields ? "visible" : "hidden",
-                    mr: showHiveFields ? 0 : -2,
+                    marginInlineEnd: showHiveFields ? 0 : -2,
                     pt: 1.5,
                     mt: -1.5,
                 } }

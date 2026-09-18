@@ -47,10 +47,10 @@ export function EventTimeField({
     const startTimeChange = useCallback(
         (time: PickerValue) =>
         {
-            if (time)
-            {
-                onBlurCallback({ startTime: time, endTime: time.add(duration) });
-            }
+            // A half-typed value arrives as an *invalid* Dayjs, not null;
+            // writing it through would put NaN timestamps on the event.
+            if (!time?.isValid()) return;
+            onBlurCallback({ startTime: time, endTime: time.add(duration) });
         },
         [ duration, onBlurCallback ],
     );
@@ -58,7 +58,7 @@ export function EventTimeField({
     const endTimeChange = useCallback(
         (time: PickerValue) =>
         {
-            if (!time) return;
+            if (!time?.isValid()) return;
             // The picker's minTime shows the field as invalid; this refuses
             // to write the bad value through (#623).
             if (!isEndTimeValid(startTime, time)) return;
@@ -74,7 +74,7 @@ export function EventTimeField({
     const dateChange = useCallback(
         (date: PickerValue) =>
         {
-            if (!date || !startTime) return;
+            if (!date?.isValid() || !startTime) return;
             // Rebuilt from wall-clock strings rather than via
             // `.year().month().date()`: those setters keep the *current*
             // UTC offset on a `.tz()` instance, so moving across a DST
