@@ -169,6 +169,7 @@ export const INITIATOR_LABELS: Record<EventChangeInitiator, string> = {
     [EventChangeInitiator.GoogleSync]: "סנכרון מיומן Google",
     [EventChangeInitiator.Split]: "פיצול בלוח",
     [EventChangeInitiator.Undo]: "ביטול/ביצוע חוזר",
+    [EventChangeInitiator.ContextMenu]: "תפריט ימני בלוח",
     [EventChangeInitiator.AiAssistant]: "עוזר AI",
     [EventChangeInitiator.Unknown]: "לא ידוע",
 };
