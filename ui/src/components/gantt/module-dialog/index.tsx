@@ -32,6 +32,7 @@ import {
 } from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { InstructorSelect } from "@/components/base/InstructorSelect";
+import { useConfirmDialog } from "@/components/base/UseConfirmDialog";
 import { ModuleConstraintsView } from "@/components/gantt/module-dialog/constraints/ModuleConstraintsView";
 import { ModuleEventsView } from "@/components/gantt/module-dialog/ModuleEventsView";
 import {
@@ -396,8 +397,20 @@ function ModuleDialogInner({
         [moduleId, syllabusId, moduleDoc, updateModule, enqueueSnackbar],
     );
 
-    const handleDelete = useCallback(() => {
+    const { confirm, confirmDialog } = useConfirmDialog();
+
+    // Deleting a module takes every event under it along, with no undo —
+    // one stray click on מחיקה must not be enough.
+    const handleDelete = useCallback(async () => {
         if (!syllabusId || !moduleId) return;
+        const eventCount = moduleDoc?.events?.length ?? 0;
+        const ok = await confirm(
+            eventCount > 0
+                ? `למחוק את המערך "${moduleDoc?.title ?? ""}" על ${eventCount} המופעים שבו? לא ניתן לבטל.`
+                : `למחוק את המערך "${moduleDoc?.title ?? ""}"? לא ניתן לבטל.`,
+            { title: "מחיקת מערך", confirmLabel: "למחוק" },
+        );
+        if (!ok) return;
 
         setIsActionLoading(true);
         deleteModule(syllabusId, moduleId)
@@ -407,7 +420,16 @@ function ModuleDialogInner({
                 setOpen(false);
             })
             .catch(() => setIsActionLoading(false));
-    }, [syllabusId, moduleId, deleteModule, closeModuleDialog, setOpen]);
+    }, [
+        syllabusId,
+        moduleId,
+        moduleDoc?.title,
+        moduleDoc?.events?.length,
+        confirm,
+        deleteModule,
+        closeModuleDialog,
+        setOpen,
+    ]);
 
     if (syllabusId === null || moduleId === null) return null;
 
@@ -495,13 +517,18 @@ function ModuleDialogInner({
             </DialogContent>
 
             <DialogActions>
-                <Button color="error" disabled={isActionLoading} onClick={handleDelete}>
+                <Button
+                    color="error"
+                    disabled={isActionLoading}
+                    onClick={() => void handleDelete()}
+                >
                     מחיקה
                 </Button>
                 <Button color="primary" disabled={isActionLoading} onClick={handleClose} variant="contained">
                     סגירה
                 </Button>
             </DialogActions>
+            {confirmDialog}
         </Dialog>
     );
 }

@@ -27,6 +27,7 @@ import
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { InstructorSelect } from "@/components/base/InstructorSelect";
 import { NumberSpinner } from "@/components/base/NumberSpinner";
+import { useConfirmDialog } from "@/components/base/UseConfirmDialog";
 import { EVENT_ANCHOR_PREFIX } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
 import { MoveEventDialog } from "@/components/gantt/module-dialog/MoveEventDialog";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
@@ -108,8 +109,17 @@ export function ModuleEventView({
         [ eventId, updateEvent, enqueueSnackbar ],
     );
 
-    const handleDeleteClick = useCallback(() =>
+    const { confirm, confirmDialog } = useConfirmDialog();
+
+    // No undo on a gantt delete: the trash icon sits a few pixels from
+    // duplicate and move, so a mis-click used to cost the event outright.
+    const handleDeleteClick = useCallback(async () =>
     {
+        const ok = await confirm(
+            `למחוק את המופע "${moduleEvent?.title ?? ""}"? לא ניתן לבטל.`,
+            { title: "מחיקת מופע", confirmLabel: "למחוק" },
+        );
+        if (!ok) return;
         deleteEvent(moduleId, eventId).catch((error) =>
             enqueueApiErrorSnackbar(
                 enqueueSnackbar,
@@ -117,7 +127,7 @@ export function ModuleEventView({
                 error,
             ),
         );
-    }, [ eventId, moduleId, deleteEvent, enqueueSnackbar ]);
+    }, [ eventId, moduleId, moduleEvent?.title, confirm, deleteEvent, enqueueSnackbar ]);
 
     const handleDuplicateClick = useCallback(() =>
     {
@@ -244,7 +254,7 @@ export function ModuleEventView({
                 <IconButton onClick={ () => setMoveDialogOpen(true) } size="small" title="העבר מופע למערך אחר">
                     <DriveFileMoveIcon color="action" fontSize="small" />
                 </IconButton>
-                <IconButton onClick={ handleDeleteClick } size="small" title="מחיקת המופע">
+                <IconButton onClick={ () => void handleDeleteClick() } size="small" title="מחיקת המופע">
                     <DeleteIcon color="error" fontSize="small" />
                 </IconButton>
             </TableCell>
@@ -254,6 +264,7 @@ export function ModuleEventView({
                 onClose={ () => setMoveDialogOpen(false) }
                 open={ moveDialogOpen }
             />
+            { confirmDialog }
         </TableRow>
     );
 }
