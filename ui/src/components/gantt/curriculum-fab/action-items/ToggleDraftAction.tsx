@@ -43,7 +43,7 @@ export function ToggleDraftAction({
                     <EditNoteIcon fontSize="small" />
                 )
             }
-            tooltipTitle={sourceCurriculum?.isDraft ? "פיבלוש" : "החזרה לדראפט"}
+            tooltipTitle={sourceCurriculum?.isDraft ? "פרסום" : "החזרה לדראפט"}
             {...props}
         />
     );
