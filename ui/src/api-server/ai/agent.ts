@@ -1,6 +1,6 @@
 /**
- * The agent loop: model → tools → model, until the model answers in prose or
- * asks for a change that needs a human.
+ * The agent loop: model → tools → model, until the model answers in prose,
+ * asks the human a question, or asks for a change that needs approval.
  *
  * The safety property this file exists to enforce: **a write tool never runs
  * unless the human approved that exact tool call id.** The model can ask; only
@@ -14,11 +14,31 @@
  * already has on the underlying endpoints — but it means "human-gated" is a
  * UI property for a normal client, not a server-enforced guarantee that a
  * person clicked anything.
+ *
+ * Every tool outcome leaves here wrapped by `envelope.ts` rather than as a
+ * bare payload, so the model is always told what to do next — including, and
+ * especially, after a failure.
  */
 
 import { AiProvider } from "@/api-server/ai/provider";
 import { buildSystemPrompt } from "@/api-server/ai/system-prompt";
-import { AiToolContext, findTool, isWriteTool, toolSpecs } from "@/api-server/ai/tools";
+import {
+    AiToolContext,
+    AiToolRegistry,
+    DEFAULT_TOOL_REGISTRY,
+    isPromptTool,
+    isWriteTool,
+} from "@/api-server/ai/tools";
+import {
+    AskUserArgs,
+    normalizeChoiceOptions,
+} from "@/api-server/ai/tools/ask-user";
+import {
+    AiToolEnvelope,
+    errorEnvelope,
+    successEnvelope,
+    unknownToolEnvelope,
+} from "@/api-server/ai/tools/envelope";
 import {
     AI_MAX_RESPONSE_TOKENS,
     AI_MAX_TOOL_ITERATIONS,
@@ -38,6 +58,8 @@ export type AiAgentRunOptions = {
     context: AiToolContext;
     /** Tool call ids the human approved for this turn. */
     approvedToolCallIds: ReadonlySet<string>;
+    /** Defaults to the live registry; the self-test passes fixture tools. */
+    registry?: AiToolRegistry;
     model?: string;
     signal?: AbortSignal;
 };
@@ -48,7 +70,9 @@ function parseArguments(call: AiToolCall): Record<string, unknown> {
     try {
         return JSON.parse(call.arguments) as Record<string, unknown>;
     } catch {
-        throw new Error(`ארגומנטים לא תקינים לכלי ${call.name}`);
+        throw new Error(
+            `ארגומנטים לא תקינים לכלי ${call.name} — לא JSON חוקי. שלח אובייקט JSON תקין.`,
+        );
     }
 }
 
@@ -57,12 +81,12 @@ function parseArguments(call: AiToolCall): Record<string, unknown> {
  * rather than thrown: a model that mistypes an id should get the chance to
  * correct itself, exactly as it would in a terminal.
  */
-function toolMessage(call: AiToolCall, payload: unknown): AiMessage {
+function toolMessage(call: AiToolCall, envelope: AiToolEnvelope): AiMessage {
     return {
         role: AiRole.Tool,
         toolCallId: call.id,
         name: call.name,
-        content: JSON.stringify(payload),
+        content: JSON.stringify(envelope),
     };
 }
 
@@ -105,12 +129,19 @@ function pendingToolCalls(messages: Array<AiMessage>): Array<AiToolCall> | undef
  * Runs one turn and yields it as a stream of app-level events.
  *
  * The turn ends when the model stops calling tools, when a write needs
- * approval, or when {@link AI_MAX_TOOL_ITERATIONS} is hit.
+ * approval, when the model asks the human a question, or when
+ * {@link AI_MAX_TOOL_ITERATIONS} is hit.
  */
 export async function* runAiAgent(
     options: AiAgentRunOptions,
 ): AsyncGenerator<AiStreamEvent> {
-    const { provider, context, approvedToolCallIds, signal } = options;
+    const {
+        provider,
+        context,
+        approvedToolCallIds,
+        signal,
+        registry = DEFAULT_TOOL_REGISTRY,
+    } = options;
 
     // The system prompt is rebuilt server-side every turn and never trusted
     // from the client, so a crafted transcript cannot rewrite the rules.
@@ -132,6 +163,23 @@ export async function* runAiAgent(
         produced.push(message);
     };
 
+    /** Records a failed call and reports it, in the one shape both sides use. */
+    const fail = function* (
+        call: AiToolCall,
+        envelope: AiToolEnvelope,
+    ): Generator<AiStreamEvent> {
+        record(toolMessage(call, envelope));
+        yield {
+            type: AiStreamEventType.ToolResult,
+            toolCallId: call.id,
+            name: call.name,
+            title: registry.title(call.name),
+            summary: envelope.summary,
+            ok: false,
+            detail: envelope,
+        };
+    };
+
     for (let iteration = 0; iteration < AI_MAX_TOOL_ITERATIONS; iteration++) {
         if (!toolCalls) {
             let content = "";
@@ -142,20 +190,20 @@ export async function* runAiAgent(
                 // provider that reads its own `messages` lazily would observe
                 // messages that did not exist when the call was made.
                 messages: [...transcript],
-                tools: toolSpecs(),
+                tools: registry.specs(),
                 model: options.model,
                 maxTokens: AI_MAX_RESPONSE_TOKENS,
                 signal,
             })) {
-                if (event.kind === "text") {
-                    yield { type: AiStreamEventType.Delta, text: event.text };
-                    continue;
-                }
                 if (event.kind === "reasoning") {
                     yield {
                         type: AiStreamEventType.ReasoningDelta,
                         text: event.text,
                     };
+                    continue;
+                }
+                if (event.kind === "text") {
+                    yield { type: AiStreamEventType.Delta, text: event.text };
                     continue;
                 }
                 content = event.result.content;
@@ -183,17 +231,9 @@ export async function* runAiAgent(
         }
 
         for (const call of toolCalls) {
-            const tool = findTool(call.name);
+            const tool = registry.find(call.name);
             if (!tool) {
-                const message = `כלי לא מוכר: ${call.name}`;
-                record(toolMessage(call, { error: message }));
-                yield {
-                    type: AiStreamEventType.ToolResult,
-                    toolCallId: call.id,
-                    name: call.name,
-                    summary: message,
-                    ok: false,
-                };
+                yield* fail(call, unknownToolEnvelope(call.name));
                 continue;
             }
 
@@ -203,16 +243,49 @@ export async function* runAiAgent(
             try {
                 args = parseArguments(call);
             } catch (e) {
-                const message = e instanceof Error ? e.message : String(e);
-                record(toolMessage(call, { error: message }));
-                yield {
-                    type: AiStreamEventType.ToolResult,
-                    toolCallId: call.id,
-                    name: call.name,
-                    summary: message,
-                    ok: false,
-                };
+                yield* fail(call, errorEnvelope(call.name, e, tool));
                 continue;
+            }
+
+            if (isPromptTool(tool)) {
+                // The question goes to the browser and the turn ends there.
+                // The *client* writes the answer back as this call's tool
+                // result, exactly as it does for a declined write — which is
+                // why nothing is recorded here.
+                const ask = args as AskUserArgs;
+                const choiceOptions = normalizeChoiceOptions(ask.options);
+
+                if (!ask.question || choiceOptions.length === 0) {
+                    // A question with no answers is a dead end for the user;
+                    // hand it back as a correctable tool error instead.
+                    yield* fail(
+                        call,
+                        errorEnvelope(
+                            call.name,
+                            new Error(
+                                "ask_user דורש שאלה ולפחות אפשרות בחירה אחת תקינה",
+                            ),
+                            tool,
+                        ),
+                    );
+                    continue;
+                }
+
+                yield {
+                    type: AiStreamEventType.Choice,
+                    toolCallId: call.id,
+                    question: ask.question,
+                    options: choiceOptions,
+                    allowFreeText: ask.allowFreeText !== false,
+                };
+                yield {
+                    type: AiStreamEventType.Done,
+                    messages: produced,
+                    awaitingApproval: true,
+                    model,
+                    usage,
+                };
+                return;
             }
 
             if (isWriteTool(tool) && !approvedToolCallIds.has(call.id)) {
@@ -223,10 +296,12 @@ export async function* runAiAgent(
                     type: AiStreamEventType.ToolProposal,
                     toolCallId: call.id,
                     name: call.name,
+                    title: tool.title,
+                    danger: tool.danger,
                     arguments: args,
                     summary:
-                        tool.describe?.(args, context) ??
-                        `הרצת הכלי ${call.name}`,
+                        tool.describe?.(args, context) ?? `הרצת ${tool.title}`,
+                    impact: tool.impact?.(args, context),
                 };
                 yield {
                     type: AiStreamEventType.Done,
@@ -242,30 +317,51 @@ export async function* runAiAgent(
                 type: AiStreamEventType.ToolStart,
                 toolCallId: call.id,
                 name: call.name,
+                title: tool.title,
             };
 
+            const startedAt = Date.now();
             try {
                 const result = await tool.execute(args, context);
-                record(toolMessage(call, result.data));
+                const envelope = successEnvelope(
+                    tool,
+                    result.summary,
+                    result.data,
+                );
+                record(toolMessage(call, envelope));
                 yield {
                     type: AiStreamEventType.ToolResult,
                     toolCallId: call.id,
                     name: call.name,
+                    title: tool.title,
                     summary: result.summary,
                     ok: true,
+                    durationMs: Date.now() - startedAt,
+                    detail: envelope,
                 };
             } catch (e) {
                 // A tool failure is the model's problem to recover from, not a
-                // 500: it is reported back in-band and the loop continues.
-                const message = e instanceof Error ? e.message : String(e);
-                logger.warn({ tool: call.name, err: message }, "ai: tool failed");
-                record(toolMessage(call, { error: message }));
+                // 500: it is reported back in-band, with recovery
+                // instructions, and the loop continues.
+                logger.warn(
+                    {
+                        tool: call.name,
+                        danger: tool.danger,
+                        err: e instanceof Error ? e.message : String(e),
+                    },
+                    "ai: tool failed",
+                );
+                const envelope = errorEnvelope(call.name, e, tool);
+                record(toolMessage(call, envelope));
                 yield {
                     type: AiStreamEventType.ToolResult,
                     toolCallId: call.id,
                     name: call.name,
-                    summary: message,
+                    title: tool.title,
+                    summary: envelope.summary,
                     ok: false,
+                    durationMs: Date.now() - startedAt,
+                    detail: envelope,
                 };
             }
         }

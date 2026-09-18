@@ -99,6 +99,9 @@ export function normalizeApiSyllabus(
             shuffles: [...(apiModule.shuffles ?? [])],
             events: moduleEventIds,
             syllabusId: apiSyllabus.id,
+            // Same reason as `shuffles` above: a field dropped here vanishes
+            // from the UI on refresh while the DB still holds it.
+            defaultOrchestratorId: apiModule.defaultOrchestratorId ?? null,
             constraints: [],
             defaultOrchestratorId: apiModule.defaultOrchestratorId ?? null,
         });

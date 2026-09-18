@@ -11,6 +11,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
+import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import LinearProgress from "@mui/material/LinearProgress";
@@ -50,6 +51,7 @@ import { Class, ClassTypeEnum } from "@/api-shared/types/hive";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { useOutsiders } from "@/components/base/OutsidersProvider";
+import { AiSelfTest } from "@/components/settings-dialog/tabs/AiSelfTest";
 import { iconBadgeSx, settingsCardSx } from "@/components/settings-dialog/tabs/global/common/styles";
 
 type PersonalState = {
@@ -801,6 +803,8 @@ export function PersonalSettings()
                         type={ aiApiTokenVisible ? "text" : "password" }
                         value={ state.aiApiToken }
                     />
+                    <Divider />
+                    <AiSelfTest />
                 </Box>
             </Box>
         </Box>

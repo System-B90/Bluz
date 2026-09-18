@@ -19,10 +19,24 @@ const { streamAiChat } = vi.hoisted(() => ({ streamAiChat: vi.fn() }));
 vi.mock("@/api-client/ai", () => ({ streamAiChat, fetchAiTools: vi.fn() }));
 
 import {
+    AiApprovalState,
+    AiTimelineItem,
     AiTimelineKind,
+    AiToolState,
     useAiChat,
 } from "@/components/ai/use-ai-chat";
-import { AiRole, AiStreamEventType } from "@/api-shared/types/ai";
+import {
+    AiRole,
+    AiStreamEventType,
+    AiToolDanger,
+} from "@/api-shared/types/ai";
+
+/** The error text the panel is currently showing, if any. */
+const failureText = (timeline: Array<AiTimelineItem>) =>
+    timeline
+        .filter((item) => item.kind === AiTimelineKind.Failure)
+        .map((item) => (item as { message: string }).message)
+        .at(-1);
 
 /** Replays a scripted event stream, one turn per call. */
 function scriptTurns(turns: Array<Array<unknown>>) {
@@ -253,7 +267,14 @@ describe("useAiChat", () => {
             role: AiRole.Tool,
             toolCallId: "w1",
         });
-        expect(result.current.pendingApproval).toBeNull();
+        // The card stays in the timeline as a record of the decision, but it
+        // is no longer pending, so nothing is awaiting the user.
+        expect(result.current.pendingApproval).toBeUndefined();
+        expect(
+            result.current.timeline.find(
+                (item) => item.kind === AiTimelineKind.Approval,
+            ),
+        ).toMatchObject({ state: AiApprovalState.Rejected });
     });
 
     it("marks a tool chip failed when the tool failed", async () => {
@@ -284,7 +305,10 @@ describe("useAiChat", () => {
         );
         // The chip is updated in place, not appended twice.
         expect(chips).toHaveLength(1);
-        expect(chips[0]).toMatchObject({ state: "failed", summary: "מונגו נפל" });
+        expect(chips[0]).toMatchObject({
+            state: AiToolState.Failed,
+            summary: "מונגו נפל",
+        });
     });
 
     it("surfaces a terminal error frame", async () => {
@@ -294,7 +318,9 @@ describe("useAiChat", () => {
 
         const { result } = renderChat();
         await act(async () => result.current.send("היי"));
-        await waitFor(() => expect(result.current.error).toBe("שירות ה-AI נפל"));
+        await waitFor(() =>
+            expect(failureText(result.current.timeline)).toBe("שירות ה-AI נפל"),
+        );
     });
 
     it("keeps a mid-turn error's produced tool messages in the transcript", async () => {
@@ -328,7 +354,9 @@ describe("useAiChat", () => {
 
         const { result } = renderChat();
         await act(async () => result.current.send("מה יש?"));
-        await waitFor(() => expect(result.current.error).toBe("יותר מדי צעדים"));
+        await waitFor(() =>
+            expect(failureText(result.current.timeline)).toBe("יותר מדי צעדים"),
+        );
 
         await act(async () => result.current.send("נסה שוב"));
         const sent = streamAiChat.mock.calls[1][0].messages;
@@ -338,6 +366,195 @@ describe("useAiChat", () => {
             AiRole.Tool,
             AiRole.User,
         ]);
+    });
+
+    it("orders prose, tools and more prose the way the turn happened", async () => {
+        // The regression this pins: every delta of a turn collapsing into one
+        // bubble, which strands the tool chips after text that was written
+        // before the tool ran and makes a multi-step answer unauditable.
+        scriptTurns([
+            [
+                { type: AiStreamEventType.Delta, text: "בודק" },
+                {
+                    type: AiStreamEventType.ToolStart,
+                    toolCallId: "c1",
+                    name: "list_events",
+                    title: 'אירועי הלו"ז',
+                },
+                {
+                    type: AiStreamEventType.ToolResult,
+                    toolCallId: "c1",
+                    name: "list_events",
+                    title: 'אירועי הלו"ז',
+                    summary: "נמצאו 3",
+                    ok: true,
+                    durationMs: 120,
+                },
+                { type: AiStreamEventType.Delta, text: "מצאתי 3" },
+                doneEvent(),
+            ],
+        ]);
+
+        const { result } = renderChat();
+        await act(async () => result.current.send("מה יש?"));
+        await waitFor(() => expect(result.current.busy).toBe(false));
+
+        expect(result.current.timeline.map((item) => item.kind)).toEqual([
+            AiTimelineKind.User,
+            AiTimelineKind.Assistant,
+            AiTimelineKind.Tool,
+            AiTimelineKind.Assistant,
+        ]);
+        const bubbles = result.current.timeline.filter(
+            (item) => item.kind === AiTimelineKind.Assistant,
+        );
+        expect(bubbles.map((item) => (item as { text: string }).text)).toEqual([
+            "בודק",
+            "מצאתי 3",
+        ]);
+    });
+
+    it("collects reasoning into its own block and never into the transcript", async () => {
+        scriptTurns([
+            [
+                { type: AiStreamEventType.Reasoning, text: "קודם " },
+                { type: AiStreamEventType.Reasoning, text: "אבדוק" },
+                { type: AiStreamEventType.Delta, text: "תשובה" },
+                doneEvent([{ role: AiRole.Assistant, content: "תשובה" }]),
+            ],
+            [doneEvent()],
+        ]);
+
+        const { result } = renderChat();
+        await act(async () => result.current.send("היי"));
+        await waitFor(() => expect(result.current.busy).toBe(false));
+
+        const thinking = result.current.timeline.filter(
+            (item) => item.kind === AiTimelineKind.Thinking,
+        );
+        expect(thinking).toHaveLength(1);
+        expect(thinking[0]).toMatchObject({ text: "קודם אבדוק" });
+
+        // Replaying reasoning would bill the model to re-read its own
+        // scratchpad on every later turn.
+        await act(async () => result.current.send("ועוד"));
+        const sent = streamAiChat.mock.calls[1][0].messages;
+        expect(JSON.stringify(sent)).not.toContain("אבדוק");
+    });
+
+    it("answers an ask_user question with the option the user picked", async () => {
+        scriptTurns([
+            [
+                {
+                    type: AiStreamEventType.Choice,
+                    toolCallId: "q1",
+                    question: "באיזה שיעור מדובר?",
+                    options: [
+                        { value: "fx-1", label: "יום שני" },
+                        { value: "fx-2", label: "יום רביעי" },
+                    ],
+                    allowFreeText: true,
+                },
+                doneEvent(
+                    [
+                        {
+                            role: AiRole.Assistant,
+                            content: "",
+                            toolCalls: [
+                                { id: "q1", name: "ask_user", arguments: "{}" },
+                            ],
+                        },
+                    ],
+                    true,
+                ),
+            ],
+            [doneEvent()],
+        ]);
+
+        const { result } = renderChat();
+        await act(async () => result.current.send("תזיז את השיעור"));
+        await waitFor(() => expect(result.current.pendingChoice).toBeTruthy());
+
+        await act(async () => result.current.answerChoice("fx-2"));
+
+        // The server never ran `ask_user`, so the client owes the model that
+        // call's result — without it every later request is malformed.
+        const sent = streamAiChat.mock.calls[1][0].messages;
+        const answer = sent.at(-1);
+        expect(answer).toMatchObject({ role: AiRole.Tool, toolCallId: "q1" });
+        expect(JSON.parse(answer.content)).toMatchObject({
+            ok: true,
+            data: { answer: "fx-2" },
+        });
+        expect(result.current.pendingChoice).toBeUndefined();
+    });
+
+    it("carries the danger level and impact of a proposed write", async () => {
+        scriptTurns([
+            [
+                {
+                    type: AiStreamEventType.ToolProposal,
+                    toolCallId: "w1",
+                    name: "delete_event",
+                    title: "מחיקת אירוע",
+                    danger: AiToolDanger.Destructive,
+                    arguments: { id: "e1" },
+                    summary: "מחיקת אירוע e1",
+                    impact: ["האירוע יוסר מהלוח"],
+                },
+                doneEvent([], true),
+            ],
+        ]);
+
+        const { result } = renderChat();
+        await act(async () => result.current.send("תמחק"));
+
+        await waitFor(() =>
+            expect(result.current.pendingApproval).toMatchObject({
+                danger: AiToolDanger.Destructive,
+                impact: ["האירוע יוסר מהלוח"],
+                state: AiApprovalState.Pending,
+            }),
+        );
+    });
+
+    it("stops a running tool chip from spinning forever after an abort", async () => {
+        streamAiChat.mockImplementation(async function* (
+            _payload: unknown,
+            signal: AbortSignal,
+        ) {
+            yield {
+                type: AiStreamEventType.ToolStart,
+                toolCallId: "c1",
+                name: "list_events",
+                title: 'אירועי הלו"ז',
+            };
+            // Ends only when the panel aborts, exactly as the real client's
+            // fetch does when the user presses stop.
+            await new Promise((_resolve, reject) => {
+                signal.addEventListener("abort", () =>
+                    reject(new DOMException("aborted", "AbortError")),
+                );
+            });
+        });
+
+        const { result } = renderChat();
+        await act(async () => result.current.send("מה יש?"));
+        await waitFor(() =>
+            expect(
+                result.current.timeline.some(
+                    (item) => item.kind === AiTimelineKind.Tool,
+                ),
+            ).toBe(true),
+        );
+
+        await act(async () => result.current.stop());
+        await waitFor(() => expect(result.current.busy).toBe(false));
+
+        const chip = result.current.timeline.find(
+            (item) => item.kind === AiTimelineKind.Tool,
+        );
+        expect(chip).toMatchObject({ state: AiToolState.Failed });
     });
 
     it("clears everything on reset", async () => {

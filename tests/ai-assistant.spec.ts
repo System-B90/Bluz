@@ -125,13 +125,16 @@ test.describe("AI assistant", () => {
                 type: "tool_start",
                 toolCallId: "c1",
                 name: "list_events",
+                title: 'אירועי הלו"ז',
             }) +
                 frame({
                     type: "tool_result",
                     toolCallId: "c1",
                     name: "list_events",
+                    title: 'אירועי הלו"ז',
                     summary: "נמצאו 3 אירועים בטווח",
                     ok: true,
+                    durationMs: 120,
                 }) +
                 frame({ type: "delta", text: "מצאתי." }) +
                 doneFrame(),
@@ -141,9 +144,150 @@ test.describe("AI assistant", () => {
 
         await ask(page, 'מה יש בלו"ז?');
 
+        // The friendly title is what a user sees; the snake_case wire name
+        // never reaches the panel.
         await expect(
-            panel(page).getByText("list_events: נמצאו 3 אירועים בטווח"),
+            panel(page).getByText('אירועי הלו"ז', { exact: true }),
         ).toBeVisible({ timeout: 15_000 });
+        await expect(
+            panel(page).getByText("נמצאו 3 אירועים בטווח"),
+        ).toBeVisible();
+        await expect(panel(page).getByText("list_events")).toHaveCount(0);
+    });
+
+    test("interleaves tool activity with the text around it", async ({
+        page,
+    }) => {
+        // A turn whose prose all collapses into one bubble reads as if the
+        // assistant answered before it looked anything up, which is exactly
+        // what makes a multi-step answer impossible to audit.
+        await stubTools(page);
+        await stubChat(page, [
+            frame({ type: "delta", text: "בודק את הלוח…" }) +
+                frame({
+                    type: "tool_start",
+                    toolCallId: "c1",
+                    name: "list_events",
+                    title: 'אירועי הלו"ז',
+                }) +
+                frame({
+                    type: "tool_result",
+                    toolCallId: "c1",
+                    name: "list_events",
+                    title: 'אירועי הלו"ז',
+                    summary: "נמצאו 3 אירועים בטווח",
+                    ok: true,
+                }) +
+                frame({ type: "delta", text: "נמצאו שלושה אירועים." }) +
+                doneFrame(),
+        ]);
+        await gotoAppHome(page);
+        await openAssistant(page);
+        await ask(page, 'מה יש בלו"ז?');
+
+        const first = panel(page).getByText("בודק את הלוח…");
+        const chip = panel(page).getByText("נמצאו 3 אירועים בטווח");
+        const second = panel(page).getByText("נמצאו שלושה אירועים.");
+        await expect(second).toBeVisible({ timeout: 15_000 });
+
+        const order = await Promise.all(
+            [first, chip, second].map((locator) =>
+                locator.evaluate((element) => {
+                    const all = [
+                        ...document.querySelectorAll("*"),
+                    ];
+                    return all.indexOf(element);
+                }),
+            ),
+        );
+        expect(order[0]).toBeLessThan(order[1]);
+        expect(order[1]).toBeLessThan(order[2]);
+    });
+
+    test("keeps the model's reasoning collapsed until asked for", async ({
+        page,
+    }) => {
+        await stubTools(page);
+        await stubChat(page, [
+            frame({ type: "reasoning", text: "מחשבה-פנימית-בדיקה" }) +
+                frame({ type: "delta", text: "התשובה." }) +
+                doneFrame(),
+        ]);
+        await gotoAppHome(page);
+        await openAssistant(page);
+        await ask(page, "היי");
+
+        await expect(panel(page).getByText("התשובה.")).toBeVisible({
+            timeout: 15_000,
+        });
+        // Collapsed by default: a block that expanded itself would push the
+        // answer off-screen on every turn.
+        await expect(
+            panel(page).getByText("מחשבה-פנימית-בדיקה"),
+        ).toHaveCount(0);
+
+        await panel(page).getByText("תהליך החשיבה").click();
+        await expect(
+            panel(page).getByText("מחשבה-פנימית-בדיקה"),
+        ).toBeVisible();
+    });
+
+    test("answers an ask_user question with the option clicked", async ({
+        page,
+    }) => {
+        await stubTools(page);
+        await stubChat(page, [
+            frame({
+                type: "choice",
+                toolCallId: "q1",
+                question: "באיזה שיעור מדובר?",
+                options: [
+                    { value: "fx-1", label: "יום שני" },
+                    { value: "fx-2", label: "יום רביעי" },
+                ],
+                allowFreeText: true,
+            }) +
+                doneFrame(
+                    [
+                        {
+                            role: "assistant",
+                            content: "",
+                            toolCalls: [
+                                { id: "q1", name: "ask_user", arguments: "{}" },
+                            ],
+                        },
+                    ],
+                    true,
+                ),
+            frame({ type: "delta", text: "הזזתי." }) + doneFrame(),
+        ]);
+
+        const bodies: Array<any> = [];
+        page.on("request", (request) => {
+            if (request.url().includes("/api/ai/chat")) {
+                bodies.push(request.postDataJSON());
+            }
+        });
+
+        await gotoAppHome(page);
+        await openAssistant(page);
+        await ask(page, "תזיז את השיעור");
+
+        await expect(
+            panel(page).getByText("באיזה שיעור מדובר?"),
+        ).toBeVisible({ timeout: 15_000 });
+        await page.getByRole("button", { name: "יום רביעי" }).click();
+
+        await expect(panel(page).getByText("הזזתי.")).toBeVisible({
+            timeout: 15_000,
+        });
+        // The server never ran `ask_user`, so the browser owes the model that
+        // call's result — without it the next request is malformed.
+        const answer = bodies[1].messages.at(-1);
+        expect(answer).toMatchObject({ role: "tool", toolCallId: "q1" });
+        expect(JSON.parse(answer.content)).toMatchObject({
+            data: { answer: "fx-2" },
+        });
     });
 
     test("a write waits for approval and sends the approved id", async ({
@@ -164,13 +308,17 @@ test.describe("AI assistant", () => {
                 type: "tool_proposal",
                 toolCallId: "w1",
                 name: "delete_event",
+                title: "מחיקת אירוע",
+                danger: "destructive",
                 arguments: { id: "e1" },
                 summary: "מחיקת אירוע e1",
+                impact: ['האירוע יוסר מהלו"ז של כל מי שרואה את המחזור.'],
             }) + doneFrame(assistantTurn, true),
             frame({
                 type: "tool_result",
                 toolCallId: "w1",
                 name: "delete_event",
+                title: "מחיקת אירוע",
                 summary: 'נמחק אירוע "שיעור"',
                 ok: true,
             }) +
@@ -188,16 +336,25 @@ test.describe("AI assistant", () => {
         await openAssistant(page);
         await ask(page, "תמחק את האירוע");
 
-        // The proposal is shown and nothing has run yet.
+        // The proposal is shown, with its consequences, and nothing has run.
         await expect(panel(page).getByText("מחיקת אירוע e1")).toBeVisible({
             timeout: 15_000,
         });
+        await expect(
+            panel(page).getByText('האירוע יוסר מהלו"ז של כל מי שרואה את המחזור.'),
+        ).toBeVisible();
         await expect(page.getByRole("button", { name: "אישור" })).toBeVisible();
 
+        // A destructive call takes two clicks: the first arms, the second —
+        // labelled with what is about to happen — executes.
         await page.getByRole("button", { name: "אישור" }).click();
-        await expect(panel(page).getByText('delete_event: נמחק אירוע "שיעור"')).toBeVisible(
-            { timeout: 15_000 },
-        );
+        expect(approvals).toHaveLength(1);
+        await page.getByRole("button", { name: "כן, בצע" }).click();
+
+        await expect(panel(page).getByText('נמחק אירוע "שיעור"')).toBeVisible({
+            timeout: 15_000,
+        });
+        await expect(panel(page).getByText("אושר על ידך")).toBeVisible();
 
         // First turn asks for nothing; the resume carries exactly the id the
         // user saw and approved.
@@ -214,6 +371,8 @@ test.describe("AI assistant", () => {
                 type: "tool_proposal",
                 toolCallId: "w1",
                 name: "delete_event",
+                title: "מחיקת אירוע",
+                danger: "destructive",
                 arguments: { id: "e1" },
                 summary: "מחיקת אירוע e1",
             }) +
@@ -252,7 +411,8 @@ test.describe("AI assistant", () => {
         });
         await page.getByRole("button", { name: "ביטול" }).click();
 
-        await expect(panel(page).getByText("delete_event: הפעולה נדחתה")).toBeVisible({
+        // The card stays in place as a record of the decision.
+        await expect(panel(page).getByText("נדחה על ידך")).toBeVisible({
             timeout: 15_000,
         });
 
