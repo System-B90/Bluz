@@ -10,6 +10,7 @@ export default defineSharedVitestConfig({
         include: [ "tests/backend/**/*.test.ts", "tests/backend/**/*.test.tsx" ],
         alias: {
             "@": path.resolve(__dirname, "../ui/src"),
+            "@vendor": path.resolve(__dirname, "../ui/vendor"),
             // `ws` is installed twice — once at the root and once under
             // session-server/. The shared core resolves the nested copy while
             // `vi.mock("ws")` in a test file resolves the root one, and vitest
