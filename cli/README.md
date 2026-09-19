@@ -20,9 +20,30 @@ bluz rooms list
 bluz gantt curriculums list
 bluz --json events list --start 2026-01-01T00:00:00Z --end 2026-01-08T00:00:00Z
 bluz calendar export-ics --start 2026-01-01T00:00:00Z --end 2026-02-01T00:00:00Z -o schedule.ics
+
+# 4. Or drive the whole thing from a menu
+bluz interactive
 ```
 
 Run any command with `--help` for its options, e.g. `bluz gantt modules --help`.
+
+## Interactive mode
+
+`bluz interactive` opens a searchable menu over the command tree instead of
+asking you to remember flags:
+
+1. Pick a group (`gantt`, `events`, `calendar`, …) or a command.
+2. Answer one prompt per **required** argument.
+3. Add **optional** values from a list — pick `(run it)` when you are done.
+
+The command then runs and renders exactly as it would on the command line, and
+the menu comes back, so a session is a sequence of calls rather than one. A
+failed call prints its error and the loop continues.
+
+The menu is generated from the real Click command tree, so every command in
+this README — and every one added later — appears in it without a second list
+to maintain. It needs a terminal: piped or redirected, it tells you to run the
+command directly instead of failing inside a prompt.
 
 ## Authentication
 
@@ -57,7 +78,7 @@ A local `.env` is loaded automatically, so `BLUZ_*` vars there are honoured.
 
 | Group | What it covers |
 | --- | --- |
-| `bluz auth` | `login`, `logout`, `config`, `hive-status` |
+| `bluz auth` | `login`, `logout`, `config`, `hive-status`, `ws-ticket` |
 | `bluz iterations` | list / current / get / register / patch / set-current / delete / sync-hive |
 | `bluz rooms` | list / create / update / delete / set-info |
 | `bluz courses` | list / create / update / delete |
@@ -68,9 +89,11 @@ A local `.env` is loaded automatically, so `BLUZ_*` vars there are honoured.
 | `bluz settings` | get / set (+ prayerTimes, mealTimes and schedule helpers) |
 | `bluz personal` | get / set — per-user filters and Google Calendar toggles |
 | `bluz colors` | list / get / create / update / delete — custom event colours |
-| `bluz hive` | read-only Hive reference data: users / students / classes / subjects / modules / rooms / lessons |
+| `bluz hive` | read-only Hive reference data: users / students / classes / subjects / modules / rooms / lessons / queues / avatar, plus `activate-lessons` |
 | `bluz integrations google` | status / connect / disconnect / sync |
-| `bluz gantt` | `curriculums`, `syllabuses`, `modules`, `events`, `days`, `weeks` (CRUD + link/allocate/reorder), curriculum export/import/constraints/mappings/duplicate/execution, the cut pipeline (`cut-preview`, `cut`, `cut-status`, `pull-back`) and recurrence exceptions |
+| `bluz student-view` | `schedule` (one day of the student board), `report-engagement` |
+| `bluz ai` | `tools` (capabilities + whether AI is configured), `chat` (streaming), `benchmark` |
+| `bluz gantt` | `curriculums`, `syllabuses`, `modules`, `events`, `days`, `weeks` (CRUD + link/allocate/reorder), curriculum export/import/constraints/mappings/duplicate/execution, the cut pipeline (`cut-preview`, `cut-plan`, `cut`, `cut-status`, `pull-back`), `execution` / `recreate-occurrence`, shuffle groups and recurrence exceptions |
 
 ### The cut pipeline
 
@@ -122,6 +145,18 @@ are rejected server-side. Supported by `bluz events`, `bluz calendar drafts`,
 browser-side Google Identity Services popup — there is no terminal-only OAuth
 flow. `status` reports whether the server is configured at all; on deployments
 without Google credentials the integration is simply off.
+
+### The AI assistant
+
+```bash
+bluz ai tools                      # what it can do; `enabled: false` when no key is configured
+bluz ai chat "מה יש ביום ראשון?"    # streams the answer as it is generated
+bluz ai benchmark                  # provider self-test (throttled to once an hour)
+```
+
+A turn that wants to **write** stops and waits for a human, exactly as in the
+browser. Re-run with `--approve <toolCallId> --messages <transcript>` to let one
+call through, or pass `--yes` to approve and resume in a single invocation.
 
 ## Global options
 

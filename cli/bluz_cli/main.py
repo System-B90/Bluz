@@ -23,11 +23,12 @@ for _stream in (sys.stdout, sys.stderr):
         except (ValueError, OSError):
             pass
 
-import click  # noqa: E402
 import typer  # noqa: E402
 
 from bluz_cli import __version__  # noqa: E402
+from bluz_cli.clicktree import is_group, takes_a_value  # noqa: E402
 from bluz_cli.commands import (  # noqa: E402
+    ai,
     auth,
     calendar,
     colors,
@@ -43,8 +44,10 @@ from bluz_cli.commands import (  # noqa: E402
     reservations,
     rooms,
     settings,
+    student_view,
 )
 from bluz_cli.context import configure  # noqa: E402
+from bluz_cli.interactive import interactive as interactive_cmd  # noqa: E402
 from bluz_cli.errors import BluzCliError  # noqa: E402
 from bluz_cli.output import fail, warn  # noqa: E402
 
@@ -69,6 +72,8 @@ app.add_typer(colors.app, name="colors")
 app.add_typer(gantt.app, name="gantt")
 app.add_typer(hive.app, name="hive")
 app.add_typer(integrations.app, name="integrations")
+app.add_typer(student_view.app, name="student-view")
+app.add_typer(ai.app, name="ai")
 
 # `bluz login` / `bluz logout` as friendly top-level aliases for the most-used auth verbs.
 app.command("login")(auth.login)
@@ -77,6 +82,10 @@ app.command("logout")(auth.logout)
 # Top-level because it is the one command that needs no session and answers
 # about the deployment rather than about data in it.
 app.command("health")(health_cmd.health)
+
+# The menu-driven front end onto everything above. Registered last so it can
+# introspect the finished command tree.
+app.command("interactive")(interactive_cmd)
 
 
 def _version_callback(value: bool) -> None:
@@ -171,8 +180,9 @@ def _value_taking_options() -> set[str]:
     Every `--flag` / `-x` spelling, across the whole command tree, whose Click
     option consumes a following value (i.e. is not a boolean flag).
 
-    Built once by introspecting the real Click command tree instead of
-    guessing from argv shape — a guess ("any unrecognised `-x` might take a
+    Built once by introspecting the real Click command tree (through
+    `clicktree`, since Typer vendors its own Click and `isinstance` against
+    the `click` package answers False) instead of guessing from argv shape — a guess ("any unrecognised `-x` might take a
     value") can't tell a boolean like `--with-parents` from a value option
     like `--value`, and wrongly swallowing the token after a boolean flag is
     exactly what broke `--with-parents --json` (#526).
@@ -181,11 +191,11 @@ def _value_taking_options() -> set[str]:
     if _VALUE_TAKING_OPTIONS is None:
         opts = set(_GLOBAL_OPTS_WITH_VALUE)
 
-        def walk(command: click.Command) -> None:
+        def walk(command) -> None:
             for param in command.params:
-                if isinstance(param, click.Option) and not param.is_flag:
+                if takes_a_value(param):
                     opts.update(param.opts)
-            if isinstance(command, click.Group):
+            if is_group(command):
                 for sub in command.commands.values():
                     walk(sub)
 

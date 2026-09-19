@@ -9,11 +9,13 @@ Author: Michael K. Steinberg
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import typer
 
-from bluz_cli.commands._common import LIMIT_OPTION, OFFSET_OPTION, show
+from bluz_cli.commands._common import LIMIT_OPTION, OFFSET_OPTION, show, write_file
 from bluz_cli.context import state
-from bluz_cli.output import success
+from bluz_cli.output import abort, success
 
 app = typer.Typer(help="Hive LMS reference data (read-only).", no_args_is_help=True)
 
@@ -107,3 +109,21 @@ def activate_lessons() -> None:
         result = client.post(f"{_BASE}/lesson-activation")
     success("Ran a lesson-activation pass")
     show(result, title="Activation tick")
+
+
+@app.command("avatar")
+def avatar(
+    slug: str = typer.Argument(..., help="Hive user id whose avatar to fetch."),
+    output: Path = typer.Option(..., "--output", "-o", help="Destination image file."),
+) -> None:
+    """Download one Hive user's avatar image through the Bluz proxy.
+
+    Users without an uploaded avatar answer 404 — that is a miss, not a
+    failure, and it is reported as one.
+    """
+    with state.client() as client:
+        data = client.get(f"{_BASE}/users/avatars/{slug}")
+    if not isinstance(data, bytes):
+        abort(f"No avatar image for {slug}: {str(data)[:200]}")
+    write_file(output, data, what="avatar")
+    success(f"Saved avatar for {slug} → {output} ({len(data)} bytes)")

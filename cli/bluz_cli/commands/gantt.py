@@ -640,6 +640,63 @@ def materialize_occurrence(
     show(result)
 
 
+@curriculums_app.command("recreate-occurrence")
+def recreate_occurrence(
+    curriculum_id: str = typer.Argument(..., help="Curriculum id."),
+    gantt_event_id: str = typer.Option(
+        ..., "--gantt-event-id", help="Gantt event whose occurrence was deleted."
+    ),
+    occurrence_date: str = typer.Option(
+        ..., "--date", help="Date of the deleted occurrence (ISO)."
+    ),
+) -> None:
+    """Re-create the schedule event of one deleted cut occurrence.
+
+    The repair half of תכנון מול ביצוע: `execution` names the occurrences a
+    cut produced and someone since deleted; this puts one of them back without
+    re-cutting the whole curriculum.
+    """
+    with state.client() as client:
+        result = client.post(
+            f"{_BASE}/curriculums/{curriculum_id}/execution/recreate",
+            json={"ganttEventId": gantt_event_id, "occurrenceDate": occurrence_date},
+        )
+    success(f"Re-created occurrence of {gantt_event_id} on {occurrence_date}")
+    show(result)
+
+
+@events_app.command("shuffle-group")
+def set_shuffle_group(
+    event_id: str = typer.Argument(..., help="Gantt event id."),
+    module_id: str = typer.Option(
+        ..., "--module-id", help="Module the group lives in."
+    ),
+    shuffles: str = typer.Option(
+        ...,
+        "--shuffles",
+        help="Comma-separated shuffle names — one sibling event per name. "
+        "Fewer than two ungroups.",
+    ),
+) -> None:
+    """Reconcile this event's shuffle group against a list of shuffle names.
+
+    The server creates, keeps or drops sibling events so the group matches the
+    names exactly. Passing one name (or none) ungroups the event.
+    """
+    names = [name.strip() for name in shuffles.split(",") if name.strip()]
+    with state.client() as client:
+        result = client.post(
+            f"{_BASE}/events/{event_id}/shuffle-group",
+            json={"moduleId": module_id, "shuffles": names},
+        )
+    success(
+        f"Grouped event {event_id} across {len(names)} shuffle(s)"
+        if len(names) > 1
+        else f"Ungrouped event {event_id}"
+    )
+    show(result)
+
+
 # --- cut planning and shuffles ----------------------------------------------
 
 
