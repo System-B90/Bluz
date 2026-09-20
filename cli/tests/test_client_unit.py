@@ -265,3 +265,77 @@ def test_posted_json_bodies_round_trip_as_json(monkeypatch):
     client.post("/api/x", json={"a": 1})
 
     assert seen["body"] == {"a": 1}
+
+
+# --- SSE streaming -------------------------------------------------------------
+
+
+def _sse_response(body: str, status: int = 200) -> httpx.Response:
+    return httpx.Response(
+        status, text=body, headers={"Content-Type": "text/event-stream"}
+    )
+
+
+def test_stream_sse_yields_each_parsed_frame(monkeypatch):
+    body = (
+        'data: {"type":"delta","text":"a"}\n\ndata: {"type":"done"}\n\ndata: [DONE]\n\n'
+    )
+    client = _client(monkeypatch, lambda request: _sse_response(body))
+
+    assert list(client.stream_sse("/api/ai/chat", json={})) == [
+        {"type": "delta", "text": "a"},
+        {"type": "done"},
+    ]
+
+
+def test_stream_sse_stops_at_the_done_sentinel(monkeypatch):
+    body = 'data: [DONE]\n\ndata: {"type":"delta","text":"never"}\n\n'
+    client = _client(monkeypatch, lambda request: _sse_response(body))
+
+    assert list(client.stream_sse("/api/ai/chat", json={})) == []
+
+
+def test_stream_sse_skips_comments_and_unparsable_frames(monkeypatch):
+    # A keep-alive comment and a truncated tail must not kill a live answer.
+    body = ': ping\n\ndata: {"type":"delta"}\n\ndata: {"broken\n\n'
+    client = _client(monkeypatch, lambda request: _sse_response(body))
+
+    assert list(client.stream_sse("/api/ai/chat", json={})) == [{"type": "delta"}]
+
+
+def test_stream_sse_translates_a_401_into_not_authenticated(monkeypatch):
+    client = _client(monkeypatch, lambda request: httpx.Response(401))
+
+    with pytest.raises(NotAuthenticatedError):
+        list(client.stream_sse("/api/ai/chat", json={}))
+
+
+def test_stream_sse_raises_the_enveloped_error_of_a_failed_request(monkeypatch):
+    client = _client(
+        monkeypatch,
+        lambda request: _json_response(
+            {
+                "status": 1,
+                "error": {"name": "AiRateLimitError", "message": "slow down"},
+            },
+            429,
+        ),
+    )
+
+    with pytest.raises(BluzApiError) as raised:
+        list(client.stream_sse("/api/ai/chat", json={}))
+
+    assert raised.value.error_name == "AiRateLimitError"
+    assert "slow down" in str(raised.value)
+
+
+def test_stream_sse_reports_a_network_failure(monkeypatch):
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("boom", request=request)
+
+    client = _client(monkeypatch, handler)
+
+    with pytest.raises(BluzApiError) as raised:
+        list(client.stream_sse("/api/ai/chat", json={}))
+
+    assert raised.value.error_name == "NetworkError"

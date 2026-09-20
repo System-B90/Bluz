@@ -551,3 +551,20 @@ def hive_status() -> None:
 
     with state.client() as client:
         show(client.get("/api/auth/hive-status"), title="Hive status")
+
+
+@app.command("ws-ticket")
+def ws_ticket() -> None:
+    """Mint a session-server WebSocket ticket for the stored credential.
+
+    The ticket is signed with the caller's clearance (`segel` for staff,
+    `hanich` for a student), which is what the session server gates on — a
+    client cannot widen its own scope. Useful for driving or debugging the
+    real-time sync channel outside a browser.
+    """
+    from bluz_cli.commands._common import show
+
+    with state.client() as client:
+        # Not client.get: /api/ws-ticket answers a bare { ticket } rather than
+        # the response envelope.
+        show(client.get_raw("/api/ws-ticket"), title="WebSocket ticket")
