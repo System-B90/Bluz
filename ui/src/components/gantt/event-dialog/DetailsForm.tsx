@@ -41,7 +41,7 @@ export function EventDetailsForm({
 })
 {
     const labelId = useId();
-    const [durationUnit, setDurationUnit] = useState<"minutes" | "hours">("minutes");
+    const [durationUnit, setDurationUnit] = useState<"hours" | "minutes">("minutes");
     const isHours = durationUnit === "hours";
     return (
         <Stack spacing={ 2.5 }>
