@@ -14,8 +14,8 @@
  * Regenerate both with `npm run build:vendor:exceljs` -- see ./README.md.
  */
 
+import bundled from "@vendor/exceljs/dist/exceljs.bundle.cjs";
 import type { Workbook as WorkbookInstance } from "@vendor/exceljs/dist/exceljs.bundle.js";
-import { Workbook as BundledWorkbook } from "@vendor/exceljs/dist/exceljs.bundle.mjs";
 
 export type {
     Alignment,
@@ -37,9 +37,9 @@ export type {
  * both `new Workbook()` and `Promise<Workbook>`, the way the npm package's
  * class did.
  *
- * The cast is load-bearing: the bundle is plain `.mjs` with no declarations of
- * its own, so without it the constructor infers as `any` and every cell, row
- * and sheet downstream silently loses its type.
+ * The cast is load-bearing: the bundle is plain JavaScript with no
+ * declarations of its own, so without it the constructor infers as `any` and
+ * every cell, row and sheet downstream silently loses its type.
  */
 export type Workbook = WorkbookInstance;
-export const Workbook = BundledWorkbook as new () => WorkbookInstance;
+export const Workbook = bundled.Workbook as new () => WorkbookInstance;
