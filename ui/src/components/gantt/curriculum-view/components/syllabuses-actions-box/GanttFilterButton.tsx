@@ -72,7 +72,7 @@ export function GanttFilterButton() {
             </Tooltip>
             <Popover
                 anchorEl={anchorEl}
-                anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                 onClose={() => setAnchorEl(null)}
                 open={open}
                 slotProps={{
@@ -80,7 +80,7 @@ export function GanttFilterButton() {
                         sx: { p: 2, mt: 1, borderRadius: "12px", direction: "rtl" },
                     },
                 }}
-                transformOrigin={{ vertical: "top", horizontal: "left" }}
+                transformOrigin={{ vertical: "top", horizontal: "right" }}
             >
                 <Stack gap={2} minWidth={280}>
                     <FormControl fullWidth size="small">

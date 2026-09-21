@@ -224,6 +224,7 @@ export function SyllabusesActionsBox({
 
             <Divider flexItem orientation="vertical" />
 
+            <GanttFilterButton />
             <Box
                 display="flex"
                 flexGrow={ 1 }
@@ -232,7 +233,6 @@ export function SyllabusesActionsBox({
             >
                 <GanttSearchField />
             </Box>
-            <GanttFilterButton />
 
             <Box flexGrow={ 1 } />
 
