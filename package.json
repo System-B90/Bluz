@@ -28,7 +28,8 @@
         "test:e2e:ui": "npx playwright test --config tests/playwright.config.ts --ui",
         "session:start": "cd session-server && npm install && npm start",
         "docs:build": "pwsh -Command \"$env:NO_MKDOCS_2_WARNING='true'; python -m mkdocs build\"",
-        "docs:serve": "pwsh -Command \"$env:NO_MKDOCS_2_WARNING='true'; python -m mkdocs serve\""
+        "docs:serve": "pwsh -Command \"$env:NO_MKDOCS_2_WARNING='true'; python -m mkdocs serve\"",
+        "build:vendor:exceljs": "node ui/vendor/exceljs/build.mjs"
     },
     "lint-staged": {
         "*.{js,jsx,ts,tsx}": "eslint --config ./ui/eslint.config.mts",
@@ -60,7 +61,6 @@
         "dayjs": "^1.11.21",
         "drizzle-kit": "^0.31.10",
         "drizzle-orm": "^0.45.2",
-        "exceljs": "^4.4.0",
         "googleapis": "^173.0.0",
         "lightningcss": "^1.33.0",
         "moment-timezone": "^0.5.48",

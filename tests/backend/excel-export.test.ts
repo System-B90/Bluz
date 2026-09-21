@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { NextRequest } from "next/server";
-import ExcelJS from "exceljs";
+import { Workbook } from "@vendor/exceljs";
 
 // Bypass requireStaffSession()'s getServerSession() call, which touches
 // next/headers outside a request scope in vitest (#223).
@@ -140,7 +140,7 @@ describe("Gantt Excel Export Route", () => {
         expect(buffer.byteLength).toBeGreaterThan(0);
 
         // Parse the workbook back to assert on the generated content.
-        const wb = new ExcelJS.Workbook();
+        const wb = new Workbook();
         await wb.xlsx.load(buffer);
 
         const sheetNames = wb.worksheets.map((s) => s.name);
@@ -232,7 +232,7 @@ describe("Gantt Excel Export - orchestrator names (#466)", () => {
         const response = await ExcelExportRoute.GET(request, routeContext);
         expect(response.status).toBe(200);
 
-        const wb = new ExcelJS.Workbook();
+        const wb = new Workbook();
         await wb.xlsx.load(await response.arrayBuffer());
         const detail = wb.getWorksheet("פירוט סילבוסים")!;
 
