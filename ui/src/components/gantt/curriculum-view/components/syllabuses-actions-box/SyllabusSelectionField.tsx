@@ -9,7 +9,7 @@ import { SelectChangeEvent } from "@mui/material/Select";
 import Select from "@mui/material/Select";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useId } from "react";
 
 import {
     GanttCurriculumId,
@@ -28,6 +28,7 @@ export function SyllabusSelectionField({
     curriculumId,
     ...props
 }: SyllabusSelectionFieldProps) {
+    const labelId = useId();
     const { enqueueSnackbar } = useSnackbar();
     const curriculum = useCurriculum(curriculumId);
     const { linkSyllabusToCurriculum } = useSyllabusActions();
@@ -99,9 +100,8 @@ export function SyllabusSelectionField({
     return (
         <Box {...props}>
             <FormControl fullWidth={true} size="small">
-                <InputLabel>הוספת סילבוס לגאנט</InputLabel>
-                <Select
-                    disabled={isLinking}
+                <InputLabel id={ labelId }>הוספת סילבוס לגאנט</InputLabel>
+                <Select disabled={isLinking}
                     endAdornment={
                         <InputAdornment
                             position="end"
@@ -122,6 +122,7 @@ export function SyllabusSelectionField({
                     }
                     fullWidth
                     label="הוספת סילבוס לגאנט"
+                    labelId={ labelId }
                     onChange={onChange}
                     value=""
                 >

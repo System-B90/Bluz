@@ -4,12 +4,14 @@ import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import { SelectChangeEvent } from "@mui/material/Select";
 import Select from "@mui/material/Select";
+import { useId } from "react";
 
 import { roomLikeToResourceKey } from "@/api-shared/types/room";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useRooms } from "@/components/base/RoomsProvider";
 
 export function FilterRoom({ ...props }: BoxProps) {
+    const labelId = useId();
     const { rooms } = useRooms();
     const { filteredRoom, setFilteredRoom } = useCalendarFilters();
 
@@ -21,9 +23,9 @@ export function FilterRoom({ ...props }: BoxProps) {
     return (
         <Box {...props}>
             <FormControl fullWidth={true} size="small">
-                <InputLabel size="small">סינון לפי חדר</InputLabel>
-                <Select
-                    label="סינון לפי חדר"
+                <InputLabel id={ labelId } size="small">סינון לפי חדר</InputLabel>
+                <Select label="סינון לפי חדר"
+                    labelId={ labelId }
                     MenuProps={{ disablePortal: true }}
                     onChange={handleChange}
                     size="small"

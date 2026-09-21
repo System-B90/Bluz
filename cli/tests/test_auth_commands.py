@@ -65,6 +65,27 @@ def test_logout_clears_the_token_but_keeps_the_url(tmp_path, monkeypatch):
     assert reloaded.url == "https://bluz.example.com"
 
 
+def test_logout_does_not_persist_an_env_token_and_warns(tmp_path, monkeypatch):
+    _isolate_config(tmp_path, monkeypatch)
+    Config(url="https://bluz.example.com", token="file-token").save()
+    monkeypatch.setenv("BLUZ_TOKEN", "env-token")
+    monkeypatch.setenv("BLUZ_URL", "https://other.example.com")
+
+    from typer.testing import CliRunner
+
+    from bluz_cli.config import _load_file
+    from bluz_cli.main import app
+
+    result = CliRunner().invoke(app, ["auth", "logout"], catch_exceptions=False)
+
+    assert result.exit_code == 0
+    file_data = _load_file()
+    # Only the file token is cleared; env-derived values never reach the file.
+    assert file_data["token"] is None
+    assert file_data["url"] == "https://bluz.example.com"
+    assert "BLUZ_TOKEN" in result.output
+
+
 # --- bluz auth config --------------------------------------------------------------
 
 

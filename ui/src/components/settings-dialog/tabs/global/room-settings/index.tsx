@@ -111,8 +111,9 @@ export function RoomSettings()
     {
         const roomId = searchParams.get("editRoom");
         if (!roomId || rooms.length === 0) return;
-        const room = rooms.find((r) => r.id === roomId);
-        if (room && (!selectedEntity || selectedEntity.id !== roomId))
+        // Hive room ids are numeric; the URL param is always a string.
+        const room = rooms.find((r) => String(r.id) === roomId);
+        if (room && (!selectedEntity || String(selectedEntity.id) !== roomId))
         {
             queueMicrotask(() => populateFormState(room));
         }

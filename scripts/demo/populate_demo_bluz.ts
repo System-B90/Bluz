@@ -147,6 +147,13 @@ async function main() {
             /@([^/:]+)(:\d+)?/,
             `@${mongoHost}:${mongoPort}`
         );
+        // The test Mongo is a replica set whose member advertises the
+        // in-network host "mongodb", which the host cannot resolve. A direct
+        // connection skips that discovery; against a standalone it is a no-op
+        // (#649).
+        const url = new URL(connectionString);
+        url.searchParams.set("directConnection", "true");
+        connectionString = url.toString();
     }
 
     console.log(
@@ -156,8 +163,12 @@ async function main() {
     const client = new MongoClient(connectionString);
     try {
         await client.connect();
-        const db = client.db("bluz");
-        console.log("Successfully connected to database: bluz");
+        // The current iteration lives in its own database (see
+        // `mongo-db-controller`), so seeding always-"bluz" leaves the running
+        // app with no demo data. MONGO_DB names the target explicitly.
+        const dbName = process.env.MONGO_DB || "bluz";
+        const db = client.db(dbName);
+        console.log(`Successfully connected to database: ${dbName}`);
 
         // 3. Clear existing collections
         console.log("Clearing courses and events collections...");
@@ -545,9 +556,14 @@ async function main() {
         console.log("Database seeding completed successfully!");
     } catch (err) {
         console.error("An error occurred during database seeding:", err);
+        // A silent exit 0 let run_tests.py proceed against an empty DB.
+        process.exitCode = 1;
     } finally {
         await client.close();
     }
 }
 
-main().catch(console.error);
+main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+});

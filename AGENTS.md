@@ -272,6 +272,12 @@ Runtime config comes from the root **`.env`** (consumed by docker-compose and co
 - **Server/client boundary is load-bearing.** A stray browser import in `api-server` (or a
   side effect in `api-shared`) breaks the build in non-obvious ways. Respect the layer
   READMEs' checklists.
+- **The student boundary is security priority #1.** Read
+  [`docs/student-boundary.md`](docs/student-boundary.md) before touching anything under
+  `student-view`, `(post-auth)/layout.tsx`, `ws-ticket`, or the `StudentEvent`
+  projection. Assume students are hostile and will probe for staff data; the adversarial
+  suite is `tests/backend/student-data-leak.test.ts` plus `tests/student-view.spec.ts`.
+  A failure there is a data leak, never a styling regression.
 - **Clearance is a security boundary, not a UI preference.** Hanich (student) accounts can
   sign in (#656), so *every* route handler must call `requireStaffSession()`. A
   logged-in check (`getSessionUser()`) is **not** a gate any more. The one exception is
@@ -288,7 +294,11 @@ Runtime config comes from the root **`.env`** (consumed by docker-compose and co
   carry real payloads) and may subscribe only to `STUDENT_SYNC_ID`. Nothing but an empty
   ping is ever broadcast there — students refetch through the projection endpoint. Never
   put event data on that channel, and never add a per-iteration student channel: the
-  absence of one is what keeps iterations invisible to students.
+  absence of one is what keeps iterations invisible to students. The emptiness is
+  enforced by the core, not by the call sites: `STUDENT_SYNC_ID` is listed in
+  `payloadFreeSyncObjects`, so a broadcast that tries to carry a payload there is
+  stripped on the wire. Tickets are also single-use, so an observed one cannot be
+  replayed into a second socket.
 - **Don't edit generated artifacts:** files in `drizzle/*.sql` (regenerate with
   `db:generate`), `ui/.next/`, `node_modules/`, `playwright-report/`, `test-results/`,
   `tsconfig.tsbuildinfo`.

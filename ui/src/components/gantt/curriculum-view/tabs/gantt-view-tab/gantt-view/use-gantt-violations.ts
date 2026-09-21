@@ -106,25 +106,20 @@ export const useGanttViolations = ({
                 if (targetIdx === -1) return;
 
                 let isViolated = false;
-                const delta = myIdx - targetIdx;
+                // Mirrors the solver (cut-constraints.ts applyRelational):
+                // delta is positive when on the constraint's expected side.
+                const delta =
+                    c.relation === "after"
+                        ? myIdx - targetIdx
+                        : targetIdx - myIdx;
 
-                if (c.relation === "after")
-                {
-                    if (delta <= 0) isViolated = true;
-                    if (
-                        c.minDelayDays !== undefined &&
-                        delta < c.minDelayDays
-                    )
-                        isViolated = true;
-                    if (
-                        c.maxDelayDays !== undefined &&
-                        delta > c.maxDelayDays
-                    )
-                        isViolated = true;
-                } else if (c.relation === "before")
-                {
-                    if (delta >= 0) isViolated = true;
-                }
+                if (delta <= 0) isViolated = true;
+                // Server rows carry `null` (not `undefined`) when unset;
+                // `delta > null` would compare against 0.
+                if (c.minDelayDays != null && delta < c.minDelayDays)
+                    isViolated = true;
+                if (c.maxDelayDays != null && delta > c.maxDelayDays)
+                    isViolated = true;
 
                 if (isViolated)
                 {

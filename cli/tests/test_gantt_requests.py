@@ -528,3 +528,68 @@ def test_materialize_posts_curriculum_module_and_day(stub_bluz, run_cli):
         "moduleId": "m-1",
         "dayId": "d-3",
     }
+
+
+def test_recreate_occurrence_posts_the_event_and_its_date(stub_bluz, run_cli):
+    stub = stub_bluz()
+    stub.envelope(
+        "POST", "/api/gantt/curriculums/c-1/execution/recreate", {"id": "ev-9"}
+    )
+
+    result = run_cli(
+        stub,
+        "gantt",
+        "curriculums",
+        "recreate-occurrence",
+        "c-1",
+        "--gantt-event-id",
+        "ge-1",
+        "--date",
+        "2026-03-04T08:00:00Z",
+    )
+
+    assert result.exit_code == 0
+    assert stub.last().body == {
+        "ganttEventId": "ge-1",
+        "occurrenceDate": "2026-03-04T08:00:00Z",
+    }
+
+
+def test_shuffle_group_posts_the_module_and_split_names(stub_bluz, run_cli):
+    stub = stub_bluz()
+    stub.envelope("POST", "/api/gantt/events/e-1/shuffle-group", [])
+
+    result = run_cli(
+        stub,
+        "gantt",
+        "events",
+        "shuffle-group",
+        "e-1",
+        "--module-id",
+        "m-1",
+        "--shuffles",
+        "א, ב ,ג",
+    )
+
+    assert result.exit_code == 0
+    assert stub.last().body == {"moduleId": "m-1", "shuffles": ["א", "ב", "ג"]}
+
+
+def test_shuffle_group_with_no_names_ungroups(stub_bluz, run_cli):
+    stub = stub_bluz()
+    stub.envelope("POST", "/api/gantt/events/e-1/shuffle-group", [])
+
+    result = run_cli(
+        stub,
+        "gantt",
+        "events",
+        "shuffle-group",
+        "e-1",
+        "--module-id",
+        "m-1",
+        "--shuffles",
+        "",
+    )
+
+    assert result.exit_code == 0
+    assert stub.last().body == {"moduleId": "m-1", "shuffles": []}

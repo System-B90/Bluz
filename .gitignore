@@ -75,3 +75,8 @@ __pycache__/
 # Agent worktrees checked out inside the repo. Each is its own git repo, so a
 # `git add -A` otherwise stages it as an embedded repository (gitlink).
 /worktrees/
+
+# vim undo files
+*.un~
+
+*.crt

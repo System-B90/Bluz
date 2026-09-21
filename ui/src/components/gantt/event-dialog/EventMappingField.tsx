@@ -5,7 +5,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import { useSnackbar } from "notistack";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useId } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
 import {
@@ -17,6 +17,7 @@ import {
 } from "@/api-shared/types/gantt/models";
 import { getDayNameDisplay } from "@/api-shared/types/gantt/models/day";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
+import { notifyMappingsChanged } from "@/components/gantt/state/mappings/change-bus";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 /**
@@ -36,6 +37,7 @@ export function EventMappingField({
     eventId: GanttEventId;
 })
 {
+    const labelId = useId();
     const { enqueueSnackbar } = useSnackbar();
     const state = useCurriculumState();
     const curriculum = state.curriculums[curriculumId];
@@ -100,6 +102,7 @@ export function EventMappingField({
                     });
                     setMapping(created);
                 }
+                notifyMappingsChanged(curriculumId);
                 enqueueSnackbar("המופע שובץ בהצלחה", { variant: "success" });
             } catch (error)
             {
@@ -121,6 +124,7 @@ export function EventMappingField({
             await ganttApi.mappings.apiDelete(curriculumId, moduleId, eventId, mapping.dayId);
             setMapping(null);
             setWeekId("");
+            notifyMappingsChanged(curriculumId);
             enqueueSnackbar("שיבוץ המופע הוסר", { variant: "success" });
         } catch (error)
         {
@@ -134,9 +138,9 @@ export function EventMappingField({
     return (
         <Stack direction="row" spacing={ 2 }>
             <FormControl disabled={ loading || saving } size="small" sx={ { flex: 1, minWidth: "8rem" } }>
-                <InputLabel>שבוע</InputLabel>
-                <Select
-                    label="שבוע"
+                <InputLabel id={ `${labelId}-1` }>שבוע</InputLabel>
+                <Select label="שבוע"
+                    labelId={ `${labelId}-1` }
                     onChange={ (e) => setWeekId(e.target.value as string) }
                     value={ weekId }
                 >
@@ -152,17 +156,19 @@ export function EventMappingField({
             </FormControl>
 
             <FormControl disabled={ loading || saving || !weekId } size="small" sx={ { flex: 1, minWidth: "8rem" } }>
-                <InputLabel>יום</InputLabel>
-                <Select
-                    label="יום"
+                <InputLabel id={ `${labelId}-2` }>יום</InputLabel>
+                <Select label="יום"
+                    labelId={ `${labelId}-2` }
                     onChange={ (e) => applyMapping(e.target.value as GanttDayId) }
                     value={ days.includes(dayId) ? dayId : "" }
                 >
-                    { days.map((dId) => (
-                        <MenuItem key={ dId } value={ dId }>
-                            { getDayNameDisplay(state.days[dId].dayIndex) }
-                        </MenuItem>
-                    )) }
+                    { days
+                        .filter((dId) => state.days[ dId ])
+                        .map((dId) => (
+                            <MenuItem key={ dId } value={ dId }>
+                                { getDayNameDisplay(state.days[ dId ].dayIndex) }
+                            </MenuItem>
+                        )) }
                 </Select>
             </FormControl>
 

@@ -15,7 +15,7 @@ import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 
 import { apiGetClasses, apiGetQueues } from "@/api-client/hive";
 import { hiveClassUrl, hiveModuleUrl } from "@/api-shared/hive-links";
@@ -38,6 +38,7 @@ type HiveQueueMappingProps = {
  * member can check the real thing in one click.
  */
 export function HiveQueueMapping({ event, onUpdate }: HiveQueueMappingProps) {
+    const labelIdPrefix = useId();
     const { getCourse } = useCourses();
     const { iterationId, currentIterationId, iterations } = useIterationScope();
     const hiveUrl = useMemo(() => {
@@ -238,9 +239,14 @@ export function HiveQueueMapping({ event, onUpdate }: HiveQueueMappingProps) {
                                     fullWidth
                                     size="small"
                                 >
-                                    <InputLabel>תור</InputLabel>
+                                    <InputLabel
+                                        id={`${labelIdPrefix}-${courseId}`}
+                                    >
+                                        תור
+                                    </InputLabel>
                                     <Select<"" | number>
                                         label="תור"
+                                        labelId={`${labelIdPrefix}-${courseId}`}
                                         onChange={(e) =>
                                             setQueueForCourse(
                                                 courseId,

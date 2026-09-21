@@ -1,5 +1,6 @@
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import CallSplitIcon from "@mui/icons-material/CallSplit";
 import CloudSyncIcon from "@mui/icons-material/CloudSync";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
@@ -15,6 +16,7 @@ import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
 import RestoreIcon from "@mui/icons-material/Restore";
 import SelfImprovementIcon from "@mui/icons-material/SelfImprovement";
 import SyncIcon from "@mui/icons-material/Sync";
+import TouchAppIcon from "@mui/icons-material/TouchApp";
 import UndoIcon from "@mui/icons-material/Undo";
 import { ReactElement } from "react";
 
@@ -70,6 +72,10 @@ const PRESENTATION: Record<EventChangeInitiator, InitiatorPresentation> = {
         color: "secondary",
         icon: <KeyboardIcon fontSize="small" />,
     },
+    [EventChangeInitiator.ContextMenu]: {
+        color: "secondary",
+        icon: <TouchAppIcon fontSize="small" />,
+    },
     [EventChangeInitiator.OfflinePush]: {
         color: "info",
         icon: <CloudSyncIcon fontSize="small" />,
@@ -85,6 +91,10 @@ const PRESENTATION: Record<EventChangeInitiator, InitiatorPresentation> = {
     [EventChangeInitiator.PrayerSettings]: {
         color: "info",
         icon: <SelfImprovementIcon fontSize="small" />,
+    },
+    [EventChangeInitiator.Split]: {
+        color: "secondary",
+        icon: <CallSplitIcon fontSize="small" />,
     },
     [EventChangeInitiator.Undo]: {
         color: "secondary",

@@ -15,6 +15,14 @@ export type GanttExecutionContextType = {
     state: GanttExecutionState;
     /** Re-fetches the execution comparison from the server. */
     refreshExecution: () => Promise<void>;
+    /**
+     * Re-creates the schedule event for one deleted occurrence (#682), then
+     * refreshes the comparison so the new "actual" side shows up.
+     */
+    recreateOccurrence: (
+        ganttEventId: GanttEventId,
+        occurrenceDate: string,
+    ) => Promise<void>;
 };
 
 export const GanttExecutionContext = createContext<

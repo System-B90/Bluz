@@ -150,8 +150,19 @@ export const test = baseTest.extend<{ serverStateIsolation: undefined }>({
             await step("events", async () => {
                 for (const event of await listEvents(request)) {
                     if (eventsBefore.has(event.id)) continue;
+                    // `DELETE /api/event` reads a bare JSON *string* as its
+                    // body (route.ts parses it with parseJsonBody). Passing
+                    // the raw id sends `abc-123`, which is not valid JSON, so
+                    // every delete came back 400 -- and since nothing here
+                    // inspects the response, the sweep reported success while
+                    // removing nothing. Events from every spec accumulated on
+                    // the shared stack instead, crowding the day view that
+                    // geometry-based specs depend on.
                     await request
-                        .delete("/api/event", { data: event.id })
+                        .delete("/api/event", {
+                            data: JSON.stringify(event.id),
+                            headers: { "Content-Type": "application/json" },
+                        })
                         .catch(() => {});
                 }
             });
@@ -640,24 +651,64 @@ export async function createEventInOfflineMode(
 const CLEANUP_WINDOW_DAYS_BACK = 60;
 const CLEANUP_WINDOW_DAYS_FORWARD = 400;
 
+/**
+ * `GET /api/event` refuses a span wider than `MAX_EVENT_RANGE_DAYS` (366).
+ *
+ * The window above is 460 days, so the sweep's one request was rejected with a
+ * 400 every single time — and `listEvents` treats a non-ok response as "no
+ * events", so the sweep found nothing to delete and reported success. Events
+ * from every spec therefore accumulated on the shared stack forever, which is
+ * exactly the coupling this isolation layer exists to prevent: the day view
+ * fills up, and geometry-based assertions in unrelated specs start failing on
+ * debris rather than on regressions.
+ *
+ * Kept a little under the server's cap rather than at it, so a leap year or an
+ * off-by-one in either direction cannot put a chunk back over the line.
+ */
+const CLEANUP_CHUNK_DAYS = 360;
+
 type ApiEvent = { id: string; name?: string };
 
-function cleanupWindow(): { sd: string; ed: string } {
-    const sd = new Date();
-    sd.setDate(sd.getDate() - CLEANUP_WINDOW_DAYS_BACK);
-    sd.setHours(0, 0, 0, 0);
-    const ed = new Date();
-    ed.setDate(ed.getDate() + CLEANUP_WINDOW_DAYS_FORWARD);
-    ed.setHours(23, 59, 59, 999);
-    return { sd: sd.toISOString(), ed: ed.toISOString() };
+function cleanupWindow(): { start: Date; end: Date } {
+    const start = new Date();
+    start.setDate(start.getDate() - CLEANUP_WINDOW_DAYS_BACK);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date();
+    end.setDate(end.getDate() + CLEANUP_WINDOW_DAYS_FORWARD);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
 }
 
+/** Every event in the cleanup window, in chunks the range cap accepts. */
 async function listEvents(request: APIRequestContext): Promise<Array<ApiEvent>> {
-    const { sd, ed } = cleanupWindow();
-    const response = await request.get(`/api/event?sd=${sd}&ed=${ed}`);
-    if (!response.ok()) return [];
-    const body = (await response.json()) as { data?: Array<ApiEvent> };
-    return body.data ?? [];
+    const { start, end } = cleanupWindow();
+    const byId = new Map<string, ApiEvent>();
+
+    for (
+        let from = new Date(start);
+        from < end;
+        from.setDate(from.getDate() + CLEANUP_CHUNK_DAYS)
+    ) {
+        const to = new Date(from);
+        to.setDate(to.getDate() + CLEANUP_CHUNK_DAYS);
+        const chunkEnd = to < end ? to : end;
+
+        const response = await request.get(
+            `/api/event?sd=${from.toISOString()}&ed=${chunkEnd.toISOString()}`,
+        );
+        if (!response.ok()) {
+            // Loud on purpose: a silently-empty listing is what let this rot
+            // for months. A failed chunk means the sweep is blind again.
+            console.warn(
+                `[isolation] event listing failed (${response.status()}) for ${from.toISOString()}..${chunkEnd.toISOString()}`,
+            );
+            continue;
+        }
+        const body = (await response.json()) as { data?: Array<ApiEvent> };
+        for (const event of body.data ?? []) byId.set(event.id, event);
+    }
+
+    return [...byId.values()];
 }
 
 /**
@@ -926,4 +977,61 @@ export async function closeEventAndModuleDialogs(
         // so an unrelated dialog elsewhere on the page is not asserted away.
         await expect(moduleDialog).not.toBeVisible({ timeout: 10_000 });
     }
+}
+
+/**
+ * Drags a dnd-kit draggable onto a droppable (#648).
+ *
+ * Playwright's mouse already produces real pointer events in Chromium; what
+ * made the naive drag miss is how dnd-kit decides the drop. Its default
+ * collision detection intersects the *dragged node's* rect with each
+ * droppable's rect — the pointer position is irrelevant. Moving the grabbed
+ * handle to the target's centre leaves the dragged card offset by the
+ * handle-to-card distance, so it overlaps a neighbour more than the target.
+ * Starting a drag can also mount new drop zones (the course builder's
+ * RootDropZone) that shift the layout under a target box measured earlier.
+ *
+ * So: grab the handle, nudge past any activation distance, let the drag
+ * render, re-measure, then move by the offset that lands the dragged node's
+ * centre on the target's centre, and hover before releasing so dnd-kit
+ * processes the final `over`.
+ */
+export async function dragDndKit(
+    page: Page,
+    handle: Locator,
+    dragged: Locator,
+    target: Locator,
+): Promise<void> {
+    await handle.scrollIntoViewIfNeeded();
+    const handleBox = await handle.boundingBox();
+    const draggedBox = await dragged.boundingBox();
+    if (!handleBox || !draggedBox) {
+        throw new Error("dragDndKit: source is not rendered");
+    }
+
+    const grabX = handleBox.x + handleBox.width / 2;
+    const grabY = handleBox.y + handleBox.height / 2;
+    // Where the grab sits relative to the dragged node's centre.
+    const offsetX = grabX - (draggedBox.x + draggedBox.width / 2);
+    const offsetY = grabY - (draggedBox.y + draggedBox.height / 2);
+
+    await page.mouse.move(grabX, grabY);
+    await page.mouse.down();
+    await page.mouse.move(grabX + 4, grabY + 4, { steps: 4 });
+    await page.mouse.move(grabX + 12, grabY + 12, { steps: 4 });
+    // Let the drag's own UI (overlays, extra drop zones) mount and settle.
+    await page.waitForTimeout(150);
+
+    const targetBox = await target.boundingBox();
+    if (!targetBox) {
+        await page.mouse.up();
+        throw new Error("dragDndKit: target is not rendered once dragging");
+    }
+    const endX = targetBox.x + targetBox.width / 2 + offsetX;
+    const endY = targetBox.y + targetBox.height / 2 + offsetY;
+
+    await page.mouse.move(endX, endY, { steps: 20 });
+    await page.mouse.move(endX + 1, endY + 1, { steps: 2 });
+    await page.waitForTimeout(150);
+    await page.mouse.up();
 }

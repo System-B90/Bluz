@@ -5,6 +5,11 @@ import { SELECTORS } from "./fixtures";
 /**
  * The student boundary, end to end against a real Hanich session (#656).
  *
+ * TOP SECURITY PRIORITY. Treat the student as hostile: they read the bundle,
+ * know every staff query parameter, and will replay requests by hand. A
+ * failure in this file is a data leak — never relax an assertion to make it
+ * pass. See `docs/security/student-boundary.md`.
+ *
  * Everything here is pinned at the unit level too, but only against mocked
  * sessions. This suite is the one that answers "does it hold when a genuine
  * Hive student token is in the cookie jar" — the unit tests cannot catch a
@@ -57,12 +62,22 @@ test.describe("student view", () => {
             timeout: 30_000,
         });
 
-        // No app bar, no calendar, and nothing that hints the rest of the app
-        // is there — no link off this page at all.
+        // No app bar, and nothing that hints the rest of the app is there —
+        // no link off this page at all.
         await expect(page.locator(SELECTORS.appBar)).toHaveCount(0);
-        await expect(page.locator(SELECTORS.calendarRoot)).toHaveCount(0);
         await expect(page.locator("a[href='/gantt']")).toHaveCount(0);
         await expect(page.locator("a[href='/']")).toHaveCount(0);
+
+        // The board *is* a react-big-calendar grid (the student day view), so
+        // its presence is expected. What must be absent is the staff
+        // calendar's own machinery: the toolbar, the drag-and-drop addon, the
+        // instructor rail and the event dialog.
+        await expect(page.locator(".rbc-toolbar")).toHaveCount(0);
+        await expect(page.locator(".rbc-addons-dnd")).toHaveCount(0);
+        await expect(page.locator("[data-testid='instructor-rail']")).toHaveCount(
+            0,
+        );
+        await expect(page.locator("[role='dialog']")).toHaveCount(0);
     });
 
     test("shows no staff preview bar", async ({ page }) => {
@@ -208,6 +223,265 @@ test.describe("the websocket carries no calendar data", () => {
             for (const field of ["events", "notes", "hiveModule", "instructors"]) {
                 expect(payload, `leaked ${field} over WS`).not.toContain(field);
             }
+        }
+    });
+});
+
+test.describe("a hostile student probing the boundary", () => {
+    test.slow();
+
+    /** Staff parameters a student can copy straight out of a staff URL. */
+    const PROBES = [
+        "?date=2020-01-01",
+        "?date=2030-12-31",
+        "?DATE=2020-01-01",
+        "?date=2020-01-01&date=2020-01-02",
+        "?date[$ne]=null",
+        "?date=../../../etc/passwd",
+    ];
+
+    for (const probe of PROBES) {
+        test(`the schedule endpoint holds the day against ${probe}`, async ({
+            request,
+        }) => {
+            const response = await request.get(
+                `/api/student-view/schedule${probe}`,
+            );
+
+            // Either refused outright, or served — but never another day.
+            if (response.ok()) {
+                const { data } = await response.json();
+                expect(data.date).not.toBe("2020-01-01");
+                expect(data.date).not.toBe("2030-12-31");
+                expect(data.date).not.toBe("2020-01-02");
+            } else {
+                expect(response.status()).toBe(403);
+            }
+        });
+    }
+
+    test("a forged clearance header changes nothing", async ({ request }) => {
+        const response = await request.get(
+            "/api/student-view/schedule?date=2020-01-01",
+            {
+                headers: {
+                    "x-clearance": "Admin",
+                    "x-user-clearance": "Segel",
+                    "x-bluz-staff": "true",
+                },
+            },
+        );
+
+        expect(response.status()).toBe(403);
+    });
+
+    test("the schedule endpoint refuses every write verb", async ({
+        request,
+    }) => {
+        for (const send of [
+            request.post("/api/student-view/schedule", { data: {} }),
+            request.put("/api/student-view/schedule", { data: {} }),
+            request.patch("/api/student-view/schedule", { data: {} }),
+            request.delete("/api/student-view/schedule"),
+        ]) {
+            const response = await send;
+            expect(
+                response.ok(),
+                `a write to the student schedule succeeded (${response.status()})`,
+            ).toBe(false);
+        }
+    });
+
+    test("the response carries nothing beyond the agreed envelope", async ({
+        request,
+    }) => {
+        const response = await request.get("/api/student-view/schedule");
+        const { data } = await response.json();
+
+        expect(Object.keys(data).sort()).toEqual([
+            "calendarDayEndTime",
+            "calendarDayStartTime",
+            "date",
+            "events",
+        ]);
+    });
+
+    test("an engagement report cannot name another user or day", async ({
+        request,
+    }) => {
+        // The body carries a duration and nothing else; a forged identity or
+        // date in the payload must be ignored, not honoured.
+        const response = await request.post("/api/student-view/engagement", {
+            data: {
+                date: "2020-01-01",
+                seconds: 30,
+                userId: "someone-else",
+            },
+        });
+
+        // Accepted (it is the student's own counter) or refused — either way,
+        // nothing in the body may steer it. A 500 would mean the extra fields
+        // reached something that tried to use them.
+        expect([200, 400, 401, 403]).toContain(response.status());
+    });
+
+    test("the student page itself renders no staff route in its HTML", async ({
+        page,
+    }) => {
+        await page.goto("/student-view");
+        await expect(page.locator(SELECTORS.studentBoard)).toBeVisible({
+            timeout: 30_000,
+        });
+
+        const html = await page.content();
+        for (const marker of [
+            "/api/event",
+            "/api/gantt",
+            "/api/hive",
+            "/api/settings",
+            "/gantt",
+            "instructors",
+            "hiveModule",
+        ]) {
+            expect(html, `student page named ${marker}`).not.toContain(marker);
+        }
+    });
+});
+
+test.describe("no packet the student page receives carries staff data", () => {
+    /*
+     * The strongest form of the boundary: not "the schedule endpoint is
+     * clean", but "nothing that reaches this browser is dirty". Every HTTP
+     * response body and every websocket frame the page receives is scanned.
+     * This is the test that would catch a leak through an RSC payload, a
+     * prefetch, a source map, or a stray chunk — places no endpoint test
+     * looks.
+     */
+    test.slow();
+
+    /** Markers that may never appear in anything the student receives. */
+    const FORBIDDEN = [
+        // Staff event fields.
+        "hiveModule",
+        "hiveLesson",
+        "hiveQueues",
+        "personalTalk",
+        "ganttEventId",
+        "ganttCurriculumId",
+        // Staff API surface.
+        "/api/event",
+        "/api/gantt",
+        "/api/hive",
+        "/api/settings",
+        "/api/outsiders",
+        "/api/custom-colors",
+        "/api/iterations",
+        "/api/calendar/drafts",
+        "/api/calendar/snapshots",
+    ];
+
+    /**
+     * Next serves the whole client bundle from `/_next/static`, which contains
+     * the app's *code* — every route string in it, staff routes included. That
+     * is a bundling property, not a data leak, and splitting the student route
+     * into its own bundle is tracked separately; scanning it here would assert
+     * something this test cannot fix. Data-bearing responses are what matter.
+     */
+    function isDataResponse(url: string): boolean {
+        return !url.includes("/_next/static/");
+    }
+
+    test("every HTTP body and websocket frame is clean", async ({ page }) => {
+        const dirty: Array<string> = [];
+        const frames: Array<string> = [];
+
+        page.on("websocket", (ws) => {
+            ws.on("framereceived", (frame) =>
+                frames.push(String(frame.payload)),
+            );
+        });
+
+        page.on("response", async (response) => {
+            const url = response.url();
+            if (!isDataResponse(url)) return;
+            let body = "";
+            try {
+                body = await response.text();
+            } catch {
+                // Redirects and no-content responses have no body to read.
+                return;
+            }
+            for (const marker of FORBIDDEN) {
+                if (body.includes(marker)) {
+                    dirty.push(`${marker} in ${url}`);
+                }
+            }
+        });
+
+        await page.goto("/student-view");
+        await expect(page.locator(SELECTORS.studentBoard)).toBeVisible({
+            timeout: 30_000,
+        });
+        // Let the socket connect, register and receive whatever it receives.
+        await page.waitForTimeout(5_000);
+
+        for (const frame of frames) {
+            for (const marker of FORBIDDEN) {
+                if (frame.includes(marker)) dirty.push(`${marker} over WS`);
+            }
+        }
+
+        expect(
+            dirty,
+            `staff data reached the student: ${dirty.join(" | ")}`,
+        ).toEqual([]);
+    });
+
+    test("the schedule response body holds only projection values", async ({
+        request,
+    }) => {
+        const response = await request.get("/api/student-view/schedule");
+        const { data } = await response.json();
+
+        for (const event of data.events) {
+            expect(Object.keys(event).sort()).toEqual([
+                "color",
+                "courses",
+                "endTime",
+                "id",
+                "name",
+                "rooms",
+                "startTime",
+            ]);
+            // Values, not just keys: a colour must be a hex string and never
+            // an id, and rooms/courses must be display names.
+            expect(event.color).toMatch(/^#[0-9a-fA-F]{6}$/);
+            expect(Array.isArray(event.rooms)).toBe(true);
+            expect(Array.isArray(event.courses)).toBe(true);
+            for (const name of [...event.rooms, ...event.courses]) {
+                expect(typeof name).toBe("string");
+                // Bluz ids are uuids; a display name never looks like one.
+                expect(name).not.toMatch(
+                    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+                );
+            }
+        }
+    });
+
+    test("no staff cookie or header comes back with the board", async ({
+        page,
+    }) => {
+        await page.goto("/student-view");
+        await expect(page.locator(SELECTORS.studentBoard)).toBeVisible({
+            timeout: 30_000,
+        });
+
+        const cookies = await page.context().cookies();
+        for (const cookie of cookies) {
+            expect(
+                cookie.name.toLowerCase(),
+                `cookie ${cookie.name} names a clearance`,
+            ).not.toContain("clearance");
         }
     });
 });

@@ -12,7 +12,7 @@ import { STUDENT_VIEW_PATH } from "@/api-shared/types/student-view";
  */
 export function StudentViewIcon() {
     return (
-        <Tooltip placement="bottom" title="תצוגת חניכים">
+        <Tooltip placement="bottom" title="מצב חניכים">
             <IconButton
                 className="transition-all duration-200 hover:scale-110 active:scale-95"
                 color="inherit"

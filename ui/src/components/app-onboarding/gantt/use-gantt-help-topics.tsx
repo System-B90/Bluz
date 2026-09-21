@@ -1,10 +1,10 @@
 "use client";
 import Typography from "@mui/material/Typography";
+import { HelpTopic, useHelpTopics } from "@system-b90/onboarding";
 import { useMemo } from "react";
 
 import { GANTT_TOUR_ID } from "@/components/app-onboarding/gantt/use-gantt-tour";
 import { HELP_GROUPS } from "@/components/app-onboarding/labels";
-import { HelpTopic, useHelpTopics } from "@/components/onboarding";
 
 function Body({ children }: { children: React.ReactNode }) {
     return (

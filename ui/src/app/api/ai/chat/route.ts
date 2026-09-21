@@ -8,8 +8,9 @@ import { AiToolContext } from "@/api-server/ai/tools";
 import {
     ApiErrorMaker,
     catchHandler,
-    parseJsonBody,
+    requireJsonObjectBody,
 } from "@/api-server/common";
+import { DbPersonalSettings } from "@/api-server/db-personal-settings";
 import {
     resolveIterationDb,
     resolveWritableIterationDb,
@@ -109,8 +110,11 @@ export async function POST(request: Request): Promise<Response> {
     // code, so auth and validation happen here rather than inside the stream.
     let payload: ApiAiChatPayload;
     let context: AiToolContext;
+    let apiKeyOverride: string | undefined;
     try {
         const user = await requireStaffSession();
+        const personalSettings = await DbPersonalSettings.get(String(user.id));
+        apiKeyOverride = personalSettings.aiApiToken || undefined;
         if (!allowAiRequest(String(user.id))) {
             return ApiErrorMaker(
                 {
@@ -120,7 +124,7 @@ export async function POST(request: Request): Promise<Response> {
                 429,
             );
         }
-        payload = parseJsonBody<ApiAiChatPayload>(await request.text());
+        payload = await requireJsonObjectBody<ApiAiChatPayload>(request);
         const messages = validateMessages(payload.messages);
         const approvedToolCallIds = validateApprovedToolCallIds(
             payload.approvedToolCallIds,
@@ -179,7 +183,7 @@ export async function POST(request: Request): Promise<Response> {
 
             try {
                 const events = runAiAgent({
-                    provider: getAiProvider(),
+                    provider: getAiProvider(apiKeyOverride),
                     messages: payload.messages,
                     context,
                     approvedToolCallIds: new Set(

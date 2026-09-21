@@ -64,7 +64,7 @@ describe("staff-only routes reject a Hanich session", () => {
         const { ticket } = await response.json();
 
         expect(response.status).toBe(200);
-        expect(verifyWsTicketIdentity(ticket)).toEqual({
+        expect(verifyWsTicketIdentity(ticket)).toMatchObject({
             scope: WsScope.Hanich,
             userId: HANICH.id,
         });

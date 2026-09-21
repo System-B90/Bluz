@@ -5,13 +5,13 @@ import userEvent from "@testing-library/user-event";
 import { ReactNode, useMemo } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { EN_LABELS } from "@/components/onboarding/labels/en";
-import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
-import { HelpTopic, Tour } from "@/components/onboarding/types";
-import { useHelpTopics } from "@/components/onboarding/use-help-topics";
-import { useOnboarding } from "@/components/onboarding/use-onboarding";
-import { useTour } from "@/components/onboarding/use-tour";
-import { useTourAnchor } from "@/components/onboarding/use-tour-anchor";
+import { EN_LABELS } from "@system-b90/onboarding/en";
+import { OnboardingProvider } from "@system-b90/onboarding";
+import { HelpTopic, Tour } from "@system-b90/onboarding";
+import { useHelpTopics } from "@system-b90/onboarding";
+import { useOnboarding } from "@system-b90/onboarding";
+import { useTour } from "@system-b90/onboarding";
+import { useTourAnchor } from "@system-b90/onboarding";
 
 /**
  * The tour runner, from the outside: what a user sees and clicks.

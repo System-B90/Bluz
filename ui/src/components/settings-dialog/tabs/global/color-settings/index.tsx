@@ -5,11 +5,11 @@ import { useCallback, useMemo, useState } from "react";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useCustomColors } from "@/components/base/CustomColorsProvider";
 import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
+import { useConfirmDialog } from "@/components/base/UseConfirmDialog";
 import { ColorFormCard, ColorFormCardProps } from "@/components/settings-dialog/tabs/global/color-settings/ColorFormCard";
 import { ColorListCard } from "@/components/settings-dialog/tabs/global/color-settings/ColorListCard";
 import { ColorEntry } from "@/components/settings-dialog/tabs/global/color-settings/types";
 import { SettingsTab } from "@/components/settings-dialog/tabs/global/common";
-import { useConfirmDialog } from "@/components/settings-dialog/tabs/global/common/UseConfirmDialog";
 
 const DEFAULT_NEW_COLOR_HEX = "#3f51b5";
 

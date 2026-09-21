@@ -50,13 +50,46 @@ export type AiMessage = {
 export enum AiToolKind {
     Read = "read",
     Write = "write",
+    /**
+     * Not a data operation at all: the tool's whole effect is to put a
+     * question to the human and stop the turn. Answered by the client, never
+     * executed on the server.
+     */
+    Prompt = "prompt",
+}
+
+/**
+ * How much damage running a tool can do. Drives the colour, the wording and
+ * the extra confirmation on the approval card — a reversible edit and an
+ * irreversible delete must not look alike.
+ */
+export enum AiToolDanger {
+    /** Reads only, or a write that loses nothing. */
+    Safe = "safe",
+    /** Changes stored data; recoverable through history. */
+    Caution = "caution",
+    /** Destroys or overwrites data at scale. Needs an explicit re-confirm. */
+    Destructive = "destructive",
 }
 
 /** A tool as advertised to the browser (for rendering, not for calling). */
 export type AiToolSummary = {
     name: string;
+    /** Friendly Hebrew label. The raw `name` is never shown to a user. */
+    title: string;
     description: string;
     kind: AiToolKind;
+    danger: AiToolDanger;
+};
+
+/** One selectable answer in an {@link AiStreamEventType.Choice} prompt. */
+export type AiChoiceOption = {
+    /** Sent back to the model verbatim. */
+    value: string;
+    /** Hebrew label on the button. */
+    label: string;
+    /** Optional one-line clarification under the label. */
+    description?: string;
 };
 
 /** Request body of `POST /api/ai/chat`. */
@@ -103,6 +136,18 @@ export type AiChatResult = {
 export enum AiStreamEventType {
     /** A fragment of the assistant's visible answer. */
     Delta = "delta",
+    /**
+     * A fragment of the model's private reasoning. Rendered collapsed: it is
+     * what makes an answer trustworthy, and noise the rest of the time.
+     */
+    Reasoning = "reasoning",
+    /**
+     * A fragment of a reasoning model's chain-of-thought, sent on a wire
+     * channel separate from the visible answer. Shown collapsed by default.
+     */
+    ReasoningDelta = "reasoning_delta",
+    /** The model is asking the human to pick between options. */
+    Choice = "choice",
     /** A read tool started running. */
     ToolStart = "tool_start",
     /** A read tool finished; carries a short human-readable summary. */
@@ -120,6 +165,15 @@ export enum AiStreamEventType {
  * one `Error`, never both.
  */
 export type AiStreamEvent =
+    | {
+          type: AiStreamEventType.Choice;
+          /** The `ask_user` call this answers; the client writes its result. */
+          toolCallId: string;
+          question: string;
+          options: Array<AiChoiceOption>;
+          /** Whether the human may type an answer instead of picking one. */
+          allowFreeText: boolean;
+      }
     | { type: AiStreamEventType.Delta; text: string }
     | {
           type: AiStreamEventType.Done;
@@ -146,23 +200,40 @@ export type AiStreamEvent =
            */
           messages?: Array<AiMessage>;
       }
+    | { type: AiStreamEventType.Reasoning; text: string }
+    | { type: AiStreamEventType.ReasoningDelta; text: string }
     | {
           type: AiStreamEventType.ToolProposal;
           toolCallId: string;
           name: string;
+          /** Friendly Hebrew label for {@link name}. */
+          title: string;
+          danger: AiToolDanger;
           /** Parsed arguments, for showing the human what will change. */
           arguments: unknown;
           /** Hebrew, one line: what approving this will do. */
           summary: string;
+          /** Hebrew bullets: the concrete consequences of approving. */
+          impact?: Array<string>;
       }
     | {
           type: AiStreamEventType.ToolResult;
           toolCallId: string;
           name: string;
+          title: string;
           summary: string;
           ok: boolean;
+          /** Wall-clock duration of the call, for the timeline chip. */
+          durationMs?: number;
+          /** The envelope handed to the model, for the details panel. */
+          detail?: unknown;
       }
-    | { type: AiStreamEventType.ToolStart; toolCallId: string; name: string };
+    | {
+          type: AiStreamEventType.ToolStart;
+          toolCallId: string;
+          name: string;
+          title: string;
+      };
 
 /** Content type of the streaming chat route. */
 export const AI_STREAM_CONTENT_TYPE = "text/event-stream";
@@ -185,3 +256,10 @@ export const AI_MAX_TOOL_ITERATIONS = 8;
  * response.
  */
 export const AI_MAX_RESPONSE_TOKENS = 2_000;
+
+/**
+ * Character cap on one tool result before it is truncated. A tool that hands
+ * the model a 200KB curriculum tree spends the whole context window on a
+ * single call — and bills it again on every later turn of the conversation.
+ */
+export const AI_MAX_TOOL_RESULT_CHARS = 12_000;

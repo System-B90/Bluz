@@ -51,7 +51,7 @@ tests/
 ├── gantt-recurrence.spec.ts         # Gantt recurring events (#111)
 ├── gantt-reload.spec.ts             # Gantt → schedule reload
 ├── gantt.spec.ts                    # Gantt curriculum page tests
-├── google-calendar.spec.ts          # Google Calendar integration tests
+├── google-calendar.spec.ts          # Google Calendar: connect, shared calendar for 2 users, orphan/all purge (via google-stub)
 ├── header.spec.ts                   # Header, navigation, and filter tests
 ├── hive-lesson-queue.spec.ts        # Hive lesson + queue integration (against a real Hive)
 ├── instructor-dnd.spec.ts           # Instructor rail drag-and-drop tests
@@ -74,7 +74,7 @@ tests/
 - Docker installed
 - `bluz.dev` mapped to `127.0.0.3` in your hosts file
 - Node.js 22+
-- Hive instance running at `https://hive.org` with credentials `admin:Password1`
+- Hive instance running at `https://hive.test` with credentials `admin:Password1`
 
 ### Setup
 
@@ -152,7 +152,7 @@ See `.github/workflows/e2e.yml`. The CI job is fully hermetic — it stands up i
 own Hive instance instead of depending on an external one:
 
 1. Checks out `hivelms/Hive` (SSO branch; requires the `HIVE_REPO_TOKEN` secret),
-   then builds, initializes, and starts it via `manage_hive.py` at `https://hive.org`
+   then builds, initializes, and starts it via `manage_hive.py` at `https://hive.test`
 2. Verifies the `admin:Password1` account with `pyhive` (pip: `pyhivelms`)
 3. Generates a CI `.env` + self-signed SSL certs, installs npm/Python deps and
    Playwright browsers, and pre-builds the test docker images

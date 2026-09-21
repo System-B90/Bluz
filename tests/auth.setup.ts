@@ -107,7 +107,7 @@ async function gotoReliable(page: Page, url: string): Promise<void>
  * Authentication setup project.
  *
  * Authenticates against the running Bluz instance via the Hive SSO OAuth flow.
- * Uses the admin account (admin:Password1) on the Hive instance at https://hive.org.
+ * Uses the admin account (admin:Password1) on the Hive instance at https://hive.test.
  *
  * On consecutive runs, optimistically reuses .auth/user.json if the session is
  * still valid; otherwise performs the full SSO flow and refreshes the saved state.

@@ -1,6 +1,7 @@
 import Box, { BoxProps } from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
+import { useTourAnchor } from "@system-b90/onboarding";
 import { useSnackbar } from "notistack";
 import React, { useCallback } from "react";
 
@@ -9,13 +10,13 @@ import { GANTT_ANCHORS } from "@/components/app-onboarding/anchors";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { ImportExportMenuButton } from "@/components/base/ImportExportMenuButton";
 import { CreateSyllabusButton } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box/CreateSyllabusButton";
+import { GanttFilterButton } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box/GanttFilterButton";
 import { SyllabusSelectionField } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box/SyllabusSelectionField";
 import { GanttSearchField } from "@/components/gantt/curriculum-view/search/GanttSearchField";
 import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
 import { useCurriculumState } from "@/components/gantt/state/provider";
-import { useTourAnchor } from "@/components/onboarding";
 
 export type SyllabusesActionsBoxProps = {
     curriculumId: GanttCurriculumId;
@@ -231,6 +232,7 @@ export function SyllabusesActionsBox({
             >
                 <GanttSearchField />
             </Box>
+            <GanttFilterButton />
 
             <Box flexGrow={ 1 } />
 

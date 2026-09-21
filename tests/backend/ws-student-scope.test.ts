@@ -82,6 +82,18 @@ function connect(
     return socket;
 }
 
+/** Connects a socket presenting an explicit, already-minted ticket. */
+function connectWithTicket(
+    wss: FakeWebSocketServer,
+    ticket: string,
+): FakeWebSocket {
+    const socket = new FakeWebSocket();
+    wss.emit("connection", socket, {
+        url: `/?ticket=${encodeURIComponent(ticket)}`,
+    });
+    return socket;
+}
+
 /** Sends a raw client frame, exactly as a hostile browser would. */
 function send(socket: FakeWebSocket, frame: Record<string, unknown>) {
     socket.emit("message", JSON.stringify(frame));
@@ -240,6 +252,46 @@ describe("a student socket cannot subscribe to calendar traffic", () => {
 
         const frame = JSON.parse(student.sent[0]);
         expect(frame.data ?? null).toBeNull();
+    });
+
+    it("gets no payload even when a broadcast tries to carry one", async () => {
+        const wss = await loadSessionServer();
+        const student = connect(wss, "student-1", WsScope.Hanich);
+        send(student, {
+            syncObjectId: STUDENT_SYNC_ID,
+            type: MessageTypes.REGISTER_SYNC_PROVIDER,
+        });
+        student.sent = [];
+
+        // The regression this guards: a caller that passes real event data
+        // alongside the student target. `NotifyStudentsOfCalendarChange` never
+        // does, but nothing about the call signature stops the next one, and a
+        // leak here would look exactly like a working broadcast. The channel is
+        // declared payload-free, so the server core strips it on the wire.
+        broadcastFromServer(
+            wss,
+            MessageTypes.STUDENT_REFRESH,
+            { events: { e1: { name: "סודי" } } },
+            STUDENT_SYNC_ID,
+        );
+
+        const frame = JSON.parse(student.sent[0]);
+        expect(frame.type).toBe(MessageTypes.STUDENT_REFRESH);
+        expect(frame.data ?? null).toBeNull();
+        expect(student.sent[0]).not.toContain("סודי");
+    });
+
+    it("refuses a replayed ticket, so an observed one opens no second socket", async () => {
+        const wss = await loadSessionServer();
+        const ticket = signWsTicket("staff-1", WsScope.Segel);
+
+        const first = connectWithTicket(wss, ticket);
+        expect(first.closedWith).toEqual([]);
+
+        // Same ticket, presented again inside its TTL: a staff socket is the
+        // whole calendar wire, so a replay must not get one.
+        const replay = connectWithTicket(wss, ticket);
+        expect(replay.closedWith[0][0]).toBe(1008);
     });
 });
 

@@ -9,6 +9,9 @@ const fakeEvents = {
     find: vi.fn(() => ({ toArray: async () => [] as Array<any> })),
     updateMany: vi.fn(async () => ({ matchedCount: 0, modifiedCount: 0 })),
 };
+const fakeEventHistory = {
+    insertMany: vi.fn(async () => ({ insertedCount: 0 })),
+};
 const fakeController = {
     // The cut claims itself through this ledger's unique index (#515).
     curriculumCuts: {
@@ -17,6 +20,7 @@ const fakeController = {
     },
     dbName: "bluz_cut",
     events: fakeEvents,
+    eventHistory: fakeEventHistory,
 };
 // Cut writes fire Google Calendar sync, which reads personal settings off the
 // meta controller. Stub it so the sync no-ops instead of throwing.

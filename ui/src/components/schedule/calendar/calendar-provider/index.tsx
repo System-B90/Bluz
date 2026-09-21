@@ -38,13 +38,14 @@ export const CalendarProvider = ({
         captureEventBeforeEdit,
         captureInitialEvents,
         markEventCreatedLocally,
+        isEventCreatedLocally,
     } = useOffline();
     const { userData, sendMessage } = useAuth();
     const [startDate, setStartDate] = useState<Date>();
     const [endDate, setEndDate] = useState<Date>();
     // Active iteration, owned by IterationProvider so the providers mounted
     // above the calendar (settings, most of all) share the same scope.
-    const { iterationId, isReadOnlyIteration, setIterationId } =
+    const { iterationId, isReadOnlyIteration, setIterationId, currentIterationId } =
         useIterationScope();
     // Internal lock state carries per-lock expiry; the public `eventLocks` map
     // (below) strips that bookkeeping for consumers.
@@ -92,12 +93,18 @@ export const CalendarProvider = ({
 
     /** Applies a lock or unlock update for a single event into the lock state map. */
     const setEventLock = useCallback(
-        (eventId: EventId, lock: EventLockMessage | null) => {
+        (eventId: EventId, lock: EventLockMessage | null, unlockedById?: string) => {
             setLockState((prev) =>
-                applyLockUpdate(prev, eventId, lock, {
-                    selfId: userData.id,
-                    now: Date.now(),
-                }),
+                applyLockUpdate(
+                    prev,
+                    eventId,
+                    lock,
+                    {
+                        selfId: userData.id,
+                        now: Date.now(),
+                    },
+                    unlockedById,
+                ),
             );
         },
         [userData.id],
@@ -119,6 +126,10 @@ export const CalendarProvider = ({
     // show a "dirty" indicator. Relayed through the session server (ephemeral).
     // Re-emitting this on a heartbeat both refreshes the TTL on existing
     // listeners and informs clients that connected after the lock was taken.
+    // Always the real iteration id — useEventWebsocket subscribes to it
+    // directly (in addition to the unscoped current-run channel other
+    // broadcasts use), so this never needs the "undefined means current run"
+    // spelling.
     /** Broadcasts an EVENT_LOCK message so other clients show a presence indicator on the event. */
     const lockEvent = useCallback(
         (eventId: EventId) => {
@@ -148,7 +159,15 @@ export const CalendarProvider = ({
 
     // WS updates go through remoteDispatch so they don't pollute the undo stack.
     // Pass the active iteration so broadcasts for other iterations are ignored.
-    useEventWebsocket(offlineMode, remoteDispatch, setEventLock, iterationId);
+    // `currentIterationId` too: the server spells a current-run broadcast as
+    // "no iteration", while the scope here is that iteration's real id.
+    useEventWebsocket(
+        offlineMode,
+        remoteDispatch,
+        setEventLock,
+        iterationId,
+        currentIterationId,
+    );
 
     const { saveEvent, deleteEvent, syncHistoryTravel } = useEventActions(
         events,
@@ -157,6 +176,8 @@ export const CalendarProvider = ({
         dispatch,
         remoteDispatch,
         markEventCreatedLocally,
+        isEventCreatedLocally,
+        { iterationId, isReadOnlyIteration },
     );
     useLayoutEffect(() => {
         onTravelRef.current = syncHistoryTravel;

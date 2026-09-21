@@ -5,6 +5,9 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
 import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
@@ -28,6 +31,8 @@ import {
     ModuleEventType,
 } from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
+import { InstructorSelect } from "@/components/base/InstructorSelect";
+import { useConfirmDialog } from "@/components/base/UseConfirmDialog";
 import { ModuleConstraintsView } from "@/components/gantt/module-dialog/constraints/ModuleConstraintsView";
 import { ModuleEventsView } from "@/components/gantt/module-dialog/ModuleEventsView";
 import {
@@ -188,6 +193,8 @@ function SiblingModuleNav({
     );
 }
 
+const EMPTY_LEADS: Array<number> = [];
+
 type ModuleDetailsFormProps = {
     localTitle: string;
     localDescription: string;
@@ -200,6 +207,9 @@ type ModuleDetailsFormProps = {
     shuffleOptions: Array<string>;
     shuffles: Array<string>;
     onShufflesChange: (shuffles: Array<string>) => void;
+    defaultOrchestratorId: null | number;
+    onDefaultOrchestratorChange: (id: null | number) => void;
+    leadInstructorIds: Array<number>;
 }
 
 function ModuleDetailsForm({
@@ -214,6 +224,9 @@ function ModuleDetailsForm({
     shuffleOptions,
     shuffles,
     onShufflesChange,
+    defaultOrchestratorId,
+    onDefaultOrchestratorChange,
+    leadInstructorIds,
 }: ModuleDetailsFormProps) {
     return (
         <Stack spacing={2} width="30%">
@@ -248,6 +261,25 @@ function ModuleDetailsForm({
                 options={shuffleOptions}
                 value={shuffles}
             />
+
+            <FormControl fullWidth size="small">
+                <InputLabel>אחראי ברירת מחדל</InputLabel>
+                <InstructorSelect<"" | number>
+                    excludeTeachers
+                    label="אחראי ברירת מחדל"
+                    onChange={(e) =>
+                        onDefaultOrchestratorChange(
+                            e.target.value === "" ? null : Number(e.target.value),
+                        )
+                    }
+                    pinnedIds={leadInstructorIds}
+                    value={defaultOrchestratorId ?? ""}
+                >
+                    <MenuItem value="">
+                        <em>ללא ברירת מחדל</em>
+                    </MenuItem>
+                </InstructorSelect>
+            </FormControl>
 
             <HiveModuleLinker
                 hiveModules={hiveModules}
@@ -365,8 +397,20 @@ function ModuleDialogInner({
         [moduleId, syllabusId, moduleDoc, updateModule, enqueueSnackbar],
     );
 
-    const handleDelete = useCallback(() => {
+    const { confirm, confirmDialog } = useConfirmDialog();
+
+    // Deleting a module takes every event under it along, with no undo —
+    // one stray click on מחיקה must not be enough.
+    const handleDelete = useCallback(async () => {
         if (!syllabusId || !moduleId) return;
+        const eventCount = moduleDoc?.events?.length ?? 0;
+        const ok = await confirm(
+            eventCount > 0
+                ? `למחוק את המערך "${moduleDoc?.title ?? ""}" על ${eventCount} המופעים שבו? לא ניתן לבטל.`
+                : `למחוק את המערך "${moduleDoc?.title ?? ""}"? לא ניתן לבטל.`,
+            { title: "מחיקת מערך", confirmLabel: "למחוק" },
+        );
+        if (!ok) return;
 
         setIsActionLoading(true);
         deleteModule(syllabusId, moduleId)
@@ -376,7 +420,16 @@ function ModuleDialogInner({
                 setOpen(false);
             })
             .catch(() => setIsActionLoading(false));
-    }, [syllabusId, moduleId, deleteModule, closeModuleDialog, setOpen]);
+    }, [
+        syllabusId,
+        moduleId,
+        moduleDoc?.title,
+        moduleDoc?.events?.length,
+        confirm,
+        deleteModule,
+        closeModuleDialog,
+        setOpen,
+    ]);
 
     if (syllabusId === null || moduleId === null) return null;
 
@@ -410,11 +463,16 @@ function ModuleDialogInner({
                     {isContentReady ? (
                         <>
                             <ModuleDetailsForm
+                                defaultOrchestratorId={moduleDoc?.defaultOrchestratorId ?? null}
                                 hiveModules={moduleDoc?.hiveIds ?? []}
+                                leadInstructorIds={syllabus?.leadInstructorIds ?? EMPTY_LEADS}
                                 localDescription={localDescription}
                                 localTitle={localTitle}
                                 onCommitDescription={() => handleCommit({ description: localDescription })}
                                 onCommitTitle={() => handleCommit({ title: localTitle })}
+                                onDefaultOrchestratorChange={(defaultOrchestratorId) =>
+                                    handleCommit({ defaultOrchestratorId })
+                                }
                                 onHiveModulesChange={(hiveIds) =>
                                     handleCommit({ hiveIds })
                                 }
@@ -459,13 +517,18 @@ function ModuleDialogInner({
             </DialogContent>
 
             <DialogActions>
-                <Button color="error" disabled={isActionLoading} onClick={handleDelete}>
+                <Button
+                    color="error"
+                    disabled={isActionLoading}
+                    onClick={() => void handleDelete()}
+                >
                     מחיקה
                 </Button>
                 <Button color="primary" disabled={isActionLoading} onClick={handleClose} variant="contained">
                     סגירה
                 </Button>
             </DialogActions>
+            {confirmDialog}
         </Dialog>
     );
 }

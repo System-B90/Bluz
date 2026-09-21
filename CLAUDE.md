@@ -41,10 +41,10 @@ Use `/caveman` mode. Less word do trick.
 
 **CI Runners**
 - One workflow per pipeline. No cloud mirrors, no `BLUZ_CI_RUNNER` variable — both were deleted after the mirrors drifted from the originals.
-- GitHub-hosted (`ubuntu-latest`) is the default everywhere: `release-pipeline.yml`, `docs.yml`, and e2e's `Build Test Images`.
-- Self-hosted (`[self-hosted, dind]`) is for one job only: `Full Test Suite (E2E, self-hosted)` in `e2e.yml`. The suite runs ~an hour and needs the box's Hive stack.
-- New job → `runs-on: ubuntu-latest` unless it runs the e2e suite.
-- Don't pin buildx builder names or set `cleanup: false` on cloud runners. That existed to stop the self-hosted jobs tearing down each other's buildkit; each cloud job is its own VM.
+- Self-hosted (`[self-hosted, dind]`) is the default everywhere: `release-pipeline.yml`, `docs.yml`, and all of `e2e.yml`. GitHub-hosted minutes are not available.
+- Only exception: the opt-in `Full Test Suite (E2E, github-hosted)` matrix (dispatch with `target=github-hosted`) stays on `ubuntu-24.04`.
+- New job → `runs-on: [self-hosted, dind]`.
+- Every `docker/setup-buildx-action` step on self-hosted gets a unique `name:` and `cleanup: false`. Jobs share one OS user and `~/.docker/buildx`; the default ephemeral builder's cleanup tears down sibling jobs' buildkit.
 
 **Windows / PowerShell**
 - Always Windows 11 + PowerShell (v5/v7).

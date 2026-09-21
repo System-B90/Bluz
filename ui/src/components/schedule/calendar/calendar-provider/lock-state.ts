@@ -60,6 +60,10 @@ type ApplyLockOptions = {
  * @param state The current lock state.
  * @param eventId The event the update concerns.
  * @param lock The incoming lock, or `null` to release the lock.
+ * @param unlockedById When `lock` is `null`, the id of the client that sent
+ *   the unlock. A stale or superseding unlock — one whose sender does not
+ *   match who the tracked lock says currently holds it — is ignored instead
+ *   of clearing a lock some other, later holder is still holding (#689).
  * @param options Self id (for echo filtering), current time, and TTL.
  * @returns A new state object, or the same reference when nothing changed.
  */
@@ -68,6 +72,7 @@ export function applyLockUpdate(
     eventId: EventId,
     lock: EventLockMessage | null,
     { selfId, now, ttlMs = LOCK_TTL_MS }: ApplyLockOptions,
+    unlockedById?: string,
 ): LockState {
     // Ignore our own lock echoes — we already know what we are editing.
     if (lock !== null && lock.lockedById === selfId) {
@@ -75,7 +80,11 @@ export function applyLockUpdate(
     }
 
     if (lock === null) {
-        if (!(eventId in state)) {
+        const tracked = state[eventId];
+        if (!tracked) {
+            return state;
+        }
+        if (unlockedById !== undefined && tracked.lock.lockedById !== unlockedById) {
             return state;
         }
         const next = { ...state };

@@ -1,5 +1,5 @@
-import { withLabelOverrides } from "@/components/onboarding";
-import { HE_LABELS } from "@/components/onboarding/labels/he";
+import { withLabelOverrides } from "@system-b90/onboarding";
+import { HE_LABELS } from "@system-b90/onboarding/he";
 
 /**
  * Bluz's onboarding wording.

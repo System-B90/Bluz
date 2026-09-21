@@ -39,7 +39,10 @@ export function shortenInstructorName(
         );
 
         if (isUnique) {
-            return prefix;
+            // When another name is a strict prefix of this one ("אבי כהן"
+            // vs "אבי כהן לוי") the first unique prefix ends in the separating
+            // space; don't hand that trailing space to the chip.
+            return prefix.trimEnd();
         }
     }
 

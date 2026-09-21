@@ -643,11 +643,12 @@ class EnvironmentConfig {
             if (match && match[1]) {
                 connectionString = match[1].trim();
             }
-        } catch (error) {
-            connectionString =
-                process.env.MONGO_CONNECTION_STRING ||
-                "mongodb://127.0.0.1:27017";
+        } catch {
+            // no .env - fall through to the environment below
         }
+        // A .env without MONGO_CONNECTION_STRING must not yield "" either.
+        connectionString ||=
+            process.env.MONGO_CONNECTION_STRING || "mongodb://127.0.0.1:27017";
 
         if (!fs.existsSync("/.dockerenv")) {
             connectionString = connectionString.replace(

@@ -55,6 +55,7 @@ export const AuthProvider = ({
         sendMessage,
         registerSyncObject,
         deregisterSyncObject,
+        ws,
     } = useSessionWebSocketContext();
     const { enqueueSnackbar } = useSnackbar();
     const { data: session } = useSession();
@@ -64,7 +65,7 @@ export const AuthProvider = ({
     // intercepts the "/api/auth/_log" beacon it POSTs internally.
     useEffect(() => {
         const originalFetch = window.fetch;
-        window.fetch = async (...args) => {
+        const patchedFetch: typeof window.fetch = async (...args) => {
             const url =
                 typeof args[0] === "string"
                     ? args[0]
@@ -92,11 +93,17 @@ export const AuthProvider = ({
                 }
             }
 
-            return await originalFetch(...args);
+            return await originalFetch.apply(window, args);
         };
+        window.fetch = patchedFetch;
 
         return () => {
-            window.fetch = originalFetch;
+            // Only unwind our own patch: if something else wrapped fetch after
+            // us (analytics, MSW in tests), restoring `originalFetch` blindly
+            // would silently discard that wrapper.
+            if (window.fetch === patchedFetch) {
+                window.fetch = originalFetch;
+            }
         };
     }, [enqueueSnackbar]);
 
@@ -182,7 +189,7 @@ export const AuthProvider = ({
         <AuthContext.Provider value={contextValue}>
             {/* Renders nothing visible — it publishes the socket's state so a
                 dead realtime layer is detectable rather than silent (#636). */}
-            <RealtimeStatus />
+            <RealtimeStatus ws={ws} />
             {children}
         </AuthContext.Provider>
     );

@@ -150,17 +150,10 @@ test.describe("Dialog keyboard behaviour", () => {
         await selectCalendarTimeRange(page);
         const dialog = page.getByRole("dialog").filter({ hasText: "עריכת מופע" });
 
-        // Located through its FormControl rather than by accessible name:
-        // every Select in the app renders its InputLabel without an `id` and
-        // the Select without a `labelId`, so none of them has an accessible
-        // name at all (filed separately). getByLabel does not work either —
+        // By role name, now that the label is linked (#643). Not getByLabel:
         // MUI puts a hidden native input beside the combobox, and clicking
         // that does not open the menu.
-        await dialog
-            .locator(".MuiFormControl-root")
-            .filter({ hasText: "צבע" })
-            .getByRole("combobox")
-            .click();
+        await dialog.getByRole("combobox", { name: "צבע" }).click();
         const swatches = page.getByRole("listbox");
         await expect(swatches).toBeVisible();
 

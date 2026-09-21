@@ -1,6 +1,7 @@
 "use client";
+import { HelpButton, useTourAnchor } from "@system-b90/onboarding";
+
 import { APP_ANCHORS } from "@/components/app-onboarding/anchors";
-import { HelpButton, useTourAnchor } from "@/components/onboarding";
 
 /**
  * The app bar's "?" — the package's button, plus the anchor that lets a tour

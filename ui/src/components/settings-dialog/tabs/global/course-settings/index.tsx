@@ -5,7 +5,6 @@ import
     DragEndEvent,
     DragOverlay,
     DragStartEvent,
-    Modifier,
     useDroppable,
 } from "@dnd-kit/core";
 import LayersIcon from "@mui/icons-material/Layers";
@@ -14,7 +13,8 @@ import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { Course } from "@/api-shared/types/course";
 import { CourseUser } from "@/api-shared/types/hive";
@@ -70,7 +70,7 @@ function CourseDragOverlay({
     if (!course) return null;
     return (
         <Card
-            sx={ {
+            sx={ (theme) => ({
                 p: 1.5,
                 display: "flex",
                 alignItems: "center",
@@ -79,12 +79,10 @@ function CourseDragOverlay({
                 border: "1px solid",
                 borderColor: "secondary.main",
                 boxShadow: "0 8px 24px rgba(0, 0, 0, 0.15)",
-                bgcolor: (theme) =>
-                    theme.palette.mode === "light"
-                        ? "#ffffff"
-                        : "rgba(255, 255, 255, 0.05)",
+                bgcolor: "#ffffff",
                 cursor: "grabbing",
-            } }
+                ...theme.applyStyles("dark", { bgcolor: "rgba(255, 255, 255, 0.05)" }),
+            }) }
         >
             <Box
                 sx={ {
@@ -119,7 +117,7 @@ function RootDropZone()
     return (
         <Box
             ref={ setNodeRef }
-            sx={ {
+            sx={ (theme) => ({
                 border: "2px dashed",
                 borderColor: isOver ? "secondary.main" : "divider",
                 borderRadius: "12px",
@@ -129,14 +127,12 @@ function RootDropZone()
                 justifyContent: "center",
                 gap: 1,
                 width: "100%",
-                bgcolor: (theme) =>
-                    isOver
-                        ? "action.selected"
-                        : theme.palette.mode === "light"
-                            ? "rgba(0, 0, 0, 0.01)"
-                            : "rgba(255, 255, 255, 0.01)",
+                bgcolor: isOver ? "action.selected" : "rgba(0, 0, 0, 0.01)",
                 transition: "all 0.25s ease",
-            } }
+                ...(isOver
+                    ? {}
+                    : theme.applyStyles("dark", { bgcolor: "rgba(255, 255, 255, 0.01)" })),
+            }) }
         >
             <SwapHorizIcon
                 sx={ {
@@ -170,20 +166,6 @@ export function CourseSettings()
         data: DraggedItemData;
     } | null>(null);
 
-    // Captured once per drag (on start) instead of measured on every pointer
-    // move, which forced a layout reflow via getBoundingClientRect().
-    const dialogRectRef = useRef<DOMRect | null>(null);
-    const dialogOffsetModifier = useMemo<Modifier>(() => ({ transform }) =>
-    {
-        const rect = dialogRectRef.current;
-        if (!rect) return transform;
-        return {
-            ...transform,
-            x: transform.x - rect.left,
-            y: transform.y - rect.top,
-        };
-    }, []);
-
     const handleCreate = useCallback(() =>
     {
         void addCourse({
@@ -196,10 +178,6 @@ export function CourseSettings()
 
     const handleDragStart = useCallback((event: DragStartEvent) =>
     {
-        dialogRectRef.current =
-            document.querySelector(".MuiDialog-paper")?.getBoundingClientRect() ??
-            null;
-
         const { active } = event;
         const data = active.data.current as DraggedItemData | undefined;
         if (data)
@@ -333,8 +311,8 @@ export function CourseSettings()
             onDragStart={ handleDragStart }
         >
             <Box
-                sx={ {
-                    ...settingsCardSx,
+                sx={ (theme) => ({
+                    ...settingsCardSx(theme),
                     flexDirection: "row",
                     height: "100%",
                     minHeight: 380,
@@ -342,7 +320,7 @@ export function CourseSettings()
                     alignItems: "stretch",
                     p: 0,
                     gap: 0,
-                } }
+                }) }
             >
                 {/* Available Instructors Side Drawer Panel */ }
                 <InstructorSourceList />
@@ -445,24 +423,29 @@ export function CourseSettings()
                     </Box>
                 </Box>
             </Box>
-            <DragOverlay
-                dropAnimation={ dropAnimation }
-                modifiers={ [ dialogOffsetModifier ] }
-            >
-                { activeDrag ? (
-                    activeDrag.type === "INSTRUCTOR" ? (
-                        <InstructorDragOverlay
-                            activeId={ activeDrag.id }
-                            instructors={ instructors }
-                        />
-                    ) : (
-                        <CourseDragOverlay
-                            activeId={ activeDrag.id }
-                            courses={ courses }
-                        />
-                    )
-                ) : null }
-            </DragOverlay>
+            { /* Portalled to <body>: inside the dialog, MUI's transformed Paper
+                becomes the containing block for the overlay's position: fixed,
+                so the preview (and the rect dnd-kit collides with) drifted away
+                from the pointer. A modifier subtracting the paper's offset only
+                approximated that and broke when the paper moved (#648). */ }
+            { typeof document !== "undefined" ? createPortal(
+                <DragOverlay dropAnimation={ dropAnimation } zIndex={ 2000 }>
+                    { activeDrag ? (
+                        activeDrag.type === "INSTRUCTOR" ? (
+                            <InstructorDragOverlay
+                                activeId={ activeDrag.id }
+                                instructors={ instructors }
+                            />
+                        ) : (
+                            <CourseDragOverlay
+                                activeId={ activeDrag.id }
+                                courses={ courses }
+                            />
+                        )
+                    ) : null }
+                </DragOverlay>,
+                document.body,
+            ) : null }
         </DndContext>
     );
 }

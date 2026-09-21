@@ -51,4 +51,32 @@ describe("GET /api/hive/users/avatars/[slug]", () => {
         });
         expect(response.status).toBe(200);
     });
+
+    it("serves a repeat miss from the negative cache without re-hitting Hive (#685)", async () => {
+        const fetchMock = vi.fn(async () => ({
+            ok: false,
+            status: 404,
+            statusText: "Not Found",
+        }));
+        global.fetch = fetchMock as any;
+
+        const makeRequest = () =>
+            GET(
+                new NextRequest(
+                    "https://bluz.example.com/api/hive/users/avatars/user_missing",
+                ),
+                { params: Promise.resolve({ slug: "user_missing" }) },
+            );
+
+        const first = await makeRequest();
+        expect(first.status).toBe(404);
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+
+        const second = await makeRequest();
+        expect(second.status).toBe(404);
+        // The second request must be answered from the in-process negative
+        // cache, not by asking Hive again.
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(second.headers.get("Cache-Control")).toContain("max-age");
+    });
 });

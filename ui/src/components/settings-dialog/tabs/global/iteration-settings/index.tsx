@@ -13,8 +13,9 @@ import {
 } from "@/api-client/iterations";
 import { Iteration, IterationUsage } from "@/api-shared/types/iteration";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
+import { noteLocalIterationSwitch } from "@/components/base/IterationProvider";
+import { useConfirmDialog } from "@/components/base/UseConfirmDialog";
 import { SettingsTab } from "@/components/settings-dialog/tabs/global/common";
-import { useConfirmDialog } from "@/components/settings-dialog/tabs/global/common/UseConfirmDialog";
 import { useEntityForm } from "@/components/settings-dialog/tabs/global/common/UseEntityForm";
 import { IterationFormCard, IterationFormCardProps } from "@/components/settings-dialog/tabs/global/iteration-settings/IterationFormCard";
 import { IterationListCard, IterationListCardProps } from "@/components/settings-dialog/tabs/global/iteration-settings/IterationListCard";
@@ -181,6 +182,7 @@ export function IterationSettings()
         (iteration: Iteration) =>
         {
             setBusyId(iteration.id);
+            noteLocalIterationSwitch(iteration.id);
             apiPatchIteration(iteration.id, { isCurrent: true })
                 .then(() =>
                 {

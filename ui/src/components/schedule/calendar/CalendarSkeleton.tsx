@@ -2,7 +2,7 @@
 import Box from "@mui/material/Box";
 import Skeleton from "@mui/material/Skeleton";
 
-const DAY_COLUMNS = 6;
+const DAY_COLUMNS = 7;
 const SLOTS_PER_COLUMN = 8;
 
 /**

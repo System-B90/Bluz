@@ -18,6 +18,13 @@ services:
             - bluz_net
         extra_hosts:
             - "host.docker.internal:host-gateway"
+            # nginx.local.conf's websocket upstream is the bare hostname
+            # "mks-srvu" (no ".lan"). Windows resolves that via its DNS suffix
+            # search list, which containers don't inherit, so nginx fails to
+            # start with "host not found in upstream" unless it's pinned here.
+            # IP drifts on DHCP — see mks-srvu.lan in the Windows hosts file
+            # for the current one if this ever goes stale again.
+            - "mks-srvu:10.0.0.244"
 
 networks:
     bluz_net:

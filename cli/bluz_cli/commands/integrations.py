@@ -1,6 +1,7 @@
 """
 Name: integrations.py
-Purpose: Third-party integrations — Google Calendar status/connect/disconnect/sync.
+Purpose: Third-party integrations — Google Calendar status/connect/disconnect/sync/
+         calendars/select-calendar/purge.
          Mirrors ui/src/api-client/google-calendar.ts.
 Created: 2026-07-30
 Author: Michael K. Steinberg
@@ -66,6 +67,63 @@ def sync() -> None:
     if isinstance(result, dict) and not any(result.values()):
         warn("Sync ran but moved nothing — check `bluz integrations google status`.")
     success("Synced Google Calendar")
+    show(result)
+
+
+@google_app.command()
+def calendars() -> None:
+    """List the Google calendars you can mirror into (own + shared with write access)."""
+    with state.client() as client:
+        show(client.get(f"{_BASE}/calendars"), title="Google calendars")
+
+
+@google_app.command("select-calendar")
+def select_calendar(
+    calendar_id: str | None = typer.Option(
+        None,
+        "--id",
+        help="Calendar id from `bluz integrations google calendars` (a shared one to join colleagues on).",
+    ),
+    new: bool = typer.Option(
+        False,
+        "--new",
+        help="Create a fresh Bluz calendar for the current iteration instead.",
+    ),
+) -> None:
+    """Point your link at another calendar. Exactly one of --id / --new."""
+    if bool(calendar_id) == new:
+        raise typer.BadParameter("Pass exactly one of --id or --new.")
+    payload: dict[str, object] = (
+        {"createNew": True} if new else {"calendarId": calendar_id}
+    )
+    with state.client() as client:
+        result = client.post(f"{_BASE}/calendars", json=payload)
+    success("Switched Google calendar — run `bluz integrations google sync` to fill it")
+    show(result)
+
+
+@google_app.command()
+def purge(
+    scope: str = typer.Option(
+        "orphaned",
+        "--scope",
+        help="`orphaned` (no live Bluz event behind them) or `all` (every Bluz-created event).",
+    ),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation."),
+) -> None:
+    """Remove Bluz-created events from your linked Google calendar."""
+    if scope not in ("orphaned", "all"):
+        raise typer.BadParameter("--scope must be `orphaned` or `all`.")
+    if not yes:
+        typer.confirm(
+            f"Delete {'ALL Bluz-created' if scope == 'all' else 'orphaned Bluz'} events from your Google calendar?",
+            abort=True,
+        )
+    with state.client() as client:
+        result = client.post(f"{_BASE}/purge", json={"scope": scope})
+    if isinstance(result, dict) and result.get("failed"):
+        warn(f"{result['failed']} deletes failed — Google rejected them after retries.")
+    success("Purged Google Calendar")
     show(result)
 
 

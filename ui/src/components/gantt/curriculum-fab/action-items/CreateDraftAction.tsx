@@ -24,7 +24,7 @@ export function CreateDraftAction({
         runAction(
             () => ganttApi.curriculum.apiCreate(makeCurriculum()),
             (newCurriculum) => onCreate(newCurriculum),
-            "יצירת הגאנט נשלכה!",
+            "יצירת הגאנט נכשלה!",
         );
     }, [onCreate, runAction]);
 

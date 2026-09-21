@@ -34,7 +34,8 @@ async function setDbCourse(
     options?: UpdateOptions,
     controller: DatabaseController = databaseController,
 ) {
-    const { _id: _, id: courseId, ...courseData } = course as any;
+    // Same allow-list as create: the payload is client-supplied (#538 item 4).
+    const { id: courseId, ...courseData } = pickFields(course, COURSE_FIELDS);
     const data = await controller.courses.updateOne(
         { id: courseId },
         { $set: courseData },

@@ -87,7 +87,7 @@ function LoginWidget()
                     fontSize={ 14 }
                     mt={ 0 }
                 >
-                    מתי אתם מבזרים?
+                מה הלו&quot;ז?
                 </Typography>
             </Box>
 

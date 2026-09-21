@@ -1,5 +1,5 @@
 import { ClientApiProps, safeApiFetcher } from "@/api-client/common";
-import { withIteration } from "@/api-client/iteration-query";
+import { iterationEndpoint, withIteration } from "@/api-client/iteration-query";
 import { eventDateFixupToDayjs } from "@/api-shared/calendar";
 import {
     ApiEventCreatePayload,
@@ -93,21 +93,31 @@ export function withInitiator(
     return { ...props, headers };
 }
 
+// Writes name the iteration they target, same as reads do. Without it the
+// server resolved every write to the current run, so a save made while
+// viewing a past iteration silently created the event in the *current*
+// schedule instead of being refused (a past iteration is read-only).
+
 type ClientApiCreateEvent = (
     event: ApiEventCreatePayload | Event,
     initiator?: EventChangeInitiator,
     props?: ClientApiProps,
+    iterationId?: IterationId,
 ) => Promise<Event>;
 export const apiCreateEvent: ClientApiCreateEvent = async (
     event,
     initiator,
     props,
+    iterationId,
 ) => {
-    const rawData = await safeApiFetcher<ApiEventCreateResponse>("/api/event", {
-        ...withInitiator(props, initiator),
-        method: "PUT",
-        body: JSON.stringify(event),
-    });
+    const rawData = await safeApiFetcher<ApiEventCreateResponse>(
+        iterationEndpoint("/api/event", iterationId),
+        {
+            ...withInitiator(props, initiator),
+            method: "PUT",
+            body: JSON.stringify(event),
+        },
+    );
     return eventDateFixupToDayjs(rawData);
 };
 
@@ -115,17 +125,22 @@ type ClientApiUpdateEvent = (
     event: ApiEventUpdatePayload | Event,
     initiator?: EventChangeInitiator,
     props?: ClientApiProps,
+    iterationId?: IterationId,
 ) => Promise<Event>;
 export const apiUpdateEvent: ClientApiUpdateEvent = async (
     event,
     initiator,
     props,
+    iterationId,
 ) => {
-    const rawData = await safeApiFetcher<ApiEventUpdateResponse>("/api/event", {
-        ...withInitiator(props, initiator),
-        method: "POST",
-        body: JSON.stringify(event),
-    });
+    const rawData = await safeApiFetcher<ApiEventUpdateResponse>(
+        iterationEndpoint("/api/event", iterationId),
+        {
+            ...withInitiator(props, initiator),
+            method: "POST",
+            body: JSON.stringify(event),
+        },
+    );
     return eventDateFixupToDayjs(rawData);
 };
 
@@ -133,17 +148,22 @@ type ClientApiDeleteEvent = (
     eventId: ApiEventDeletePayload,
     initiator?: EventChangeInitiator,
     props?: ClientApiProps,
+    iterationId?: IterationId,
 ) => Promise<ApiEventDeleteResponse>;
 export const apiDeleteEvent: ClientApiDeleteEvent = async (
     eventId,
     initiator,
     props,
+    iterationId,
 ) => {
-    await safeApiFetcher<ApiEventDeleteResponse>("/api/event", {
-        ...withInitiator(props, initiator),
-        method: "DELETE",
-        body: JSON.stringify(eventId),
-    });
+    await safeApiFetcher<ApiEventDeleteResponse>(
+        iterationEndpoint("/api/event", iterationId),
+        {
+            ...withInitiator(props, initiator),
+            method: "DELETE",
+            body: JSON.stringify(eventId),
+        },
+    );
 };
 
 /**

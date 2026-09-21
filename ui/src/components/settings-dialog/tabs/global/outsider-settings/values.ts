@@ -48,17 +48,23 @@ export function validateOutsider(values: OutsiderValues): ValidationResult {
     return null;
 }
 
-/** Maps the form values onto the API payload, trimming and dropping blanks. */
+/**
+ * Maps the form values onto the API payload, trimming blanks to `null`.
+ *
+ * `null` rather than `undefined` on purpose: the server applies the payload
+ * as a plain `$set`, and `JSON.stringify` drops `undefined` keys entirely, so
+ * a field the user cleared would silently keep its old value on the server.
+ */
 export function outsiderValuesToPayload(values: OutsiderValues) {
     return {
-        comment: values.comment.trim() || undefined,
-        idNumber: values.idNumber.trim() || undefined,
+        comment: values.comment.trim() || null,
+        idNumber: values.idNumber.trim() || null,
         name: values.name.trim(),
-        personalNumber: values.personalNumber.trim() || undefined,
+        personalNumber: values.personalNumber.trim() || null,
         phone: values.phone.trim(),
         releaseDate:
             values.releaseDate && values.releaseDate.isValid()
                 ? values.releaseDate.toISOString()
-                : undefined,
+                : null,
     };
 }

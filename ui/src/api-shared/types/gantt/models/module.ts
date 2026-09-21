@@ -1,6 +1,10 @@
 import { GanttConstraint } from "@/api-shared/types/gantt/models/constraint";
-import { GanttEventId } from "@/api-shared/types/gantt/models/event";
-import { BaseGantItem } from "@/api-shared/types/gantt/models/shared";
+import {
+    BaseGantItem,
+    GanttEventId,
+} from "@/api-shared/types/gantt/models/shared";
+
+export type { GanttModuleId } from "@/api-shared/types/gantt/models/shared";
 
 export type GanttModule = {
     title: string;
@@ -13,5 +17,10 @@ export type GanttModule = {
      * Empty/undefined ⇒ applies to all shuffles.
      */
     shuffles?: Array<string>;
+    /**
+     * Hive id of the instructor new events in this module are pre-filled
+     * with as their orchestrator; null for no default. Existing events are
+     * left untouched when this changes.
+     */
+    defaultOrchestratorId: null | number;
 } & BaseGantItem;
-export type GanttModuleId = GanttModule["id"];

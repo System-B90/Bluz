@@ -208,6 +208,15 @@ export default defineConfig([
             "ui/dist/*",
             "node_modules/*",
             "ui/next-env.d.ts",
+            // Precompiled third-party bundle and its vendored declarations
+            // (#690). Minified output is not ours to style, and linting it
+            // produces thousands of meaningless errors.
+            "ui/vendor/*/dist/*",
+            // Bundler inputs, not application code: esbuild reads these, the
+            // app never imports them, and they sit outside the tsconfig
+            // project the type-aware rules need.
+            "ui/vendor/*/entry.cjs",
+            "ui/vendor/*/build.mjs",
             // These files are not directly part of the UI, and cause the linter to freak out
             "drizzle/drizzle.config.ts",
             "session-server/session-common.ts",

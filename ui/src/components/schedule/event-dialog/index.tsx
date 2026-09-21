@@ -44,6 +44,8 @@ type EventDialogProps = {
     event: EventOrPartial;
     // Display name of another user currently editing this event, if any.
     lockedByName?: string;
+    /** Viewing a past iteration: the form is for reading, Save/Delete are off. */
+    readOnly?: boolean;
     onClose: () => void;
     onSave: (event: EventOrPartial) => void;
     onDelete: (eventId: EventId) => void;
@@ -53,6 +55,7 @@ export function EventDialog({
     open,
     event: inputEvent,
     lockedByName,
+    readOnly = false,
     onClose,
     onSave,
     onDelete,
@@ -93,6 +96,7 @@ export function EventDialog({
     const handleSubmit = (e: FormEvent<HTMLFormElement>) =>
     {
         e.preventDefault();
+        if (readOnly) return;
         onSave(event);
     };
 
@@ -195,13 +199,20 @@ export function EventDialog({
                             </Alert>
                         </Collapse>
 
+                        <Collapse in={ readOnly } unmountOnExit>
+                            <Alert severity="warning" variant="outlined">
+                                איטרציה קודמת מוצגת לקריאה בלבד — לא ניתן
+                                לשמור שינויים.
+                            </Alert>
+                        </Collapse>
+
                         <Collapse in={ Boolean(lockedByName) } unmountOnExit>
                             <Alert
                                 icon={ <LockPersonIcon fontSize="inherit" /> }
                                 severity="warning"
                                 variant="outlined"
                             >
-                                { `משתמש אחר (${shownLockName}) עורך כעת מופע זה. שמירה תדרוס את שינוייו.` }
+                                { `משתמש אחר (${shownLockName}) עורך כעת את המופע הזה. שמירה תדרוס את שינוייו.` }
                             </Alert>
                         </Collapse>
 
@@ -237,7 +248,7 @@ export function EventDialog({
                 <DialogActions>
                     <Button
                         color="error"
-                        disabled={ !("id" in event) || !event?.id }
+                        disabled={ readOnly || !("id" in event) || !event?.id }
                         onClick={ () =>
                             "id" in event ? onDelete(event.id as string) : {}
                         }
@@ -247,6 +258,7 @@ export function EventDialog({
                     <Button onClick={ onClose }>ביטול</Button>
                     <Button
                         disabled={
+                            readOnly ||
                             !event?.name?.trim() ||
                             Boolean(
                                 event.fake &&

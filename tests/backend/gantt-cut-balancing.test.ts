@@ -568,6 +568,91 @@ describe("cut — auto spillover", () => {
         expect(plan.report.overflows).toHaveLength(1);
     });
 
+    it("wraps split-across-breaks events too instead of stacking them past the end time", () => {
+        // 08:00-12:00 window, lunch pinned 10:00-10:30. e1 fills the morning;
+        // e2/e3 split around lunch and would end 12:30 / later, so each must
+        // wrap back inside the window rather than start at (or past) 12:00.
+        const { days } = buildWeeks(1, () => ({ dayEndTime: "12:00" }));
+        const plan = planCut(
+            baseInput({
+                days,
+                weeks: [{ id: "week0", dayIds: ["w0d0"] }],
+                lunchTime: "10:00",
+                events: [
+                    makeEvent({
+                        id: "lunch",
+                        title: MEAL_EVENT_TITLES.lunchTime,
+                        minimumDuration: 30,
+                        allocatedDuration: 30,
+                    }),
+                    makeEvent({ id: "e1", minimumDuration: 90, allocatedDuration: 90 }),
+                    makeEvent({
+                        id: "e2",
+                        minimumDuration: 120,
+                        allocatedDuration: 120,
+                        splitAcrossBreaks: true,
+                    }),
+                    makeEvent({
+                        id: "e3",
+                        minimumDuration: 120,
+                        allocatedDuration: 120,
+                        splitAcrossBreaks: true,
+                    }),
+                ],
+                mappings: ["lunch", "e1", "e2", "e3"].map((id, n) => ({
+                    eventId: id,
+                    dayId: "w0d0",
+                    sortOrder: n,
+                })),
+            }),
+            { insertBreaks: false, autoSpillover: false },
+        );
+
+        expect(plan.ok).toBe(true);
+        if (!plan.ok) return;
+        // e1 08:00-09:30; e2 from 09:30 splits around lunch → ends 12:00, fits.
+        expect(wallClock(occurrencesOf(plan, "e2")[0].startTime)).toBe("09:30:00");
+        // e3 from 12:00 would run to 14:00 → wraps to the morning.
+        expect(wallClock(occurrencesOf(plan, "e3")[0].startTime)).toBe("08:00:00");
+        for (const occ of plan.occurrences) {
+            expect(wallClock(occ.startTime) < "12:00:00").toBe(true);
+        }
+    });
+
+    it("bumps a wrapped event past a meal window at the wrap position", () => {
+        // 08:00-12:00 window, breakfast pinned 08:00-08:30. Four 2-hour
+        // lectures: e1 08:30-10:30, e2 10:30-12:30 → wraps; the wrap must not
+        // land it on top of breakfast at 08:00 but bump it to 08:30.
+        const { days } = buildWeeks(1, () => ({ dayEndTime: "12:00" }));
+        const plan = planCut(
+            baseInput({
+                days,
+                weeks: [{ id: "week0", dayIds: ["w0d0"] }],
+                breakfastTime: "08:00",
+                events: [
+                    makeEvent({
+                        id: "breakfast",
+                        title: MEAL_EVENT_TITLES.breakfastTime,
+                        minimumDuration: 30,
+                        allocatedDuration: 30,
+                    }),
+                    makeEvent({ id: "e1", minimumDuration: 120, allocatedDuration: 120 }),
+                    makeEvent({ id: "e2", minimumDuration: 120, allocatedDuration: 120 }),
+                ],
+                mappings: ["breakfast", "e1", "e2"].map((id, n) => ({
+                    eventId: id,
+                    dayId: "w0d0",
+                    sortOrder: n,
+                })),
+            }),
+            { insertBreaks: false, autoSpillover: false },
+        );
+
+        expect(plan.ok).toBe(true);
+        if (!plan.ok) return;
+        expect(wallClock(occurrencesOf(plan, "e2")[0].startTime)).toBe("08:30:00");
+    });
+
     it("runs past the end time only when the user chose extend-day", () => {
         const { days } = buildWeeks(1, () => ({ dayEndTime: "12:00" }));
         const input = baseInput({
@@ -929,6 +1014,47 @@ describe("insertBreaksForDay", () => {
             }).breaks,
         ).toEqual([]);
     });
+
+    it("never shifts a pre-meal event into a pinned meal when the slack sits after it", () => {
+        // A 08:00-09:00, B 09:00-10:00 (other syllabus), C 10:00-12:50, lunch
+        // pinned 13:00-14:30, D 14:30-16:30, day ends 17:00. The 30 minutes of
+        // slack are *after* lunch; breaks before lunch may only use the 10
+        // minutes between C and the pin, never push C over 13:00.
+        const result = insertBreaksForDay({
+            dayEndMinutes: 1020,
+            prayers: [],
+            items: [
+                makeItem({ key: "a", startMinutes: 480, endMinutes: 540, syllabusId: "s1" }),
+                makeItem({ key: "b", startMinutes: 540, endMinutes: 600, syllabusId: "s2" }),
+                makeItem({ key: "c", startMinutes: 600, endMinutes: 770, syllabusId: "s2" }),
+                makeItem({
+                    key: "lunch",
+                    startMinutes: 780,
+                    endMinutes: 870,
+                    isPinned: true,
+                    isExistingBreak: true,
+                }),
+                makeItem({ key: "d", startMinutes: 870, endMinutes: 990, syllabusId: "s3" }),
+            ],
+        });
+
+        const byKey = new Map(result.items.map((item) => [item.key, item]));
+        expect(byKey.get("lunch")?.startMinutes).toBe(780);
+        expect(byKey.get("c")!.endMinutes).toBeLessThanOrEqual(780);
+        expect(byKey.get("d")!.endMinutes).toBeLessThanOrEqual(1020);
+        for (const generated of result.breaks) {
+            const overlapsLunch =
+                generated.startMinutes < 870 && generated.endMinutes > 780;
+            expect(overlapsLunch).toBe(false);
+        }
+        // Events never overlap each other or a break after the pass.
+        const spans = [...result.items, ...result.breaks]
+            .map((entry) => [entry.startMinutes, entry.endMinutes] as const)
+            .sort((x, y) => x[0] - y[0]);
+        for (let i = 1; i < spans.length; i++) {
+            expect(spans[i][0]).toBeGreaterThanOrEqual(spans[i - 1][1]);
+        }
+    });
 });
 
 describe("cut — break post-pass end to end", () => {
@@ -1070,6 +1196,74 @@ describe("solveConstraints", () => {
         expect(result.proposals).toHaveLength(1);
         // ...but the caller's own placement object is untouched.
         expect(callerPlacement).toEqual(snapshot);
+    });
+
+    it("drops a violation that a later pass resolved", () => {
+        // e1 must be on Tuesday but d2 is full on pass 0. e2 (also on d2)
+        // must leave it, which frees room; pass 1 then moves e1 — so no
+        // violation may remain in the final report.
+        const fullDays = {
+            ...days,
+            d2: dayInfo("d2", GanttDayIndex.Tuesday, 2, 480),
+        };
+        const e2Temporal = {
+            ...temporal([GanttDayIndex.Sunday, GanttDayIndex.Monday]),
+            id: "c2",
+            ownerEventId: "e2",
+        } as GanttConstraint;
+
+        const result = solveConstraints({
+            placements: [placement("e1", "d0", 0), placement("e2", "d2", 2)],
+            days: fullDays,
+            entities: [
+                { id: "e1", title: "e1", constraints: [temporal([GanttDayIndex.Tuesday])] },
+                { id: "e2", title: "e2", constraints: [e2Temporal] },
+            ],
+            eventIdsByModule: {},
+            titleByEventId: { e1: "e1", e2: "e2" },
+        });
+
+        expect(result.proposals.map((p) => [p.eventId, p.toDayId])).toEqual([
+            ["e2", "d1"],
+            ["e1", "d2"],
+        ]);
+        expect(result.violations).toEqual([]);
+    });
+
+    it("reports a constraint that a later pass broke", () => {
+        // e1 "before" e2 holds on pass 0 (d0 < d1). e2 is then pulled onto
+        // Sunday by its own weekday constraint, leaving e1 nowhere earlier
+        // to go — the final report must carry that violation.
+        const before: GanttConstraint = {
+            id: "c1",
+            type: ConstraintType.Relational,
+            ownerType: "event",
+            ownerEventId: "e1",
+            relation: "before",
+            targetType: "event",
+            targetId: "e2",
+            minDelayDays: 1,
+        } as GanttConstraint;
+        const e2Temporal = {
+            ...temporal([GanttDayIndex.Sunday]),
+            id: "c2",
+            ownerEventId: "e2",
+        } as GanttConstraint;
+
+        const result = solveConstraints({
+            placements: [placement("e1", "d0", 0), placement("e2", "d1", 1)],
+            days,
+            entities: [
+                { id: "e1", title: "e1", constraints: [before] },
+                { id: "e2", title: "e2", constraints: [e2Temporal] },
+            ],
+            eventIdsByModule: {},
+            titleByEventId: { e1: "e1", e2: "e2" },
+        });
+
+        expect(result.proposals.map((p) => [p.eventId, p.toDayId])).toEqual([["e2", "d0"]]);
+        expect(result.violations).toHaveLength(1);
+        expect(result.violations[0]).toMatchObject({ ownerId: "e1", kind: "relational" });
     });
 
     it("reports a violation when no allowed day exists in the week", () => {

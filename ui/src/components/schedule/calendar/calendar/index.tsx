@@ -24,6 +24,7 @@ import { useScheduleCommands } from "@/components/app-commands/use-schedule-comm
 import { useScheduleEventCommands } from "@/components/app-commands/use-schedule-event-commands";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useRooms } from "@/components/base/RoomsProvider";
+import { useConfirmDialog } from "@/components/base/UseConfirmDialog";
 import { CalendarView } from "@/components/schedule/calendar/calendar/CalendarView";
 import {
     GROWING_CONTROL_BUTTON_SX,
@@ -34,10 +35,16 @@ import { useCalendar } from "@/components/schedule/calendar/calendar-provider/Ca
 import { InstructorDndProvider } from "@/components/schedule/calendar/instructor-dnd/InstructorDndProvider";
 import { InstructorRail } from "@/components/schedule/calendar/instructor-dnd/InstructorRail";
 import { getRangeForView } from "@/components/schedule/calendar/utils";
+import { EventContextMenu } from "@/components/schedule/event-context-menu";
+import { useEventContextMenu } from "@/components/schedule/event-context-menu/use-event-context-menu";
+import { useEventSelection } from "@/components/schedule/event-context-menu/use-event-selection";
 import { Event } from "@/components/schedule/types/event";
 
+/** Keys the schedule's global hotkeys use (see use-schedule-commands). */
+const SCHEDULE_HOTKEYS = new Set(["z", "y", "arrowleft", "arrowright"]);
+
 type BluzCalendarProps = {
-    handleSaveEvent: (event: Event, initiator?: EventChangeInitiator) => void;
+    handleSaveEvent: (event: Event, initiator?: EventChangeInitiator) => Event | undefined | void;
     handleDeleteEvent: (
         eventId: Event["id"],
         initiator?: EventChangeInitiator,
@@ -85,18 +92,12 @@ export function BluzCalendar({
     const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
     const { rooms } = useRooms();
-    const { startDate, endDate, setStartDate, setEndDate } = useCalendar();
-    const { showPAsFor, filteredCourses, filteredInstructors, hidePrayers } =
-        useCalendarFilters();
-
-    const hasAnyFilter = useMemo(
-        () =>
-            hidePrayers ||
-            filteredCourses.length !== 0 ||
-            filteredInstructors.length !== 0 ||
-            showPAsFor !== null,
-        [filteredCourses, filteredInstructors, showPAsFor, hidePrayers],
-    );
+    const { startDate, endDate, setStartDate, setEndDate, isReadOnlyIteration } =
+        useCalendar();
+    // The provider's own flag, so the room filter counts too — the local
+    // copy this replaced left it out and the indicator stayed dark with only
+    // a room filter active.
+    const { hasActiveFilters: hasAnyFilter } = useCalendarFilters();
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -108,7 +109,26 @@ export function BluzCalendar({
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [isFullscreen]);
 
-    const { handleEventDrag, handleSlotSelect, setActiveEvent } =
+    // The palette's hotkeys (Ctrl+Z/Y undo, Ctrl+←/→ paging) are window
+    // listeners that only skip plain text inputs. With the event dialog
+    // open and focus on a Select, a chip or the dialog paper, Ctrl+Z undid
+    // the *calendar's* last edit — and pushed that undo to the server —
+    // while the user believed they were undoing inside the form. Any open
+    // dialog owns those keys; swallow them in the capture phase before the
+    // hotkey listener sees them (the browser's own text undo is untouched).
+    useEffect(() => {
+        const swallowScheduleHotkeys = (e: KeyboardEvent) => {
+            if (!(e.ctrlKey || e.metaKey)) return;
+            if (!SCHEDULE_HOTKEYS.has(e.key.toLowerCase())) return;
+            if (document.querySelector(".MuiDialog-root") === null) return;
+            e.stopPropagation();
+        };
+        window.addEventListener("keydown", swallowScheduleHotkeys, true);
+        return () =>
+            window.removeEventListener("keydown", swallowScheduleHotkeys, true);
+    }, []);
+
+    const { handleEventDrag, handleSplitEvent, handleSlotSelect, setActiveEvent } =
         useCalendarHandlers(
             events,
             handleSaveEvent,
@@ -194,6 +214,19 @@ export function BluzCalendar({
         updateDateRange(currentDate, currentView);
     }, [currentDate, currentView, updateDateRange]);
 
+    // The view owns `currentDate` and pushes its range into the context, so a
+    // jump made through the context setters (snapshot restore) was pushed
+    // straight back. Follow a range the view didn't produce (#653).
+    useEffect(() => {
+        if (!startDate) return;
+        const { start, end } = getRangeForView(currentDate, currentView);
+        if (startDate >= start && startDate <= end) return;
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- Syncs view state to an external range change
+        setCurrentDate(startDate);
+        // Only an outside change to the context range should move the view.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [startDate]);
+
     // The calendar resolves its own split pieces back to the canonical event
     // before calling out, so these only ever see whole events.
     const handleEditEvent = useCallback(
@@ -213,6 +246,32 @@ export function BluzCalendar({
     );
 
     useScheduleEventCommands({ events, onSelect: handleEditEvent });
+
+    /* ── Right-click menu (#706) ─────────────────────────────── */
+
+    const selection = useEventSelection(events);
+    const { target: contextMenuTarget, openAt, close: closeContextMenu } =
+        useEventContextMenu(selection);
+    const { confirm, confirmDialog } = useConfirmDialog();
+
+    // Every entry in the menu is a write, so a past iteration — which the
+    // server rejects writes to — gets no menu at all rather than one whose
+    // items all fail.
+    const handleContextMenuEvent = isReadOnlyIteration ? null : openAt;
+
+    // Escape drops the selection, matching the ring it clears on screen. The
+    // menu swallows its own Escape (MUI closes it first), so this only ever
+    // fires against a selection with no menu over it. Bound to `clear` rather
+    // than to the selection object, which changes on every pick — there is no
+    // reason to re-subscribe the listener each time.
+    const clearSelection = selection.clear;
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") clearSelection();
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [clearSelection]);
 
     if (!mounted) {
         return <div className="grow h-full bg-slate-50/50 animate-pulse" />;
@@ -364,16 +423,22 @@ export function BluzCalendar({
                         currentView={currentView}
                         date={currentDate}
                         events={events}
+                        onClearSelection={selection.clear}
+                        onContextMenuEvent={handleContextMenuEvent}
                         onDoubleClickEvent={handleEditEvent}
                         onEventDrop={handleEventDrag}
                         onExportIcs={exportIcs}
                         onNavigate={onNavigate}
                         onSelectEvent={handleSelectEvent}
+                        onSelectOnly={selection.selectOnly}
                         onSelectSlot={handleSlotSelect}
+                        onSplitEvent={handleSplitEvent}
+                        onToggleEventSelection={selection.toggle}
                         onToggleFullscreen={handleToggleFullscreen}
                         onToggleToolbar={handleToggleToolbar}
                         onView={handleViewChange}
                         rooms={rooms}
+                        selectedEventIds={selection.selectedEventIds}
                         showToolbar={
                             showToolbar && !isFullscreen ? true : false
                         }
@@ -383,6 +448,17 @@ export function BluzCalendar({
                     <InstructorRail />
                 </Box>
             </InstructorDndProvider>
+
+            <EventContextMenu
+                events={events}
+                onClose={closeContextMenu}
+                onConfirm={confirm}
+                onDeleteEvent={handleDeleteEvent}
+                onSaveEvent={handleSaveEvent}
+                rooms={rooms}
+                target={contextMenuTarget}
+            />
+            {confirmDialog}
         </Box>
     );
 }

@@ -20,9 +20,7 @@ import { HiveIterationCache } from "@/api-shared/types/iteration";
 beforeEach(() => {
     vi.clearAllMocks();
     hive.getModules.mockResolvedValue([ { id: 1, name: "מודול" } ]);
-    hive.getSubjects.mockResolvedValue([
-        { id: 2, name: "מקצוע", displayName: "מקצוע לתצוגה" },
-    ]);
+    hive.getSubjects.mockResolvedValue([{ id: 2, name: "מקצוע" }]);
     hive.getRooms.mockResolvedValue([ { id: 3, name: "כיתה" } ]);
 });
 
@@ -32,20 +30,10 @@ describe("buildHiveCache", () => {
 
         expect(cache).toMatchObject({
             modules: { 1: "מודול" },
-            subjects: { 2: "מקצוע לתצוגה" },
+            subjects: { 2: "מקצוע" },
             rooms: { 3: "כיתה" },
         });
         expect(typeof cache!.cachedAt).toBe("string");
-    });
-
-    it("falls back to a subject's plain name when it has no display name", async () => {
-        hive.getSubjects.mockResolvedValueOnce([
-            { id: 2, name: "מקצוע", displayName: "" },
-        ]);
-
-        const cache = await buildHiveCache();
-
-        expect(cache!.subjects[ 2 ]).toBe("מקצוע");
     });
 
     it("passes an explicit Hive URL through to the client", async () => {

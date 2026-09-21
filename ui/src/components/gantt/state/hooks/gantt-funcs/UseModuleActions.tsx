@@ -75,7 +75,13 @@ export function useModuleActions() {
             hiveIds: Array<number> = [],
         ) =>
             actions.create(
-                { title, syllabusId, description, hiveIds },
+                {
+                    title,
+                    syllabusId,
+                    description,
+                    hiveIds,
+                    defaultOrchestratorId: null,
+                },
                 syllabusId,
                 (tempId): GanttModule => ({
                     id: tempId,
@@ -84,6 +90,7 @@ export function useModuleActions() {
                     events: [],
                     hiveIds,
                     constraints: [],
+                    defaultOrchestratorId: null,
                 }),
             ),
         [actions],

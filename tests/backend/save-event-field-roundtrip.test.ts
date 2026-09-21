@@ -57,7 +57,10 @@ const REQUIRED_FIELDS: Partial<Event> = {
     type: EventType.EXERCISE,
 };
 
-function renderActions(events: Array<Event> = []) {
+function renderActions(
+    events: Array<Event> = [],
+    iterationScope?: Parameters<typeof useEventActions>[7],
+) {
     const dispatch = vi.fn();
     const remoteDispatch = vi.fn();
     const captureEventBeforeEdit = vi.fn();
@@ -71,6 +74,8 @@ function renderActions(events: Array<Event> = []) {
             dispatch,
             remoteDispatch,
             markEventCreatedLocally,
+            () => false,
+            iterationScope,
         ),
     );
 
@@ -224,5 +229,48 @@ describe("saveEvent field round-trip", () => {
             "לא ניתן לשמור אירוע ללא שם.",
             { variant: "warning" },
         );
+    });
+});
+
+describe("saveEvent on a read-only iteration", () => {
+    it("refuses the write before touching local state or the server", () => {
+        const { dispatch, result } = renderActions([], {
+            iterationId: "bis27",
+            isReadOnlyIteration: true,
+        });
+
+        let saved: Event | undefined;
+        act(() => {
+            saved = result.current.saveEvent({
+                ...REQUIRED_FIELDS,
+                startTime: dayjs("2024-03-04T08:00:00"),
+                endTime: dayjs("2024-03-04T09:00:00"),
+            });
+        });
+
+        expect(saved).toBeUndefined();
+        expect(dispatch).not.toHaveBeenCalled();
+        expect(apiCreateEvent).not.toHaveBeenCalled();
+        expect(apiUpdateEvent).not.toHaveBeenCalled();
+    });
+
+    it("stamps the viewed iteration onto a permitted write", async () => {
+        apiCreateEvent.mockImplementation(async (event: Event) => event);
+        const { result } = renderActions([], {
+            iterationId: "bis28",
+            isReadOnlyIteration: false,
+        });
+
+        act(() => {
+            result.current.saveEvent({
+                ...REQUIRED_FIELDS,
+                startTime: dayjs("2024-03-04T08:00:00"),
+                endTime: dayjs("2024-03-04T09:00:00"),
+            });
+        });
+
+        await vi.waitFor(() => expect(apiCreateEvent).toHaveBeenCalled());
+        const [, , , iterationId] = apiCreateEvent.mock.calls[0];
+        expect(iterationId).toBe("bis28");
     });
 });

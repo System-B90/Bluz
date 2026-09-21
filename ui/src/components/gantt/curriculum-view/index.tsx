@@ -10,6 +10,7 @@ import { GanttCreationDeletionCallbackProps } from "@/components/gantt/curriculu
 import { CurriculumViewSidebar } from "@/components/gantt/curriculum-view/components/sidebars";
 import { GanttSearchNavProvider } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
 import { CurriculumViewTabs } from "@/components/gantt/curriculum-view/tabs";
+import { GanttFiltersProvider } from "@/components/gantt/state/filters/Provider";
 
 export type CurriculumViewProps = {
     curriculumId: GanttCurriculumId | null;
@@ -62,43 +63,45 @@ export function CurriculumView({
 
     return (
         <GanttSearchNavProvider>
-            {/* Needs both the curriculum state and the search-nav context. */ }
-            <GanttContentCommands />
+            <GanttFiltersProvider>
+                {/* Needs both the curriculum state and the search-nav context. */ }
+                <GanttContentCommands />
 
-            {/* The tour drives the tabs, so it is registered by their owner. */ }
-            <GanttOnboarding setSelectedTabIndex={ setSelectedTabIndex } />
+                {/* The tour drives the tabs, so it is registered by their owner. */ }
+                <GanttOnboarding setSelectedTabIndex={ setSelectedTabIndex } />
 
-            <Box
-                alignItems={ "flex-start" }
-                display={ "flex" }
-                flexDirection={ "row" }
-                flexWrap={ "nowrap" }
-                gap={ 4 }
-                height={ "100%" }
-                justifyContent={ "flex-start" }
-                justifyItems={ "flex-start" }
-                width={ "100%" }
-                { ...props }
-            >
-                <CurriculumViewSidebar
-                    curriculumId={ curriculumId }
-                    onCreate={ onCreate }
-                    onDelete={ onDelete }
-                    selectedTabIndex={ selectedTabIndex }
-                    setCurrentCurriculum={ setCurrentCurriculum }
-                />
-
-                <CurriculumViewTabs
-                    curriculumId={ curriculumId }
+                <Box
+                    alignItems={ "flex-start" }
                     display={ "flex" }
-                    flexDirection={ "column" }
-                    flexGrow={ 1 }
+                    flexDirection={ "row" }
+                    flexWrap={ "nowrap" }
+                    gap={ 4 }
                     height={ "100%" }
-                    selectedTabIndex={ selectedTabIndex }
-                    setSelectedTabIndex={ setSelectedTabIndex }
+                    justifyContent={ "flex-start" }
+                    justifyItems={ "flex-start" }
                     width={ "100%" }
-                />
-            </Box>
+                    { ...props }
+                >
+                    <CurriculumViewSidebar
+                        curriculumId={ curriculumId }
+                        onCreate={ onCreate }
+                        onDelete={ onDelete }
+                        selectedTabIndex={ selectedTabIndex }
+                        setCurrentCurriculum={ setCurrentCurriculum }
+                    />
+
+                    <CurriculumViewTabs
+                        curriculumId={ curriculumId }
+                        display={ "flex" }
+                        flexDirection={ "column" }
+                        flexGrow={ 1 }
+                        height={ "100%" }
+                        selectedTabIndex={ selectedTabIndex }
+                        setSelectedTabIndex={ setSelectedTabIndex }
+                        width={ "100%" }
+                    />
+                </Box>
+            </GanttFiltersProvider>
         </GanttSearchNavProvider>
     );
 }

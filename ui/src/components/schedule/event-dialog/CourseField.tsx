@@ -5,12 +5,12 @@ import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import { SelectChangeEvent } from "@mui/material/Select";
 import Select from "@mui/material/Select";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useId } from "react";
 
 import { CourseId } from "@/api-shared/types/course";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
-import { eventHasRoom } from "@/components/schedule/types/event";
+import { eventHasCourses } from "@/components/schedule/types/event";
 
 type CourseFieldProps = {} & EventFieldProps;
 
@@ -19,6 +19,7 @@ export function CourseField({
     onBlurCallback,
     ...props
 }: CourseFieldProps & FormControlProps) {
+    const labelId = useId();
     const { courses, getCourse } = useCourses();
     const [currentCourseIds, setCurrentCourseIds] = useState(
         Array.isArray(event?.courses) ? event.courses : [],
@@ -68,11 +69,11 @@ export function CourseField({
         <FormControl
             fullWidth={false}
             {...props}
-            disabled={event?.type ? !eventHasRoom(event.type) : false}
+            disabled={event?.type ? !eventHasCourses(event.type) : false}
         >
-            <InputLabel>מסלולים</InputLabel>
-            <Select
-                label="מסלולים"
+            <InputLabel id={ labelId }>מסלולים</InputLabel>
+            <Select label="מסלולים"
+                labelId={ labelId }
                 multiple
                 onChange={handleChange}
                 onClose={onClose}

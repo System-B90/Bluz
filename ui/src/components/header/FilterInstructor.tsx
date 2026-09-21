@@ -3,12 +3,14 @@ import Chip from "@mui/material/Chip";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import { SelectChangeEvent } from "@mui/material/Select";
+import { useId } from "react";
 
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { InstructorSelect } from "@/components/base/InstructorSelect";
 
 export function FilterInstructors({ ...props }: BoxProps) {
+    const labelId = useId();
     const { getInstructor } = useHiveUsers();
     const { filteredInstructors, setFilteredInstructors } =
         useCalendarFilters();
@@ -41,10 +43,10 @@ export function FilterInstructors({ ...props }: BoxProps) {
     return (
         <Box {...props}>
             <FormControl fullWidth={true} size="small">
-                <InputLabel size="small">סינון לפי מדריכים</InputLabel>
-                <InstructorSelect
-                    excludeTeachers={true}
+                <InputLabel id={ labelId } size="small">סינון לפי מדריכים</InputLabel>
+                <InstructorSelect excludeTeachers={true}
                     label="סינון לפי מדריכים"
+                    labelId={ labelId }
                     MenuProps={{ disablePortal: true }}
                     multiple
                     onChange={handleChange}

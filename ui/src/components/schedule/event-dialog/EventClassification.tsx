@@ -23,8 +23,10 @@ export function EventClassification({
 })
 {
     const isPrayer = event?.type === EventType.PRAYER;
-    // Fake events aren't wired to Hive — hide subject/module/lesson (#102).
-    const showHiveFields = !isPrayer && !event?.fake;
+    // Fake events aren't wired to Hive, and a break has no subject of its own
+    // — hide subject/module/lesson for both (#102).
+    const showHiveFields =
+        !isPrayer && !event?.fake && event?.type !== EventType.BREAK;
 
     return (
         <Box
@@ -34,8 +36,11 @@ export function EventClassification({
             justifyContent="flex-start"
             width="100%"
         >
+            {/* Keyed per event: the field seeds its type state once from the
+                event, and the dialog swaps events without remounting. */}
             <EventTypeField
                 event={ event }
+                key={ event?.id }
                 onBlurCallback={ onUpdate }
                 sx={ { width: "15%" } }
             />
@@ -52,7 +57,7 @@ export function EventClassification({
                     display: "flex",
                     alignItems: "flex-start",
                     visibility: isPrayer ? "visible" : "hidden",
-                    mr: isPrayer ? 0 : -2,
+                    marginInlineEnd: isPrayer ? 0 : -2,
                     pt: 1.5,
                     mt: -1.5,
                 } }
@@ -77,7 +82,7 @@ export function EventClassification({
                     gap: 2,
                     alignItems: "flex-start",
                     visibility: showHiveFields ? "visible" : "hidden",
-                    mr: showHiveFields ? 0 : -2,
+                    marginInlineEnd: showHiveFields ? 0 : -2,
                     pt: 1.5,
                     mt: -1.5,
                 } }

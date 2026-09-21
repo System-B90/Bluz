@@ -1,9 +1,11 @@
 /* eslint-disable import/order */
 "use client";
-import moment from "moment";
+import moment from "moment-timezone";
 // @ts-ignore This import is broken
 import "moment/locale/he"; // Import Hebrew locale
 import { Calendar, momentLocalizer } from "react-big-calendar";
+
+import { APP_TIMEZONE } from "@/api-shared/dayjs-setup";
 
 // DO NOT SORT IMPORTS - they are ordered for a reason!
 
@@ -25,6 +27,11 @@ const DnDCalendar = withDragAndDrop<EventSegment, Room>(Calendar);
 
 // Set the default locale to Hebrew
 moment.locale("he");
+// Pin rendering to the school's wall clock. Segments are computed in
+// APP_TIMEZONE but cross into react-big-calendar as plain `Date`s, which the
+// localizer would otherwise format in the device's timezone — same fix as
+// student-view/StudentCalendarLocalizer.tsx.
+moment.tz.setDefault(APP_TIMEZONE);
 export { moment as calendarMoment };
 export const localizer = momentLocalizer(moment);
 export { DnDCalendar };

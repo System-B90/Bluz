@@ -1,6 +1,8 @@
 import { GanttDayIndex } from "@/api-shared/types/gantt/models/day";
-import { GanttEventId } from "@/api-shared/types/gantt/models/event";
-import { GanttModuleId } from "@/api-shared/types/gantt/models/module";
+import {
+    GanttEventId,
+    GanttModuleId,
+} from "@/api-shared/types/gantt/models/shared";
 
 export enum ConstraintType {
     Relational = "RELATIONAL",
@@ -146,9 +148,11 @@ export function constraintToHumanReadableString(
 
         let ownerName = " ";
         if (constraint.ownerType === "event") {
-            ownerName = state.events[constraint.ownerEventId].title;
+            ownerName =
+                state.events[constraint.ownerEventId]?.title ?? "*לא נמצא*";
         } else {
-            ownerName = state.modules[constraint.ownerModuleId].title;
+            ownerName =
+                state.modules[constraint.ownerModuleId]?.title ?? "*לא נמצא*";
         }
 
         if (constraint.relation === "after") {

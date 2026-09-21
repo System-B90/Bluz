@@ -19,6 +19,7 @@ import
     GanttModuleId,
     GanttSyllabusId
 } from "@/api-shared/types/gantt/models";
+import { useConfirmDialog } from "@/components/base/UseConfirmDialog";
 import { EventDialogContent } from "@/components/gantt/event-dialog/DialogContent";
 import { EventDialogHeader } from "@/components/gantt/event-dialog/DialogHeader";
 import { MoveEventDialog } from "@/components/gantt/module-dialog/MoveEventDialog";
@@ -56,6 +57,7 @@ function EventDialogInner({
 
     const [ , startTransition ] = useTransition();
     const [ isActionLoading, setIsActionLoading ] = useState(false);
+    const { confirm, confirmDialog } = useConfirmDialog();
 
     const handleClose = useCallback(() => setOpen(false), [ setOpen ]);
 
@@ -66,9 +68,17 @@ function EventDialogInner({
         openModuleDialog(syllabusId, moduleId);
     }, [ syllabusId, moduleId, setOpen, openModuleDialog ]);
 
-    const handleDelete = useCallback(() =>
+    // A gantt delete has no undo, so one stray click on מחיקה used to
+    // drop the event — and its placement, constraints and shuffles — for
+    // good. Ask first.
+    const handleDelete = useCallback(async () =>
     {
         if (!moduleId || !eventId) return;
+        const ok = await confirm(
+            `למחוק את המופע "${event?.title ?? ""}"? לא ניתן לבטל.`,
+            { title: "מחיקת מופע", confirmLabel: "למחוק" },
+        );
+        if (!ok) return;
         setIsActionLoading(true);
         deleteEvent(moduleId, eventId)
             .then(() =>
@@ -77,7 +87,7 @@ function EventDialogInner({
                 setOpen(false);
             })
             .catch(() => setIsActionLoading(false));
-    }, [ moduleId, eventId, deleteEvent, setOpen ]);
+    }, [ moduleId, eventId, event?.title, confirm, deleteEvent, setOpen ]);
 
     if (eventId === null || moduleId === null) return null;
 
@@ -106,7 +116,11 @@ function EventDialogInner({
             <EventDialogContent curriculumId={ syllabus?.curriculumId ?? null } event={ event } eventId={ eventId } isContentReady={ isContentReady } moduleId={ moduleId } syllabus={ syllabus } />
 
             <DialogActions>
-                <Button color="error" disabled={ isActionLoading } onClick={ handleDelete }>
+                <Button
+                    color="error"
+                    disabled={ isActionLoading }
+                    onClick={ () => void handleDelete() }
+                >
                     מחיקה
                 </Button>
                 <Button
@@ -131,6 +145,7 @@ function EventDialogInner({
                 onClose={ () => setMoveDialogOpen(false) }
                 open={ moveDialogOpen }
             />
+            { confirmDialog }
         </Dialog>
     );
 }

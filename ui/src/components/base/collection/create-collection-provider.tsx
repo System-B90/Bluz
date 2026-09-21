@@ -224,10 +224,17 @@ export function createCollectionProvider<T, TId, TCreate>(
             [ops, enqueueSnackbar],
         );
 
+        // Sequence full reloads: mount, CURRENT_ITERATION_CHANGED and a
+        // rollback can overlap, and an older list() resolving last would
+        // replace a newer one (or clobber incremental WS puts/removes that
+        // landed in between). Only the most recently issued load may apply.
+        const loadSeqRef = useRef(0);
         const load = useCallback(() => {
+            const seq = ++loadSeqRef.current;
             dispatch({ type: "SET_LOADING", payload: true });
             api.list()
                 .then((fetched) => {
+                    if (seq !== loadSeqRef.current) return;
                     const map: ItemMap<T> = {};
                     fetched.forEach((item) => {
                         map[getKey(item)] = item;
@@ -235,6 +242,7 @@ export function createCollectionProvider<T, TId, TCreate>(
                     dispatch({ type: "SET_ITEMS", payload: map });
                 })
                 .catch((error) => {
+                    if (seq !== loadSeqRef.current) return;
                     dispatch({ type: "SET_LOADING", payload: false });
                     enqueueApiErrorSnackbar(
                         enqueueSnackbar,

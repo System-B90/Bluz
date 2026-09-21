@@ -1,6 +1,6 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, SyntheticEvent, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import
 {
     CalendarProps,
@@ -27,6 +27,7 @@ import
 } from "@/api-shared/interval-layout";
 import { GanttDayIndex, getDayNameDisplay, HEBREW_DAYS_SHORT } from "@/api-shared/types/gantt/models/day";
 import { Room, roomLikeToResourceKey, RoomSource } from "@/api-shared/types/room"; // Import the full Room type and the stable resource-key helper
+import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useSettings } from "@/components/base/SettingsProvider";
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
 import { CalendarToolbar } from "@/components/schedule/calendar/calendar/CalendarToolbar";
@@ -36,7 +37,12 @@ import
     localizer,
 } from "@/components/schedule/calendar/calendar/DndLocalizer";
 import { dayRangeHeaderFormat } from "@/components/schedule/calendar/calendar/range-header";
-import { usePrecisionDrag } from "@/components/schedule/calendar/calendar/UsePrecisionDrag";
+import type { GridInteraction } from "@/components/schedule/calendar/calendar/UseCalendarHandlers";
+import {
+    DragModifiers,
+    useDragModifiers,
+} from "@/components/schedule/calendar/calendar/UseDragModifiers";
+import { dampDragDelta } from "@/components/schedule/calendar/calendar/UsePrecisionDrag";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { CustomWorkWeek } from "@/components/schedule/calendar/CustomWorkWeek";
 import { splitAwareDayLayout } from "@/components/schedule/calendar/split/segment-layout";
@@ -51,6 +57,7 @@ import
 import
 {
     ActiveDrag,
+    OpenEventContextMenu,
     SplitCalendarProvider,
 } from "@/components/schedule/calendar/split/SplitCalendarContext";
 import { BluzEventComponent } from "@/components/schedule/event-component/base";
@@ -221,6 +228,12 @@ function resizableAccessor(segment: EventSegment)
     return !segment.event.locked;
 }
 
+/** A past iteration is reference material: no tile moves or resizes. */
+function nothingDraggable()
+{
+    return false;
+}
+
 function resourceAccessor(segment: EventSegment)
 {
     return segment.event.rooms.length > 0
@@ -254,15 +267,26 @@ type CalendarViewProps = {
     onSelectEvent: (event: Event) => void;
     onDoubleClickEvent: (event: Event) => void;
     onSelectSlot: (slotInfo: SlotInfo) => void;
+    /** Ids in the right-click multi-selection; the tiles ring them (#706). */
+    selectedEventIds: ReadonlySet<EventId>;
+    /** Ctrl/Cmd+click on a tile: add it to, or drop it from, the selection. */
+    onToggleEventSelection: (eventId: EventId) => void;
+    /** Plain click on a tile or on empty grid: the selection collapses. */
+    onSelectOnly: (eventId: EventId) => void;
+    onClearSelection: () => void;
+    /** Right-click on a tile; null while the calendar is read-only. */
+    onContextMenuEvent: null | OpenEventContextMenu;
     /**
      * Reports a committed grid interaction in event-space. `interaction`
-     * distinguishes a move from a resize so the write can be attributed
-     * correctly in the event change log.
+     * distinguishes a move from a resize from a Ctrl-held duplicate so the
+     * write can be attributed correctly in the event change log.
      */
     onEventDrop: (
         args: EventInteractionArgs<Event>,
-        interaction: "move" | "resize",
+        interaction: GridInteraction,
     ) => void;
+    /** Middle-click / Shift+click on a tile: cut the event at that instant (#657). */
+    onSplitEvent: (event: Event, atMs: number) => void;
     onToggleFullscreen: () => void;
     onToggleToolbar: () => void;
     onExportIcs: () => void;
@@ -279,7 +303,13 @@ export function CalendarView({
     onSelectEvent,
     onDoubleClickEvent,
     onSelectSlot,
+    selectedEventIds,
+    onToggleEventSelection,
+    onSelectOnly,
+    onClearSelection,
+    onContextMenuEvent,
     onEventDrop,
+    onSplitEvent,
     onToggleFullscreen,
     onToggleToolbar,
     onExportIcs,
@@ -290,7 +320,7 @@ export function CalendarView({
         [ showToolbar, onToggleFullscreen, onToggleToolbar, onExportIcs ],
     );
 
-    const { startDate, endDate } = useCalendar();
+    const { startDate, endDate, isReadOnlyIteration } = useCalendar();
     const [ hoveredEventId, setHoveredEventId ] = useState<EventId | null>(null);
     const [ selectedEventId, setSelectedEventId ] = useState<EventId | null>(null);
     const [ activeDrag, setActiveDrag ] = useState<ActiveDrag | null>(null);
@@ -305,16 +335,23 @@ export function CalendarView({
 
     // Scope to the visible range so websocket traffic for off-screen events
     // doesn't force the grid to re-lay-out. Filtering happens on the *drawn*
-    // range, which for a split event runs past its stored end.
+    // range, which for a split event runs past its stored end. Events a
+    // filter hides outright (hidden prayers, a room filter) leave the grid
+    // too: drawn at opacity 0 they still claimed a column, squeezing the
+    // events beside them for something nobody could see.
+    const { eventFilteredOpacity } = useCalendarFilters();
     const visibleSegments = useMemo(() =>
     {
-        if (!startDate || !endDate) return segments;
+        const inRange = (segment: EventSegment) =>
+            !startDate ||
+            !endDate ||
+            (segment.to.toDate() >= startDate &&
+                segment.from.toDate() <= endDate);
         return segments.filter(
             (segment) =>
-                segment.to.toDate() >= startDate &&
-                segment.from.toDate() <= endDate,
+                inRange(segment) && eventFilteredOpacity(segment.event) > 0,
         );
-    }, [ segments, startDate, endDate ]);
+    }, [ segments, startDate, endDate, eventFilteredOpacity ]);
 
     const splitCalendar = useMemo(
         () => ({
@@ -322,9 +359,20 @@ export function CalendarView({
             activeDrag,
             hoveredEventId,
             selectedEventId,
+            selectedEventIds,
             setHoveredEventId,
+            splitEventAt: onSplitEvent,
+            openContextMenu: onContextMenuEvent,
         }),
-        [ breakWindows, activeDrag, hoveredEventId, selectedEventId ],
+        [
+            breakWindows,
+            activeDrag,
+            hoveredEventId,
+            selectedEventId,
+            selectedEventIds,
+            onSplitEvent,
+            onContextMenuEvent,
+        ],
     );
 
     // A drag that ends outside the grid resolves through neither drop handler,
@@ -337,9 +385,20 @@ export function CalendarView({
         return () => window.removeEventListener("mouseup", clear);
     }, [ activeDrag ]);
 
-    // Alt held during a drag damps it into a fine adjustment (#475). Ctrl is
-    // taken by duplicate-on-drag, which the damping used to fight (#608).
-    const { applyPrecision } = usePrecisionDrag();
+    // Ctrl duplicates the dragged event (#575); Alt damps the drag into a fine
+    // adjustment (#475, #608). Both are tracked live for the whole drag: the
+    // ref is what a drop commits, and the mirrored `activeDrag` flags are what
+    // the preview and the original tile render.
+    const syncDragModifiers = useCallback(
+        (modifiers: DragModifiers) =>
+            setActiveDrag((drag) => (drag ? { ...drag, ...modifiers } : drag)),
+        [],
+    );
+    const readModifiers = useDragModifiers(activeDrag !== null, syncDragModifiers);
+    const applyPrecision = useCallback(
+        (deltaMs: number) => dampDragDelta(deltaMs, readModifiers().precise),
+        [ readModifiers ],
+    );
 
     const handleDragStart = useCallback(
         ({ event: segment, action, direction }: ActiveDragStart) =>
@@ -348,9 +407,10 @@ export function CalendarView({
                 eventId: segment.event.id,
                 action,
                 direction: direction ?? undefined,
+                ...readModifiers(),
             });
         },
-        [],
+        [ readModifiers ],
     );
 
     /**
@@ -363,7 +423,7 @@ export function CalendarView({
             args: EventInteractionArgs<EventSegment>,
             startMs: number,
             workingMs: number,
-            interaction: "move" | "resize",
+            interaction: GridInteraction,
         ) =>
         {
             setActiveDrag(null);
@@ -408,10 +468,10 @@ export function CalendarView({
                 args,
                 event.startTime.valueOf() + delta,
                 workingMsOf(event),
-                "move",
+                readModifiers().duplicate ? "duplicate" : "move",
             );
         },
-        [ applyPrecision, commit ],
+        [ applyPrecision, commit, readModifiers ],
     );
 
     const handleSegmentResize = useCallback(
@@ -450,7 +510,10 @@ export function CalendarView({
 
             // Bottom edge: the head stays put and the dropped point becomes
             // the drawn end — measured in working time, so the breaks the
-            // event steps over are not counted as duration.
+            // event steps over are not counted as duration. Both edges damp
+            // under Alt exactly like a move does, so a short resize can be
+            // made accurately; `proposedLayout` in the event component
+            // mirrors this so the preview shows where the edge will land.
             const startMs = event.startTime.valueOf();
             const delta = applyPrecision(toMs(args.end) - segment.to.valueOf());
             const endMs = segment.to.valueOf() + delta;
@@ -465,18 +528,69 @@ export function CalendarView({
     );
 
     const handleSelectSegment = useCallback(
-        (segment: EventSegment) =>
+        (segment: EventSegment, pointer: SyntheticEvent<HTMLElement>) =>
         {
-            setSelectedEventId(segment.event.id);
-            onSelectEvent(segment.event);
+            const { event } = segment;
+            setSelectedEventId(event.id);
+
+            // Ctrl/Cmd+click builds a multi-selection for the right-click menu
+            // to act on in bulk (#706), and must not also open the event in the
+            // side panel — picking a second event would otherwise replace what
+            // the first one put there.
+            const native = pointer?.nativeEvent;
+            const additive =
+                native instanceof MouseEvent && (native.ctrlKey || native.metaKey);
+            if (additive)
+            {
+                onToggleEventSelection(event.id);
+                return;
+            }
+
+            onSelectOnly(event.id);
+            onSelectEvent(event);
         },
-        [ onSelectEvent ],
+        [ onSelectEvent, onSelectOnly, onToggleEventSelection ],
     );
 
     const handleDoubleClickSegment = useCallback(
         (segment: EventSegment) => onDoubleClickEvent(segment.event),
         [ onDoubleClickEvent ],
     );
+
+    // Clicking the grid itself is the universal "never mind" for a selection.
+    const handleSelectSlot = useCallback(
+        (slotInfo: SlotInfo) =>
+        {
+            onClearSelection();
+            onSelectSlot(slotInfo);
+        },
+        [ onClearSelection, onSelectSlot ],
+    );
+
+    // Day view lays events out by room column, and react-big-calendar drops
+    // any event whose resource matches no column. An event assigned to a room
+    // the room list no longer carries (a Hive room removed since, or a Hive
+    // that is unreachable and answered with nothing) would simply vanish
+    // from the day view with no trace, so those rooms get a placeholder
+    // column of their own instead.
+    const dayResources = useMemo<Array<Room>>(() =>
+    {
+        const known = new Set(rooms.map((room) => roomLikeToResourceKey(room)));
+        const orphans = new Map<string, Room>();
+        for (const event of events)
+        {
+            for (const room of event.rooms)
+            {
+                const key = roomLikeToResourceKey(room);
+                if (known.has(key) || orphans.has(key)) continue;
+                orphans.set(key, {
+                    ...room,
+                    name: `חדר לא מוכר (${room.id})`,
+                } as Room);
+            }
+        }
+        return [ NO_ROOM_RESOURCE, ...rooms, ...orphans.values() ];
+    }, [ rooms, events ]);
 
     const { calendarDayStartTime, calendarDayEndTime } = useSettings();
     const calendarMin = useMemo(
@@ -503,7 +617,9 @@ export function CalendarView({
                     date={ date }
                     dayLayoutAlgorithm={ splitAwareDayLayout }
                     defaultView={ Views.WEEK }
-                    draggableAccessor={ draggableAccessor }
+                    draggableAccessor={
+                        isReadOnlyIteration ? nothingDraggable : draggableAccessor
+                    }
                     endAccessor={ endAccessor }
                     eventPropGetter={ segmentPropGetter }
                     events={ visibleSegments }
@@ -518,16 +634,16 @@ export function CalendarView({
                     onEventResize={ handleSegmentResize }
                     onNavigate={ onNavigate }
                     onSelectEvent={ handleSelectSegment }
-                    onSelectSlot={ onSelectSlot }
+                    onSelectSlot={ handleSelectSlot }
                     onView={ onView }
-                    resizableAccessor={ resizableAccessor }
+                    resizableAccessor={
+                        isReadOnlyIteration ? nothingDraggable : resizableAccessor
+                    }
                     resourceAccessor={ resourceAccessor }
                     resourceIdAccessor={ resourceIdAccessor }
                     // Resource logic
                     resources={
-                        currentView === Views.DAY
-                            ? [ NO_ROOM_RESOURCE, ...rooms ]
-                            : undefined
+                        currentView === Views.DAY ? dayResources : undefined
                     }
                     resourceTitleAccessor="name"
                     rtl={ true }

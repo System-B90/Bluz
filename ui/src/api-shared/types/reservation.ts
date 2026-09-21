@@ -1,5 +1,6 @@
-import dayjs, { Dayjs } from "dayjs";
+import type { Dayjs } from "dayjs";
 
+import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 import { RoomId, RoomSource } from "@/api-shared/types/room";
 
 export type ReserverType = "instructor" | "outsider";
@@ -22,8 +23,10 @@ export type DbReservation = Omit<Reservation, "end" | "start"> & {
 
 export function reservationDateFixup(reservation: DbReservation): Reservation {
     const result = { ...reservation } as unknown as Reservation;
-    result.start = dayjs(reservation.start);
-    result.end = dayjs(reservation.end);
+    // Same Israel-wall-clock rule as `eventDateFixupToDayjs` (#168): a
+    // reservation must not shift by the viewer's browser offset.
+    result.start = dayjs(reservation.start).tz(APP_TIMEZONE);
+    result.end = dayjs(reservation.end).tz(APP_TIMEZONE);
     return result;
 }
 

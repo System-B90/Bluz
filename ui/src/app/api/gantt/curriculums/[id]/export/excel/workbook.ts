@@ -1,5 +1,13 @@
+import {
+    Workbook,
+    type Border,
+    type Borders,
+    type Cell,
+    type CellValue,
+    type Row,
+    type Worksheet,
+} from "@vendor/exceljs";
 import dayjs from "dayjs";
-import ExcelJS from "exceljs";
 
 import {
     ApiCurriculum,
@@ -43,18 +51,18 @@ export type DayMapping = {
     sortOrder: null | number;
 };
 
-const BORDER_SIDE: Partial<ExcelJS.Border> = {
+const BORDER_SIDE: Partial<Border> = {
     style: "thin",
     color: { argb: THEME.border },
 };
-const BORDER_STYLE: Partial<ExcelJS.Borders> = {
+const BORDER_STYLE: Partial<Borders> = {
     top: BORDER_SIDE,
     left: BORDER_SIDE,
     bottom: BORDER_SIDE,
     right: BORDER_SIDE,
 };
 
-function applyHeaderCell(cell: ExcelJS.Cell): void {
+function applyHeaderCell(cell: Cell): void {
     cell.font = {
         name: "Segoe UI",
         bold: true,
@@ -73,9 +81,9 @@ function applyHeaderCell(cell: ExcelJS.Cell): void {
 // Paint every column of a row (including empty cells), so group/summary rows
 // keep a continuous fill across the sheet width.
 function paintRow(
-    row: ExcelJS.Row,
+    row: Row,
     colCount: number,
-    styler: (cell: ExcelJS.Cell, colNumber: number) => void,
+    styler: (cell: Cell, colNumber: number) => void,
 ): void {
     for (let c = 1; c <= colCount; c++) styler(row.getCell(c), c);
 }
@@ -86,19 +94,19 @@ const minutesToHours = (minutes: number) =>
 // Merges runs of consecutive rows in a column that share the same value
 // (e.g. repeated סילבוס/מודול names), so each distinct value appears once.
 function mergeConsecutiveIdenticalCells(
-    sheet: ExcelJS.Worksheet,
+    sheet: Worksheet,
     col: number,
     firstRow: number,
     lastRow: number,
 ): void {
     const END_OF_RANGE = Symbol("end");
     let runStart = firstRow;
-    let runValue: ExcelJS.CellValue | typeof END_OF_RANGE = sheet.getCell(
+    let runValue: CellValue | typeof END_OF_RANGE = sheet.getCell(
         runStart,
         col,
     ).value;
     for (let r = firstRow + 1; r <= lastRow + 1; r++) {
-        const value: ExcelJS.CellValue | typeof END_OF_RANGE =
+        const value: CellValue | typeof END_OF_RANGE =
             r <= lastRow ? sheet.getCell(r, col).value : END_OF_RANGE;
         if (value !== runValue) {
             if (r - 1 > runStart) sheet.mergeCells(runStart, col, r - 1, col);
@@ -125,10 +133,10 @@ export async function buildGanttExcelWorkbook(
     mappings: Array<DayMapping>,
     /** Hive user id → display name. Missing ids fall back to the raw id. */
     userNamesById: Map<number, string> = new Map(),
-): Promise<ExcelJS.Workbook> {
+): Promise<Workbook> {
     const orchestratorLabel = makeOrchestratorLabel(userNamesById);
 
-    const workbook = new ExcelJS.Workbook();
+    const workbook = new Workbook();
     workbook.creator = "Bluz Gantt System";
     workbook.created = new Date();
 

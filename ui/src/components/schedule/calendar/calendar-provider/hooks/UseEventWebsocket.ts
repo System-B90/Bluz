@@ -15,11 +15,44 @@ import { iterationSyncId, MessageTypes } from "@/settings";
 export const useEventWebsocket = (
     offlineMode: boolean,
     dispatch: (action: CalendarAction) => void,
-    setEventLock: (eventId: EventId, lock: EventLockMessage | null) => void,
+    setEventLock: (
+        eventId: EventId,
+        lock: EventLockMessage | null,
+        unlockedById?: string,
+    ) => void,
     activeIterationId?: string,
+    currentIterationId?: string,
 ) => {
     const { addMessageHandler, registerSyncObject, deregisterSyncObject } =
         useAuth();
+
+    /*
+     * "Am I looking at the current run?" — and the answer has to be yes both
+     * when nothing is scoped *and* when the scoped id happens to be the
+     * current iteration's own id.
+     *
+     * The server has one representation for a current-run write: it omits the
+     * iteration entirely, broadcasting with `iterationId: undefined` to
+     * `CURRENT_ITERATION_SYNC_ID`. The client has another: `IterationProvider`
+     * backfills `?it=` with the current iteration's real id, so
+     * `activeIterationId` is that id, not `undefined`. Comparing the two
+     * directly makes every current-run broadcast look like it belongs to some
+     * other iteration.
+     *
+     * That is not hypothetical: installs migrated from before the iteration
+     * registry have a current iteration whose literal id is "current"
+     * (db-iterations.ts), which made the subscription id collide with
+     * `CURRENT_ITERATION_SYNC_ID` by pure coincidence — frames arrived, and
+     * were then dropped by the match below. On any install whose current
+     * iteration has an ordinary id, the subscription missed too and nothing
+     * arrived at all. Either way the calendar silently stopped updating for
+     * every user on the default view until a reload (#582).
+     *
+     * `isReadOnlyIteration` in IterationProvider already makes exactly this
+     * distinction, for exactly this reason (#456).
+     */
+    const viewingCurrentRun =
+        !activeIterationId || activeIterationId === currentIterationId;
 
     // Subscribe to the sync object for the iteration being viewed so the
     // server only fans iteration-scoped broadcasts (full event documents) to
@@ -33,25 +66,50 @@ export const useEventWebsocket = (
     // reconnect (and dropped outright if the ticket fetch was still in flight),
     // leaving the calendar silently stale until a page reload.
     useEffect(() => {
-        const syncId = iterationSyncId(activeIterationId);
-        registerSyncObject(syncId);
-        // Cleanup closes over this run's syncId, so an iteration switch
-        // deregisters the old id before the next run registers the new one --
-        // React runs the previous cleanup first. No bookkeeping ref needed.
-        return () => deregisterSyncObject(syncId);
-    }, [activeIterationId, registerSyncObject, deregisterSyncObject]);
+        // Two channels can carry traffic for the run being viewed: the
+        // shared current-run id most server writes still broadcast to when
+        // viewing the current run (see the #582 note above), and the
+        // explicit per-iteration id, which lock/unlock always uses (real id,
+        // never "undefined means current") so a relay never needs to know
+        // whether the run it's relaying for happens to be the current one.
+        const syncIds = Array.from(
+            new Set(
+                viewingCurrentRun
+                    ? [iterationSyncId(undefined), iterationSyncId(activeIterationId)]
+                    : [iterationSyncId(activeIterationId)],
+            ),
+        );
+        syncIds.forEach((syncId) => registerSyncObject(syncId));
+        // Cleanup closes over this run's syncIds, so an iteration switch
+        // deregisters the old ones before the next run registers the new
+        // ones — React runs the previous cleanup first. No bookkeeping ref
+        // needed.
+        return () => syncIds.forEach((syncId) => deregisterSyncObject(syncId));
+    }, [
+        viewingCurrentRun,
+        activeIterationId,
+        registerSyncObject,
+        deregisterSyncObject,
+    ]);
 
     // Ignore broadcasts that belong to an iteration other than the one being
-    // viewed. A broadcast without an iterationId is for the current run; when
-    // viewing the current run (no activeIterationId) we only accept those.
+    // viewed. A broadcast without an iterationId is for the current run, which
+    // is why "viewing the current run" has to cover the scoped-to-its-own-id
+    // case above and not just the unscoped one.
     const isForActiveIteration = useCallback(
         (broadcastIterationId?: string) => {
-            if (activeIterationId) {
-                return broadcastIterationId === activeIterationId;
+            if (viewingCurrentRun) {
+                // Accept both spellings of "the current run": the unscoped
+                // form the server sends for its own writes, and the explicit
+                // id that client-relayed frames (locks) carry.
+                return (
+                    !broadcastIterationId ||
+                    broadcastIterationId === currentIterationId
+                );
             }
-            return !broadcastIterationId;
+            return broadcastIterationId === activeIterationId;
         },
-        [activeIterationId],
+        [viewingCurrentRun, activeIterationId, currentIterationId],
     );
 
     // The underlying session-ws package types the handler payload as `any`
@@ -73,7 +131,7 @@ export const useEventWebsocket = (
             case MessageTypes.EVENT_UNLOCK: {
                 const msg = data as EventUnlockMessage;
                 if (!isForActiveIteration(msg.iterationId)) break;
-                setEventLock(msg.eventId, null);
+                setEventLock(msg.eventId, null, msg.lockedById);
                 break;
             }
             }

@@ -6,6 +6,7 @@ import {
     gotoAppHome,
     openSecondUserSession,
     selectCalendarTimeRange,
+    switchToDayView,
     test,
     testId,
     waitForRealtimeConnection,
@@ -109,6 +110,15 @@ test.describe("Live updates between two users (#582)", () => {
             await gotoAppHome(secondPage);
             await waitForRealtimeConnection(secondPage);
 
+            // Match A's view. `selectCalendarTimeRange` switches A to the day
+            // view and creates the event in the first room column there; B's
+            // default week view puts that same event in a single crowded day
+            // column, overlapped by seeded demo events, where its title
+            // collapses to a zero-width box and reads as hidden. That is
+            // react-big-calendar's overlap layout, not the realtime layer this
+            // spec exists to test — so assert somewhere the tile has room.
+            await switchToDayView(secondPage);
+
             // Baseline: B is not already showing the event, so a pass cannot
             // come from stale state or a name collision with seeded data.
             await expect(secondPage.getByText(eventName)).toHaveCount(0);
@@ -164,6 +174,10 @@ test.describe("Live updates between two users (#582)", () => {
 
             await gotoAppHome(secondPage);
             await waitForRealtimeConnection(secondPage);
+
+            // Same reason as the creation test: assert in the day view, where
+            // the tile is not overlapped into a zero-width box.
+            await switchToDayView(secondPage);
 
             // B loads with the event present (it was saved before B connected),
             // so the assertion below is about the *removal* broadcast only.

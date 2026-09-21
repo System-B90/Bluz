@@ -240,6 +240,37 @@ def test_set_shuffles_posts_a_trimmed_name_list(stub_bluz, run_cli):
     assert stub.last().body == {"shuffles": ["a", "b", "c"]}
 
 
+def test_set_links_patches_only_the_given_fields(stub_bluz, run_cli):
+    stub = stub_bluz()
+    stub.envelope("PATCH", "/api/gantt/syllabuses/s-1", {"id": "s-1"})
+
+    result = run_cli(
+        stub, "gantt", "syllabuses", "set-links", "s-1", "--leads", " 7 , 9 ,"
+    )
+
+    assert result.exit_code == 0
+    assert stub.last().body == {"leadInstructorIds": [7, 9]}
+
+
+def test_set_links_can_clear_courses(stub_bluz, run_cli):
+    stub = stub_bluz()
+    stub.envelope("PATCH", "/api/gantt/syllabuses/s-1", {"id": "s-1"})
+
+    result = run_cli(stub, "gantt", "syllabuses", "set-links", "s-1", "--courses", "")
+
+    assert result.exit_code == 0
+    assert stub.last().body == {"courseIds": []}
+
+
+def test_set_links_rejects_no_options(stub_bluz, run_cli):
+    stub = stub_bluz()
+
+    result = run_cli(stub, "gantt", "syllabuses", "set-links", "s-1")
+
+    assert result.exit_code != 0
+    assert not stub.requests
+
+
 def test_set_shuffles_can_clear_them_all(stub_bluz, run_cli):
     stub = stub_bluz()
     stub.envelope("POST", "/api/gantt/syllabuses/s-1/shuffles", {"ok": True})

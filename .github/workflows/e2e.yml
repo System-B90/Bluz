@@ -67,19 +67,14 @@ concurrency:
     cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 jobs:
-    # Image builds are pure CPU with no Hive dependency and their artifact is
-    # portable, so they run on GitHub-hosted runners no matter where the suite
-    # itself lands. That keeps the one thing the self-hosted box is actually
-    # needed for — the long test run — off a builder that kept dying under its
-    # own load: three named, warm buildkits shared one 8-vCPU host with the
-    # release pipeline's lint job and 14 Hive containers, and the UI build
-    # failed with "frontend grpc server closed unexpectedly" often enough that
-    # a continue-on-error retry was papering over it (the retry then failed the
-    # job anyway, master 23f3af5). An ephemeral VM per run has none of that
-    # contention, so the builder pinning and the retries are gone with it.
+    # Runs on the self-hosted box: GitHub-hosted minutes are not available.
+    # The builder is named and never cleaned up so this job cannot tear down
+    # the release pipeline's buildkits (same OS user, same ~/.docker/buildx).
+    # Known risk: under load buildkit on the box can die with "frontend grpc
+    # server closed unexpectedly" (master 23f3af5) — a rerun usually passes.
     build-test-images:
         name: Build Test Images
-        runs-on: ubuntu-24.04
+        runs-on: [self-hosted, dind]
         # Version-bump commits on master (chore: bump version to *) only touch
         # package.json, so they'd otherwise trigger a full e2e run for nothing.
         if: >-
@@ -91,6 +86,9 @@ jobs:
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v4
+              with:
+                  name: builder-e2e-test-images
+                  cleanup: false
 
             # Build once here instead of once per shard (#e2e-perf). Tags match
             # exactly what deploy/docker-compose.yml resolves to with
@@ -259,7 +257,7 @@ jobs:
                   python - <<'PY'
                   from pyhive import HiveClient
 
-                  with HiveClient("admin", "Password1", "https://hive.org", verify=False, timeout=30) as client:
+                  with HiveClient("admin", "Password1", "https://hive.test", verify=False, timeout=30) as client:
                       print("Hive admin login OK. API version:", client.get_hive_version())
                   PY
 
@@ -274,7 +272,7 @@ jobs:
                   # checkout produces.
                   HIVE_NETWORK_NAME=hive_hive-net
                   WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY=$(openssl rand -hex 32)
-                  NEXT_PUBLIC_HIVE_URL=https://hive.org
+                  NEXT_PUBLIC_HIVE_URL=https://hive.test
                   NODE_TLS_REJECT_UNAUTHORIZED=0
                   NEXTAUTH_URL=https://bluz.dev
                   NEXTAUTH_SECRET=$(openssl rand -hex 32)
@@ -552,7 +550,7 @@ jobs:
                   python - <<'PY'
                   from pyhive import HiveClient
 
-                  with HiveClient("admin", "Password1", "https://hive.org", verify=False, timeout=30) as client:
+                  with HiveClient("admin", "Password1", "https://hive.test", verify=False, timeout=30) as client:
                       print("Hive admin login OK. API version:", client.get_hive_version())
                   PY
 
@@ -567,7 +565,7 @@ jobs:
                   # checkout produces.
                   HIVE_NETWORK_NAME=hive_hive-net
                   WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY=$(openssl rand -hex 32)
-                  NEXT_PUBLIC_HIVE_URL=https://hive.org
+                  NEXT_PUBLIC_HIVE_URL=https://hive.test
                   NODE_TLS_REJECT_UNAUTHORIZED=0
                   NEXTAUTH_URL=https://bluz.dev
                   NEXTAUTH_SECRET=$(openssl rand -hex 32)
@@ -732,7 +730,7 @@ jobs:
     # copy.
     cleanup-test-images:
         name: Delete Test Images artifact
-        runs-on: ubuntu-24.04
+        runs-on: [self-hosted, dind]
         # Must wait for BOTH suites, not just the matrix. Only one of them
         # runs on any given trigger and the other is `skipped` -- and a skipped
         # need is a *satisfied* need, so gating on the github matrix alone let

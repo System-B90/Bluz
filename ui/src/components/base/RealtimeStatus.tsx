@@ -1,12 +1,21 @@
 "use client";
 import { useEffect, useState } from "react";
 
-import { useSessionWebSocketContext } from "@/components/SessionWs";
+import type { useSessionWebSocketContext } from "@/components/SessionWs";
 
 /** How often the socket's readyState is sampled into the DOM. */
 const POLL_MS = 500;
 
 export type RealtimeState = "closed" | "connecting" | "open";
+
+/**
+ * The socket ref owned by the single `useSessionWebSocketContext()` call in
+ * `AuthProvider`. Passed down rather than re-invoked here: that hook *opens* a
+ * connection, so calling it again would run a second socket in parallel.
+ */
+export type RealtimeStatusProps = {
+    ws: ReturnType<typeof useSessionWebSocketContext>["ws"];
+};
 
 /**
  * Attribute the state is published under, and the element carrying it.
@@ -55,8 +64,7 @@ function readHost(socket: null | WebSocket): string {
  * the socket as a ref, which gives no notification when it is replaced on a
  * reconnect.
  */
-export function RealtimeStatus() {
-    const { ws } = useSessionWebSocketContext();
+export function RealtimeStatus({ ws }: RealtimeStatusProps) {
     const [state, setState] = useState<RealtimeState>("closed");
     const [host, setHost] = useState<string>("");
 

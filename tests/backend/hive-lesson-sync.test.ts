@@ -397,6 +397,38 @@ describe("reconcileEventLesson", () => {
         expect(hive.deleteLesson).not.toHaveBeenCalled();
     });
 
+    it("keeps a hand-picked lesson when the event opens no queue", async () => {
+        const hive = makeHiveStub([
+            { description: "", id: 400, module: 7, name: "ידני" } as Lesson,
+        ]);
+
+        const lessonId = await reconcileEventLesson(
+            hive,
+            makeEvent({ hiveLesson: 400, hiveQueues: {} }),
+            "upsert",
+            fakeController as any,
+        );
+
+        expect(lessonId).toBe(400);
+        expect(hive.deleteLesson).not.toHaveBeenCalled();
+    });
+
+    it("clears a Bluz-owned lesson it deletes even when hiveLesson pointed at it", async () => {
+        const event = makeEvent({ archived: true, hiveLesson: 500 });
+        const owned = {
+            description: buildLessonDescription(event),
+            id: 500,
+            module: 7,
+            name: "תרגול רשתות",
+        } as Lesson;
+        const hive = makeHiveStub([owned]);
+
+        const lessonId = await reconcileEventLesson(hive, event, "upsert", fakeController as any);
+
+        expect(lessonId).toBeNull();
+        expect(hive.deleteLesson).toHaveBeenCalledWith(500);
+    });
+
     it("creates nothing for an archived event", async () => {
         const hive = makeHiveStub([]);
 

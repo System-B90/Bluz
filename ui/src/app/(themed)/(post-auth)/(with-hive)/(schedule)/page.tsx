@@ -1,7 +1,7 @@
 "use client";
 import Box from "@mui/material/Box";
 import dayjs from "dayjs";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 import { EventChangeInitiator } from "@/api-shared/types/event-history";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
@@ -16,6 +16,9 @@ import { EventDialog } from "@/components/schedule/event-dialog";
 import { PushOfflineUpdatesDialog } from "@/components/schedule/offline-dialogs/push-updates-dialog";
 import { Event, EventId } from "@/components/schedule/types/event";
 
+/** Highest opacity CalendarFilterProvider uses for a non-matching event. */
+const FILTERED_OUT_OPACITY = 0.2;
+
 export default function SchedulePage() {
     const {
         events,
@@ -27,6 +30,7 @@ export default function SchedulePage() {
         undo,
         redo,
         isLoadingEvents,
+        isReadOnlyIteration,
     } = useCalendar();
 
     const { clearFilters, eventFilteredOpacity, hasActiveFilters } =
@@ -39,7 +43,11 @@ export default function SchedulePage() {
         !isLoadingEvents &&
         hasActiveFilters &&
         events.length > 0 &&
-        events.every((event) => eventFilteredOpacity(event) === 0);
+        // Course/instructor filters dim non-matches to 0.2 rather than hiding
+        // them, so a dimmed event counts as filtered out too (#653).
+        events.every(
+            (event) => eventFilteredOpacity(event) <= FILTERED_OUT_OPACITY,
+        );
 
     const [selectedEvent, setSelectedEvent] = useState<Partial<Event>>();
     const [openEventDialog, setOpenEventDialog] = useState<boolean>(false);
@@ -57,28 +65,9 @@ export default function SchedulePage() {
             : undefined;
 
     // Undo/redo hotkeys are declared on the schedule.undo/redo palette
-    // commands (see use-schedule-commands.tsx) and captured globally by
-    // useCommandHotkeys — only the Delete key stays local, since it isn't a
-    // palette command.
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            const activeTag = document.activeElement?.tagName.toLowerCase();
-            const isInput = activeTag === "input" || activeTag === "textarea";
-
-            if (
-                !isInput &&
-                e.key === "Delete" &&
-                selectedEvent?.id !== undefined
-            ) {
-                e.preventDefault();
-                deleteEvent(selectedEvent.id, EventChangeInitiator.Keyboard);
-                setSelectedEvent(undefined);
-            }
-        };
-
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [deleteEvent, selectedEvent]);
+    // commands (see use-schedule-commands.tsx). Delete/copy/cut/paste live in
+    // useCalendarHandlers alone: a second Delete listener here acted on a
+    // stale selection, ignored open dialogs, and double-deleted (#653).
 
     // Opened without a calendar slot to seed it, so default to the next
     // half-hour boundary for an hour — the same shape a slot drag produces.
@@ -100,8 +89,9 @@ export default function SchedulePage() {
     const handleSave = useCallback(
         (event: Partial<Event>, initiator?: EventChangeInitiator) => {
             // Provider handles API, offline, and history tracking.
-            saveEvent(event, initiator);
+            const saved = saveEvent(event, initiator);
             handleCloseEventDialog();
+            return saved;
         },
         [saveEvent, handleCloseEventDialog],
     );
@@ -179,6 +169,7 @@ export default function SchedulePage() {
                 onDelete={handleDelete}
                 onSave={handleSave}
                 open={openEventDialog}
+                readOnly={isReadOnlyIteration}
             />
 
             <PushOfflineUpdatesDialog />

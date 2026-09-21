@@ -28,6 +28,10 @@ _DEFAULT_TIMEOUT = 30.0
 _GET_RETRY_ATTEMPTS = 3
 _GET_RETRY_BACKOFF_SECONDS = 0.5
 
+# Terminator every OpenAI-compatible backend sends after the last SSE chunk;
+# mirrors SSE_DONE_SENTINEL in ui/src/api-shared/sse.ts.
+_SSE_DONE_SENTINEL = "[DONE]"
+
 
 class BluzClient:
     """Authenticated HTTP client for the Bluz `/api/*` surface."""
@@ -105,6 +109,60 @@ class BluzClient:
             raise BluzApiError(
                 "InvalidResponse", f"Server did not return valid JSON: {exc}"
             ) from exc
+
+    def stream_sse(self, path: str, *, json: Any = None):
+        """POST a request whose body is a Server-Sent Events stream, yielding
+        each `data:` frame already parsed from JSON.
+
+        `/api/ai/chat` is the case this exists for: it is the one route that
+        answers a stream instead of the response envelope, so an error raised
+        after the first byte arrives as a terminal frame rather than as an HTTP
+        status. Frames that are not JSON (a keep-alive comment slipping through,
+        a truncated tail) are skipped rather than crashing a turn mid-answer.
+        """
+        import json as json_module
+
+        try:
+            with self._client.stream("POST", path, json=json) as response:
+                if response.is_redirect or response.status_code == 401:
+                    raise NotAuthenticatedError()
+                if response.is_error:
+                    response.read()
+                    raise self._error_from_body(response)
+                for line in response.iter_lines():
+                    line = line.strip()
+                    if not line or not line.startswith("data:"):
+                        continue
+                    payload = line[len("data:") :].strip()
+                    if payload == _SSE_DONE_SENTINEL:
+                        return
+                    try:
+                        yield json_module.loads(payload)
+                    except ValueError:
+                        continue
+        except httpx.RequestError as exc:
+            raise BluzApiError("NetworkError", str(exc)) from exc
+
+    @staticmethod
+    def _error_from_body(response: httpx.Response) -> BluzApiError:
+        """Translate an errored response body into a BluzApiError."""
+        try:
+            body = response.json()
+        except ValueError:
+            body = None
+        if isinstance(body, dict):
+            error = body.get("error")
+            if isinstance(error, dict):
+                return BluzApiError(
+                    error.get("name", "Error"),
+                    error.get("message", ""),
+                    response.status_code,
+                )
+        return BluzApiError(
+            "HttpError",
+            (response.text or response.reason_phrase)[:500],
+            response.status_code,
+        )
 
     # --- core ---------------------------------------------------------------
 

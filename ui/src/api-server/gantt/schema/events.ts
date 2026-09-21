@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm";
 import {
     boolean,
     date,
+    index,
     integer,
     pgTable,
     text,
@@ -49,13 +50,22 @@ export const ganttEventsSchema = pgTable("e", {
     comment: text("comment"),
     // Shuffle names this event applies to. Empty ⇒ all shuffles.
     shuffles: text("shuffles").array().notNull().default([]),
+    // Shuffle group: sibling events sharing this id are the same lesson given
+    // to different shuffles at different times. Null ⇒ ungrouped (#699).
+    groupId: text("group_id"),
     // Hive linkage copied onto schedule events by the "גזירה ללו"ז" cut; all optional.
     hiveSubjectId: integer("hive_subject_id"),
     hiveModuleId: integer("hive_module_id"),
-    hiveLessonId: integer("hive_lesson_id"),
+    // Text, not integer: some Hive instances key lessons by UUID rather than
+    // a numeric pk (#682-adjacent). Stored as whatever string Hive returned.
+    hiveLessonId: text("hive_lesson_id"),
     createdAt: timestamp("ca").defaultNow().notNull(),
     updatedAt: timestamp("ua").defaultNow().notNull(),
-});
+}, (table) => [
+    // Resolving a group walks every sibling by this id, on each open of the
+    // event dialog and on each regrouping (#699).
+    index("e_group_id_idx").on(table.groupId),
+]);
 export const ganttEventsRelationsSchema = relations(
     ganttEventsSchema,
     ({ many }) => ({

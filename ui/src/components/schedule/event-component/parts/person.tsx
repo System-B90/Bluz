@@ -93,9 +93,11 @@ export function PersonChip({
         },
         [filterableId, setFilteredInstructors],
     );
-    // Dragging a chip out of an event is the unassign gesture. Pointer events
-    // stop here so react-big-calendar's own DnD does not also start moving the
-    // event under the cursor.
+    // Dragging a chip out of an event is the unassign gesture. Pointer *and*
+    // mouse/touch events stop here so react-big-calendar's own DnD does not
+    // also start moving the event under the cursor: dnd-kit listens to
+    // pointerdown, but the library arms its drag from the separate mousedown/
+    // touchstart stream, which stopping pointerdown alone never reaches.
     const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
         id: eventPersonDraggableId(event.id, personId),
         disabled: event.locked,
@@ -126,10 +128,12 @@ export function PersonChip({
                 ref={setNodeRef}
                 {...listeners}
                 {...attributes}
+                onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
                 onPointerDown={(e: React.PointerEvent) => {
                     e.stopPropagation();
                     listeners?.onPointerDown?.(e);
                 }}
+                onTouchStart={(e: React.TouchEvent) => e.stopPropagation()}
                 sx={{
                     ...tagSx({ isLecturer: !!isLecturer }),
                     cursor: event.locked ? "inherit" : "grab",

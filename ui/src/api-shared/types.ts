@@ -43,6 +43,10 @@ export type EventLockMessage = {
 
 export type EventUnlockMessage = {
     eventId: string;
+    // Session ID / user ID of the client that released the lock, so a
+    // receiver can tell this apart from an unlock for a lock it never saw
+    // superseded (#689).
+    lockedById: string;
     iterationId?: string;
 };
 

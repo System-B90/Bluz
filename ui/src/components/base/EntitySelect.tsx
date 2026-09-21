@@ -2,7 +2,7 @@ import FormControl, { FormControlProps } from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
-import { useMemo } from "react";
+import { useMemo, useId } from "react";
 
 /** Minimal shape every Hive entity offered in a dropdown satisfies. */
 export type NamedEntity<TId extends number | string> = {
@@ -46,6 +46,7 @@ export function EntitySelect<TId extends number | string>({
     disabled,
     ...formControlProps
 }: EntitySelectProps<TId>) {
+    const labelId = useId();
     const sorted = useMemo(
         () => [...options].sort((a, b) => a.name.localeCompare(b.name, "he")),
         [options],
@@ -56,9 +57,9 @@ export function EntitySelect<TId extends number | string>({
             disabled={disabled || (disableWhenEmpty && sorted.length === 0)}
             {...formControlProps}
         >
-            <InputLabel>{label}</InputLabel>
-            <Select
-                label={label}
+            <InputLabel id={ labelId }>{label}</InputLabel>
+            <Select label={label}
+                labelId={ labelId }
                 onChange={(e) =>
                     onChange(
                         e.target.value === "" || e.target.value == null

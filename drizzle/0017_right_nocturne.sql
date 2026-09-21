@@ -1,0 +1,1 @@
+ALTER TABLE "e" ALTER COLUMN "hive_lesson_id" SET DATA TYPE text;

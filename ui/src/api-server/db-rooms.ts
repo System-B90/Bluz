@@ -33,7 +33,8 @@ async function setDbRoom(
     options?: UpdateOptions,
     controller: DatabaseController = databaseController,
 ) {
-    const { _id: _, id: roomId, ...roomData } = room as any;
+    // Same allow-list as create: the payload is client-supplied (#538 item 4).
+    const { id: roomId, ...roomData } = pickFields(room, ROOM_FIELDS);
     const data = await controller.rooms.updateOne(
         { id: roomId },
         { $set: roomData },
