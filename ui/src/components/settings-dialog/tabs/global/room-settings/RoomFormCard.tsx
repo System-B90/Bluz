@@ -91,16 +91,14 @@ function RoomToggleRow({
             alignItems="center"
             display="flex"
             justifyContent="space-between"
-            sx={ {
+            sx={ (theme) => ({
                 p: 1.5,
                 borderRadius: "10px",
                 border: "1px solid",
                 borderColor: "divider",
-                bgcolor: (theme) =>
-                    theme.palette.mode === "light"
-                        ? "rgba(0,0,0,0.01)"
-                        : "rgba(255,255,255,0.02)",
-            } }
+                bgcolor: "rgba(0,0,0,0.01)",
+                ...theme.applyStyles("dark", { bgcolor: "rgba(255,255,255,0.02)" }),
+            }) }
         >
             <Box>
                 <Typography

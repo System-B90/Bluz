@@ -160,28 +160,31 @@ async function restoreSnapshot(
         Math.max(...events.map((e) => e.endTime.getTime())),
     );
 
-    // Live events fully inside the snapshot's range get replaced by the restore.
-    const existingIds = (
-        await controller.events
-            .find(
-                {
-                    startTime: { $gte: rangeStart },
-                    endTime: { $lte: rangeEnd },
-                    archived: { $ne: true },
-                },
-                { projection: { id: 1, _id: 0 } },
-            )
-            .toArray()
-    ).map((doc) => doc.id);
-
     // Archiving the live range and writing the snapshot back are two halves of
     // one decision: a crash between them left the calendar emptied with nothing
     // restored (#517). They run under one transaction where the deployment
     // supports it; on a standalone mongod withOptionalTransaction logs the
     // degradation loudly rather than failing the restore.
+    let existingIds: Array<string> = [];
     await withOptionalTransaction(
         controller.client,
         async (session) => {
+            // Live events fully inside the snapshot's range get replaced by
+            // the restore. Read inside the transaction so an event created
+            // between the read and the archive cannot slip through.
+            existingIds = (
+                await controller.events
+                    .find(
+                        {
+                            startTime: { $gte: rangeStart },
+                            endTime: { $lte: rangeEnd },
+                            archived: { $ne: true },
+                        },
+                        { projection: { id: 1, _id: 0 }, session },
+                    )
+                    .toArray()
+            ).map((doc) => doc.id);
+
             if (existingIds.length > 0) {
                 await controller.events.updateMany(
                     { id: { $in: existingIds } },
@@ -192,14 +195,22 @@ async function restoreSnapshot(
 
             // Upserting by id also un-archives originals that survived into the
             // snapshot.
+            // Captured events carry the hex `_id` string the client received;
+            // replacing a live doc (ObjectId) with it fails the whole write
+            // ("immutable field '_id' altered"), so drop it.
             await controller.events.bulkWrite(
-                events.map((event) => ({
-                    replaceOne: {
-                        filter: { id: event.id },
-                        replacement: { ...event, archived: false },
-                        upsert: true,
-                    },
-                })),
+                events.map((event) => {
+                    const { _id: _ignored, ...rest } = event as typeof event & {
+                        _id?: unknown;
+                    };
+                    return {
+                        replaceOne: {
+                            filter: { id: event.id },
+                            replacement: { ...rest, archived: false },
+                            upsert: true,
+                        },
+                    };
+                }),
                 { session },
             );
         },

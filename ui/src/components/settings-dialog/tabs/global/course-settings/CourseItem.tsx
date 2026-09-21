@@ -71,10 +71,40 @@ export function CourseItem({
 
     // Debounce for color picker to avoid server commits on every pixel change
     const colorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    // Mirrors "a debounced colour commit is pending" as state, because the
+    // prop-resync below runs during render, where a ref cannot be read.
+    const [ isPickingColor, setIsPickingColor ] = useState<boolean>(false);
     useEffect(() => () =>
     {
         if (colorTimeoutRef.current) clearTimeout(colorTimeoutRef.current);
     }, []);
+
+    // The row's local copies are seeded once from props; a failed optimistic
+    // update rolls the provider back but left the row showing the rejected
+    // value. Resync from props whenever they change outside an active edit.
+    // Done during render (prev-prop tracking) rather than in an effect so the
+    // stale value never reaches the screen for a frame.
+    const [ prevCourse, setPrevCourse ] = useState(course);
+    if (course !== prevCourse)
+    {
+        setPrevCourse(course);
+        if (!isEditing && course.name !== prevCourse.name)
+        {
+            setTitle(course.name);
+        }
+        if (
+            !isEditingDescription &&
+            course.description !== prevCourse.description
+        )
+        {
+            setDescription(course.description ?? "");
+        }
+        // A pending debounce means the user is still picking; leave it alone.
+        if (!isPickingColor && course.color !== prevCourse.color)
+        {
+            setColor(course.color ?? "#e0e0e0");
+        }
+    }
 
     // Filter children courses
     const subCourses = allCourses.filter((c) => c.parentId === course.id);
@@ -157,12 +187,15 @@ export function CourseItem({
         {
             const hex = colors.hex;
             setColor(hex);
+            setIsPickingColor(true);
             if (colorTimeoutRef.current)
             {
                 clearTimeout(colorTimeoutRef.current);
             }
             colorTimeoutRef.current = setTimeout(() =>
             {
+                colorTimeoutRef.current = null;
+                setIsPickingColor(false);
                 void updateCoursePartial(course.id, { color: hex });
             }, 600);
         },
@@ -219,23 +252,25 @@ export function CourseItem({
                 onMouseEnter={ () => setIsHovered(true) }
                 onMouseLeave={ () => setIsHovered(false) }
                 ref={ setDropRef }
-                sx={ {
+                sx={ (theme) => ({
                     display: "flex",
                     flexDirection: "column",
-                    mr: depth > 0 ? 0.5 : 0, // In RTL, indentation works via mr (margin-right)
+                    // Logical: stylis-plugin-rtl flips physical `mr` to
+                    // margin-left, which put the indent on the wrong edge.
+                    marginInlineStart: depth > 0 ? 0.5 : 0,
                     border: "1px solid",
                     borderStyle: isOver ? "dashed" : "solid",
                     borderColor: isOver ? "primary.main" : "divider",
-                    bgcolor: (theme) =>
-                        isOver
-                            ? "action.selected"
-                            : theme.palette.mode === "light"
-                                ? `rgb(${theme.vars.palette.primary.mainChannel} / 0.04)`
-                                : "rgba(255, 255, 255, 0.02)",
+                    bgcolor: isOver
+                        ? "action.selected"
+                        : `rgb(${theme.vars.palette.primary.mainChannel} / 0.04)`,
                     borderRadius: "16px",
                     p: 1.5,
                     transition: "all 0.2s ease",
-                } }
+                    ...(isOver
+                        ? {}
+                        : theme.applyStyles("dark", { bgcolor: "rgba(255, 255, 255, 0.02)" })),
+                }) }
             >
                 <Box
                     ref={ setDragRef }
@@ -413,7 +448,7 @@ export function CourseItem({
                 {/* Description Field */ }
                 <Box onClick={ () =>
                     !isEditingDescription && setIsEditingDescription(true) }
-                sx={ { mt: 1, mr: 4, cursor: "pointer" } }
+                sx={ { mt: 1, marginInlineStart: 4, cursor: "pointer" } }
                 >
                     { isEditingDescription ? (
                         <TextField
@@ -454,7 +489,7 @@ export function CourseItem({
                             flexWrap: "wrap",
                             gap: 0.8,
                             mt: 1.5,
-                            mr: 4, // Indent inside RTL card
+                            marginInlineStart: 4, // Indent inside the card
                         } }
                     >
                         { assignedIds.map((id) =>
@@ -505,10 +540,10 @@ export function CourseItem({
                         display: "flex",
                         flexDirection: "column",
                         gap: 1,
-                        mr: 3.5, // Indentation for the children (in RTL margin-right indents)
-                        borderRight: "1px dashed",
+                        marginInlineStart: 3.5, // Indentation for the children
+                        borderInlineStart: "1px dashed",
                         borderColor: "divider",
-                        pr: 1.5, // Padding between the vertical line and the sub-courses
+                        paddingInlineStart: 1.5, // Padding between the vertical line and the sub-courses
                         mt: 1,
                     } }
                 >

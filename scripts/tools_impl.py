@@ -164,8 +164,14 @@ def _fail(msg: str) -> None:
 
 
 def _check_hosts() -> None:
-    """Mirrors e2e.yml's /etc/hosts mapping (hive.test + bluz.dev loopbacks)."""
-    wanted = {HIVE_HOST: "127.0.0.1", DEV_HOST: "127.0.0.3"}
+    """Mirrors e2e.yml's /etc/hosts mapping (hive.test + bluz.dev loopbacks).
+
+    Hive's nginx binds 127.0.0.6 (pyhive hive-stack compose; `setup-hive`'s
+    `hive-host-ip` default) so it can share the host with Bluz's proxy on
+    127.0.0.3. Demanding 127.0.0.1 here made every readiness probe hit a
+    loopback with nothing listening and time out after 90 attempts.
+    """
+    wanted = {HIVE_HOST: "127.0.0.6", DEV_HOST: "127.0.0.3"}
     missing = []
     for host, ip in wanted.items():
         try:
@@ -192,7 +198,10 @@ def _hive_token() -> str | None:
         token = os.environ.get(var)
         if token:
             return token
-    gh = subprocess.run(["gh", "auth", "token"], capture_output=True, text=True)
+    try:
+        gh = subprocess.run(["gh", "auth", "token"], capture_output=True, text=True)
+    except (FileNotFoundError, OSError):
+        return None
     if gh.returncode == 0 and gh.stdout.strip():
         return gh.stdout.strip()
     return None
@@ -318,6 +327,20 @@ def _init_hive(stack: Path, wait_attempts: int) -> None:
         return subprocess.run(_hive_compose(stack, *args), cwd=stack, check=check)
 
     compose("up", "-d")
+    # `up -d` returns as soon as the containers start; `core` only waits for
+    # `database` to be *started*, not accepting connections, so an immediate
+    # `migrate` raced Postgres and died with "Connection refused" on any cold
+    # boot. Wait for the server itself before touching it.
+    for attempt in range(1, wait_attempts + 1):
+        ready = compose("exec", "-T", "database", "pg_isready", check=False)
+        if ready.returncode == 0:
+            break
+        typer.echo(
+            f"Attempt {attempt}/{wait_attempts} - Hive database not ready, waiting 5s..."
+        )
+        time.sleep(5)
+    else:
+        _fail("Hive database failed to accept connections in time.")
     compose("exec", "-T", "core", "python", "manage.py", "migrate")
     compose("exec", "-T", "core", "python", "manage.py", "collectstatic", "--noinput")
     compose("exec", "-T", "database", "sh", "/update.sh")

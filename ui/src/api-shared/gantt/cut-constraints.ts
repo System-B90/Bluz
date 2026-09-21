@@ -162,7 +162,10 @@ export function solveConstraints(
     input: ConstraintPassInput,
 ): ConstraintPassResult {
     const proposals: Array<ConstraintMoveProposal> = [];
-    const violations: Array<ConstraintViolation> = [];
+    // Violations are what the *final* pass could not satisfy: a constraint a
+    // later pass fixed must not stay reported, and one a later move broke
+    // must not be dropped. Each pass starts afresh and the last one wins.
+    let violations: Array<ConstraintViolation> = [];
 
     // `propose` mutates a placement's dayId/dayOrdinal/dayIndex in place as
     // it accepts a move — clone each placement here rather than reusing the
@@ -202,6 +205,7 @@ export function solveConstraints(
 
     for (let pass = 0; pass < CONSTRAINT_RULES.maxSolverPasses; pass++) {
         let changed = false;
+        violations = [];
 
         for (const entity of input.entities) {
             for (const constraint of entity.constraints) {
@@ -226,7 +230,7 @@ export function solveConstraints(
                             );
 
                     if (outcome === "moved") changed = true;
-                    if (outcome !== "violated" || pass > 0) continue;
+                    if (outcome !== "violated") continue;
 
                     violations.push({
                         ownerId: entity.id,

@@ -25,26 +25,24 @@ export const SettingsListItem = memo(function SettingsListItem<TEntity extends T
             key={ item.id }
             { ...props }
             secondaryAction={ secondaryAction }
-            sx={ {
+            sx={ (theme) => ({
                 border: "1px solid",
                 borderColor: isActive ? "primary.main" : "divider",
                 borderRadius: "12px",
                 mb: dense ? 0.75 : 1.5,
                 p: dense ? 0.75 : 1.5,
                 cursor: "pointer",
-                bgcolor: (theme) =>
-                    isActive
-                        ? "action.selected"
-                        : theme.palette.mode === "light"
-                            ? "rgba(0,0,0,0.01)"
-                            : "rgba(255,255,255,0.01)",
+                bgcolor: isActive ? "action.selected" : "rgba(0,0,0,0.01)",
                 transition: "all 0.2s ease",
                 "&:hover": {
                     borderColor: isActive ? "primary.main" : "text.secondary",
                     transform: "translateY(-1px)",
                     boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
                 },
-            } }
+                ...(isActive
+                    ? {}
+                    : theme.applyStyles("dark", { bgcolor: "rgba(255,255,255,0.01)" })),
+            }) }
         >
             { children }
             <ListItemText

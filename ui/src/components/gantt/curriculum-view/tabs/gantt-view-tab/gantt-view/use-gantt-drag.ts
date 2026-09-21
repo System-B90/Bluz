@@ -87,53 +87,42 @@ export const useGanttDrag = ({
             if (deltaDays === 0) return;
 
             const ganttModule = modulesById[ moduleId ];
-            const promises: Array<Promise<void>> = [];
 
-            const mDays = moduleMappings[ moduleId ] || [];
-            mDays.forEach((dayId) =>
+            // Every mapping this module owns, as (current index → move).
+            // Unknown days (stale mappings) are skipped: -1 + delta would
+            // land on an unrelated day.
+            const moves: Array<{ idx: number; eventId: GanttEventId | null; dayId: GanttDayId }> = [];
+            (moduleMappings[ moduleId ] || []).forEach((dayId) =>
             {
-                const currentIdx = linearDays.indexOf(dayId);
-                const newIdx = currentIdx + deltaDays;
-                const targetDayId = linearDays[ newIdx ];
-                if (targetDayId)
-                {
-                    promises.push(
-                        moveMapping({
-                            moduleId,
-                            eventId: null,
-                            from: { d: dayId },
-                            to: { d: targetDayId },
-                        }),
-                    );
-                }
+                const idx = linearDays.indexOf(dayId);
+                if (idx !== -1) moves.push({ idx, eventId: null, dayId });
+            });
+            (ganttModule?.events ?? []).forEach((eventId) =>
+            {
+                const dayId = eventMappings[ eventId ];
+                if (!dayId) return;
+                const idx = linearDays.indexOf(dayId);
+                if (idx !== -1) moves.push({ idx, eventId, dayId });
             });
 
-            if (ganttModule && ganttModule.events)
+            // Moved one at a time, the leading edge first: a module mapped
+            // to consecutive days shifted by less than its span would
+            // otherwise move a day onto one it still occupies, and the
+            // server's (module, event, day) uniqueness rejected that move
+            // while its neighbour went through — leaving the module torn.
+            moves.sort((a, b) => (deltaDays > 0 ? b.idx - a.idx : a.idx - b.idx));
+
+            for (const move of moves)
             {
-                ganttModule.events.forEach((eventId) =>
-                {
-                    const currentDayId = eventMappings[ eventId ];
-                    if (currentDayId)
-                    {
-                        const currentIdx = linearDays.indexOf(currentDayId);
-                        const newIdx = currentIdx + deltaDays;
-                        const targetDayId = linearDays[ newIdx ];
-                        if (targetDayId)
-                        {
-                            promises.push(
-                                moveMapping({
-                                    moduleId,
-                                    eventId,
-                                    from: { d: currentDayId },
-                                    to: { d: targetDayId },
-                                }),
-                            );
-                        }
-                    }
+                const targetDayId = linearDays[ move.idx + deltaDays ];
+                if (!targetDayId) continue;
+                await moveMapping({
+                    moduleId,
+                    eventId: move.eventId,
+                    from: { d: move.dayId },
+                    to: { d: targetDayId },
                 });
             }
-
-            await Promise.all(promises);
         },
         [ linearDays, modulesById, moduleMappings, eventMappings, moveMapping ],
     );

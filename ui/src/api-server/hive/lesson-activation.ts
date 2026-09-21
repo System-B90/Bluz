@@ -104,9 +104,12 @@ export async function runLessonActivationTick(
     if (!client && !hasHiveServiceCredentials()) return result;
 
     try {
+        // A fresh install with service creds but no registered iteration
+        // is idle, not broken - `current()` throwing every 30s spammed warns.
+        const currentIteration = controller ? null : await DbIterations.currentOrNull();
+        if (!controller && !currentIteration) return result;
         const db =
-            controller ??
-            getDatabaseController((await DbIterations.current()).dbName);
+            controller ?? getDatabaseController(currentIteration!.dbName);
 
         // One tick only ever looks at events around "now"; the lag cap means
         // nothing older can activate anyway.

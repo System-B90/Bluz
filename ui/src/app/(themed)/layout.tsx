@@ -31,6 +31,10 @@ export default function ThemedLayout({
                 // aligns its children with direction-relative `flex-end`, which
                 // sends short snackbars to the left under RTL (#416).
                 classes={ { containerRoot: "snackbar-container-physical-right" } }
+                // A bulk action on the calendar (#706) writes one event at a
+                // time, and each write toasts. Without this, deleting twenty
+                // events queues twenty identical toasts three at a time.
+                preventDuplicate
             >
                 <SessionProvider>{ children }</SessionProvider>
             </SnackbarProvider>

@@ -146,8 +146,7 @@ export async function reconcileEventLesson(
         action === "upsert" && !event.archived && eventOpensHiveQueue(event);
 
     if (!wanted) {
-        await deleteOwnedLesson(client, event);
-        return null;
+        return await deleteOwnedLesson(client, event);
     }
 
     const courses = await controller.courses.find({}).toArray();
@@ -158,8 +157,7 @@ export async function reconcileEventLesson(
         await client.getClasses(),
     );
     if (desired.size === 0) {
-        await deleteOwnedLesson(client, event);
-        return null;
+        return await deleteOwnedLesson(client, event);
     }
 
     const lessonId = await ensureLesson(client, event);
@@ -325,12 +323,20 @@ function isBadRequest(error: unknown): boolean {
     );
 }
 
-/** Deletes the event's lesson, but only if Bluz created it for this event. */
+/**
+ * Deletes the event's lesson, but only if Bluz created it for this event.
+ *
+ * @returns The lesson id the event should keep: a hand-picked lesson the
+ * Segel chose survives (Bluz never owned it), while a Bluz-owned lesson that
+ * was just deleted — or a `hiveLesson` that pointed at it — is cleared.
+ */
 async function deleteOwnedLesson(
     client: HiveClient,
     event: DbEventDocument,
-): Promise<void> {
+): Promise<HiveLessonId | null> {
+    const picked = event.hiveLesson ?? null;
     const ownedId = await findOwnedLesson(client, event);
-    if (ownedId === null) return;
+    if (ownedId === null) return picked;
     await client.deleteLesson(ownedId);
+    return ownedId === picked ? null : picked;
 }

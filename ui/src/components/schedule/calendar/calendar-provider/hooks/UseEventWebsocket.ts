@@ -15,7 +15,11 @@ import { iterationSyncId, MessageTypes } from "@/settings";
 export const useEventWebsocket = (
     offlineMode: boolean,
     dispatch: (action: CalendarAction) => void,
-    setEventLock: (eventId: EventId, lock: EventLockMessage | null) => void,
+    setEventLock: (
+        eventId: EventId,
+        lock: EventLockMessage | null,
+        unlockedById?: string,
+    ) => void,
     activeIterationId?: string,
     currentIterationId?: string,
 ) => {
@@ -127,7 +131,7 @@ export const useEventWebsocket = (
             case MessageTypes.EVENT_UNLOCK: {
                 const msg = data as EventUnlockMessage;
                 if (!isForActiveIteration(msg.iterationId)) break;
-                setEventLock(msg.eventId, null);
+                setEventLock(msg.eventId, null, msg.lockedById);
                 break;
             }
             }

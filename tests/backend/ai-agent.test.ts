@@ -28,17 +28,23 @@ const { calendarTools, ganttTools, readExecute, writeExecute } = vi.hoisted(
             calendarTools: [
                 {
                     name: "read_thing",
+                    title: "קריאת דבר",
                     description: "read",
                     kind: "read",
+                    danger: "safe",
                     parameters: { type: "object", properties: {} },
+                    nextSteps: ["המשך לפי הנתונים שחזרו."],
                     execute: read,
                 },
                 {
                     name: "write_thing",
+                    title: "כתיבת דבר",
                     description: "write",
                     kind: "write",
+                    danger: "destructive",
                     parameters: { type: "object", properties: {} },
                     describe: () => "שינוי מסוכן",
+                    impact: () => ["הנתון יימחק"],
                     execute: write,
                 },
             ] as Array<unknown>,
@@ -57,7 +63,7 @@ import {
     AiProvider,
     AiProviderEvent,
 } from "@/api-server/ai/provider";
-import { AiToolContext } from "@/api-server/ai/tools";
+import { AiToolContext, createToolRegistry } from "@/api-server/ai/tools";
 import {
     AI_MAX_RESPONSE_TOKENS,
     AiMessage,
@@ -65,9 +71,11 @@ import {
     AiStreamEvent,
     AiStreamEventType,
     AiToolCall,
+    AiToolDanger,
+    AiToolKind,
 } from "@/api-shared/types/ai";
 
-type Turn = { text?: string; toolCalls?: Array<AiToolCall> };
+type Turn = { text?: string; reasoning?: string; toolCalls?: Array<AiToolCall> };
 
 /** A provider that replays scripted turns and records what it was asked. */
 function fakeProvider(turns: Array<Turn>): AiProvider & {
@@ -84,6 +92,9 @@ function fakeProvider(turns: Array<Turn>): AiProvider & {
         async *streamChat(request: AiChatRequest): AsyncIterable<AiProviderEvent> {
             requests.push(request);
             const turn = turns[index++] ?? { text: "done" };
+            if (turn.reasoning) {
+                yield { kind: "reasoning", text: turn.reasoning };
+            }
             if (turn.text) yield { kind: "text", text: turn.text };
             yield {
                 kind: "final",
@@ -147,6 +158,26 @@ describe("runAiAgent", () => {
         ]);
         const done = events.at(-1);
         expect(done).toMatchObject({ awaitingApproval: false });
+    });
+
+    it("streams reasoning on its own event type, ahead of the visible answer", async () => {
+        const events = await drain(
+            runAiAgent({
+                provider: fakeProvider([
+                    { reasoning: "חושב...", text: "שלום" },
+                ]),
+                messages: userTurn("היי"),
+                context,
+                approvedToolCallIds: new Set(),
+            }),
+        );
+
+        expect(events.map((event) => event.type)).toEqual([
+            AiStreamEventType.ReasoningDelta,
+            AiStreamEventType.Delta,
+            AiStreamEventType.Done,
+        ]);
+        expect(events[0]).toMatchObject({ text: "חושב..." });
     });
 
     it("caps every model call with a max_tokens ceiling", async () => {
@@ -466,5 +497,248 @@ describe("runAiAgent", () => {
         expect(done).toMatchObject({
             usage: { promptTokens: 2, completionTokens: 4, totalTokens: 6 },
         });
+    });
+
+    it("wraps a tool result in an envelope that tells the model what to do next", async () => {
+        const events = await drain(
+            runAiAgent({
+                provider: fakeProvider([
+                    { toolCalls: [call("c1", "read_thing")] },
+                    { text: "התשובה" },
+                ]),
+                messages: userTurn("מה יש?"),
+                context,
+                approvedToolCallIds: new Set(),
+            }),
+        );
+
+        const done = events.at(-1);
+        const toolMessage =
+            done?.type === AiStreamEventType.Done
+                ? done.messages.find((m) => m.role === AiRole.Tool)
+                : undefined;
+        const envelope = JSON.parse(toolMessage?.content ?? "{}");
+
+        expect(envelope).toMatchObject({ ok: true, tool: "read_thing" });
+        // The guidance is the point: a bare payload leaves the model to guess
+        // whether it may invent ids from here.
+        expect(envelope.next).toContain("המשך לפי הנתונים שחזרו.");
+        expect(envelope.next.length).toBeGreaterThan(1);
+    });
+
+    it("hands a failing tool a recovery path instead of a bare message", async () => {
+        readExecute.mockRejectedValueOnce(new Error("מונגו נפל"));
+        const events = await drain(
+            runAiAgent({
+                provider: fakeProvider([
+                    { toolCalls: [call("c1", "read_thing")] },
+                    { text: "מצטער" },
+                ]),
+                messages: userTurn("מה יש?"),
+                context,
+                approvedToolCallIds: new Set(),
+            }),
+        );
+
+        const result = events.find(
+            (event) => event.type === AiStreamEventType.ToolResult,
+        );
+        expect(result).toMatchObject({ ok: false, title: "קריאת דבר" });
+
+        const envelope = (result as { detail: { next: Array<string>; retryable: boolean } })
+            .detail;
+        expect(envelope.retryable).toBe(true);
+        expect(envelope.next).toContain("אל תדווח למשתמש שהפעולה הצליחה.");
+    });
+
+    it("tells the model a tool it invented does not exist", async () => {
+        const events = await drain(
+            runAiAgent({
+                provider: fakeProvider([
+                    { toolCalls: [call("c1", "delete_everything")] },
+                    { text: "מצטער" },
+                ]),
+                messages: userTurn("תמחק הכול"),
+                context,
+                approvedToolCallIds: new Set(),
+            }),
+        );
+
+        const result = events.find(
+            (event) => event.type === AiStreamEventType.ToolResult,
+        );
+        expect(result).toMatchObject({ ok: false });
+        expect(
+            (result as { detail: { next: Array<string> } }).detail.next,
+        ).toContain("השתמש רק בכלים שהוגדרו לך. אל תמציא שמות כלים.");
+    });
+
+    it("carries the tool's friendly title and danger into the proposal", async () => {
+        // The raw wire name must never reach a human, and a destructive call
+        // has to be distinguishable from an ordinary edit before it is
+        // approved, not after.
+        const events = await drain(
+            runAiAgent({
+                provider: fakeProvider([
+                    { toolCalls: [call("w1", "write_thing")] },
+                ]),
+                messages: userTurn("תמחק"),
+                context,
+                approvedToolCallIds: new Set(),
+            }),
+        );
+
+        expect(events[0]).toMatchObject({
+            type: AiStreamEventType.ToolProposal,
+            title: "כתיבת דבר",
+            danger: "destructive",
+            impact: ["הנתון יימחק"],
+        });
+        expect(writeExecute).not.toHaveBeenCalled();
+    });
+
+    it("stops the turn on ask_user and never executes it", async () => {
+        const events = await drain(
+            runAiAgent({
+                provider: fakeProvider([
+                    {
+                        toolCalls: [
+                            call(
+                                "q1",
+                                "ask_user",
+                                JSON.stringify({
+                                    question: "באיזה שיעור מדובר?",
+                                    options: [
+                                        { value: "a", label: "יום שני" },
+                                        { value: "b", label: "יום רביעי" },
+                                    ],
+                                }),
+                            ),
+                        ],
+                    },
+                ]),
+                messages: userTurn("תזיז את השיעור"),
+                context,
+                approvedToolCallIds: new Set(),
+            }),
+        );
+
+        expect(events[0]).toMatchObject({
+            type: AiStreamEventType.Choice,
+            toolCallId: "q1",
+            allowFreeText: true,
+        });
+        expect(events.at(-1)).toMatchObject({ awaitingApproval: true });
+
+        // The question is answered by the client, so the server must not
+        // pre-answer the call — that would leave the browser nothing to
+        // resume from and desync the transcript.
+        const done = events.at(-1);
+        const produced =
+            done?.type === AiStreamEventType.Done ? done.messages : [];
+        expect(produced.some((m) => m.role === AiRole.Tool)).toBe(false);
+    });
+
+    it("rejects an ask_user call with no usable options", async () => {
+        // A question with no answers is a dead end for the user; the model
+        // has to get it back as a correctable error.
+        const events = await drain(
+            runAiAgent({
+                provider: fakeProvider([
+                    {
+                        toolCalls: [
+                            call("q1", "ask_user", JSON.stringify({
+                                question: "מה?",
+                                options: [],
+                            })),
+                        ],
+                    },
+                    { text: "מצטער" },
+                ]),
+                messages: userTurn("תזיז"),
+                context,
+                approvedToolCallIds: new Set(),
+            }),
+        );
+
+        expect(
+            events.some((event) => event.type === AiStreamEventType.Choice),
+        ).toBe(false);
+        expect(
+            events.find((event) => event.type === AiStreamEventType.ToolResult),
+        ).toMatchObject({ ok: false });
+    });
+
+    it("forwards reasoning as its own event and keeps it out of the transcript", async () => {
+        const provider: AiProvider = {
+            name: "fake",
+            defaultModel: "fake-model",
+            chat: vi.fn(),
+            async *streamChat(): AsyncIterable<AiProviderEvent> {
+                yield { kind: "reasoning", text: "אני חושב" };
+                yield { kind: "text", text: "תשובה" };
+                yield {
+                    kind: "final",
+                    result: { content: "תשובה", model: "fake-model" },
+                };
+            },
+        };
+
+        const events = await drain(
+            runAiAgent({
+                provider,
+                messages: userTurn("היי"),
+                context,
+                approvedToolCallIds: new Set(),
+            }),
+        );
+
+        // Streamed reasoning arrives as deltas (the loop forwards each
+        // provider chunk as it comes), never as one assembled block.
+        expect(events[0]).toMatchObject({
+            type: AiStreamEventType.ReasoningDelta,
+            text: "אני חושב",
+        });
+        const done = events.at(-1);
+        const produced =
+            done?.type === AiStreamEventType.Done ? done.messages : [];
+        expect(JSON.stringify(produced)).not.toContain("אני חושב");
+    });
+
+    it("runs against an injected registry instead of the live tools", async () => {
+        // This is what lets the self-test drive the real loop against fixture
+        // data without touching a single production tool.
+        const fixtureExecute = vi.fn(async () => ({
+            data: { fixture: true },
+            summary: "פיקטיבי",
+        }));
+        const events = await drain(
+            runAiAgent({
+                provider: fakeProvider([
+                    { toolCalls: [call("c1", "fixture_tool")] },
+                    { text: "סיימתי" },
+                ]),
+                messages: userTurn("בדוק"),
+                context,
+                approvedToolCallIds: new Set(),
+                registry: createToolRegistry([
+                    {
+                        name: "fixture_tool",
+                        title: "כלי בדיקה",
+                        description: "fixture",
+                        kind: AiToolKind.Read,
+                        danger: AiToolDanger.Safe,
+                        parameters: { type: "object", properties: {} },
+                        execute: fixtureExecute,
+                    },
+                ]),
+            }),
+        );
+
+        expect(fixtureExecute).toHaveBeenCalledOnce();
+        expect(readExecute).not.toHaveBeenCalled();
+        expect(
+            events.find((event) => event.type === AiStreamEventType.ToolResult),
+        ).toMatchObject({ title: "כלי בדיקה", ok: true });
     });
 });

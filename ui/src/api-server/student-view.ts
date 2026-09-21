@@ -22,7 +22,6 @@ import {
     ApiStudentScheduleGetResponse,
     StudentEvent,
 } from "@/api-shared/types/student-view";
-import { Subject } from "@/api-shared/types/subject";
 
 /** Colour used when nothing resolves — matches the calendar's own fallback. */
 const FALLBACK_COLOR = "#000000";
@@ -98,7 +97,7 @@ export function resolveStudentViewDate(
 async function getSubjectColors(): Promise<Map<string, string>> {
     try {
         const hive = await createHiveServiceClient();
-        const subjects: Array<Subject> = await hive.getSubjects();
+        const subjects = await hive.getSubjects();
         return new Map(
             subjects
                 .filter((subject) => Boolean(subject.color))

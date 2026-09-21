@@ -174,9 +174,11 @@ function EventSegmentBlock({ segment }: { segment: EventSegment }) {
     const {
         hoveredEventId,
         selectedEventId,
+        selectedEventIds,
         activeDrag,
         setHoveredEventId,
         splitEventAt,
+        openContextMenu,
     } = useSplitCalendar();
 
     const isFirst = isFirstSegment(segment);
@@ -184,7 +186,15 @@ function EventSegmentBlock({ segment }: { segment: EventSegment }) {
     // Every piece of the event reacts to a pointer on any one of them, which
     // is what sells them as a single object rather than N neighbours.
     const isHovered = hoveredEventId === event.id;
-    const isSelected = selectedEventId === event.id;
+    // A multi-selected tile wears the same ring as the single-selected one:
+    // the selection is one concept whether it holds one event or twenty (#706).
+    // Once a multi-selection exists it *is* the selection — otherwise a
+    // right-click elsewhere, which never reaches rbc's own select handler,
+    // would leave the previously clicked tile ringed alongside the new target.
+    const isSelected =
+        selectedEventIds.size > 0
+            ? selectedEventIds.has(event.id)
+            : selectedEventId === event.id;
     const isBeingDragged = activeDrag?.eventId === event.id;
     // A Ctrl+drag leaves the original where it is, so it must not fade like
     // a moved one — the fade is the "this is leaving" cue.
@@ -222,6 +232,21 @@ function EventSegmentBlock({ segment }: { segment: EventSegment }) {
         [],
     );
 
+    // Right-click opens the tile menu (#706). The browser menu is suppressed
+    // only when we actually have one to put there, so a read-only iteration
+    // keeps the native menu (copy, inspect) rather than swallowing the gesture
+    // and offering nothing. The propagation stop keeps the grid underneath
+    // from also treating the press as a slot selection.
+    const handleContextMenu = useCallback(
+        (pointer: ReactMouseEvent<HTMLElement>) => {
+            if (!openContextMenu) return;
+            pointer.preventDefault();
+            pointer.stopPropagation();
+            openContextMenu(event, pointer.clientX, pointer.clientY);
+        },
+        [ event, openContextMenu ],
+    );
+
     const lock = eventLocks[event.id];
     const subject = getSubject(event.subject);
     const bgColor = resolveEventColor(
@@ -251,6 +276,7 @@ function EventSegmentBlock({ segment }: { segment: EventSegment }) {
         <Box
             onAuxClick={handleAuxClick}
             onClick={handleClick}
+            onContextMenu={handleContextMenu}
             onMouseDown={handleMouseDown}
             onMouseEnter={() => setHoveredEventId(event.id)}
             onMouseLeave={() => setHoveredEventId(null)}

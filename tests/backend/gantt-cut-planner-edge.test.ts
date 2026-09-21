@@ -361,6 +361,43 @@ describe("planCut — recurrence", () => {
         );
         expect(echoDay.map((o) => o.ganttEventId)).toEqual(["a-daily", "b-daily"]);
     });
+
+    it("accepts a recurrence that starts in the week its recurrenceStartDate opens (#468)", () => {
+        // Window opens on week 2's Sunday (2024-01-14); mapping it there is
+        // satisfied, exactly as the gantt view judges it — not an error.
+        const plan = planCut(
+            baseInput({
+                events: [
+                    makeEvent({
+                        id: "weekly",
+                        recurrence: EventRecurrence.Weekly,
+                        recurrenceStartDate: "2024-01-14",
+                    }),
+                ],
+                mappings: [{ eventId: "weekly", dayId: "w1d0", sortOrder: 0 }],
+            }),
+        );
+        expect(plan.ok).toBe(true);
+        expect(occurrencesOf(plan).map((o) => o.occurrenceDate)).toEqual(["2024-01-14"]);
+    });
+
+    it("still rejects a recurrence mapped after the week its window opens", () => {
+        const plan = planCut(
+            baseInput({
+                events: [
+                    makeEvent({
+                        id: "daily",
+                        recurrence: EventRecurrence.Daily,
+                        recurrenceStartDate: "2024-01-07",
+                    }),
+                ],
+                mappings: [{ eventId: "daily", dayId: "w1d0", sortOrder: 0 }],
+            }),
+        );
+        expect(plan.ok).toBe(false);
+        if (plan.ok) return;
+        expect(plan.errors.map((e) => e.type)).toEqual(["unsatisfied-recurrence"]);
+    });
 });
 
 describe("planCut — validation & robustness", () => {

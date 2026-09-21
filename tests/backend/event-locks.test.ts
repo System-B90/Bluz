@@ -74,6 +74,39 @@ describe("applyLockUpdate", () => {
         expect(cleared.e1).toBeUndefined();
     });
 
+    it("ignores a stale unlock from a client that no longer holds the lock (#689)", () => {
+        // Client A locks, then client B's lock supersedes it in this
+        // observer's state (last writer wins, single slot per event).
+        const afterA = applyLockUpdate({}, "e1", lockFrom("e1", "user-a"), {
+            selfId: SELF_ID,
+            now: 1_000,
+        });
+        const afterB = applyLockUpdate(afterA, "e1", lockFrom("e1", "user-b"), {
+            selfId: SELF_ID,
+            now: 2_000,
+        });
+        // A's belated unlock arrives after B has taken over — must not clear
+        // B's still-active lock.
+        const stillLocked = applyLockUpdate(
+            afterB,
+            "e1",
+            null,
+            { selfId: SELF_ID, now: 3_000 },
+            "user-a",
+        );
+        expect(stillLocked.e1.lock.lockedById).toBe("user-b");
+
+        // B's own unlock, once it actually arrives, does clear it.
+        const cleared = applyLockUpdate(
+            stillLocked,
+            "e1",
+            null,
+            { selfId: SELF_ID, now: 4_000 },
+            "user-b",
+        );
+        expect(cleared.e1).toBeUndefined();
+    });
+
     it("returns the same reference when unlocking an unknown event", () => {
         const state: LockState = {};
         const next = applyLockUpdate(state, "missing", null, {

@@ -76,16 +76,40 @@ export type BreakPassResult = {
     breaks: Array<GeneratedBreak>;
 };
 
-/** Minutes of free time between the last item and the day's end. */
-function trailingSlack(
+/**
+ * Segment a day's items at its pinned events. Segment `s` holds the unpinned
+ * items that run up to the `s`-th pinned item (or the day's end for the last
+ * segment). A break inserted in a segment shifts only that segment's items,
+ * so its budget is the free time between the segment's last item and the
+ * pin (or day end) that closes it — slack after a pinned meal can never be
+ * spent on breaks before it.
+ */
+function segmentBudgets(
     items: Array<PlacedItem>,
     dayEndMinutes: number,
-): number {
-    const lastEnd = items.reduce(
-        (max, item) => Math.max(max, item.endMinutes),
-        0,
-    );
-    return Math.max(0, dayEndMinutes - lastEnd);
+): { segmentOf: Array<number>; budgets: Array<number> } {
+    const segmentOf: Array<number> = [];
+    const limits: Array<number> = [];
+    const lastEnds: Array<number> = [];
+    let segment = 0;
+    for (const item of items) {
+        if (item.isPinned) {
+            limits[segment] = Math.min(limits[segment] ?? Infinity, item.startMinutes);
+            segment++;
+        } else {
+            lastEnds[segment] = Math.max(lastEnds[segment] ?? -Infinity, item.endMinutes);
+        }
+        segmentOf.push(segment);
+    }
+    limits[segment] = dayEndMinutes;
+
+    const budgets: Array<number> = [];
+    for (let s = 0; s <= segment; s++) {
+        const lastEnd = lastEnds[s];
+        budgets[s] =
+            lastEnd === undefined ? 0 : Math.max(0, (limits[s] ?? dayEndMinutes) - lastEnd);
+    }
+    return { segmentOf, budgets };
 }
 
 /**
@@ -169,8 +193,10 @@ function prayerCoveredBy(
  * Insert breaks into a single day's slack.
  *
  * Guarantees:
- * - The day never grows: total inserted minutes never exceed the trailing
- *   slack, so the last item still ends at or before `dayEndMinutes`.
+ * - The day never grows: inserted minutes never exceed the slack of the
+ *   segment they sit in (the gap up to the next pinned meal, or to
+ *   `dayEndMinutes` for the last segment), so no item is shifted into a
+ *   pinned meal and the last item still ends at or before `dayEndMinutes`.
  * - Higher-priority break kinds are satisfied first; when slack runs out the
  *   remaining candidates are dropped rather than shortened below their
  *   `minimumMinutes`.
@@ -182,8 +208,8 @@ export function insertBreaksForDay(input: BreakPassInput): BreakPassResult {
     const items = [...input.items].sort((a, b) => a.startMinutes - b.startMinutes);
     if (items.length < 2) return { items, breaks: [] };
 
-    let budget = trailingSlack(items, input.dayEndMinutes);
-    if (budget < BREAK_PLACEMENT_RULES.minimumMaterializedMinutes) {
+    const { segmentOf, budgets } = segmentBudgets(items, input.dayEndMinutes);
+    if (Math.max(...budgets) < BREAK_PLACEMENT_RULES.minimumMaterializedMinutes) {
         return { items, breaks: [] };
     }
 
@@ -256,35 +282,39 @@ export function insertBreaksForDay(input: BreakPassInput): BreakPassResult {
         return a.priority - b.priority;
     });
 
-    // Allocate the budget by priority; anything that cannot reach its minimum
-    // is dropped outright.
+    // Allocate each segment's budget by priority; anything that cannot reach
+    // its minimum is dropped outright. A break after item `i` shifts the
+    // items that follow it up to the next pin, so it draws on item `i`'s
+    // segment.
     const allocated = new Map<number, { kind: BreakKind; minutes: number }>();
     for (const candidate of ordered) {
         const rule = BREAK_RULES[candidate.kind];
-        const minutes = Math.min(rule.preferredMinutes, budget);
+        const segment = segmentOf[candidate.afterIndex];
+        const minutes = Math.min(rule.preferredMinutes, budgets[segment]);
         if (minutes < rule.minimumMinutes) continue;
         allocated.set(candidate.afterIndex, { kind: candidate.kind, minutes });
-        budget -= minutes;
+        budgets[segment] -= minutes;
     }
 
     // Redistribute what is left rather than leaving one long empty tail: grow
     // existing breaks, highest priority first, up to their own maximum and
     // never past the implicit-break ceiling.
-    if (BREAK_PLACEMENT_RULES.redistributeTrailingSlack && budget > 0) {
+    if (BREAK_PLACEMENT_RULES.redistributeTrailingSlack) {
         const growable = [...allocated.entries()].sort(
             (a, b) =>
                 BREAK_RULES[a[1].kind].priority - BREAK_RULES[b[1].kind].priority,
         );
         for (const [index, entry] of growable) {
-            if (budget <= 0) break;
+            const segment = segmentOf[index];
+            if (budgets[segment] <= 0) continue;
             const ceiling = Math.min(
                 BREAK_RULES[entry.kind].maximumMinutes,
                 BREAK_PLACEMENT_RULES.implicitBreakCeilingMinutes,
             );
-            const growth = Math.min(ceiling - entry.minutes, budget);
+            const growth = Math.min(ceiling - entry.minutes, budgets[segment]);
             if (growth <= 0) continue;
             allocated.set(index, { ...entry, minutes: entry.minutes + growth });
-            budget -= growth;
+            budgets[segment] -= growth;
         }
     }
 

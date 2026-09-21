@@ -38,6 +38,7 @@ export const CalendarProvider = ({
         captureEventBeforeEdit,
         captureInitialEvents,
         markEventCreatedLocally,
+        isEventCreatedLocally,
     } = useOffline();
     const { userData, sendMessage } = useAuth();
     const [startDate, setStartDate] = useState<Date>();
@@ -92,12 +93,18 @@ export const CalendarProvider = ({
 
     /** Applies a lock or unlock update for a single event into the lock state map. */
     const setEventLock = useCallback(
-        (eventId: EventId, lock: EventLockMessage | null) => {
+        (eventId: EventId, lock: EventLockMessage | null, unlockedById?: string) => {
             setLockState((prev) =>
-                applyLockUpdate(prev, eventId, lock, {
-                    selfId: userData.id,
-                    now: Date.now(),
-                }),
+                applyLockUpdate(
+                    prev,
+                    eventId,
+                    lock,
+                    {
+                        selfId: userData.id,
+                        now: Date.now(),
+                    },
+                    unlockedById,
+                ),
             );
         },
         [userData.id],
@@ -169,6 +176,8 @@ export const CalendarProvider = ({
         dispatch,
         remoteDispatch,
         markEventCreatedLocally,
+        isEventCreatedLocally,
+        { iterationId, isReadOnlyIteration },
     );
     useLayoutEffect(() => {
         onTravelRef.current = syncHistoryTravel;

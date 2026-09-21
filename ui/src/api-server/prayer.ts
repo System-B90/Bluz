@@ -1,6 +1,10 @@
 import { Dayjs } from "dayjs";
 
 import { DbEvent, DbEventDocument } from "@/api-server/db-event";
+import {
+    DatabaseController,
+    databaseController,
+} from "@/api-server/mongo-db-controller";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 import { ClientApiError } from "@/api-shared/errors";
@@ -13,6 +17,7 @@ import {
     prayerTypeToHebrew,
 } from "@/api-shared/types/event";
 import { EventChangeInitiator } from "@/api-shared/types/event-history";
+import { IterationId } from "@/api-shared/types/iteration";
 import { PrayerSettings } from "@/api-shared/types/settings/prayer";
 import { CURRENT_ITERATION_SYNC_ID, MessageTypes } from "@/settings";
 
@@ -40,14 +45,38 @@ function prayerTimeOf(
     return parsed;
 }
 
+/**
+ * Place a configured prayer time on a venue-local day.
+ *
+ * The stored time is an instant (ISO/UTC). Its wall-clock reading must be
+ * taken in {@link APP_TIMEZONE}, not via `Date#getHours()`, which uses the
+ * server's zone - a UTC container turned 06:00 Israel into 04:00 Israel.
+ */
+function placePrayerOnDay(venueDay: Dayjs, prayerTime: Date): Date {
+    const wallClock = dayjs(prayerTime).tz(APP_TIMEZONE);
+    return venueDay
+        .hour(wallClock.hour())
+        .minute(wallClock.minute())
+        .second(wallClock.second())
+        .millisecond(0)
+        .toDate();
+}
+
+type PrayerScope = {
+    controller: DatabaseController;
+    iterationId?: IterationId;
+};
+
 async function updatePrayerEvent({
     day,
     prayerEvent,
     newConfig,
+    scope,
 }: {
     day: Date;
     prayerEvent: Event;
     newConfig: PrayerSettings;
+    scope: PrayerScope;
 }): Promise<PrayerEvent> {
     const updatedEvent: PrayerEvent = { ...prayerEvent } as PrayerEvent;
 
@@ -56,14 +85,10 @@ async function updatePrayerEvent({
         updatedEvent.prayerType as keyof PrayerSettings,
     );
     // Venue-local wall-clock placement, same as the creation path (#538 item 5).
-    const startTime = dayjs(day)
-        .tz(APP_TIMEZONE)
-        .startOf("day")
-        .hour(prayerTime.getHours())
-        .minute(prayerTime.getMinutes())
-        .second(prayerTime.getSeconds())
-        .millisecond(0)
-        .toDate();
+    const startTime = placePrayerOnDay(
+        dayjs(day).tz(APP_TIMEZONE).startOf("day"),
+        prayerTime,
+    );
     const endTime = new Date(startTime.getTime() + 20 * 60 * 1000); // Add 20min
 
     (updatedEvent.startTime as unknown as Date) = startTime;
@@ -72,8 +97,8 @@ async function updatePrayerEvent({
     await DbEvent.set(
         updatedEvent as unknown as DbEventDocument,
         undefined,
-        undefined,
-        undefined,
+        scope.controller,
+        scope.iterationId,
         { initiator: EventChangeInitiator.PrayerSettings },
     );
     return updatedEvent;
@@ -82,9 +107,11 @@ async function updatePrayerEvent({
 async function updatePrayerEventsInDay({
     day,
     newConfig,
+    scope,
 }: {
     day: Date;
     newConfig: PrayerSettings;
+    scope: PrayerScope;
 }) {
     // Day boundaries are venue-local, not server-local, and a DST day is not
     // 24h long — a fixed millisecond span silently shifted the window across
@@ -99,6 +126,7 @@ async function updatePrayerEventsInDay({
             endOfDay,
             undefined,
             { type: EventType.PRAYER } as any,
+            scope.controller,
         )) as unknown as Array<PrayerEvent>;
 
     if (existingPrayerEvents.length > 3) {
@@ -118,12 +146,7 @@ async function updatePrayerEventsInDay({
             );
             // The configured prayer time is a venue-local wall-clock time, so
             // it has to be placed on the venue's day, not the server's.
-            const startTime = venueDay
-                .hour(prayerTime.getHours())
-                .minute(prayerTime.getMinutes())
-                .second(prayerTime.getSeconds())
-                .millisecond(0)
-                .toDate();
+            const startTime = placePrayerOnDay(venueDay, prayerTime);
 
             return {
                 id: crypto.randomUUID(),
@@ -152,8 +175,8 @@ async function updatePrayerEventsInDay({
                 await DbEvent.create(
                     prayer as unknown as DbEventDocument,
                     undefined,
-                    undefined,
-                    undefined,
+                    scope.controller,
+                    scope.iterationId,
                     { initiator: EventChangeInitiator.PrayerSettings },
                 )
             ).id;
@@ -163,7 +186,12 @@ async function updatePrayerEventsInDay({
         // Update existing prayer events and broadcast the updated versions
         broadcastEvents = await Promise.all(
             existingPrayerEvents.map((prayerEvent) =>
-                updatePrayerEvent({ day: dayStart, prayerEvent, newConfig }),
+                updatePrayerEvent({
+                    day: dayStart,
+                    prayerEvent,
+                    newConfig,
+                    scope,
+                }),
             ),
         );
     }
@@ -185,10 +213,16 @@ async function updatePrayerEventsInDay({
 export async function updatePrayerEvents({
     startDate,
     newConfig,
+    controller = databaseController,
+    iterationId,
 }: {
     startDate: Date;
     newConfig: PrayerSettings;
+    /** Iteration DB the prayer events live in - must match the settings write. */
+    controller?: DatabaseController;
+    iterationId?: IterationId;
 }) {
+    const scope: PrayerScope = { controller, iterationId };
     // Step in venue-local calendar days: adding 24h at a time lands on the
     // wrong day either side of a DST transition (#538 item 5).
     const start = dayjs(startDate).tz(APP_TIMEZONE).startOf("day");
@@ -198,6 +232,7 @@ export async function updatePrayerEvents({
             await updatePrayerEventsInDay({
                 day: start.add(i, "day").toDate(),
                 newConfig,
+                scope,
             });
         }),
     );

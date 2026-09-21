@@ -104,3 +104,34 @@ export function areValuesEqual(a: any, b: any): boolean {
 export function areEventsEqual(event1: Event, event2: Event): boolean {
     return areValuesEqual(event1, event2);
 }
+
+/**
+ * Everything of an event that a *copy* of it may carry. Strips the id, the
+ * gantt-cut provenance (ganttEventId/ganttOccurrenceDate/ganttCurriculumId,
+ * see EventFactory.ts's invariant) — carrying those over would make the copy
+ * masquerade as the original event — and the Hive linkage (hiveLesson/
+ * hiveQueues), which lesson-sync reconciled for the original event only
+ * (#653). Everything else, including locked/hidden/fake, is copied as-is.
+ * @param event The event being copied.
+ * @returns The fields a new event may be seeded from.
+ */
+export function copyableFields(event: Event): Omit<
+    Event,
+    | "ganttCurriculumId"
+    | "ganttEventId"
+    | "ganttOccurrenceDate"
+    | "hiveLesson"
+    | "hiveQueues"
+    | "id"
+> {
+    const {
+        id: _id,
+        ganttEventId: _ganttEventId,
+        ganttOccurrenceDate: _ganttOccurrenceDate,
+        ganttCurriculumId: _ganttCurriculumId,
+        hiveLesson: _hiveLesson,
+        hiveQueues: _hiveQueues,
+        ...rest
+    } = event;
+    return rest;
+}

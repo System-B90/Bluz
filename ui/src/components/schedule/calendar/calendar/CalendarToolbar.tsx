@@ -58,21 +58,11 @@ export function CalendarToolbar({
 {
     const { offlineMode, setOfflineMode } = useOffline();
     const { startDate, endDate } = useCalendar();
-    const { showPAsFor, filteredCourses, filteredInstructors, hidePrayers } =
-        useCalendarFilters();
+    const { hasActiveFilters: hasAnyFilter } = useCalendarFilters();
     const [ open, setOpen ] = useState(false);
     const [ filterAnchorEl, setFilterAnchorEl ] =
         useState<HTMLButtonElement | null>(null);
     const filterOpen = Boolean(filterAnchorEl);
-
-    const hasAnyFilter = useMemo(
-        () =>
-            hidePrayers ||
-            filteredCourses.length !== 0 ||
-            filteredInstructors.length !== 0 ||
-            showPAsFor !== null,
-        [ filteredCourses, filteredInstructors, showPAsFor, hidePrayers ],
-    );
 
     const handleDateChange = useCallback(
         (val: dayjs.Dayjs | null) =>
@@ -124,15 +114,13 @@ export function CalendarToolbar({
                 justifyContent="space-between"
                 px={ 2 }
                 py={ 1.5 }
-                sx={ {
+                sx={ (theme) => ({
                     position: "relative",
                     borderBottom: "1px solid",
                     borderColor: "divider",
-                    bgcolor: (theme) =>
-                        theme.palette.mode === "dark"
-                            ? "background.default"
-                            : "transparent",
-                } }
+                    bgcolor: "transparent",
+                    ...theme.applyStyles("dark", { bgcolor: "background.default" }),
+                }) }
                 width="100%"
             >
                 <Box

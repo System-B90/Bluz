@@ -30,6 +30,7 @@ export default function SchedulePage() {
         undo,
         redo,
         isLoadingEvents,
+        isReadOnlyIteration,
     } = useCalendar();
 
     const { clearFilters, eventFilteredOpacity, hasActiveFilters } =
@@ -168,6 +169,7 @@ export default function SchedulePage() {
                 onDelete={handleDelete}
                 onSave={handleSave}
                 open={openEventDialog}
+                readOnly={isReadOnlyIteration}
             />
 
             <PushOfflineUpdatesDialog />

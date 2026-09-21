@@ -94,7 +94,10 @@ export function ImportExportMenuButton({
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-                URL.revokeObjectURL(url);
+                // Revoking synchronously after click() can cancel the download
+                // in Safari/older Firefox: the blob URL is dead before the
+                // navigation starts. Defer to the next tick.
+                setTimeout(() => URL.revokeObjectURL(url), 0);
             }
             if (onExportSuccess) onExportSuccess();
         } catch (error)

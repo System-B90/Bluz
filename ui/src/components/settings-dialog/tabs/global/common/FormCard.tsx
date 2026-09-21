@@ -55,13 +55,13 @@ export function BaseFormCard<TEntity>({
         <Box
             component="form"
             onSubmit={ handleSave }
-            sx={ {
-                ...settingsCardSx,
+            sx={ (theme) => ({
+                ...settingsCardSx(theme),
                 flex: 1,
                 gap: 3,
                 opacity: showForm ? 1 : 0.5,
                 transition: "opacity 0.3s ease",
-            } }
+            }) }
         >
             <SettingsFormHeader
                 { ...formHeader }

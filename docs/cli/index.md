@@ -17,6 +17,19 @@ bluz login           # Interactive — prompts for URL and session token
 bluz auth config     # Show current config file location and values
 ```
 
+## Interactive mode
+
+```bash
+bluz interactive
+```
+
+Opens a menu over the whole command tree: pick a group, pick a command, answer
+one prompt per required argument, then add optional ones from a list. The menu
+is built from the real commands, so anything `bluz --help` lists is reachable
+from it. Results render exactly as they do on the command line, and the session
+keeps going after a failed call. Needs a terminal — when output is piped, run
+the command you want directly instead.
+
 ## Quick Examples
 
 ```bash

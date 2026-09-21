@@ -51,7 +51,7 @@ tests/
 ├── gantt-recurrence.spec.ts         # Gantt recurring events (#111)
 ├── gantt-reload.spec.ts             # Gantt → schedule reload
 ├── gantt.spec.ts                    # Gantt curriculum page tests
-├── google-calendar.spec.ts          # Google Calendar integration tests
+├── google-calendar.spec.ts          # Google Calendar: connect, shared calendar for 2 users, orphan/all purge (via google-stub)
 ├── header.spec.ts                   # Header, navigation, and filter tests
 ├── hive-lesson-queue.spec.ts        # Hive lesson + queue integration (against a real Hive)
 ├── instructor-dnd.spec.ts           # Instructor rail drag-and-drop tests

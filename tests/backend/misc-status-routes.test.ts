@@ -4,10 +4,16 @@ vi.mock("@/api-server/hive/health", () => ({ isHiveReachable: vi.fn() }));
 vi.mock("@/api-server/db-iterations", () => ({
     DbIterations: { get: vi.fn(), current: vi.fn(), usage: vi.fn() },
 }));
-vi.mock("@/api-server/ai", () => ({ isAiConfigured: vi.fn(() => true) }));
+vi.mock("@/api-server/ai", () => ({
+    isAiConfigured: vi.fn(() => true),
+    getAiProvider: vi.fn(() => ({ defaultModel: "test-model" })),
+}));
 vi.mock("@/api-server/ai/tools", () => ({ toolSummaries: vi.fn(() => []) }));
+vi.mock("@/api-server/db-personal-settings", () => ({
+    DbPersonalSettings: { get: vi.fn(async () => ({ aiApiToken: "" })) },
+}));
 vi.mock("@/api-server/session-user", () => ({
-    requireStaffSession: vi.fn(async () => undefined),
+    requireStaffSession: vi.fn(async () => ({ id: "u1" })),
     getSessionUser: vi.fn(async () => ({ id: "u1" })),
 }));
 
@@ -103,11 +109,12 @@ describe("GET /api/ai/tools", () => {
         expect(response.status).toBe(200);
         expect((await response.json()).data).toEqual({
             enabled: true,
+            model: "test-model",
             tools: [ { name: "createEvent" } ],
         });
     });
 
-    it("reports enabled:false on a deployment with no key, so the UI can hide the launcher", async () => {
+    it("reports enabled:false and model:null on a deployment with no key, so the UI can hide the launcher", async () => {
         vi.mocked(isAiConfigured).mockReturnValueOnce(false);
 
         const { data } = await (
@@ -115,5 +122,6 @@ describe("GET /api/ai/tools", () => {
         ).json();
 
         expect(data.enabled).toBe(false);
+        expect(data.model).toBe(null);
     });
 });

@@ -7,8 +7,10 @@ import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
-import { useId } from "react";
+import { useId, useState } from "react";
 
 import
 {
@@ -18,7 +20,6 @@ import
 } from "@/api-shared/types/gantt/models";
 import { NumberSpinner } from "@/components/base/NumberSpinner";
 import { EventOrchestratorField } from "@/components/gantt/event-dialog/EventOrchestratorField";
-import { ShuffleSelect } from "@/components/gantt/ShuffleSelect";
 
 /**
  * The always-visible core of the event dialog: identity (name / type /
@@ -30,16 +31,18 @@ export function EventDetailsForm({
     localTitle,
     setLocalTitle,
     commit,
-    shuffleOptions,
+    leadInstructorIds,
 }: {
     event: GanttEvent;
     localTitle: string;
     setLocalTitle: (v: string) => void;
     commit: (updates: Partial<GanttEvent>) => void;
-    shuffleOptions: Array<string>;
+    leadInstructorIds: Array<number>;
 })
 {
     const labelId = useId();
+    const [durationUnit, setDurationUnit] = useState<"hours" | "minutes">("minutes");
+    const isHours = durationUnit === "hours";
     return (
         <Stack spacing={ 2.5 }>
             <Box alignItems="flex-start" display="flex" gap={ 2 }>
@@ -78,20 +81,40 @@ export function EventDetailsForm({
 
                 <Box display="flex" flexDirection="column">
                     <NumberSpinner
-                        largeStep={ 45 }
+                        largeStep={ isHours ? 0.75 : 45 }
                         onValueChange={ (v) =>
-                            v ? commit({ minimumDuration: v }) : undefined
-                        }
-                        step={ 5 }
-                        value={ event.minimumDuration }
+                        {
+                            if (!v) return;
+                            commit({ minimumDuration: isHours ? Math.round(v * 60) : v });
+                        } }
+                        step={ isHours ? 0.25 : 5 }
+                        value={ isHours ? event.minimumDuration / 60 : event.minimumDuration }
                     />
-                    <Typography
-                        color="text.secondary"
-                        sx={ { marginInlineStart: 0.5, mt: 0.5 } }
-                        variant="caption"
-                    >
-                        זמן מינימלי (דק&apos;)
-                    </Typography>
+                    <Stack alignItems="center" direction="row" spacing={ 0.5 } sx={ { mt: 0.5 } }>
+                        <Typography
+                            color="text.secondary"
+                            sx={ { marginInlineStart: 0.5 } }
+                            variant="caption"
+                        >
+                            זמן מינימלי
+                        </Typography>
+                        <ToggleButtonGroup
+                            exclusive
+                            onChange={ (_e, v) =>
+                            {
+                                if (v) setDurationUnit(v);
+                            } }
+                            size="small"
+                            value={ durationUnit }
+                        >
+                            <ToggleButton sx={ { py: 0, px: 0.75 } } value="minutes">
+                                <Typography variant="caption">דק&apos;</Typography>
+                            </ToggleButton>
+                            <ToggleButton sx={ { py: 0, px: 0.75 } } value="hours">
+                                <Typography variant="caption">שעות</Typography>
+                            </ToggleButton>
+                        </ToggleButtonGroup>
+                    </Stack>
                 </Box>
             </Box>
 
@@ -99,18 +122,9 @@ export function EventDetailsForm({
                 <EventOrchestratorField
                     commit={ commit }
                     event={ event }
+                    leadInstructorIds={ leadInstructorIds }
                     sx={ { flex: 1, minWidth: "10rem" } }
                 />
-
-                { shuffleOptions.length > 0 && (
-                    <Box sx={ { flex: 1, minWidth: "10rem" } }>
-                        <ShuffleSelect
-                            onChange={ (shuffles) => commit({ shuffles }) }
-                            options={ shuffleOptions }
-                            value={ event.shuffles ?? [] }
-                        />
-                    </Box>
-                ) }
 
                 <Stack direction="row" spacing={ 1 } sx={ { flexShrink: 0, pt: 0.25 } }>
                     <FormControlLabel

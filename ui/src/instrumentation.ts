@@ -4,7 +4,16 @@ import { DbSettings } from "@/api-server/db-settings";
 import { startLessonActivationLoop } from "@/api-server/hive/lesson-activation";
 
 export function register() {
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+    // Bluz ships for airgapped networks by default (see SECURITY.md): Hive and
+    // the reverse proxy in front of it are typically self-signed internally,
+    // and the network boundary — not TLS — is what actually keeps the
+    // deployment safe. `.env` (setup.py) sets this explicitly for every
+    // generated deployment, including production; this is only a fallback
+    // for a hand-rolled `.env` that omits it, and still respects an operator
+    // who set it explicitly (e.g. a non-airgapped, internet-facing install).
+    if (process.env.NODE_TLS_REJECT_UNAUTHORIZED === undefined) {
+        process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+    }
 
     if (process.env.NODE_ENV === "production") {
         registerOTel("next-app");

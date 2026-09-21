@@ -25,6 +25,7 @@ import {
     WeekOverflowResolution,
 } from "@/api-shared/gantt/cut-rules";
 import {
+    getFirstRequiredRecurrenceWeekIdx,
     getRecurrenceOccurrenceDayIds,
     isRecurrenceSatisfied,
 } from "@/api-shared/gantt/recurrence";
@@ -352,6 +353,20 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
         exceptionsByEvent.set(exception.eventId, set);
     }
 
+    // Real date for a day: curriculum start (anchoring week 1's Sunday) plus
+    // the week's ordinal offset and the day's weekday offset. Kept as a bare
+    // `YYYY-MM-DD` string — the clock time is attached later, in the venue
+    // timezone, by `minutesOfDay` (#415).
+    const dayDate = (dayId: string): string => {
+        const weekIdx = weekIndexOfDay(dayId);
+        const dow = dayIndexOf(dayId) ?? 0;
+        return shiftDate(input.startDate as string, weekIdx * 7 + dow);
+    };
+    // Same, but unknown until a start date exists (recurrence-window lookups).
+    const dateOf = (dayId: string): string | undefined =>
+        input.startDate ? dayDate(dayId) : undefined;
+    const weeksForRecurrence = input.weeks.map((w) => ({ days: w.dayIds }));
+
     const startDayIdByEvent = new Map<string, string>();
     const skippedEventIds = new Set<string>();
 
@@ -371,7 +386,21 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
 
         if (event.recurrence !== EventRecurrence.None) {
             const startWeekIdx = weekIndexOfDay(startDayId);
-            if (!isRecurrenceSatisfied(event.recurrence, startWeekIdx)) {
+            // A recurrence window opening after week 1 only has to be covered
+            // from the week holding its start date (#468) — the same rule the
+            // gantt view applies before flagging an event as unallocated.
+            const firstRequiredWeekIdx = getFirstRequiredRecurrenceWeekIdx(
+                event.recurrenceStartDate,
+                weeksForRecurrence,
+                dateOf,
+            );
+            if (
+                !isRecurrenceSatisfied(
+                    event.recurrence,
+                    startWeekIdx,
+                    firstRequiredWeekIdx,
+                )
+            ) {
                 errors.push({
                     type: "unsatisfied-recurrence",
                     eventId: event.id,
@@ -391,16 +420,6 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
     if (options.force && skippedEventIds.size > 0) {
         input = { ...input, events: input.events.filter((e) => !skippedEventIds.has(e.id)) };
     }
-
-    // Real date for a day: curriculum start (anchoring week 1's Sunday) plus
-    // the week's ordinal offset and the day's weekday offset. Kept as a bare
-    // `YYYY-MM-DD` string — the clock time is attached later, in the venue
-    // timezone, by `minutesOfDay` (#415).
-    const dayDate = (dayId: string): string => {
-        const weekIdx = weekIndexOfDay(dayId);
-        const dow = dayIndexOf(dayId) ?? 0;
-        return shiftDate(input.startDate as string, weekIdx * 7 + dow);
-    };
 
     const parseTime = (time: string): [number, number] => {
         const [ hour, minute ] = time.split(":").map(Number);
@@ -755,6 +774,30 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
 
             let startMinutes: number;
 
+            // Place from the stacking cursor; when the day is full, rather
+            // than run past its end time — which the cut never does — wrap
+            // back to the day's start and let this event overlap what is
+            // already there. It stays visible, on the right day, for the user
+            // to resolve deliberately. `layout` lays the event out from a
+            // candidate cursor (meal windows included) and reports its start
+            // and the position that clears its last piece.
+            const placeWithWrap = (
+                layout: (from: number) => { start: number; end: number },
+            ): number => {
+                const first = layout(cursor);
+                if (mayExtendDay || first.end <= dayEndMinutes) {
+                    cursor = first.end;
+                    return first.start;
+                }
+                const wrapped = layout(overlapCursor);
+                overlapCursor = wrapped.end;
+                if (overlapCursor > dayEndMinutes) {
+                    overlapCursor = dayStartMinutes;
+                }
+                cursor = dayEndMinutes;
+                return wrapped.start;
+            };
+
             if (fixedStartMinutes !== undefined) {
                 // Pinned meal event: placed at its configured clock time,
                 // independent of and without consuming the stacking cursor.
@@ -765,48 +808,42 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
                 // the pieces are a rendering concern — but the stacking cursor
                 // must clear the last piece so the next event doesn't land on
                 // top of it.
-                const pieces = layoutAroundWindows(
-                    cursor * 60_000,
-                    duration * 60_000,
-                    mealWindows.map((window) => ({
-                        start: window.startMinutes * 60_000,
-                        end: window.endMinutes * 60_000,
-                    })),
-                );
-                // A cursor sitting inside a window is pushed out by the layout,
-                // so the first piece — not the cursor — is the real start.
-                startMinutes = pieces[ 0 ].start / 60_000;
-                cursor = layoutEnd(pieces) / 60_000;
+                startMinutes = placeWithWrap((from) => {
+                    const pieces = layoutAroundWindows(
+                        from * 60_000,
+                        duration * 60_000,
+                        mealWindows.map((window) => ({
+                            start: window.startMinutes * 60_000,
+                            end: window.endMinutes * 60_000,
+                        })),
+                    );
+                    // A cursor sitting inside a window is pushed out by the
+                    // layout, so the first piece — not the cursor — is the
+                    // real start.
+                    return {
+                        start: pieces[ 0 ].start / 60_000,
+                        end: layoutEnd(pieces) / 60_000,
+                    };
+                });
             } else {
-                // Bump the cursor past any meal window it would otherwise
+                // Bump the start past any meal window it would otherwise
                 // overlap. A bump that would carry the event past midnight is
                 // refused (#474): overlapping the break is the lesser wrong —
                 // it stays on the right day and is visible in the schedule, so
                 // the user can resolve it deliberately.
-                for (const window of mealWindows) {
-                    if (
-                        cursor < window.endMinutes &&
-                        cursor + duration > window.startMinutes
-                    ) {
-                        if (window.endMinutes + duration > MINUTES_PER_DAY) continue;
-                        cursor = window.endMinutes;
+                startMinutes = placeWithWrap((from) => {
+                    let start = from;
+                    for (const window of mealWindows) {
+                        if (
+                            start < window.endMinutes &&
+                            start + duration > window.startMinutes
+                        ) {
+                            if (window.endMinutes + duration > MINUTES_PER_DAY) continue;
+                            start = window.endMinutes;
+                        }
                     }
-                }
-                startMinutes = cursor;
-                cursor = startMinutes + duration;
-
-                // The day is full. Rather than run past its end time — which
-                // the cut never does — wrap back to the day's start and let
-                // this event overlap what is already there. It stays visible,
-                // on the right day, for the user to resolve deliberately.
-                if (!mayExtendDay && startMinutes + duration > dayEndMinutes) {
-                    startMinutes = overlapCursor;
-                    overlapCursor = startMinutes + duration;
-                    if (overlapCursor > dayEndMinutes) {
-                        overlapCursor = dayStartMinutes;
-                    }
-                    cursor = dayEndMinutes;
-                }
+                    return { start, end: start + duration };
+                });
             }
 
             placed.push({

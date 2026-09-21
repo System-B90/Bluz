@@ -5,6 +5,8 @@ import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import DriveFileMoveIcon from "@mui/icons-material/DriveFileMove";
 import EditIcon from "@mui/icons-material/Edit";
 import FileCopyIcon from "@mui/icons-material/FileCopy";
+import GroupsIcon from "@mui/icons-material/Groups";
+import Chip from "@mui/material/Chip";
 import FormControl from "@mui/material/FormControl";
 import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
@@ -25,6 +27,7 @@ import
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { InstructorSelect } from "@/components/base/InstructorSelect";
 import { NumberSpinner } from "@/components/base/NumberSpinner";
+import { useConfirmDialog } from "@/components/base/UseConfirmDialog";
 import { EVENT_ANCHOR_PREFIX } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
 import { MoveEventDialog } from "@/components/gantt/module-dialog/MoveEventDialog";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
@@ -53,6 +56,8 @@ function ModuleEventTitle({
     );
 }
 
+const EMPTY_LEADS: Array<number> = [];
+
 export function ModuleEventView({
     moduleId,
     eventId,
@@ -69,6 +74,10 @@ export function ModuleEventView({
     const { openEventDialog } = useCurriculumProviderActions();
     const state = useCurriculumState();
     const [ moveDialogOpen, setMoveDialogOpen ] = useState(false);
+    const parentSyllabusId = state.modules[ moduleId ]?.syllabusId;
+    const leadInstructorIds =
+        (parentSyllabusId && state.syllabuses[ parentSyllabusId ]?.leadInstructorIds) ||
+        EMPTY_LEADS;
 
     const handleEditClick = useCallback(() =>
     {
@@ -100,8 +109,17 @@ export function ModuleEventView({
         [ eventId, updateEvent, enqueueSnackbar ],
     );
 
-    const handleDeleteClick = useCallback(() =>
+    const { confirm, confirmDialog } = useConfirmDialog();
+
+    // No undo on a gantt delete: the trash icon sits a few pixels from
+    // duplicate and move, so a mis-click used to cost the event outright.
+    const handleDeleteClick = useCallback(async () =>
     {
+        const ok = await confirm(
+            `למחוק את המופע "${moduleEvent?.title ?? ""}"? לא ניתן לבטל.`,
+            { title: "מחיקת מופע", confirmLabel: "למחוק" },
+        );
+        if (!ok) return;
         deleteEvent(moduleId, eventId).catch((error) =>
             enqueueApiErrorSnackbar(
                 enqueueSnackbar,
@@ -109,7 +127,7 @@ export function ModuleEventView({
                 error,
             ),
         );
-    }, [ eventId, moduleId, deleteEvent, enqueueSnackbar ]);
+    }, [ eventId, moduleId, moduleEvent?.title, confirm, deleteEvent, enqueueSnackbar ]);
 
     const handleDuplicateClick = useCallback(() =>
     {
@@ -150,6 +168,20 @@ export function ModuleEventView({
                     key={ `${moduleEvent?.title ?? "-title"}` }
                     moduleEvent={ moduleEvent }
                 />
+                {/* Standalone (ungrouped) events still show their own shuffle
+                    tag; grouped siblings show it once on the group header row. */}
+                { !moduleEvent?.groupId
+                    ? (moduleEvent?.shuffles ?? []).map((shuffle) => (
+                        <Chip
+                            icon={ <GroupsIcon /> }
+                            key={ shuffle }
+                            label={ shuffle }
+                            size="small"
+                            sx={ { marginInlineEnd: 0.5, mt: 0.25 } }
+                            variant="outlined"
+                        />
+                    ))
+                    : null }
             </TableCell>
             <TableCell>
                 <FormControl disabled={ !moduleEvent } fullWidth size="small">
@@ -203,6 +235,7 @@ export function ModuleEventView({
                                         : Number(e.target.value),
                             })
                         }
+                        pinnedIds={ leadInstructorIds }
                         value={ moduleEvent?.orchestratorId ?? "" }
                     >
                         <MenuItem value="">
@@ -221,7 +254,7 @@ export function ModuleEventView({
                 <IconButton onClick={ () => setMoveDialogOpen(true) } size="small" title="העבר מופע למערך אחר">
                     <DriveFileMoveIcon color="action" fontSize="small" />
                 </IconButton>
-                <IconButton onClick={ handleDeleteClick } size="small" title="מחיקת המופע">
+                <IconButton onClick={ () => void handleDeleteClick() } size="small" title="מחיקת המופע">
                     <DeleteIcon color="error" fontSize="small" />
                 </IconButton>
             </TableCell>
@@ -231,6 +264,7 @@ export function ModuleEventView({
                 onClose={ () => setMoveDialogOpen(false) }
                 open={ moveDialogOpen }
             />
+            { confirmDialog }
         </TableRow>
     );
 }

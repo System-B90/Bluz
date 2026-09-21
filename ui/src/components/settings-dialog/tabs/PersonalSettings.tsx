@@ -4,11 +4,16 @@ import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import EventIcon from "@mui/icons-material/Event";
 import PeopleIcon from "@mui/icons-material/People";
 import SchoolIcon from "@mui/icons-material/School";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
+import Divider from "@mui/material/Divider";
+import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
 import LinearProgress from "@mui/material/LinearProgress";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
@@ -21,10 +26,12 @@ import
     useEffect,
     useMemo,
     useReducer,
+    useRef,
     useState,
     type ReactNode,
 } from "react";
 
+import { fetchAiTools } from "@/api-client/ai";
 import
 {
     apiConnectGoogleCalendar,
@@ -44,7 +51,9 @@ import { Class, ClassTypeEnum } from "@/api-shared/types/hive";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { useOutsiders } from "@/components/base/OutsidersProvider";
+import { AiSelfTest } from "@/components/settings-dialog/tabs/AiSelfTest";
 import { iconBadgeSx, settingsCardSx } from "@/components/settings-dialog/tabs/global/common/styles";
+import { GoogleCalendarManager } from "@/components/settings-dialog/tabs/GoogleCalendarManager";
 
 type PersonalState = {
     groups: Array<string>;
@@ -53,6 +62,7 @@ type PersonalState = {
     googleCalendarEnabled: boolean;
     googleCalendarSyncAllEvents: boolean;
     aiAssistantEnabled: boolean;
+    aiApiToken: string;
 };
 type PersonalAction =
     | { type: "ADD_GROUP"; payload: string; }
@@ -62,6 +72,7 @@ type PersonalAction =
     | { type: "REMOVE_GROUP"; payload: string; }
     | { type: "REMOVE_INSTRUCTOR"; payload: string; }
     | { type: "REMOVE_OUTSIDER"; payload: string; }
+    | { type: "SET_AI_API_TOKEN"; payload: string; }
     | { type: "SET_AI_ASSISTANT_ENABLED"; payload: boolean; }
     | { type: "SET_GOOGLE_CALENDAR_ENABLED"; payload: boolean; }
     | { type: "SET_GOOGLE_CALENDAR_SYNC_ALL_EVENTS"; payload: boolean; };
@@ -115,6 +126,8 @@ function personalSettingsReducer(
         return { ...state, googleCalendarSyncAllEvents: action.payload };
     case "SET_AI_ASSISTANT_ENABLED":
         return { ...state, aiAssistantEnabled: action.payload };
+    case "SET_AI_API_TOKEN":
+        return { ...state, aiApiToken: action.payload };
     }
 }
 
@@ -157,7 +170,7 @@ const SelectionCard = memo(function SelectionCard({
 {
     return (
         <Box
-            sx={ { ...settingsCardSx, flex: 1, minWidth: 0, gap: 3, height: "100%" } }
+            sx={ (theme) => ({ ...settingsCardSx(theme), flex: 1, minWidth: 0, gap: 3, height: "100%" }) }
         >
             <Box alignItems="center" display="flex" gap={ 1.5 }>
                 <Box sx={ iconBadgeSx(colorTheme) }>
@@ -268,11 +281,18 @@ export function PersonalSettings()
         googleCalendarEnabled: false,
         googleCalendarSyncAllEvents: false,
         aiAssistantEnabled: true,
+        aiApiToken: "",
     });
     const [ isLoaded, setIsLoaded ] = useState(false);
+    // Tracks the last value we told the user was saved, so blurring the API
+    // key field without editing it (or re-focusing/blurring) doesn't spam a
+    // confirmation snackbar.
+    const lastSavedAiApiTokenRef = useRef<string>("");
     const [ googleStatus, setGoogleStatus ] = useState<GoogleCalendarStatus | null>(null);
     const [ googleBusy, setGoogleBusy ] = useState(false);
     const [ googleSyncing, setGoogleSyncing ] = useState(false);
+    const [ aiApiTokenVisible, setAiApiTokenVisible ] = useState(false);
+    const [ aiModel, setAiModel ] = useState<null | string>(null);
 
     const refreshGoogleStatus = useCallback(() =>
     {
@@ -293,6 +313,20 @@ export function PersonalSettings()
         refreshGoogleStatus();
     }, [ refreshGoogleStatus ]);
 
+    const refreshAiModel = useCallback(() =>
+    {
+        fetchAiTools()
+            .then(({ model }) => setAiModel(model))
+            // Deployment with no AI configured at all: nothing to show, not
+            // an error worth a snackbar over.
+            .catch(() => setAiModel(null));
+    }, []);
+
+    useEffect(() =>
+    {
+        refreshAiModel();
+    }, [ refreshAiModel ]);
+
     // Load saved preferences from the server (once on mount)
     useEffect(() =>
     {
@@ -300,6 +334,11 @@ export function PersonalSettings()
             .then((settings) =>
             {
                 dispatch({ type: "INITIALIZE", payload: settings });
+                lastSavedAiApiTokenRef.current = settings.aiApiToken;
+                // Only a successful load may arm the persist effect: arming
+                // it after a failure PUT the reducer defaults and wiped the
+                // user's saved groups/instructors/favourites.
+                setIsLoaded(true);
             })
             .catch((e) =>
                 enqueueApiErrorSnackbar(
@@ -307,22 +346,28 @@ export function PersonalSettings()
                     "כשל בטעינת העדפות אישיות",
                     e,
                 ),
-            )
-            .finally(() => setIsLoaded(true));
+            );
         // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount only
     }, []);
 
-    // Persist preferences whenever state changes (skip the initial load)
+    // Persist preferences whenever state changes (skip the initial load).
+    // Writes are chained so they reach the server in order: two quick edits
+    // fired two concurrent PUTs, and when the older one resolved last the
+    // server kept the older snapshot (e.g. a group just removed came back).
+    const persistQueueRef = useRef<Promise<unknown>>(Promise.resolve());
     useEffect(() =>
     {
         if (!isLoaded) return;
-        apiSetPersonalSettings(state, {}).catch((e) =>
-            enqueueApiErrorSnackbar(
-                enqueueSnackbar,
-                "כשל בשמירת העדפות אישיות",
-                e,
-            ),
-        );
+        persistQueueRef.current = persistQueueRef.current
+            .catch(() => undefined)
+            .then(() => apiSetPersonalSettings(state, {}))
+            .catch((e) =>
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "כשל בשמירת העדפות אישיות",
+                    e,
+                ),
+            );
     }, [ state, isLoaded, enqueueSnackbar ]);
 
     // Load student groups from Hive
@@ -405,6 +450,35 @@ export function PersonalSettings()
         },
         [ enqueueSnackbar ],
     );
+
+    // The token field saves through the same debounced/queued persist effect
+    // as every other field (fired on every keystroke), so there is no natural
+    // "save" moment to hang a toast off — show it on blur instead, once the
+    // in-flight persist settles, and only if the value actually changed.
+    const handleAiApiTokenBlur = useCallback(async () =>
+    {
+        const value = state.aiApiToken;
+        if (value === lastSavedAiApiTokenRef.current) return;
+        try
+        {
+            await persistQueueRef.current;
+            lastSavedAiApiTokenRef.current = value;
+            enqueueSnackbar(
+                value ? "מפתח ה-API האישי נשמר בהצלחה." : "מפתח ה-API האישי הוסר.",
+                { variant: "success" },
+            );
+            // A key just added/removed can flip whether AI is configured at
+            // all, or (in principle) which model answers — re-probe so the
+            // card's model line reflects the key that was just saved.
+            refreshAiModel();
+        }
+        catch
+        {
+            // Persist failures already surface via the generic
+            // "כשל בשמירת העדפות אישיות" snackbar in the persist effect.
+        }
+         
+    }, [ state.aiApiToken, enqueueSnackbar, refreshAiModel ]);
 
     const handleToggleGoogleCalendar = useCallback(
         async (enabled: boolean) =>
@@ -602,7 +676,7 @@ export function PersonalSettings()
                 />
             </Box>
             <Box sx={ { display: "flex", width: "100%" } }>
-                <Box sx={ { ...settingsCardSx, flex: 1, minWidth: 0, gap: 2 } }>
+                <Box sx={ (theme) => ({ ...settingsCardSx(theme), flex: 1, minWidth: 0, gap: 2 }) }>
                     <Box alignItems="center" display="flex" gap={ 1.5 }>
                         <Box sx={ iconBadgeSx("info") }>
                             <EventIcon className="text-[20px]" />
@@ -668,19 +742,34 @@ export function PersonalSettings()
                             </Box>
                             { googleSyncing ? <LinearProgress sx={ { borderRadius: 1, height: 4 } } /> : null }
                         </Box>
+                        { googleStatus.calendar ? (
+                            <GoogleCalendarManager
+                                calendar={ googleStatus.calendar }
+                                disabled={ googleBusy || googleSyncing }
+                                onChanged={ refreshGoogleStatus }
+                            />
+                        ) : null }
                     </> : null }
                 </Box>
             </Box>
-            <Box sx={ { display: "flex", width: "100%" } }>
-                <Box sx={ { ...settingsCardSx, flex: 1, minWidth: 0, gap: 2 } }>
+            <Box sx={ { display: "flex", width: "100%", mb: 2 } }>
+                <Box sx={ (theme) => ({ ...settingsCardSx(theme), flex: 1, minWidth: 0, gap: 2 }) }>
                     <Box alignItems="center" display="flex" gap={ 1.5 }>
                         <Box sx={ iconBadgeSx("secondary") }>
                             <AutoAwesomeIcon className="text-[20px]" />
                         </Box>
                         <Box flex={ 1 }>
-                            <Typography sx={ { fontWeight: 800, fontSize: "1.1rem", color: "text.primary" } }>
-                                עוזר AI
-                            </Typography>
+                            <Box alignItems="center" display="flex" gap={ 1 }>
+                                <Typography sx={ { fontWeight: 800, fontSize: "1.1rem", color: "text.primary" } }>
+                                    עוזר AI
+                                </Typography>
+                                { aiModel ? <Chip
+                                    label={ aiModel }
+                                    size="small"
+                                    sx={ { fontSize: "0.7rem", fontWeight: 700, height: 20 } }
+                                    variant="outlined"
+                                /> : null }
+                            </Box>
                             <Typography sx={ { fontSize: "0.75rem", color: "text.secondary" } }>
                                 מציג/מסתיר את כפתור עוזר ה-AI הצף בלו&quot;ז ובגאנט.
                             </Typography>
@@ -690,6 +779,40 @@ export function PersonalSettings()
                             onChange={ (_e, checked) => dispatch({ type: "SET_AI_ASSISTANT_ENABLED", payload: checked }) }
                         />
                     </Box>
+                    <TextField
+                        autoComplete="off"
+                        fullWidth
+                        helperText="מפתח OpenRouter אישי (אופציונלי). אם לא מוגדר, ייעשה שימוש במפתח המוגדר בשרת."
+                        label="מפתח API אישי"
+                        onBlur={ handleAiApiTokenBlur }
+                        onChange={ (e) => dispatch({ type: "SET_AI_API_TOKEN", payload: e.target.value }) }
+                        size="small"
+                        slotProps={ {
+                            input: {
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <IconButton
+                                            aria-label={ aiApiTokenVisible ? "הסתר מפתח" : "הצג מפתח" }
+                                            edge="end"
+                                            onClick={ () => setAiApiTokenVisible((v) => !v) }
+                                            size="small"
+                                        >
+                                            { aiApiTokenVisible ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" /> }
+                                        </IconButton>
+                                    </InputAdornment>
+                                ),
+                            },
+                        } }
+                        sx={ {
+                            "& .MuiOutlinedInput-root": {
+                                borderRadius: "10px",
+                            },
+                        } }
+                        type={ aiApiTokenVisible ? "text" : "password" }
+                        value={ state.aiApiToken }
+                    />
+                    <Divider />
+                    <AiSelfTest />
                 </Box>
             </Box>
         </Box>

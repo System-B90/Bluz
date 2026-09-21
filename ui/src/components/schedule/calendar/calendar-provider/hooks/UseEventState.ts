@@ -99,6 +99,13 @@ function historyReducer(
     case "__remote__": {
         const next = calendarReducer(history.present, histAction.action);
         if (next === history.present) return history;
+        // A wholesale replacement (week paging, iteration switch, snapshot
+        // restore) makes every earlier snapshot describe a *different* set
+        // of events. Keeping them let Ctrl+Z diff week B against week A and
+        // push that diff to the server - deleting the visible week.
+        if (histAction.action.type === "SET_EVENTS") {
+            return { past: [], present: next, future: [] };
+        }
         return { ...history, present: next };
     }
     case "__undo__":

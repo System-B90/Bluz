@@ -32,22 +32,25 @@ export type AllocateTimeToModuleProps<T extends AllocateTimeToEventCallback> = {
     allocateToEventCallback: T;
 };
 
-export function allocateTimeToModule(
-    props: AllocateTimeToModuleProps<AllocateTimeToEventCallbackAsync>,
-): Promise<void>;
-export function allocateTimeToModule(
-    props: AllocateTimeToModuleProps<AllocateTimeToEventCallbackSync>,
-): void;
+export type ModuleAllocation = { eventId: GanttEventId; duration: number };
 
-// Implementation
-export async function allocateTimeToModule({
+/**
+ * Pure, synchronous split of `totalDuration` across the module's events in
+ * order, each taking up to its `minimumDuration`. The client reducer consumes
+ * this directly: the async `allocateTimeToModule` wrapper only runs its first
+ * iteration synchronously, so a reducer calling it returned before the
+ * remaining events were updated.
+ */
+export function planModuleAllocation({
     module,
     totalDuration,
     moduleEvents,
-    curriculumId,
-    allocateToEventCallback,
-}: AllocateTimeToModuleProps<AllocateTimeToEventCallback>): Promise<void> {
+}: Pick<
+    AllocateTimeToModuleProps<AllocateTimeToEventCallback>,
+    "module" | "moduleEvents" | "totalDuration"
+>): Array<ModuleAllocation> {
     let remainingBudget = totalDuration;
+    const allocations: Array<ModuleAllocation> = [];
 
     for (const eventId of module.events) {
         const event = moduleEvents[eventId];
@@ -68,11 +71,33 @@ export async function allocateTimeToModule({
             remainingBudget = 0;
         }
 
+        allocations.push({ eventId, duration: allocation });
+    }
+
+    return allocations;
+}
+
+export function allocateTimeToModule(
+    props: AllocateTimeToModuleProps<AllocateTimeToEventCallbackAsync>,
+): Promise<void>;
+export function allocateTimeToModule(
+    props: AllocateTimeToModuleProps<AllocateTimeToEventCallbackSync>,
+): void;
+
+// Implementation
+export async function allocateTimeToModule({
+    module,
+    totalDuration,
+    moduleEvents,
+    curriculumId,
+    allocateToEventCallback,
+}: AllocateTimeToModuleProps<AllocateTimeToEventCallback>): Promise<void> {
+    for (const { eventId, duration } of planModuleAllocation({
+        module,
+        totalDuration,
+        moduleEvents,
+    })) {
         // We await regardless; if the callback is sync, it resolves immediately.
-        await allocateToEventCallback({
-            eventId,
-            curriculumId,
-            duration: allocation,
-        });
+        await allocateToEventCallback({ eventId, curriculumId, duration });
     }
 }

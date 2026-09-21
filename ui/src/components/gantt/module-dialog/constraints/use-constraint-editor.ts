@@ -64,12 +64,14 @@ function constraintToDraft(constraint: GanttConstraint): DraftConstraint {
             targetId: constraint.targetId,
             targetType: constraint.targetType,
             relation: constraint.relation,
+            // Server rows carry `null` when unset; `!== undefined` seeded the
+            // field with the literal text "null".
             minDelay:
-                constraint.minDelayDays !== undefined
+                constraint.minDelayDays != null
                     ? String(constraint.minDelayDays)
                     : "",
             maxDelay:
-                constraint.maxDelayDays !== undefined
+                constraint.maxDelayDays != null
                     ? String(constraint.maxDelayDays)
                     : "",
         };

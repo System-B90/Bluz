@@ -15,6 +15,8 @@ export function useTargetOptions() {
 
         for (const ganttModule of Object.values(state.modules)) {
             const syllabus = state.syllabuses[ganttModule.syllabusId];
+            // REMOVE_SYLLABUS leaves its modules in the store; skip orphans.
+            if (!syllabus) continue;
             const label = `${syllabus.title} / ${ganttModule.title}`;
 
             result[ganttModule.syllabusId].push({

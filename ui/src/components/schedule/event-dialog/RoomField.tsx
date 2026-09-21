@@ -9,8 +9,8 @@ import { useCallback, useState, useId } from "react";
 import {
     areRoomsEqual,
     ResolvableRoom,
+    resourceKeyToResolvable,
     roomLikeToResourceKey,
-    roomToResolvable,
 } from "@/api-shared/types/room";
 import { useRooms } from "@/components/base/RoomsProvider";
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
@@ -25,9 +25,14 @@ export function RoomField({
 }: RoomFieldProps & FormControlProps) {
     const labelId = useId();
     const { rooms, getRoom } = useRooms();
+    // Selected values are resource keys (`source:id`), never a JSON dump of
+    // the room object: an event's stored room may carry extra fields or a
+    // different key order, and a JSON string that differs by a byte matched
+    // no menu item — the room showed as a chip but was never highlighted in
+    // the list, and picking it again added it a second time.
     const [encodedSelectedRoomIds, setEncodedSelectedRoomIds] = useState(
         Array.isArray(event?.rooms)
-            ? event.rooms.map((r) => JSON.stringify(r))
+            ? event.rooms.map((r) => roomLikeToResourceKey(r))
             : [],
     );
 
@@ -56,17 +61,14 @@ export function RoomField({
         (roomIdToDelete: ResolvableRoom) => {
             const remaining = encodedSelectedRoomIds.filter(
                 (id) =>
-                    !areRoomsEqual(
-                        JSON.parse(id) as ResolvableRoom,
-                        roomIdToDelete,
-                    ),
+                    !areRoomsEqual(resourceKeyToResolvable(id), roomIdToDelete),
             );
             setEncodedSelectedRoomIds(remaining);
             // The chip's own onMouseDown stops the menu from opening, so
             // onClose never fires and the removal reached nothing but local
             // state — the room was still saved (#616).
             onBlurCallback({
-                rooms: remaining.map((v) => JSON.parse(v) as ResolvableRoom),
+                rooms: remaining.map((v) => resourceKeyToResolvable(v)),
             });
         },
         [encodedSelectedRoomIds, onBlurCallback],
@@ -74,8 +76,8 @@ export function RoomField({
 
     const onClose = useCallback(() => {
         onBlurCallback({
-            rooms: encodedSelectedRoomIds.map(
-                (v) => JSON.parse(v) as ResolvableRoom,
+            rooms: encodedSelectedRoomIds.map((v) =>
+                resourceKeyToResolvable(v),
             ),
         });
     }, [encodedSelectedRoomIds, onBlurCallback]);
@@ -95,9 +97,8 @@ export function RoomField({
                 renderValue={(selected: Array<string>) => (
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                         {selected
-                            .map(
-                                (encodedValue) =>
-                                    JSON.parse(encodedValue) as ResolvableRoom,
+                            .map((encodedValue) =>
+                                resourceKeyToResolvable(encodedValue),
                             )
                             .map((value) => (
                                 <Chip
@@ -117,7 +118,7 @@ export function RoomField({
                 {Object.values(rooms).map((room) => (
                     <MenuItem
                         key={roomLikeToResourceKey(room)}
-                        value={JSON.stringify(roomToResolvable(room))}
+                        value={roomLikeToResourceKey(room)}
                     >
                         {room.name}
                     </MenuItem>

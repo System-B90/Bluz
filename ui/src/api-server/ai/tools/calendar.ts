@@ -11,7 +11,7 @@ import { EventWriteOrigin } from "@/api-server/db-event-history";
 import { DbIterations } from "@/api-server/db-iterations";
 import { DbRooms } from "@/api-server/db-rooms";
 import { ClientApiError } from "@/api-shared/errors";
-import { AiToolKind } from "@/api-shared/types/ai";
+import { AiToolDanger, AiToolKind } from "@/api-shared/types/ai";
 import { DbEventDocument, EventType } from "@/api-shared/types/event";
 import { EventChangeInitiator } from "@/api-shared/types/event-history";
 import { ResolvableRoom, RoomSource } from "@/api-shared/types/room";
@@ -45,7 +45,45 @@ function parseDate(value: string, field: string): Date {
     return date;
 }
 
-/** Trimmed view of an event — the full document is far too large to re-send. */
+/**
+ * Renders a range the way the approval card should show it.
+ *
+ * The card is the last thing a human reads before agreeing to a change, and
+ * `2026-03-01T09:00:00Z` is not something anyone verifies correctly at a
+ * glance. An unparsable value falls through to the raw string rather than
+ * throwing: this runs inside `describe`, which must never break the gate it
+ * is describing.
+ */
+function formatRange(start: string, end: string): string {
+    const from = new Date(start);
+    const to = new Date(end);
+    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+        return `${start} — ${end}`;
+    }
+
+    const day = from.toLocaleDateString("he-IL", {
+        weekday: "long",
+        day: "numeric",
+        month: "numeric",
+    });
+    const time = (date: Date) =>
+        date.toLocaleTimeString("he-IL", {
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    return `${day}, ${time(from)}–${time(to)}`;
+}
+
+/**
+ * Trimmed view of an event — the full document is far too large to re-send,
+ * and a narrow projection means a schema change on the document cannot
+ * silently widen what the assistant sees.
+ *
+ * Exported so the benchmark fixture answers with exactly this shape rather
+ * than an approximation of it.
+ */
+export type AiEventSummary = ReturnType<typeof summarizeEvent>;
+
 function summarizeEvent(event: DbEventDocument) {
     return {
         id: event.id,
@@ -84,6 +122,8 @@ const ROOMS_PARAM = {
 
 export const listIterationsTool: AiTool<Record<string, never>> = {
     name: "list_iterations",
+    title: "רשימת מחזורים",
+    danger: AiToolDanger.Safe,
     description:
         "מחזיר את כל המחזורים (iterations) הקיימים, כולל המחזור הנוכחי. " +
         "השתמש בזה כדי לזהות על איזה מחזור המשתמש מדבר.",
@@ -106,6 +146,8 @@ export const listIterationsTool: AiTool<Record<string, never>> = {
 
 export const listRoomsTool: AiTool<Record<string, never>> = {
     name: "list_rooms",
+    title: "רשימת חדרים",
+    danger: AiToolDanger.Safe,
     description:
         "מחזיר את כל החדרים המוגדרים במחזור הנוכחי, עם המזהה והשם שלהם.",
     kind: AiToolKind.Read,
@@ -124,6 +166,12 @@ type ListEventsArgs = { from: string; to: string; nameContains?: string };
 
 export const listEventsTool: AiTool<ListEventsArgs> = {
     name: "list_events",
+    title: 'אירועי הלו"ז',
+    danger: AiToolDanger.Safe,
+    nextSteps: [
+        "לפני שינוי או מחיקה — ודא מול הרשימה הזו שהאירוע הוא הנכון.",
+        "אם יותר מאירוע אחד מתאים לבקשה, שאל את המשתמש עם ask_user באיזה מדובר.",
+    ],
     description:
         'מחזיר את אירועי הלו"ז שחופפים לטווח תאריכים. הטווח חייב להיות ' +
         "סביר (עד כמה שבועות). אפשר לסנן לפי מחרוזת בשם האירוע.",
@@ -175,6 +223,8 @@ type CreateEventArgs = {
 
 export const createEventTool: AiTool<CreateEventArgs> = {
     name: "create_event",
+    title: "יצירת אירוע",
+    danger: AiToolDanger.Caution,
     description:
         'יוצר אירוע חדש בלו"ז של המחזור. השתמש בזה רק אחרי שווידאת מול ' +
         "list_events שאין התנגשות, ואחרי שהמשתמש אישר את הפרטים.",
@@ -198,7 +248,18 @@ export const createEventTool: AiTool<CreateEventArgs> = {
     },
 
     describe(args) {
-        return `יצירת אירוע "${args.name}" בין ${args.startTime} ל-${args.endTime}`;
+        return `יצירת אירוע "${args.name}" ב-${formatRange(args.startTime, args.endTime)}`;
+    },
+
+    impact(args) {
+        return [
+            `אירוע חדש בשם "${args.name}" יתווסף ללו"ז.`,
+            `מועד: ${formatRange(args.startTime, args.endTime)}.`,
+            ...(args.rooms?.length
+                ? [`ישובץ ל-${args.rooms.length} חדרים.`]
+                : ["ללא שיבוץ חדר."]),
+            "האירוע יסונכרן להייב ויופיע אצל כל מי שרואה את המחזור.",
+        ];
     },
 
     async execute(args, context) {
@@ -251,6 +312,8 @@ type UpdateEventArgs = {
 
 export const updateEventTool: AiTool<UpdateEventArgs> = {
     name: "update_event",
+    title: "עדכון אירוע",
+    danger: AiToolDanger.Caution,
     description:
         "מעדכן אירוע קיים. יש להעביר רק את השדות שמשתנים; שאר השדות נשמרים. " +
         "חובה להביא את האירוע קודם עם list_events כדי לקבל את המזהה שלו.",
@@ -270,8 +333,28 @@ export const updateEventTool: AiTool<UpdateEventArgs> = {
     },
 
     describe(args) {
-        const fields = Object.keys(args).filter((key) => key !== "id");
-        return `עדכון אירוע ${args.id} (${fields.join(", ")})`;
+        return `עדכון אירוע ${args.id}`;
+    },
+
+    impact(args) {
+        // One bullet per field actually being written, named in Hebrew: a
+        // human approving "עדכון אירוע e1" has no way to tell a rename from a
+        // reschedule, and those are not the same decision.
+        const labels: Record<string, string> = {
+            name: "שם האירוע ישונה",
+            notes: "ההערות יוחלפו",
+            rooms: "שיבוץ החדרים יוחלף",
+            startTime: "שעת ההתחלה תשונה",
+            endTime: "שעת הסיום תשונה",
+        };
+        const changes = Object.keys(args)
+            .filter((key) => key !== "id" && key in labels)
+            .map((key) => labels[key]);
+
+        return [
+            ...(changes.length ? changes : ["לא צוינו שדות לשינוי."]),
+            "השינוי יירשם בהיסטוריית האירוע על שם העוזר וניתן לשחזור ממנה.",
+        ];
     },
 
     async execute(args, context) {
@@ -314,6 +397,8 @@ type DeleteEventArgs = { id: string };
 
 export const deleteEventTool: AiTool<DeleteEventArgs> = {
     name: "delete_event",
+    title: "מחיקת אירוע",
+    danger: AiToolDanger.Destructive,
     description:
         'מוחק (מארכב) אירוע מהלו"ז. פעולה זו הפיכה רק דרך היסטוריית האירועים, ' +
         "אז ודא מול המשתמש שזה האירוע הנכון.",
@@ -327,6 +412,14 @@ export const deleteEventTool: AiTool<DeleteEventArgs> = {
 
     describe(args) {
         return `מחיקת אירוע ${args.id}`;
+    },
+
+    impact() {
+        return [
+            'האירוע יוסר מהלו"ז של כל מי שרואה את המחזור.',
+            "השחזור אפשרי רק דרך היסטוריית האירועים.",
+            "אם האירוע מסונכרן להייב — הוא ייעלם גם שם.",
+        ];
     },
 
     async execute(args, context) {

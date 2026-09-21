@@ -26,6 +26,19 @@ vi.mock("@/api-server/mongo-db-controller", () => ({
     resolveIterationDb: vi.fn(async () => ({ dbName: "bluz" })),
     resolveWritableIterationDb: vi.fn(async () => ({ dbName: "bluz" })),
 }));
+vi.mock("@/api-server/db-personal-settings", () => ({
+    DbPersonalSettings: {
+        get: vi.fn(async () => ({
+            groups: [],
+            instructors: [],
+            favoriteOutsiders: [],
+            googleCalendarEnabled: false,
+            googleCalendarSyncAllEvents: false,
+            aiAssistantEnabled: true,
+            aiApiToken: "",
+        })),
+    },
+}));
 
 import { POST } from "@/app/api/ai/chat/route";
 import { resetAiRateLimit } from "@/api-server/ai/rate-limit";
@@ -67,6 +80,26 @@ describe("POST /api/ai/chat", () => {
         // whole answer back until the turn ends.
         expect(response.headers.get("X-Accel-Buffering")).toBe("no");
         expect(response.headers.get("Cache-Control")).toBe("no-store");
+        expect(getAiProvider).toHaveBeenCalledWith(undefined);
+    });
+
+    it("uses the caller's personal API token when set", async () => {
+        const { DbPersonalSettings } = await import(
+            "@/api-server/db-personal-settings"
+        );
+        vi.mocked(DbPersonalSettings.get).mockResolvedValueOnce({
+            groups: [],
+            instructors: [],
+            favoriteOutsiders: [],
+            googleCalendarEnabled: false,
+            googleCalendarSyncAllEvents: false,
+            aiAssistantEnabled: true,
+            aiApiToken: "sk-or-personal",
+        });
+
+        await POST(post(validPayload));
+
+        expect(getAiProvider).toHaveBeenCalledWith("sk-or-personal");
     });
 
     it("refuses an unauthenticated caller before opening a stream", async () => {

@@ -35,7 +35,22 @@ export type AiChatRequest = {
  * tool approval or Bluz's transcript.
  */
 export type AiProviderEvent =
+    | {
+          /**
+           * Private chain-of-thought, on backends that expose it. Kept
+           * separate from `text` so the UI can collapse it: merged into the
+           * answer it would read as the assistant thinking out loud at the
+           * user, and it is not part of the transcript replayed next turn.
+           */
+          kind: "reasoning";
+          text: string;
+      }
     | { kind: "final"; result: AiChatResult }
+    | { kind: "reasoning"; text: string }
+    // A reasoning model's chain-of-thought, sent on a separate wire channel
+    // (`delta.reasoning_content` / `delta.reasoning`) rather than mixed into
+    // the visible answer — distinct from the "answer wrapped in <think> tags"
+    // case, which arrives as ordinary `text` and is split client-side instead.
     | { kind: "text"; text: string };
 
 export type AiProvider = {

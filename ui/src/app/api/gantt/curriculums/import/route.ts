@@ -8,6 +8,7 @@ import {
     withApi,
 } from "@/api-server/common";
 import { postgresDb } from "@/api-server/gantt";
+import { sanitizeCreatePayload } from "@/api-server/gantt/db-base";
 import {
     ganttCurriculumsSchema,
     ganttCurriculum2SyllabusesSchema,
@@ -34,6 +35,41 @@ export const dynamic = "force-dynamic";
 // Guards the recursive curriculum walk against a hostile/corrupt payload that
 // would otherwise fan out into an unbounded number of inserts (#162).
 const MAX_IMPORT_NODES = 50_000;
+
+/**
+ * Junction rows come back from the export with their `sortOrder`, but the
+ * shared `Api*` junction shapes do not declare it; read it defensively.
+ */
+function junctionSortOrder(link: unknown): number {
+    const value = (link as { sortOrder?: unknown })?.sortOrder;
+    return typeof value === "number" ? value : 0;
+}
+
+/**
+ * Builds an insert row for an exported entity: every real column of the
+ * target table is carried over (recurrence, shuffles, lecturers, room
+ * requirements, …), relational/junction fields (`s2m`, `m2e`, `cEC`) are
+ * dropped by the column filter, enums are validated (bad value → 400), and the
+ * server-owned id/timestamps are replaced.
+ */
+function importRow(
+    table: Parameters<typeof sanitizeCreatePayload>[0],
+    source: unknown,
+    typeName: string,
+    id: string,
+    now: Date,
+): Record<string, unknown> {
+    return {
+        ...sanitizeCreatePayload(
+            table,
+            source as Record<string, unknown>,
+            typeName,
+        ),
+        id,
+        createdAt: now,
+        updatedAt: now,
+    };
+}
 
 /**
  * Counts the entities the import would create (weeks, days, syllabuses,
@@ -168,13 +204,17 @@ export const POST = withApi(async (request: NextRequest) => {
                 if (!oldSyllabus) continue;
 
                 const newSyllabusId = `s_${crypto.randomUUID()}`;
-                await tx.insert(ganttSyllabusesSchema).values({
-                    id: newSyllabusId,
-                    title: oldSyllabus.title,
-                    hiveIds: oldSyllabus.hiveIds || [],
-                    createdAt: now,
-                    updatedAt: now,
-                });
+                await tx
+                    .insert(ganttSyllabusesSchema)
+                    .values(
+                        importRow(
+                            ganttSyllabusesSchema,
+                            oldSyllabus,
+                            "סילבוס",
+                            newSyllabusId,
+                            now,
+                        ) as typeof ganttSyllabusesSchema.$inferInsert,
+                    );
 
                 await tx.insert(ganttCurriculum2SyllabusesSchema).values({
                     curriculumId: newCurriculumId,
@@ -189,18 +229,22 @@ export const POST = withApi(async (request: NextRequest) => {
                         const newModuleId = `m_${crypto.randomUUID()}`;
                         moduleIdMap[oldModule.id] = newModuleId;
 
-                        await tx.insert(ganttModulesSchema).values({
-                            id: newModuleId,
-                            title: oldModule.title,
-                            description: oldModule.description || "",
-                            hiveIds: oldModule.hiveIds || [],
-                            createdAt: now,
-                            updatedAt: now,
-                        });
+                        await tx
+                            .insert(ganttModulesSchema)
+                            .values(
+                                importRow(
+                                    ganttModulesSchema,
+                                    oldModule,
+                                    "מערך",
+                                    newModuleId,
+                                    now,
+                                ) as typeof ganttModulesSchema.$inferInsert,
+                            );
 
                         await tx.insert(ganttSyllabus2ModulesSchema).values({
                             syllabusId: newSyllabusId,
                             moduleId: newModuleId,
+                            sortOrder: junctionSortOrder(s2mItem),
                         });
 
                         if (Array.isArray(oldModule.m2e)) {
@@ -211,21 +255,28 @@ export const POST = withApi(async (request: NextRequest) => {
                                 const newEventId = `e_${crypto.randomUUID()}`;
                                 eventIdMap[oldEvent.id] = newEventId;
 
-                                await tx.insert(ganttEventsSchema).values({
-                                    id: newEventId,
-                                    title: oldEvent.title,
-                                    type: oldEvent.type,
-                                    minimumDuration:
-                                        oldEvent.minimumDuration || 0,
-                                    createdAt: now,
-                                    updatedAt: now,
-                                });
+                                await tx
+                                    .insert(ganttEventsSchema)
+                                    .values({
+                                        ...(importRow(
+                                            ganttEventsSchema,
+                                            oldEvent,
+                                            "מופע",
+                                            newEventId,
+                                            now,
+                                        ) as typeof ganttEventsSchema.$inferInsert),
+                                        // The Hive lesson belongs to the
+                                        // exported event; two events sharing
+                                        // one id fight over it in lesson-sync.
+                                        hiveLessonId: null,
+                                    });
 
                                 await tx
                                     .insert(ganttModule2EventsSchema)
                                     .values({
                                         moduleId: newModuleId,
                                         eventId: newEventId,
+                                        sortOrder: junctionSortOrder(m2eItem),
                                     });
 
                                 // Extract and save event configurations (cEC)
@@ -301,21 +352,28 @@ export const POST = withApi(async (request: NextRequest) => {
                     ? moduleIdMap[constraint.targetModuleId]
                     : null;
 
-                await tx.insert(ganttConstraintsSchema).values({
-                    id: crypto.randomUUID(),
-                    type: constraint.type,
-                    ownerEventId,
-                    ownerModuleId,
-                    relation: constraint.relation || null,
-                    targetEventId,
-                    targetModuleId,
-                    minDelayDays: constraint.minDelayDays || null,
-                    maxDelayDays: constraint.maxDelayDays || null,
-                    allowedDays: constraint.allowedDays || null,
-                    forbiddenDays: constraint.forbiddenDays || null,
-                    createdAt: now,
-                    updatedAt: now,
-                });
+                // Validated like a create so a bad enum (type/relation) is a
+                // 400 naming the field rather than a raw PostgresError.
+                await tx.insert(ganttConstraintsSchema).values(
+                    importRow(
+                        ganttConstraintsSchema,
+                        {
+                            ...constraint,
+                            ownerEventId,
+                            ownerModuleId,
+                            targetEventId,
+                            targetModuleId,
+                            relation: constraint.relation || null,
+                            minDelayDays: constraint.minDelayDays || null,
+                            maxDelayDays: constraint.maxDelayDays || null,
+                            allowedDays: constraint.allowedDays || null,
+                            forbiddenDays: constraint.forbiddenDays || null,
+                        },
+                        "אילוץ",
+                        crypto.randomUUID(),
+                        now,
+                    ) as typeof ganttConstraintsSchema.$inferInsert,
+                );
             }
         }
 

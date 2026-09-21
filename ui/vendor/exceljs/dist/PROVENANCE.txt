@@ -1,0 +1,7 @@
+exceljs version : 4.4.0
+bundle bytes    : 1037722
+built by        : ui/vendor/exceljs/build.mjs
+
+Regenerate with:
+  npm i --no-save exceljs@4.4.0
+  node ui/vendor/exceljs/build.mjs

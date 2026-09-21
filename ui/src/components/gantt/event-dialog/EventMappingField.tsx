@@ -17,6 +17,7 @@ import {
 } from "@/api-shared/types/gantt/models";
 import { getDayNameDisplay } from "@/api-shared/types/gantt/models/day";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
+import { notifyMappingsChanged } from "@/components/gantt/state/mappings/change-bus";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 /**
@@ -101,6 +102,7 @@ export function EventMappingField({
                     });
                     setMapping(created);
                 }
+                notifyMappingsChanged(curriculumId);
                 enqueueSnackbar("המופע שובץ בהצלחה", { variant: "success" });
             } catch (error)
             {
@@ -122,6 +124,7 @@ export function EventMappingField({
             await ganttApi.mappings.apiDelete(curriculumId, moduleId, eventId, mapping.dayId);
             setMapping(null);
             setWeekId("");
+            notifyMappingsChanged(curriculumId);
             enqueueSnackbar("שיבוץ המופע הוסר", { variant: "success" });
         } catch (error)
         {
@@ -159,11 +162,13 @@ export function EventMappingField({
                     onChange={ (e) => applyMapping(e.target.value as GanttDayId) }
                     value={ days.includes(dayId) ? dayId : "" }
                 >
-                    { days.map((dId) => (
-                        <MenuItem key={ dId } value={ dId }>
-                            { getDayNameDisplay(state.days[dId].dayIndex) }
-                        </MenuItem>
-                    )) }
+                    { days
+                        .filter((dId) => state.days[ dId ])
+                        .map((dId) => (
+                            <MenuItem key={ dId } value={ dId }>
+                                { getDayNameDisplay(state.days[ dId ].dayIndex) }
+                            </MenuItem>
+                        )) }
                 </Select>
             </FormControl>
 

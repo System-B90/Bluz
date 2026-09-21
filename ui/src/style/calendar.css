@@ -270,6 +270,9 @@ button.rbc-input::-moz-focus-inner {
 
 .rbc-event:has(.rbc-event-content [data-filtered-out="0"]) {
     opacity: 0;
+    /* Invisible must also mean inert: a hidden prayer still caught clicks,
+       hovers and drags aimed at whatever sits behind it. */
+    pointer-events: none;
 }
 
 .rbc-slot-selecting .rbc-event {

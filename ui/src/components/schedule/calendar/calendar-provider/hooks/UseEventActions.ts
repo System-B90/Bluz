@@ -7,11 +7,16 @@ import {
     apiUpdateEvent,
 } from "@/api-client/calendar";
 import { EventChangeInitiator } from "@/api-shared/types/event-history";
+import { IterationId } from "@/api-shared/types/iteration";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { createEventFactory } from "@/components/schedule/calendar/calendar-provider/EventFactory";
 import { CalendarAction } from "@/components/schedule/calendar/calendar-provider/hooks/UseEventState";
 import { Event, EventId } from "@/components/schedule/types/event";
 import { areEventsEqual } from "@/components/schedule/types/EventUtils";
+
+/** What every write path says when the viewed iteration cannot be written. */
+export const READ_ONLY_ITERATION_MESSAGE =
+    "איטרציה קודמת מוצגת לקריאה בלבד — לא ניתן לערוך.";
 
 export const useEventActions = (
     events: Array<Event>,
@@ -20,13 +25,31 @@ export const useEventActions = (
     dispatch: (action: CalendarAction) => void,
     remoteDispatch: (action: CalendarAction) => void,
     markEventCreatedLocally: (eventId: EventId) => void,
+    isEventCreatedLocally: (eventId: EventId) => boolean,
+    iterationScope: {
+        iterationId?: IterationId;
+        isReadOnlyIteration: boolean;
+    } = { isReadOnlyIteration: false },
 ) => {
+    const { iterationId, isReadOnlyIteration } = iterationScope;
+
+    // One gate for every write path (dialog, drag, paste, split, context
+    // menu, undo): a past iteration is reference material. Before this the
+    // only guard was the context menu, and a paste or Ctrl+drag made while
+    // viewing a past run created the event in the *current* schedule.
+    const refuseIfReadOnly = useCallback((): boolean => {
+        if (!isReadOnlyIteration) return false;
+        enqueueSnackbar(READ_ONLY_ITERATION_MESSAGE, { variant: "warning" });
+        return true;
+    }, [isReadOnlyIteration]);
+
     const saveEvent = useCallback(
         (
             eventPartial: Partial<Event>,
             initiator: EventChangeInitiator = EventChangeInitiator.EventDialog,
         ): Event | undefined => {
             if (!eventPartial) return;
+            if (refuseIfReadOnly()) return;
             if (eventPartial.name === "") {
                 // A nameless event is refused, but refusing it in silence made
                 // a drag or resize look like the grid was broken: the event
@@ -51,7 +74,10 @@ export const useEventActions = (
                     // locally" apart from "modified locally" without
                     // guessing from id shape.
                     markEventCreatedLocally(newEvent.id);
-                } else {
+                } else if (!isEventCreatedLocally(newEvent.id)) {
+                    // Editing an event that was itself created offline must
+                    // not demote it to "modified": reconciliation would then
+                    // try to diff it against a server copy that never existed.
                     const oldEvent = events.find((ev) => ev.id === newEvent.id);
                     if (oldEvent) captureEventBeforeEdit(oldEvent);
                 }
@@ -76,7 +102,7 @@ export const useEventActions = (
                     ? "יצירת המופע נכשלה!"
                     : "שמירת המופע נכשלה!";
 
-                apiCall(newEvent, initiator)
+                apiCall(newEvent, initiator, undefined, iterationId)
                     .then((res) => {
                         enqueueSnackbar(successMsg, { variant: "success" });
                         // Server confirmation. Skip the redundant re-upsert when
@@ -136,8 +162,11 @@ export const useEventActions = (
             offlineMode,
             captureEventBeforeEdit,
             markEventCreatedLocally,
+            isEventCreatedLocally,
             dispatch,
             remoteDispatch,
+            refuseIfReadOnly,
+            iterationId,
         ],
     );
 
@@ -148,7 +177,7 @@ export const useEventActions = (
     // to a different snapshot, diffed the same way.
     const syncHistoryTravel = useCallback(
         (from: Array<Event>, to: Array<Event>) => {
-            if (offlineMode) return;
+            if (offlineMode || isReadOnlyIteration) return;
 
             const fromMap = new Map(from.map((ev) => [ev.id, ev]));
             const toMap = new Map(to.map((ev) => [ev.id, ev]));
@@ -159,7 +188,12 @@ export const useEventActions = (
 
                 const stamped: Event = { ...toEvent, updatedAt: Date.now() };
                 const apiCall = fromEvent ? apiUpdateEvent : apiCreateEvent;
-                apiCall(stamped, EventChangeInitiator.Undo).catch((error) => {
+                apiCall(
+                    stamped,
+                    EventChangeInitiator.Undo,
+                    undefined,
+                    iterationId,
+                ).catch((error) => {
                     // Roll the local copy back to what the server still holds.
                     remoteDispatch(
                         fromEvent
@@ -179,7 +213,12 @@ export const useEventActions = (
 
             for (const [id, fromEvent] of fromMap) {
                 if (toMap.has(id)) continue;
-                apiDeleteEvent(id, EventChangeInitiator.Undo).catch((error) => {
+                apiDeleteEvent(
+                    id,
+                    EventChangeInitiator.Undo,
+                    undefined,
+                    iterationId,
+                ).catch((error) => {
                     remoteDispatch({
                         type: "UPSERT_EVENT",
                         payload: { ...fromEvent, updatedAt: Date.now() },
@@ -192,7 +231,7 @@ export const useEventActions = (
                 });
             }
         },
-        [offlineMode, remoteDispatch],
+        [offlineMode, isReadOnlyIteration, iterationId, remoteDispatch],
     );
 
     const deleteEvent = useCallback(
@@ -200,6 +239,7 @@ export const useEventActions = (
             eventId: EventId,
             initiator: EventChangeInitiator = EventChangeInitiator.EventDialog,
         ) => {
+            if (refuseIfReadOnly()) return;
             // Captured before the optimistic removal so a rejected delete can
             // put the event back rather than leaving the UI claiming it is gone.
             const deletedEvent = events.find((ev) => ev.id === eventId);
@@ -207,7 +247,7 @@ export const useEventActions = (
             dispatch({ type: "DELETE_EVENT", payload: eventId });
 
             if (!offlineMode) {
-                apiDeleteEvent(eventId, initiator)
+                apiDeleteEvent(eventId, initiator, undefined, iterationId)
                     .then(() =>
                         enqueueSnackbar("המופע נמחק בהצלחה.", {
                             variant: "success",
@@ -231,7 +271,14 @@ export const useEventActions = (
                     });
             }
         },
-        [events, offlineMode, dispatch, remoteDispatch],
+        [
+            events,
+            offlineMode,
+            dispatch,
+            remoteDispatch,
+            refuseIfReadOnly,
+            iterationId,
+        ],
     );
 
     return { saveEvent, deleteEvent, syncHistoryTravel };

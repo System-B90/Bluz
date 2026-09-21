@@ -15,13 +15,33 @@ const API_LOGIN_REQUIRED_SLEEP_TIMEOUT = 60 * 1000; // 1 Minute
 const DEFAULT_API_TIMEOUT_MS = 30 * 1000; // 30 Seconds
 
 /**
- * Combines the caller's abort signal (if any) with a default timeout signal,
- * so every request is bounded even when the caller doesn't pass one.
+ * Combines the caller's abort signal (if any) with a timeout signal, so every
+ * request is bounded even when the caller doesn't pass one.
+ *
+ * `AbortSignal.any` fires on whichever signal aborts first, so a caller's own
+ * long-lived signal cannot raise this ceiling — it can only lower it. An
+ * endpoint that is legitimately slower than the default (a long-running agent
+ * turn, say) therefore has to say so with `timeoutMs`, which is deliberately
+ * explicit: the alternative is every such caller dropping the wrapper and
+ * losing the redirect handling and envelope unwrapping with it.
  */
-function withDefaultTimeout(signal: AbortSignal | null | undefined) {
-    const timeoutSignal = AbortSignal.timeout(DEFAULT_API_TIMEOUT_MS);
+function withTimeout(
+    signal: AbortSignal | null | undefined,
+    timeoutMs: number = DEFAULT_API_TIMEOUT_MS,
+) {
+    const timeoutSignal = AbortSignal.timeout(timeoutMs);
     return signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal;
 }
+
+/** Per-call overrides for {@link safeApiFetcher}. */
+export type SafeApiFetcherOptions = {
+    /**
+     * Overrides the default request ceiling. Only raise it for an endpoint
+     * whose work genuinely takes longer than {@link DEFAULT_API_TIMEOUT_MS};
+     * it is not a way to paper over a slow route.
+     */
+    timeoutMs?: number;
+};
 
 async function safeFetcher(
     input: RequestInfo,
@@ -33,6 +53,7 @@ async function safeFetcher(
 export async function safeApiFetcher<T = unknown>(
     input: RequestInfo,
     init?: RequestInit | undefined,
+    options?: SafeApiFetcherOptions,
 ): Promise<T> {
     const headers = new Headers(init?.headers);
     if (!headers.has("Content-Type")) {
@@ -41,7 +62,7 @@ export async function safeApiFetcher<T = unknown>(
     const mergedInit: RequestInit = {
         ...init,
         headers,
-        signal: withDefaultTimeout(init?.signal),
+        signal: withTimeout(init?.signal, options?.timeoutMs),
     };
     return await safeFetcher(input, mergedInit)
         .then((response): Promise<any> => {

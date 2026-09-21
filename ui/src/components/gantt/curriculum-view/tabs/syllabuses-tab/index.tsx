@@ -12,7 +12,9 @@ import
 import { EmptyState } from "@/components/base/EmptyState";
 import { SyllabusesActionsBox } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box";
 import { useProgressiveItemCount } from "@/components/gantt/curriculum-view/tabs/UseProgressiveItemCount";
+import { useGanttFilters } from "@/components/gantt/state/filters/Provider";
 import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
+import { useCurriculumState } from "@/components/gantt/state/provider";
 import { SyllabusCard } from "@/components/gantt/syllabus-card";
 
 type SyllabusesTabProps = {
@@ -66,56 +68,73 @@ export const SyllabusesTab = memo(function SyllabusesTab({
 }: SyllabusesTabProps)
 {
     const curriculum = useCurriculum(curriculumId);
-    const syllabuses = curriculum?.syllabuses ?? EMPTY_SYLLABUS_IDS;
+    const state = useCurriculumState();
+    const { syllabusMatches, hasActiveFilters, description, clearFilters } =
+        useGanttFilters();
+    const allSyllabuses = curriculum?.syllabuses ?? EMPTY_SYLLABUS_IDS;
+    const syllabuses = useMemo(
+        () =>
+            hasActiveFilters
+                ? allSyllabuses.filter((id) =>
+                {
+                    const syllabus = state.syllabuses[ id ];
+                    return syllabus ? syllabusMatches(syllabus) : false;
+                })
+                : allSyllabuses,
+        [ allSyllabuses, hasActiveFilters, syllabusMatches, state.syllabuses ],
+    );
     const visibleSyllabusCount = useProgressiveItemCount(syllabuses.length, {
         batchSize: SYLLABUS_CARD_BATCH_SIZE,
         initialCount: INITIAL_SYLLABUS_CARD_COUNT,
         resetKey: curriculumId,
     });
     const hiddenSyllabusCount = syllabuses.length - visibleSyllabusCount;
-    const [ expandedCards, setExpandedCards ] = useState<Set<GanttSyllabusId>>(
-        new Set(syllabuses.slice(0, visibleSyllabusCount))
+    // Cards are open unless the user closed them. Tracking the *collapsed*
+    // set (rather than seeding an "expanded" set once on mount) keeps cards
+    // that stream in later, and the cards of a curriculum switched to, open
+    // like the first two instead of arriving shut.
+    const [ collapsedCards, setCollapsedCards ] = useState<Set<GanttSyllabusId>>(
+        () => new Set(),
     );
+    const visibleSyllabusIds = useMemo(
+        () => syllabuses.slice(0, visibleSyllabusCount),
+        [ syllabuses, visibleSyllabusCount ],
+    );
+    const expandedCount = visibleSyllabusIds.filter(
+        (id) => !collapsedCards.has(id),
+    ).length;
 
     const syllabusCards = useMemo(() =>
     {
-        return syllabuses
-            .slice(0, visibleSyllabusCount)
-            .map((syllabusId) => (
-                <SyllabusCard
-                    curriculumId={ curriculumId }
-                    expanded={ expandedCards.has(syllabusId) }
-                    key={ syllabusId }
-                    onExpandChange={ (expanded) =>
+        return visibleSyllabusIds.map((syllabusId) => (
+            <SyllabusCard
+                curriculumId={ curriculumId }
+                expanded={ !collapsedCards.has(syllabusId) }
+                key={ syllabusId }
+                onExpandChange={ (expanded) =>
+                {
+                    setCollapsedCards((prev) =>
                     {
-                        setExpandedCards((prev) =>
+                        const next = new Set(prev);
+                        if (expanded)
                         {
-                            const next = new Set(prev);
-                            if (expanded)
-                            {
-                                next.add(syllabusId);
-                            } else
-                            {
-                                next.delete(syllabusId);
-                            }
-                            return next;
-                        });
-                    } }
-                    syllabusId={ syllabusId }
-                />
-            ));
-    }, [ curriculumId, syllabuses, visibleSyllabusCount, expandedCards ]);
+                            next.delete(syllabusId);
+                        } else
+                        {
+                            next.add(syllabusId);
+                        }
+                        return next;
+                    });
+                } }
+                syllabusId={ syllabusId }
+            />
+        ));
+    }, [ curriculumId, visibleSyllabusIds, collapsedCards ]);
 
     const toggleAllExpanded = () =>
     {
-        const allExpanded = expandedCards.size === visibleSyllabusCount;
-        if (allExpanded)
-        {
-            setExpandedCards(new Set());
-        } else
-        {
-            setExpandedCards(new Set(syllabuses.slice(0, visibleSyllabusCount)));
-        }
+        const allExpanded = expandedCount === visibleSyllabusCount;
+        setCollapsedCards(allExpanded ? new Set(visibleSyllabusIds) : new Set());
     };
 
     return (
@@ -135,7 +154,7 @@ export const SyllabusesTab = memo(function SyllabusesTab({
             >
                 <SyllabusesActionsBox
                     curriculumId={ curriculumId }
-                    expandedCount={ expandedCards.size }
+                    expandedCount={ expandedCount }
                     mb={ 0 }
                     onToggleAllExpanded={ toggleAllExpanded }
                     visibleSyllabusCount={ visibleSyllabusCount }
@@ -151,10 +170,18 @@ export const SyllabusesTab = memo(function SyllabusesTab({
                     pt={ 1 }
                     sx={ { overflowX: "scroll" } }
                 >
-                    { syllabuses.length === 0 ? (
+                    { allSyllabuses.length === 0 ? (
                         <EmptyState
                             hint="הוספת סילבוס תתחיל את בניית הגאנט."
                             message="לגאנט הזה אין עדיין סילבוסים"
+                        />
+                    ) : syllabuses.length === 0 ? (
+                        <EmptyState
+                            actionLabel="ניקוי מסננים"
+                            hint={ description }
+                            message="אין סילבוסים שתואמים למסננים"
+                            onAction={ clearFilters }
+                            variant="filtered"
                         />
                     ) : null }
                     { syllabusCards }

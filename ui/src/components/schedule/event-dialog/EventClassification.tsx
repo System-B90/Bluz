@@ -36,8 +36,11 @@ export function EventClassification({
             justifyContent="flex-start"
             width="100%"
         >
+            {/* Keyed per event: the field seeds its type state once from the
+                event, and the dialog swaps events without remounting. */}
             <EventTypeField
                 event={ event }
+                key={ event?.id }
                 onBlurCallback={ onUpdate }
                 sx={ { width: "15%" } }
             />
@@ -54,7 +57,7 @@ export function EventClassification({
                     display: "flex",
                     alignItems: "flex-start",
                     visibility: isPrayer ? "visible" : "hidden",
-                    mr: isPrayer ? 0 : -2,
+                    marginInlineEnd: isPrayer ? 0 : -2,
                     pt: 1.5,
                     mt: -1.5,
                 } }
@@ -79,7 +82,7 @@ export function EventClassification({
                     gap: 2,
                     alignItems: "flex-start",
                     visibility: showHiveFields ? "visible" : "hidden",
-                    mr: showHiveFields ? 0 : -2,
+                    marginInlineEnd: showHiveFields ? 0 : -2,
                     pt: 1.5,
                     mt: -1.5,
                 } }

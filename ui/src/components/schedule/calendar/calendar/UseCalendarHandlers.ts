@@ -14,6 +14,7 @@ import { EventChangeInitiator } from "@/api-shared/types/event-history";
 import { ResolvableRoom, resourceKeyToResolvable } from "@/api-shared/types/room";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { Event } from "@/components/schedule/types/event";
+import { copyableFields } from "@/components/schedule/types/EventUtils";
 
 const DUMMY_ROOM_ID = "no-room-unassigned";
 const MIN_WORKING_MS = MIN_SEGMENT_MINUTES * 60_000;
@@ -23,35 +24,6 @@ const MIN_WORKING_MS = MIN_SEGMENT_MINUTES * 60_000;
  * move that places a copy and leaves the original where it was (#575).
  */
 export type GridInteraction = "duplicate" | "move" | "resize";
-
-/**
- * Everything of an event that a *copy* of it may carry. Strips the id, the
- * gantt-cut provenance (ganttEventId/ganttOccurrenceDate/ganttCurriculumId,
- * see EventFactory.ts's invariant) — carrying those over would make the copy
- * masquerade as the original event — and the Hive linkage (hiveLesson/
- * hiveQueues), which lesson-sync reconciled for the original event only
- * (#653). Everything else, including locked/hidden/fake, is copied as-is.
- */
-function copyableFields(event: Event): Omit<
-    Event,
-    | "ganttCurriculumId"
-    | "ganttEventId"
-    | "ganttOccurrenceDate"
-    | "hiveLesson"
-    | "hiveQueues"
-    | "id"
-> {
-    const {
-        id: _id,
-        ganttEventId: _ganttEventId,
-        ganttOccurrenceDate: _ganttOccurrenceDate,
-        ganttCurriculumId: _ganttCurriculumId,
-        hiveLesson: _hiveLesson,
-        hiveQueues: _hiveQueues,
-        ...rest
-    } = event;
-    return rest;
-}
 
 /**
  * Custom React hook to manage calendar event logic, user interactions (e.g. drag & drop, select, click),
@@ -291,6 +263,9 @@ export function useCalendarHandlers(
                     currentActive.id,
                     EventChangeInitiator.Keyboard,
                 );
+                // The event is gone; a second Delete must not fire another
+                // (failing) delete for the same id.
+                setActiveEvent(null);
             }
 
             if (isCmdOrCtrl && e.key === "c" && currentActive) {

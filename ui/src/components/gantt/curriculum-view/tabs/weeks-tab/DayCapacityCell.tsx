@@ -11,7 +11,7 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
-import { KeyboardEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import
 {
@@ -160,6 +160,16 @@ export function DayCapacityCell({
     const [localComment, setLocalComment] = useState(day?.comment ?? "");
     const [isTimeFocused, setIsTimeFocused] = useState(false);
     const [isCommentFocused, setIsCommentFocused] = useState(false);
+    const commentInputRef = useRef<HTMLTextAreaElement | null>(null);
+
+    // Clicking the "💬 …" caption only flips the field into view; nothing
+    // put the caret in it, so the field sat there unfocused, its blur never
+    // fired, and the cell was stuck in "editing" until a second click.
+    useEffect(() => {
+        if (!isCommentFocused) return;
+        const input = commentInputRef.current;
+        if (input && document.activeElement !== input) input.focus();
+    }, [isCommentFocused]);
 
     // Sync local state when the server value changes and the field is not focused
     useEffect(() => {
@@ -238,9 +248,14 @@ export function DayCapacityCell({
         (deltaMinutes: number) => {
             if (!day) return;
 
+            // Step from what the field *shows*: pressing +/- right after
+            // typing a new value stepped from the stale stored value instead
+            // and silently threw the typed one away.
+            const baseMinutes =
+                parseTimeInputToMinutes(localTime) ?? day.totalWorkingMinutes;
             const nextMinutes = Math.max(
                 0,
-                Math.min(24 * 60, day.totalWorkingMinutes + deltaMinutes),
+                Math.min(24 * 60, baseMinutes + deltaMinutes),
             );
             setLocalTime(formatMinutesAsTimeInput(nextMinutes));
             void updateDay(dayId, { totalWorkingMinutes: nextMinutes }).catch(
@@ -252,7 +267,7 @@ export function DayCapacityCell({
                     ),
             );
         },
-        [day, dayId, enqueueSnackbar, updateDay],
+        [day, dayId, enqueueSnackbar, localTime, updateDay],
     );
 
     const handleTimeKeyDown = useCallback(
@@ -544,6 +559,7 @@ export function DayCapacityCell({
                     >
                         <TextField
                             fullWidth
+                            inputRef={commentInputRef}
                             multiline
                             onBlur={() => {
                                 commitComment();

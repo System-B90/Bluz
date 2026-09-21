@@ -40,12 +40,12 @@ export function BaseTimeSettingsCard({
     return (
         <Box
             sx={ [
-                {
-                    ...settingsCardSx,
+                (theme) => ({
+                    ...settingsCardSx(theme),
                     p: 3,
                     gap: 2,
                     alignItems: "stretch",
-                },
+                }),
                 ...(Array.isArray(sx) ? sx : [ sx ]),
             ] }
         >

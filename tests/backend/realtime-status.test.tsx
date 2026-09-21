@@ -16,11 +16,12 @@ const socketRef: { current: null | { readyState: number; url?: string } } = {
 
 const WS_URL = "wss://bluz.dev:8443/ws/";
 
-vi.mock("@/components/SessionWs", () => ({
-    useSessionWebSocketContext: () => ({ ws: socketRef }),
-}));
-
 import { RealtimeStatus } from "@/components/base/RealtimeStatus";
+
+// The component takes the socket ref as a prop rather than calling the
+// connection hook itself (that hook opens a socket; AuthProvider owns the one
+// call). Cast: the spec drives a minimal fake, not a real WebSocket.
+const ws = socketRef as unknown as Parameters<typeof RealtimeStatus>[0]["ws"];
 
 beforeEach(() => {
     vi.useFakeTimers();
@@ -46,14 +47,14 @@ function currentHost(): null | string {
 
 describe("RealtimeStatus", () => {
     it("reports closed while no socket exists", () => {
-        render(<RealtimeStatus />);
+        render(<RealtimeStatus ws={ws} />);
 
         expect(currentState()).toBe("closed");
     });
 
     it("reports connecting while the socket is still opening", () => {
         socketRef.current = { readyState: WebSocket.CONNECTING, url: WS_URL };
-        render(<RealtimeStatus />);
+        render(<RealtimeStatus ws={ws} />);
 
         expect(currentState()).toBe("connecting");
     });
@@ -61,7 +62,7 @@ describe("RealtimeStatus", () => {
     it("picks up the socket opening without a re-render of its own", () => {
         // The package hands out a ref, so nothing notifies this component when
         // the socket is replaced on a reconnect — it samples instead.
-        render(<RealtimeStatus />);
+        render(<RealtimeStatus ws={ws} />);
         expect(currentState()).toBe("closed");
 
         socketRef.current = { readyState: WebSocket.OPEN, url: WS_URL };
@@ -74,7 +75,7 @@ describe("RealtimeStatus", () => {
 
     it("reports closed again once the socket drops", () => {
         socketRef.current = { readyState: WebSocket.OPEN, url: WS_URL };
-        render(<RealtimeStatus />);
+        render(<RealtimeStatus ws={ws} />);
         expect(currentState()).toBe("open");
 
         socketRef.current = { readyState: WebSocket.CLOSED, url: WS_URL };
@@ -90,19 +91,19 @@ describe("RealtimeStatus", () => {
         // address. A machine running another stack answers on the wrong one,
         // and the connection then looks perfectly healthy.
         socketRef.current = { readyState: WebSocket.OPEN, url: WS_URL };
-        render(<RealtimeStatus />);
+        render(<RealtimeStatus ws={ws} />);
 
         expect(currentHost()).toBe("bluz.dev:8443");
     });
 
     it("publishes no host while there is no socket", () => {
-        render(<RealtimeStatus />);
+        render(<RealtimeStatus ws={ws} />);
 
         expect(currentHost()).toBe("");
     });
 
     it("stays out of the visible UI", () => {
-        render(<RealtimeStatus />);
+        render(<RealtimeStatus ws={ws} />);
 
         expect(screen.getByTestId("realtime-status").hidden).toBe(true);
     });

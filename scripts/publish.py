@@ -97,7 +97,12 @@ def get_version_info() -> Tuple[int, int, int, Optional[int]]:
     run_git("fetch --tags origin", description="Fetching remote tags")
 
     # Fetch all tags matching v* sorted by version descending
-    tags_output = run_git('tag -l --sort=-v:refname "v*"', check=False)
+    # `versionsort.suffix` makes `v1.0.0-rc.12` sort *below* `v1.0.0`; without
+    # it git treats the suffix as a later patch and a post-release run would
+    # re-cut 1.0.0.
+    tags_output = run_git(
+        '-c versionsort.suffix=-rc tag -l --sort=-v:refname "v*"', check=False
+    )
 
     if not tags_output:
         logger.info("No existing tags found. Starting at v0.0.0")

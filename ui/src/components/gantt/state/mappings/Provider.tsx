@@ -20,6 +20,7 @@ import
     GanttModuleId,
 } from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
+import { onMappingsChanged } from "@/components/gantt/state/mappings/change-bus";
 import { GanttMappingContext } from "@/components/gantt/state/mappings/context";
 import { ganttMappingReducer } from "@/components/gantt/state/mappings/reducer";
 import { getGanttMappingKey } from "@/components/gantt/state/mappings/types";
@@ -219,6 +220,22 @@ export function GanttMappingProvider({
         });
         return () => controller.abort();
     }, [ enqueueSnackbar, refreshMappings ]); // Initial load
+
+    // A mapping written from the event dialog (mounted outside this
+    // provider) has to show up on the timeline without a reload.
+    useEffect(() =>
+        onMappingsChanged((changedCurriculumId) =>
+        {
+            if (changedCurriculumId !== curriculumId) return;
+            refreshMappings().catch((error) =>
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "טעינת מיפויי מערכים ומופעים נכשלה!",
+                    error,
+                ),
+            );
+        }),
+    [ curriculumId, refreshMappings, enqueueSnackbar ]);
 
     const value = useMemo(
         () => ({

@@ -7,6 +7,7 @@ import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import { useCallback } from "react";
 
+import { useAuth } from "@/components/auth/AuthProvider";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { FilterCourses } from "@/components/header/FilterCourses";
 import { FilterInstructors } from "@/components/header/FilterInstructor";
@@ -17,16 +18,28 @@ export function Filters({ ...props }: BoxProps)
     const {
         showPAsFor,
         setShowPAsFor,
+        filteredInstructors,
         hidePrayers,
         setHidePrayers,
         showMisconfigurations,
         setShowMisconfigurations,
     } = useCalendarFilters();
+    const { userData } = useAuth();
+
+    // The פ"א view highlights slots where *one* instructor could hold a
+    // personal talk, greying out the ones they are already busy in. That
+    // instructor is whoever the instructor filter is narrowed to, or the
+    // signed-in user — it used to be a hard-coded Hive id, so the "busy"
+    // dimming was computed for a stranger and never matched the viewer.
+    const paInstructorId =
+        filteredInstructors.length === 1
+            ? filteredInstructors[ 0 ]
+            : Number(userData.id);
 
     const handleShowPA = useCallback(() =>
     {
-        setShowPAsFor((v) => (v === null ? 365 : null));
-    }, [ setShowPAsFor ]);
+        setShowPAsFor((v) => (v === null ? paInstructorId : null));
+    }, [ setShowPAsFor, paInstructorId ]);
 
     return (
         <Box { ...props }>

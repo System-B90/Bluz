@@ -21,6 +21,7 @@ import { useSettings } from "@/components/base/SettingsProvider";
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
 import {
     PREVIEW_BUTTON_GROUP_SX,
+    PREVIEW_STATUS_ALERT_SX,
     PreviewLayout,
     PreviewToolbar,
     renderPreviewBlockers,
@@ -175,7 +176,7 @@ export function CutPreviewTab({ curriculumId }: CutPreviewTabProps) {
                     {preview.data.skipped.length > 0 ? (
                         <Alert
                             severity="warning"
-                            sx={{ py: 0, "& .MuiAlert-message": { py: 0.5 } }}
+                            sx={PREVIEW_STATUS_ALERT_SX}
                         >
                             {preview.data.skipped.length} אירועים לא משובצים
                             הושמטו מהתצוגה
@@ -184,7 +185,7 @@ export function CutPreviewTab({ curriculumId }: CutPreviewTabProps) {
                     {preview.data.report.moves.length > 0 ? (
                         <Alert
                             severity="info"
-                            sx={{ py: 0, "& .MuiAlert-message": { py: 0.5 } }}
+                            sx={PREVIEW_STATUS_ALERT_SX}
                         >
                             {preview.data.report.moves.length} אירועים אוזנו
                             ליום אחר (מסומנים במסגרת מקווקוות)
@@ -193,7 +194,7 @@ export function CutPreviewTab({ curriculumId }: CutPreviewTabProps) {
                     {preview.data.report.breaks.length > 0 ? (
                         <Alert
                             severity="success"
-                            sx={{ py: 0, "& .MuiAlert-message": { py: 0.5 } }}
+                            sx={PREVIEW_STATUS_ALERT_SX}
                         >
                             {preview.data.report.breaks.length} הפסקות נוספו
                         </Alert>
@@ -201,7 +202,7 @@ export function CutPreviewTab({ curriculumId }: CutPreviewTabProps) {
                     {preview.data.overlaps > 0 ? (
                         <Alert
                             severity="info"
-                            sx={{ py: 0, "& .MuiAlert-message": { py: 0.5 } }}
+                            sx={PREVIEW_STATUS_ALERT_SX}
                         >
                             {preview.data.overlaps} חפיפות בתוכנית
                         </Alert>

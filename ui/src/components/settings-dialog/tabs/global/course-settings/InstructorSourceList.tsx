@@ -22,7 +22,7 @@ export function InstructorCard({
 {
     return (
         <Card
-            sx={ {
+            sx={ (theme) => ({
                 p: 1.2,
                 display: "flex",
                 alignItems: "center",
@@ -33,24 +33,26 @@ export function InstructorCard({
                 boxShadow: isOverlay
                     ? "0 8px 24px rgba(0, 0, 0, 0.15)"
                     : "none",
-                bgcolor: (theme) =>
-                    theme.palette.mode === "light"
-                        ? "background.paper"
-                        : "rgba(255, 255, 255, 0.03)",
+                bgcolor: "background.paper",
                 transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                 cursor: isOverlay ? "grabbing" : "grab",
                 "&:hover": {
                     borderColor: "secondary.main",
                     bgcolor: "action.hover",
                     transform: isOverlay ? "none" : "translateY(-1px)",
-                    boxShadow: (theme) =>
-                        isOverlay
-                            ? undefined
-                            : theme.palette.mode === "light"
-                                ? `0 4px 12px rgb(${theme.vars.palette.primary.mainChannel} / 0.1)`
-                                : "0 4px 12px rgba(0, 0, 0, 0.25)",
+                    boxShadow: isOverlay
+                        ? undefined
+                        : `0 4px 12px rgb(${theme.vars.palette.primary.mainChannel} / 0.1)`,
                 },
-            } }
+                ...theme.applyStyles("dark", {
+                    bgcolor: "rgba(255, 255, 255, 0.03)",
+                    "&:hover": {
+                        boxShadow: isOverlay
+                            ? undefined
+                            : "0 4px 12px rgba(0, 0, 0, 0.25)",
+                    },
+                }),
+            }) }
         >
             <HiveAvatar
                 alt={ instructor.display_name ?? "" }
@@ -119,7 +121,7 @@ export function InstructorSourceList()
 
     return (
         <Box
-            sx={ {
+            sx={ (theme) => ({
                 width: 220,
                 borderLeft: "1px solid",
                 borderColor: "divider",
@@ -129,11 +131,9 @@ export function InstructorSourceList()
                 gap: 2,
                 height: "100%",
                 boxSizing: "border-box",
-                bgcolor: (theme) =>
-                    theme.palette.mode === "light"
-                        ? "rgba(103, 200, 221, 0.02)"
-                        : "rgba(255, 255, 255, 0.01)",
-            } }
+                bgcolor: "rgba(103, 200, 221, 0.02)",
+                ...theme.applyStyles("dark", { bgcolor: "rgba(255, 255, 255, 0.01)" }),
+            }) }
         >
             <Box>
                 <Typography

@@ -85,6 +85,10 @@ services:
         command: ["node", "/stub/server.mjs"]
         volumes:
             - ./../tests/google-stub:/stub:ro
+        # Host-exposed so e2e specs can seed a shared calendar and inspect
+        # what the integration wrote (the /__stub/ control surface).
+        ports:
+            - "127.0.0.3:${TEST_GOOGLE_STUB_PORT:-18080}:8080"
         networks:
             - bluz_net
         healthcheck:
@@ -107,6 +111,12 @@ services:
     # Auth plus --replSet needs a keyfile; a throwaway one per container is
     # enough for a single member. The healthcheck doubles as the one-shot
     # rs.initiate(): rs.status() throws until the set exists.
+    #
+    # The container's writable layer survives a restart (not a recreate), so
+    # a second `up` finds the first boot's keyfile still there at 400 (owner
+    # read-only) — the `>` redirect can't reopen it for writing, `&&` never
+    # reaches `exec`, and the container restart-loops (#684). Remove it first
+    # so a restart regenerates a fresh one exactly like a first boot.
     mongodb:
         container_name: ${TEST_PROJECT_NAME:-bluz-test}-mongodb
         hostname: mongodb
@@ -114,6 +124,7 @@ services:
             - bash
             - -c
             - >-
+                rm -f /tmp/mongo-keyfile &&
                 openssl rand -base64 756 > /tmp/mongo-keyfile &&
                 chmod 400 /tmp/mongo-keyfile &&
                 exec python3 /usr/local/bin/docker-entrypoint.py mongod

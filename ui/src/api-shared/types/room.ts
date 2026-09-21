@@ -94,6 +94,9 @@ export function roomLikeToResourceKey(room: RoomLike): string {
  */
 export function resourceKeyToResolvable(key: string): ResolvableRoom {
     const sep = key.indexOf(":");
+    if (sep === -1) {
+        throw new Error(`Malformed room resource key: "${key}"`);
+    }
     const source = Number(key.slice(0, sep)) as RoomSource;
     const rawId = key.slice(sep + 1);
     return source === RoomSource.Hive

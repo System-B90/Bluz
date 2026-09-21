@@ -94,8 +94,14 @@ export function normalizeApiSyllabus(
             updatedAt: apiModule.updatedAt,
             createdAt: apiModule.createdAt,
             hiveIds: [...(apiModule.hiveIds ?? [])],
+            // Shuffle tags must survive normalization: dropping them here made
+            // every shuffle vanish on refresh while the DB still held them (#699).
+            shuffles: [...(apiModule.shuffles ?? [])],
             events: moduleEventIds,
             syllabusId: apiSyllabus.id,
+            // Same reason as `shuffles` above: a field dropped here vanishes
+            // from the UI on refresh while the DB still holds it.
+            defaultOrchestratorId: apiModule.defaultOrchestratorId ?? null,
             constraints: [],
         });
     }
@@ -107,6 +113,9 @@ export function normalizeApiSyllabus(
             updatedAt: apiSyllabus.updatedAt,
             createdAt: apiSyllabus.createdAt,
             hiveIds: [...(apiSyllabus.hiveIds ?? [])],
+            shuffles: [...(apiSyllabus.shuffles ?? [])],
+            courseIds: [...(apiSyllabus.courseIds ?? [])],
+            leadInstructorIds: [...(apiSyllabus.leadInstructorIds ?? [])],
             modules: syllabusModuleIds,
             curriculumId,
         },
@@ -166,6 +175,7 @@ export function normalizeCurriculumData(
                 weekId: dLink.weekId,
                 dayIndex: apiDay.dayIndex,
                 totalWorkingMinutes: apiDay.totalWorkingMinutes,
+                dayEndTime: apiDay.dayEndTime ?? null,
                 comment: apiDay.comment,
                 createdAt: apiDay.createdAt,
                 updatedAt: apiDay.updatedAt,
