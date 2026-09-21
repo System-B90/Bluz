@@ -1,19 +1,19 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from "vitest";
 
-import { AnchorRegistry } from "@/components/onboarding/core/anchors";
+import { AnchorRegistry } from "@system-b90/onboarding/core";
 import {
     areRectsEqual,
     toPopperPlacement,
     toSpotlightRect,
-} from "@/components/onboarding/core/spotlight";
-import { findShowableStep, stepProgress } from "@/components/onboarding/core/steps";
+} from "@system-b90/onboarding/core";
+import { findShowableStep, stepProgress } from "@system-b90/onboarding/core";
 import {
     isTourCompleted,
     readCompletions,
     writeCompletions,
-} from "@/components/onboarding/core/storage";
-import { OnboardingStorage, TourStep } from "@/components/onboarding/types";
+} from "@system-b90/onboarding/core";
+import { OnboardingStorage, TourStep } from "@system-b90/onboarding";
 
 /**
  * The onboarding engine's pure half. Everything here is what the overlay

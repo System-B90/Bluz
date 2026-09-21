@@ -1,8 +1,8 @@
 "use client";
+import { OnboardingProvider } from "@system-b90/onboarding";
 import { ReactNode } from "react";
 
 import { ONBOARDING_LABELS } from "@/components/app-onboarding/labels";
-import { OnboardingProvider } from "@/components/onboarding";
 
 /**
  * Bluz's onboarding. Wraps the generic engine with this app's copy.

@@ -1,6 +1,7 @@
 import Box, { BoxProps } from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
+import { useTourAnchor } from "@system-b90/onboarding";
 import { useSnackbar } from "notistack";
 import React, { useCallback } from "react";
 
@@ -16,7 +17,6 @@ import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/Use
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
 import { useCurriculumState } from "@/components/gantt/state/provider";
-import { useTourAnchor } from "@/components/onboarding";
 
 export type SyllabusesActionsBoxProps = {
     curriculumId: GanttCurriculumId;

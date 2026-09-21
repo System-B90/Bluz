@@ -1,9 +1,9 @@
 # `app-onboarding/`
 
 Bluz's contributions to onboarding. This is the **Bluz-specific half** of the
-feature — the generic half lives in
-[`components/onboarding/`](../onboarding/README.md) and knows nothing about
-curriculums, syllabuses or cutting to the schedule.
+feature — the generic half is the extracted
+[`@system-b90/onboarding`](https://github.com/System-B90/onboarding) package
+and knows nothing about curriculums, syllabuses or cutting to the schedule.
 
 Built for [#659](https://github.com/System-B90/Bluz/issues/659): the gantt
 screen reads as intimidating to a first-time planner, and nothing on it explains
@@ -66,9 +66,9 @@ Yes, if it names a Bluz concept — a gantt, a syllabus, a tab, the cut — or
 contains Hebrew copy.
 
 No, if it is generic tour machinery (the registry, the step runner, the overlay,
-the help drawer). That belongs in `components/onboarding/`, which must stay free
-of any knowledge of this app so it can be extracted to
-`@system-b90/onboarding` the way the palette was.
+the help drawer). That belongs in `@system-b90/onboarding` (the
+[`onboarding`](https://github.com/System-B90/onboarding) repo), which must stay
+free of any knowledge of this app.
 
 ## Adding a tour
 
@@ -82,6 +82,6 @@ of any knowledge of this app so it can be extracted to
 ## Wording
 
 `labels.ts` builds `ONBOARDING_LABELS` from the package's Hebrew table
-(`@/components/onboarding/labels/he`) with `withLabelOverrides` for the strings
+(`@system-b90/onboarding/he`) with `withLabelOverrides` for the strings
 Bluz says differently. Import `labels/he` only — pulling in `labels/en` as well
 would ship both languages' strings to every user.
