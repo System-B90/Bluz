@@ -90,7 +90,7 @@ A local `.env` is loaded automatically, so `BLUZ_*` vars there are honoured.
 | `bluz personal` | get / set — per-user filters and Google Calendar toggles |
 | `bluz colors` | list / get / create / update / delete — custom event colours |
 | `bluz hive` | read-only Hive reference data: users / students / classes / subjects / modules / rooms / lessons / queues / avatar, plus `activate-lessons` |
-| `bluz integrations google` | status / connect / disconnect / sync |
+| `bluz integrations google` | status / connect / disconnect / sync / calendars / select-calendar / purge |
 | `bluz student-view` | `schedule` (one day of the student board), `report-engagement` |
 | `bluz ai` | `tools` (capabilities + whether AI is configured), `chat` (streaming), `benchmark` |
 | `bluz gantt` | `curriculums`, `syllabuses`, `modules`, `events`, `days`, `weeks` (CRUD + link/allocate/reorder), curriculum export/import/constraints/mappings/duplicate/execution, the cut pipeline (`cut-preview`, `cut-plan`, `cut`, `cut-status`, `pull-back`), `execution` / `recreate-occurrence`, shuffle groups and recurrence exceptions |
@@ -157,6 +157,14 @@ bluz ai benchmark                  # provider self-test (throttled to once an ho
 A turn that wants to **write** stops and waits for a human, exactly as in the
 browser. Re-run with `--approve <toolCallId> --messages <transcript>` to let one
 call through, or pass `--yes` to approve and resume in a single invocation.
+
+Several staff can mirror into one shared calendar: its owner shares it in
+Google with "make changes to events", each user runs
+`bluz integrations google calendars` and `select-calendar --id <id>` on it, and
+every Bluz event is then written there once. `purge --scope orphaned` removes
+Bluz-created copies whose event is gone, moved iteration, or left your sync
+scope; `purge --scope all` wipes every Bluz-created copy (hand-made Google
+events are never touched).
 
 ## Global options
 

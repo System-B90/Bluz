@@ -85,6 +85,10 @@ services:
         command: ["node", "/stub/server.mjs"]
         volumes:
             - ./../tests/google-stub:/stub:ro
+        # Host-exposed so e2e specs can seed a shared calendar and inspect
+        # what the integration wrote (the /__stub/ control surface).
+        ports:
+            - "127.0.0.3:${TEST_GOOGLE_STUB_PORT:-18080}:8080"
         networks:
             - bluz_net
         healthcheck:

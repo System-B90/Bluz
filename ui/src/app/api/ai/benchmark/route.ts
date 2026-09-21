@@ -1,31 +1,44 @@
 export const dynamic = "force-dynamic";
 
 import { getAiProvider } from "@/api-server/ai";
-import { runAiBenchmark } from "@/api-server/ai/benchmark/run";
-import { AiProviderError } from "@/api-server/ai/provider";
+import {
+    getBenchmarkJob,
+    startBenchmarkJob,
+} from "@/api-server/ai/benchmark/job";
 import {
     aiBenchmarkCooldownMs,
     allowAiBenchmark,
 } from "@/api-server/ai/rate-limit";
 import { ApiErrorMaker, ApiSuccess, withApi } from "@/api-server/common";
 import { requireStaffSession } from "@/api-server/session-user";
+import { AiBenchmarkJobStatus } from "@/api-shared/types/ai-benchmark";
 
 /**
- * Runs the assistant self-test against a fabricated fixture (#704).
+ * Assistant self-test against a fabricated fixture (#704).
  *
  * Gated by the same staff session as `/api/ai/chat` and no more: any user can
  * point the deployment at a different model or key, so any user needs to be
  * able to check *theirs*. It is throttled hard instead, because a run costs
  * real tokens.
  *
- * Not streamed: a run is a handful of turns with nothing useful to show until
- * a case finishes, and the report is what the settings card renders.
+ * A run takes minutes — past a proxy's request timeout — so POST only starts
+ * it in the background and answers at once; GET reports its state.
  */
+export const GET = withApi(async () => {
+    const user = await requireStaffSession();
+    return ApiSuccess(getBenchmarkJob(String(user.id)));
+});
+
 export const POST = withApi(async () => {
     const user = await requireStaffSession();
+    const userId = String(user.id);
 
-    if (!allowAiBenchmark(String(user.id))) {
-        const minutes = Math.ceil(aiBenchmarkCooldownMs(String(user.id)) / 60_000);
+    // A run already in flight is attached to, not counted against the throttle.
+    const running = getBenchmarkJob(userId);
+    if (running.status === AiBenchmarkJobStatus.Running) return ApiSuccess(running);
+
+    if (!allowAiBenchmark(userId)) {
+        const minutes = Math.ceil(aiBenchmarkCooldownMs(userId) / 60_000);
         return ApiErrorMaker(
             {
                 name: "AiRateLimitError",
@@ -35,22 +48,14 @@ export const POST = withApi(async () => {
         );
     }
 
-    try {
-        const result = await runAiBenchmark({
-            provider: getAiProvider(),
-            actor: {
-                id: String(user.id),
-                displayName: user.display_name || user.name || "משתמש",
-            },
-        });
-        return ApiSuccess(result);
-    } catch (e) {
-        // A missing key or an unreachable gateway is a dependency fault, not a
-        // bad request — and it is precisely what this endpoint exists to
-        // surface, so it must come back readable rather than as a bare 500.
-        if (e instanceof AiProviderError) {
-            return ApiErrorMaker({ name: e.name, message: e.message }, 502);
-        }
-        throw e;
-    }
+    // A missing key or unreachable gateway surfaces as a Failed job on the
+    // next poll, not as a status here: the request has already returned.
+    const { job } = startBenchmarkJob({
+        provider: getAiProvider(),
+        actor: {
+            id: userId,
+            displayName: user.display_name || user.name || "משתמש",
+        },
+    });
+    return ApiSuccess(job);
 });

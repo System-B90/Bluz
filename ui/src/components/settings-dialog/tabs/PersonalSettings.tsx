@@ -53,6 +53,7 @@ import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { useOutsiders } from "@/components/base/OutsidersProvider";
 import { AiSelfTest } from "@/components/settings-dialog/tabs/AiSelfTest";
 import { iconBadgeSx, settingsCardSx } from "@/components/settings-dialog/tabs/global/common/styles";
+import { GoogleCalendarManager } from "@/components/settings-dialog/tabs/GoogleCalendarManager";
 
 type PersonalState = {
     groups: Array<string>;
@@ -741,6 +742,13 @@ export function PersonalSettings()
                             </Box>
                             { googleSyncing ? <LinearProgress sx={ { borderRadius: 1, height: 4 } } /> : null }
                         </Box>
+                        { googleStatus.calendar ? (
+                            <GoogleCalendarManager
+                                calendar={ googleStatus.calendar }
+                                disabled={ googleBusy || googleSyncing }
+                                onChanged={ refreshGoogleStatus }
+                            />
+                        ) : null }
                     </> : null }
                 </Box>
             </Box>

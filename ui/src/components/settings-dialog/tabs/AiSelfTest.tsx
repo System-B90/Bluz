@@ -30,11 +30,15 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import React from "react";
 
-import { runAiBenchmark } from "@/api-client/ai";
+import { fetchAiBenchmarkJob, startAiBenchmark } from "@/api-client/ai";
 import {
     AiBenchmarkCase,
+    AiBenchmarkJob,
+    AiBenchmarkJobStatus,
     AiBenchmarkResult,
 } from "@/api-shared/types/ai-benchmark";
+
+const POLL_INTERVAL_MS = 3_000;
 
 function CaseRow({ entry }: { entry: AiBenchmarkCase }) {
     const [open, setOpen] = React.useState(false);
@@ -113,27 +117,50 @@ export function AiSelfTest() {
     const [result, setResult] = React.useState<AiBenchmarkResult | null>(null);
     const [error, setError] = React.useState<null | string>(null);
 
-    // A run outlives a quick dialog close, so the request is aborted on
-    // unmount rather than left streaming into a component that is gone.
+    // The run lives on the server, so closing the dialog only stops *watching*
+    // it. Mounting re-attaches: whatever the server holds (running, done or
+    // failed) is shown, and polling resumes if it is still going.
     const abortRef = React.useRef<AbortController | null>(null);
-    React.useEffect(() => () => abortRef.current?.abort(), []);
 
-    const start = () => {
-        if (running) return;
+    // Shows a job's state and, while it runs, polls until it settles.
+    const watch = React.useCallback(async (first: AiBenchmarkJob, signal: AbortSignal) => {
+        let job = first;
+        for (;;) {
+            if (signal.aborted) return;
+            setRunning(job.status === AiBenchmarkJobStatus.Running);
+            if (job.status === AiBenchmarkJobStatus.Done) setResult(job.result ?? null);
+            if (job.status === AiBenchmarkJobStatus.Failed) setError(job.error ?? "הבדיקה נכשלה");
+            if (job.status !== AiBenchmarkJobStatus.Running) return;
+
+            await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+            if (signal.aborted) return;
+            // A dropped poll is not a failed run; keep the last state and retry.
+            job = await fetchAiBenchmarkJob(signal).catch(() => job);
+        }
+    }, []);
+
+    React.useEffect(() => {
         const abort = new AbortController();
         abortRef.current = abort;
+        fetchAiBenchmarkJob(abort.signal)
+            .then((job) => watch(job, abort.signal))
+            .catch(() => undefined);
+        return () => abort.abort();
+    }, [watch]);
+
+    const start = () => {
+        const abort = abortRef.current;
+        if (running || !abort) return;
         setRunning(true);
         setError(null);
         setResult(null);
 
-        void runAiBenchmark(abort.signal)
-            .then(setResult)
+        startAiBenchmark(abort.signal)
+            .then((job) => watch(job, abort.signal))
             .catch((e: unknown) => {
                 if (abort.signal.aborted) return;
+                setRunning(false);
                 setError(e instanceof Error ? e.message : String(e));
-            })
-            .finally(() => {
-                if (!abort.signal.aborted) setRunning(false);
             });
     };
 
@@ -167,6 +194,7 @@ export function AiSelfTest() {
                     <LinearProgress sx={ { borderRadius: 1, height: 4 } } />
                     <Typography color="text.secondary" variant="caption">
                         הבדיקה מריצה כמה שיחות מלאות מול המודל — זה יכול לקחת דקה או שתיים.
+                        אפשר לסגור את החלון; הבדיקה ממשיכה ברקע.
                     </Typography>
                 </>
                 : null }

@@ -12,19 +12,11 @@ import {
     AiToolSummary,
     ApiAiChatPayload,
 } from "@/api-shared/types/ai";
-import { AiBenchmarkResult } from "@/api-shared/types/ai-benchmark";
+import { AiBenchmarkJob } from "@/api-shared/types/ai-benchmark";
 
 const CHAT_ENDPOINT = "/api/ai/chat";
 const TOOLS_ENDPOINT = "/api/ai/tools";
 const BENCHMARK_ENDPOINT = "/api/ai/benchmark";
-
-/**
- * A self-test is several full agent turns end to end, so it routinely outlives
- * the 30s ceiling `safeApiFetcher` puts on an ordinary API call. The route's
- * own per-run budget is what actually bounds the work; this only keeps the
- * browser from giving up before the server has answered.
- */
-const BENCHMARK_TIMEOUT_MS = 10 * 60 * 1000; // 10 Minutes
 
 /**
  * Opens a turn and yields its events as they arrive.
@@ -101,19 +93,24 @@ export async function fetchAiTools(): Promise<{
 }
 
 /**
- * Runs the assistant self-test and returns its report (#704).
+ * Starts the assistant self-test in the background (#704).
  *
- * Slow by nature — several complete agent turns against the configured model —
- * so callers must show progress rather than waiting silently, and the request
- * gets its own ceiling well above the shared API default. The throttle (one
- * run per hour per user) arrives as a 429 with a readable message.
+ * Returns at once with the job state: the run itself takes minutes, so it
+ * lives on the server and is read back with {@link fetchAiBenchmarkJob}. The
+ * throttle (one run per hour per user) arrives as a 429 with a readable message.
  */
-export async function runAiBenchmark(
+export async function startAiBenchmark(
     signal?: AbortSignal,
-): Promise<AiBenchmarkResult> {
-    return await safeApiFetcher<AiBenchmarkResult>(
-        BENCHMARK_ENDPOINT,
-        { method: "POST", signal },
-        { timeoutMs: BENCHMARK_TIMEOUT_MS },
-    );
+): Promise<AiBenchmarkJob> {
+    return await safeApiFetcher<AiBenchmarkJob>(BENCHMARK_ENDPOINT, {
+        method: "POST",
+        signal,
+    });
+}
+
+/** Current state of the user's self-test run: idle, running, done or failed. */
+export async function fetchAiBenchmarkJob(
+    signal?: AbortSignal,
+): Promise<AiBenchmarkJob> {
+    return await safeApiFetcher<AiBenchmarkJob>(BENCHMARK_ENDPOINT, { signal });
 }
