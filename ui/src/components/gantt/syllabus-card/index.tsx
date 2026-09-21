@@ -152,7 +152,6 @@ export function SyllabusCard({
                     />
                 </CardContent>
                 <SyllabusCardActions
-                    curriculumId={ curriculumId }
                     sx={ { width: '100%', gap: 0 } }
                     syllabusId={ syllabusId }
                 />

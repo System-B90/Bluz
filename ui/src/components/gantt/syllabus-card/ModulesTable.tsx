@@ -40,12 +40,15 @@ export type ModulesTableProps = {
     syllabusId: GanttSyllabusId;
     curriculumId: GanttCurriculumId;
     syllabusModules: GanttSyllabus["modules"];
+    /** Overridden by the syllabus dialog, which has far more room than the card. */
+    maxHeight?: number | string;
 };
 
 export function ModulesTable({
     syllabusId,
     syllabusModules,
     curriculumId,
+    maxHeight = 225,
 }: ModulesTableProps) {
     const { enqueueSnackbar } = useSnackbar();
     const { dispatch } = useCurriculumProviderActions();
@@ -85,7 +88,7 @@ export function ModulesTable({
                 border: 1,
                 borderColor: "divider",
                 borderRadius: 1,
-                maxHeight: 225,
+                maxHeight,
                 "&::-webkit-scrollbar": {
                     width: "6px",
                 },
