@@ -20,6 +20,8 @@ import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { InstructorSelect } from "@/components/base/InstructorSelect";
 import { useGanttFilters } from "@/components/gantt/state/filters/Provider";
 
+const SELECT_RTL_SX = { "& .MuiSelect-select": { textAlign: "right" } };
+
 /** Popover with the gantt syllabus filters, mirroring the schedule's filter icon. */
 export function GanttFilterButton() {
     const coursesLabelId = useId();
@@ -82,7 +84,7 @@ export function GanttFilterButton() {
                 }}
                 transformOrigin={{ vertical: "top", horizontal: "right" }}
             >
-                <Stack gap={2} minWidth={280}>
+                <Stack dir="rtl" gap={2} minWidth={280}>
                     <FormControl fullWidth size="small">
                         <InputLabel id={coursesLabelId} size="small">
                             סינון לפי מסלולים
@@ -109,6 +111,7 @@ export function GanttFilterButton() {
                                 </Box>
                             )}
                             size="small"
+                            sx={SELECT_RTL_SX}
                             value={values.courseIds}
                         >
                             {courses.map((course) => (
@@ -149,6 +152,7 @@ export function GanttFilterButton() {
                                 </Box>
                             )}
                             size="small"
+                            sx={SELECT_RTL_SX}
                             value={values.leadInstructorIds}
                         />
                     </FormControl>
