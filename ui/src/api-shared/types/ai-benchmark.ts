@@ -48,6 +48,23 @@ export type AiBenchmarkResult = {
     durationMs: number;
 };
 
+export enum AiBenchmarkJobStatus {
+    Idle = "idle",
+    Running = "running",
+    Done = "done",
+    Failed = "failed",
+}
+
+/** Server-side state of a user's background self-test run. */
+export type AiBenchmarkJob = {
+    status: AiBenchmarkJobStatus;
+    /** Epoch ms the run began; absent while idle. */
+    startedAt?: number;
+    result?: AiBenchmarkResult;
+    /** Readable failure, when status is Failed. */
+    error?: string;
+};
+
 /**
  * One run per user per this window. A run drives several full agent turns
  * against a billed model, so it is throttled far harder than chat.
