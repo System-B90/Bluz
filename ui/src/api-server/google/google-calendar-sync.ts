@@ -107,13 +107,17 @@ export function syncEventToInstructorsGoogleCalendars(
                     const wantsNow =
                         action === "upsert" &&
                         calendarWantsEvent(event, group.subscribers);
+                    // A delete only reaches calendars that held the event:
+                    // the deleted doc's own scope, or the pre-update scope.
                     const wantedBefore =
-                        previous !== undefined &&
-                        calendarWantsEvent(previous, group.subscribers);
+                        (previous !== undefined &&
+                            calendarWantsEvent(previous, group.subscribers)) ||
+                        (action === "delete" &&
+                            calendarWantsEvent(event, group.subscribers));
 
                     if (wantsNow) {
                         await pushViaAnyLink(group, event, "upsert", iterationId);
-                    } else if (action === "delete" || wantedBefore) {
+                    } else if (wantedBefore) {
                         await pushViaAnyLink(group, event, "delete", iterationId);
                     }
                 }),

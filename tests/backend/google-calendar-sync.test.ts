@@ -235,16 +235,16 @@ describe("syncEventToInstructorsGoogleCalendars", () => {
         expect(pushedTo()).toEqual(["1:upsert"]);
     });
 
-    it("deletes from every calendar on a delete, assigned or not", async () => {
+    it("deletes only from calendars whose scope held the event", async () => {
         const { syncEventToInstructorsGoogleCalendars } = await importSync();
-        // User 5 never qualified for this event — but a delete is cheap and
-        // a stale copy is worse than a 404.
+        // User 5 never qualified for this event, so its calendar holds no
+        // copy — a broadcast delete there is a wasted Google API call.
         arrange([settings("1"), settings("5")], [link("1", "cal-1"), link("5", "cal-5")]);
 
         syncEventToInstructorsGoogleCalendars(event, "delete", "2026a");
         await flushAsyncWork();
 
-        expect(pushedTo().sort()).toEqual(["1:delete", "5:delete"]);
+        expect(pushedTo()).toEqual(["1:delete"]);
     });
 
     it("on an update, removes the event from a calendar that wanted the old assignment only", async () => {

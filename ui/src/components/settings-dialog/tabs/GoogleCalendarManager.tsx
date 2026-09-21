@@ -102,7 +102,7 @@ export const GoogleCalendarManager = memo(function GoogleCalendarManager({ calen
     {
         const approved = await confirm(
             scope === "all"
-                ? `כל האירועים ש-Bluz יצר ביומן "${calendar.summary}" יימחקו מ-Google. אירועים שנוצרו ידנית ב-Google לא ייגעו. להמשיך?`
+                ? `כל האירועים ש-Bluz יצר ביומן "${calendar.summary}" יימחקו מ-Google. אירועים שנוצרו ידנית ב-Google לא ייפגעו. להמשיך?`
                 : `אירועים ביומן "${calendar.summary}" שאין להם עוד אירוע תואם ב-Bluz (נמחקו, שייכים למחזור אחר, או יצאו מטווח הסנכרון שלכם) יימחקו מ-Google. להמשיך?`,
             {
                 title: scope === "all" ? "הסרת כל אירועי Bluz מהיומן" : "הסרת אירועים יתומים",

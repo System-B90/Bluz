@@ -569,7 +569,9 @@ export async function selectGoogleCalendar(
         const entry = await withBackoff(() =>
             calendarApi.calendarList.get({ calendarId }),
         ).catch((error) => {
-            if (googleErrorStatus(error) === 404) return null;
+            // 403: a calendar the account can see but not use.
+            const status = googleErrorStatus(error);
+            if (status === 404 || status === 403) return null;
             throw error;
         });
         const option = entry?.data ? toCalendarOption(entry.data) : null;
@@ -913,6 +915,9 @@ async function findOrphans(
 ): Promise<Array<calendar_v3.Schema$Event>> {
     const calendarIteration = link.iterationId;
     const subscribers = await subscribersOfCalendar(link.calendarId);
+    // No subscriber (sync switched off) means no event is "wanted" — treating
+    // that as "everything is an orphan" would wipe the calendar.
+    if (!subscribers.length) return [];
 
     // Group by the iteration each copy claims, so one Mongo lookup per DB.
     const byIteration = new Map<string, Array<calendar_v3.Schema$Event>>();
