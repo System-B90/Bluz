@@ -212,17 +212,18 @@ export function getGoogleScopes(): Array<string> {
 type OAuth2Client = InstanceType<typeof google.auth.OAuth2>;
 
 function createOAuthClient(redirectUri?: string): OAuth2Client {
-    const client = new google.auth.OAuth2(
-        GOOGLE_CLIENT_ID,
-        GOOGLE_CLIENT_SECRET,
+    // `endpoints` is read-only on the constructed client, so the stub's token
+    // URL has to go in through the constructor — assigning it afterwards left
+    // the client talking to the real oauth2.googleapis.com and every e2e
+    // connect failed with `invalid_client`.
+    return new google.auth.OAuth2({
+        clientId: GOOGLE_CLIENT_ID,
+        clientSecret: GOOGLE_CLIENT_SECRET,
         redirectUri,
-    );
-    if (GOOGLE_OAUTH_TOKEN_URL) {
-        (client as unknown as { endpoint: { oauth2TokenUrl: string } }).endpoint = {
-            oauth2TokenUrl: GOOGLE_OAUTH_TOKEN_URL,
-        };
-    }
-    return client;
+        ...(GOOGLE_OAUTH_TOKEN_URL
+            ? { endpoints: { oauth2TokenUrl: GOOGLE_OAUTH_TOKEN_URL } }
+            : {}),
+    });
 }
 
 /** Calendar API client, honouring the test stub's root URL when set. */
