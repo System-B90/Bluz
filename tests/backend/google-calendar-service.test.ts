@@ -35,23 +35,42 @@ const { gapi, links, personalSettings, mongo, dbEvent, dbIterations } =
         },
     };
 
+    type FakeOAuth2Options = {
+        clientId?: string;
+        clientSecret?: string;
+        endpoints?: Record<string, string>;
+        redirectUri?: string;
+    };
+
     class FakeOAuth2 {
         public clientId?: string;
         public clientSecret?: string;
         public redirectUri?: string;
+        /** Only the options form carries these; see the service's stub override. */
+        public endpoints?: Record<string, string>;
         public credentials: Record<string, unknown> = {};
         public tokenHandlers: Array<(tokens: Record<string, unknown>) => void> =
             [];
         public getToken = vi.fn(async () => ({ tokens: state.nextTokens }));
 
+        // google-auth-library accepts either three positional arguments or a
+        // single options object; the service uses the latter, since `endpoints`
+        // is read-only once constructed.
         constructor(
-            clientId?: string,
+            clientIdOrOptions?: FakeOAuth2Options | string,
             clientSecret?: string,
             redirectUri?: string,
         ) {
-            this.clientId = clientId;
-            this.clientSecret = clientSecret;
-            this.redirectUri = redirectUri;
+            if (typeof clientIdOrOptions === "object" && clientIdOrOptions) {
+                this.clientId = clientIdOrOptions.clientId;
+                this.clientSecret = clientIdOrOptions.clientSecret;
+                this.redirectUri = clientIdOrOptions.redirectUri;
+                this.endpoints = clientIdOrOptions.endpoints;
+            } else {
+                this.clientId = clientIdOrOptions;
+                this.clientSecret = clientSecret;
+                this.redirectUri = redirectUri;
+            }
             state.oauthInstances.push(this);
         }
 
@@ -246,7 +265,43 @@ async function loadUnconfigured() {
     }
 }
 
+/** Loads a fresh copy pointed at the e2e stub's token endpoint. */
+async function loadWithStubTokenUrl(tokenUrl: string) {
+    process.env.GOOGLE_OAUTH_TOKEN_URL = tokenUrl;
+    try {
+        vi.resetModules();
+        return await import("@/api-server/google/google-calendar-service");
+    } finally {
+        delete process.env.GOOGLE_OAUTH_TOKEN_URL;
+    }
+}
+
 describe("configuration surface", () => {
+    // The override has to reach the constructor: `endpoints` is read-only on a
+    // built client, so setting it afterwards left every token exchange going to
+    // the real oauth2.googleapis.com and e2e failed with `invalid_client`.
+    it("sends the token exchange to GOOGLE_OAUTH_TOKEN_URL when it is set", async () => {
+        const stubbed = await loadWithStubTokenUrl(
+            "http://google-stub:8080/token",
+        );
+        gapi.oauthInstances.length = 0;
+
+        await stubbed.connectGoogleCalendar("u1", "code");
+
+        expect(lastClient().endpoints).toEqual({
+            oauth2TokenUrl: "http://google-stub:8080/token",
+        });
+        vi.resetModules();
+    });
+
+    it("leaves the endpoints alone when no override is configured", async () => {
+        gapi.oauthInstances.length = 0;
+
+        await service.connectGoogleCalendar("u1", "code");
+
+        expect(lastClient().endpoints).toBeUndefined();
+    });
+
     it("reports itself configured while both credentials exist", () => {
         expect(service.isGoogleCalendarConfigured()).toBe(true);
         expect(service.getGoogleClientId()).toBe(
