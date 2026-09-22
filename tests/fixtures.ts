@@ -1027,8 +1027,22 @@ export async function dragDndKit(
         await page.mouse.up();
         throw new Error("dragDndKit: target is not rendered once dragging");
     }
-    const endX = targetBox.x + targetBox.width / 2 + offsetX;
-    const endY = targetBox.y + targetBox.height / 2 + offsetY;
+    // The grab offset keeps the dragged card under the cursor the way a real
+    // drag does, but it must not carry the pointer outside a short target:
+    // dnd-kit resolves the drop from the pointer, so an un-clamped offset slid
+    // past the root drop zone's ~40px height and the drop silently did nothing.
+    const clamp = (value: number, min: number, max: number) =>
+        Math.min(Math.max(value, min), max);
+    const endX = clamp(
+        targetBox.x + targetBox.width / 2 + offsetX,
+        targetBox.x + 2,
+        targetBox.x + targetBox.width - 2,
+    );
+    const endY = clamp(
+        targetBox.y + targetBox.height / 2 + offsetY,
+        targetBox.y + 2,
+        targetBox.y + targetBox.height - 2,
+    );
 
     await page.mouse.move(endX, endY, { steps: 20 });
     await page.mouse.move(endX + 1, endY + 1, { steps: 2 });
