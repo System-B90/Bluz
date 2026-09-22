@@ -1,0 +1,1 @@
+ALTER TABLE "s" ADD COLUMN "description" text DEFAULT '' NOT NULL;

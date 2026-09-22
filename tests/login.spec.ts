@@ -15,7 +15,7 @@ test.describe("Login Page", () => {
         await expect(page.getByText("ברוכים הבאים לבלוז")).toBeVisible();
 
         // Verify the subtitle
-        await expect(page.getByText("מתי אתם מבזרים?")).toBeVisible();
+        await expect(page.getByText('מה הלו"ז?')).toBeVisible();
     });
 
     test("displays the Hive SSO login button", async ({ page }) => {

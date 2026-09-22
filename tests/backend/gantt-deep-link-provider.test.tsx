@@ -47,8 +47,8 @@ vi.mock("@/components/gantt/event-dialog", () => ({
 }));
 // Mounted by CurriculumProvider alongside the two dialogs above; it reads
 // the courses and Hive users providers, which this test does not set up.
-vi.mock("@/components/gantt/syllabus-links-dialog", () => ({
-    SyllabusLinksDialog: () => <div data-testid="syllabus-links-dialog" />,
+vi.mock("@/components/gantt/syllabus-dialog", () => ({
+    SyllabusDialog: () => <div data-testid="syllabus-dialog" />,
 }));
 vi.mock("@/components/gantt/state/execution/Provider", () => ({
     GanttExecutionProvider: ({ children }: { children: React.ReactNode }) => (

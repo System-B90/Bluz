@@ -1,113 +1,75 @@
+import EditIcon from "@mui/icons-material/Edit";
 import GroupsIcon from "@mui/icons-material/Groups";
 import LabelIcon from "@mui/icons-material/Label";
-import LinkOffIcon from "@mui/icons-material/LinkOff";
-import Badge from "@mui/material/Badge";
+import Button from "@mui/material/Button";
 import CardActions, { CardActionsProps } from "@mui/material/CardActions";
-import IconButton from "@mui/material/IconButton";
+import Chip from "@mui/material/Chip";
+import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
-import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 
-import
-{
-    GanttCurriculumId,
-    GanttSyllabusId,
-} from "@/api-shared/types/gantt/models";
-import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
-import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
+import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
 
 export type SyllabusCardActionsProps = {
-    curriculumId: GanttCurriculumId;
     syllabusId: GanttSyllabusId;
 } & CardActionsProps;
 
+/**
+ * One entry point to the syllabus dialog, plus read-only chips for the counts
+ * the separate shuffles/שיוך/unlink icons used to carry as badges.
+ */
 export function SyllabusCardActions({
-    curriculumId,
     syllabusId,
     ...props
 }: SyllabusCardActionsProps)
 {
-    const { enqueueSnackbar } = useSnackbar();
-    const { unlinkSyllabusFromCurriculum } = useSyllabusActions();
-    const { openShuffleDialog, openSyllabusLinksDialog } =
-        useCurriculumProviderActions();
+    const { openSyllabusDialog } = useCurriculumProviderActions();
     const syllabus = useSyllabus(syllabusId);
     const shuffleCount = (syllabus?.shuffles ?? []).length;
     const courseCount = (syllabus?.courseIds ?? []).length;
     const linkCount = courseCount + (syllabus?.leadInstructorIds ?? []).length;
 
-    const deleteHandler = useCallback(() =>
-    {
-        unlinkSyllabusFromCurriculum(curriculumId, syllabusId).catch((error) =>
-            enqueueApiErrorSnackbar(
-                enqueueSnackbar,
-                `הסרת הסילבוס מהגאנט נכשלה!`,
-                error,
-            ),
-        );
-    }, [
-        curriculumId,
-        syllabusId,
-        unlinkSyllabusFromCurriculum,
-        enqueueSnackbar,
-    ]);
-
-    const shufflesHandler = useCallback(
-        () => openShuffleDialog(syllabusId),
-        [ syllabusId, openShuffleDialog ],
-    );
-
-    const linksHandler = useCallback(
-        () => openSyllabusLinksDialog(syllabusId),
-        [ syllabusId, openSyllabusLinksDialog ],
+    const editHandler = useCallback(
+        () => openSyllabusDialog(syllabusId),
+        [ syllabusId, openSyllabusDialog ],
     );
 
     return (
         <CardActions { ...props }>
-            <Tooltip title="הסרת סילבוס מהגאנט">
-                <IconButton
-                    color="warning"
-                    onClick={ deleteHandler }
-                    size="small"
-                >
-                    <LinkOffIcon fontSize="small" />
-                </IconButton>
-            </Tooltip>
-            {/* The shuffles used to be an inline chip field that only appeared
-                on hover; they now have a dialog of their own (#699). */}
-            <Tooltip title="שאפלים במקצוע">
-                <IconButton
-                    color="primary"
-                    onClick={ shufflesHandler }
-                    size="small"
-                >
-                    <Badge badgeContent={ shuffleCount } color="primary">
-                        <GroupsIcon fontSize="small" />
-                    </Badge>
-                </IconButton>
-            </Tooltip>
-            <Tooltip
-                title={
-                    courseCount === 0
-                        ? "שיוך מקצוע — מומלץ לשייך לפחות מסלול אחד"
-                        : "שיוך מקצוע (מסלולים ואחראי מקצוע)"
-                }
+            <Button
+                onClick={ editHandler }
+                size="small"
+                startIcon={ <EditIcon fontSize="small" /> }
             >
-                <IconButton
-                    color={ courseCount === 0 ? "warning" : "primary" }
-                    onClick={ linksHandler }
-                    size="small"
+                עריכת סילבוס
+            </Button>
+            <Stack direction="row" gap={ 0.5 } sx={ { marginInlineStart: "auto" } }>
+                <Tooltip title="שאפלים במקצוע">
+                    <Chip
+                        icon={ <GroupsIcon fontSize="small" /> }
+                        label={ shuffleCount }
+                        size="small"
+                        variant="outlined"
+                    />
+                </Tooltip>
+                <Tooltip
+                    title={
+                        courseCount === 0
+                            ? "אין מסלול משויך — מומלץ לשייך לפחות מסלול אחד"
+                            : "מסלולים ואחראי מקצוע"
+                    }
                 >
-                    <Badge
-                        badgeContent={ linkCount }
-                        color={ courseCount === 0 ? "warning" : "primary" }
-                    >
-                        <LabelIcon fontSize="small" />
-                    </Badge>
-                </IconButton>
-            </Tooltip>
+                    <Chip
+                        color={ courseCount === 0 ? "warning" : "default" }
+                        icon={ <LabelIcon fontSize="small" /> }
+                        label={ linkCount }
+                        size="small"
+                        variant="outlined"
+                    />
+                </Tooltip>
+            </Stack>
         </CardActions>
     );
 }

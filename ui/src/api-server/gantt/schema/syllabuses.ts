@@ -9,6 +9,8 @@ import {
 export const ganttSyllabusesSchema = pgTable("s", {
     id: text("id").primaryKey(),
     title: text("title").notNull(),
+    // Free text shown in the syllabus dialog, mirroring a module's description.
+    description: text("description").notNull().default(""),
     hiveIds: integer("hive_ids").array().notNull().default([]),
     // Student group ("shuffle") names, e.g. ["ניצה", "לחם"]. Empty ⇒ one group.
     shuffles: text("shuffles").array().notNull().default([]),

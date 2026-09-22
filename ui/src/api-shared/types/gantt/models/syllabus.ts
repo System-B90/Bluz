@@ -4,6 +4,8 @@ import { BaseGantItem } from "@/api-shared/types/gantt/models/shared";
 
 export type GanttSyllabus = {
     title: string;
+    /** Free text describing the syllabus, edited in the syllabus dialog. */
+    description?: string;
     hiveIds: Array<number>;
     modules: Array<GanttModuleId>;
     /**

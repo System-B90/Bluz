@@ -254,7 +254,7 @@ function removedShuffles(
  *
  * Without the cascade the child keeps a dangling name and the UI only offers
  * to clear it once the user retypes the deleted shuffle on the syllabus — so
- * the caller confirms first (see `ShuffleDialog`) and this applies both
+ * the caller confirms first (see `ShufflesSection`) and this applies both
  * sides in one transaction.
  */
 async function applyShuffles(

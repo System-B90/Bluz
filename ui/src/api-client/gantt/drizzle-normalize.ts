@@ -110,6 +110,7 @@ export function normalizeApiSyllabus(
         syllabus: {
             id: apiSyllabus.id,
             title: apiSyllabus.title,
+            description: apiSyllabus.description ?? "",
             updatedAt: apiSyllabus.updatedAt,
             createdAt: apiSyllabus.createdAt,
             hiveIds: [...(apiSyllabus.hiveIds ?? [])],
