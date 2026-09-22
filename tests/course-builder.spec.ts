@@ -195,8 +195,13 @@ test.describe("Course Builder settings tab", () => {
             .locator(".course-card-container")
             .filter({ hasText: courseAName })
             .filter({ hasNotText: courseBName });
+        // Click the toggle by its tooltip name: the card's first button is the
+        // drag handle, so `.first()` collapsed nothing and A — rendered inside
+        // an `unmountOnExit` Collapse — never entered the DOM.
         if (await nestedCard.isHidden()) {
-            await getCourseCard(page, courseBName).getByRole("button").first().click();
+            await getCourseCard(page, courseBName)
+                .getByRole("button", { name: "הרחבה" })
+                .click();
         }
         await expect(nestedCard).toBeVisible({ timeout: 5_000 });
 

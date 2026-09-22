@@ -13,9 +13,16 @@ out/
 .DS_Store
 *.log
 
-# Environment files (secrets — never bake into an image)
+# Environment files (secrets — never bake into an image). The patterns are
+# anchored at the context root, so `ui/.env` — written by `npm run dev` — was
+# still copied in, and Next loaded it inside the container: it pinned
+# INTERNAL_SESSION_SERVER_URI to the dev value `wss://bluz.dev/ws/`, which no
+# container can resolve, so every server→client broadcast died silently in the
+# test stack (the two live-updates specs).
 .env
 .env.*
+**/.env
+**/.env.*
 
 # TLS material
 nginx/ssl/
