@@ -225,14 +225,22 @@ async function syllabusModuleIds(
     return rows.map((row) => row.moduleId);
 }
 
+/**
+ * The syllabus' current shuffles, row-locked until the transaction ends.
+ *
+ * Postgres runs these transactions at READ COMMITTED, so without the lock two
+ * concurrent edits both read the same list and the later write resurrects a
+ * name the earlier one deleted - after its tags were already stripped.
+ */
 async function readShuffles(
     id: GanttSyllabusId,
     executor: GanttDbExecutor = postgresDb,
 ): Promise<Array<string>> {
-    const current = await executor.query.ganttSyllabusesSchema.findFirst({
-        columns: { shuffles: true },
-        where: eq(ganttSyllabusesSchema.id, id),
-    });
+    const [current] = await executor
+        .select({ shuffles: ganttSyllabusesSchema.shuffles })
+        .from(ganttSyllabusesSchema)
+        .where(eq(ganttSyllabusesSchema.id, id))
+        .for("update");
 
     if (!current) {
         throw new ClientApiError(`סילבוס עם מזהה ${id} לא נמצא לעדכון`);
