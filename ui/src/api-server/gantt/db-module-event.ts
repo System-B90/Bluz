@@ -215,6 +215,48 @@ async function findGroupMembers(
 }
 
 /**
+ * Decides which existing group member keeps which of the `wanted` shuffles.
+ *
+ * A member that already carries a wanted name keeps it. An untagged (or stale)
+ * member takes the next free name instead of being deleted - otherwise grouping
+ * an ungrouped event would throw away the very event the user grouped, along
+ * with its placement. The origin is offered a free name before any sibling:
+ * it is the event whose dialog the user is editing, so losing it to a sibling
+ * would delete the event out from under the open dialog.
+ *
+ * Returns the claimed members by name and the members left without one.
+ */
+export function assignShuffleGroupMembers<T extends { id: string; shuffles?: Array<string> | null }>(
+    existing: Array<T>,
+    wanted: Array<string>,
+    originId: string,
+): { claimed: Map<string, T>; orphans: Array<T> } {
+    const wantedSet = new Set(wanted);
+    const claimed = new Map<string, T>();
+    const orphans: Array<T> = [];
+
+    for (const member of existing) {
+        const name = (member.shuffles ?? []).find(
+            (shuffle) => wantedSet.has(shuffle) && !claimed.has(shuffle),
+        );
+        if (name) claimed.set(name, member);
+        else orphans.push(member);
+    }
+
+    orphans.sort(
+        (a, b) => Number(b.id === originId) - Number(a.id === originId),
+    );
+    for (const name of wanted) {
+        if (claimed.has(name)) continue;
+        const reusable = orphans.shift();
+        if (!reusable) break;
+        claimed.set(name, reusable);
+    }
+
+    return { claimed, orphans };
+}
+
+/**
  * Makes `eventId` cover exactly `shuffles`, one event per shuffle.
  *
  * The group is stored as separate rows rather than one event with many times:
@@ -265,27 +307,11 @@ async function applyShuffleGroup(
             return { members: refreshed, removedIds: [] };
         }
 
-        const wantedSet = new Set(wanted);
-        const claimed = new Map<string, GanttEvent>();
-        const orphans: Array<GanttEvent> = [];
-
-        for (const member of existing) {
-            const name = (member.shuffles ?? []).find(
-                (shuffle) => wantedSet.has(shuffle) && !claimed.has(shuffle),
-            );
-            if (name) claimed.set(name, member);
-            else orphans.push(member);
-        }
-
-        // An untagged (or stale) member takes the next free name instead of
-        // being deleted - otherwise grouping an ungrouped event would throw
-        // away the very event the user grouped, along with its placement.
-        for (const name of wanted) {
-            if (claimed.has(name)) continue;
-            const reusable = orphans.shift();
-            if (!reusable) break;
-            claimed.set(name, reusable);
-        }
+        const { claimed, orphans } = assignShuffleGroupMembers(
+            existing,
+            wanted,
+            eventId,
+        );
 
         const members: Array<GanttEvent> = [];
         for (const name of wanted) {
