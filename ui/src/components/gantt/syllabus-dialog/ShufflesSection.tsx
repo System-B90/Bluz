@@ -15,6 +15,7 @@ import { useSnackbar } from "notistack";
 import { useCallback, useMemo, useState } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
+import { normalizeShuffleName } from "@/api-shared/gantt/shuffle-names";
 import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
 import { ShuffleUsages } from "@/api-shared/types/gantt/shuffles";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
@@ -37,6 +38,13 @@ type PendingDeletion = {
     shuffles: Array<string>;
     usages: ShuffleUsages;
 };
+
+/** The usage chip's label: how many modules and events carry the shuffle. */
+export function shuffleUsageLabel(count: number): string {
+    if (count === 0) return "לא בשימוש";
+    if (count === 1) return "פריט אחד";
+    return `${count} פריטים`;
+}
 
 /** How many of the syllabus' modules and events carry each shuffle name. */
 function useShuffleTagCounts(syllabusId: GanttSyllabusId | null) {
@@ -82,6 +90,9 @@ export function ShufflesSection({ syllabusId }: ShufflesSectionProps) {
 
     const [draft, setDraft] = useState("");
     const [pending, setPending] = useState<null | PendingDeletion>(null);
+    // The shuffle whose usages are being fetched: a second click on its delete
+    // button would otherwise open the confirmation twice.
+    const [checking, setChecking] = useState<null | string>(null);
 
     const shuffles = useMemo(
         () => syllabus?.shuffles ?? [],
@@ -103,9 +114,9 @@ export function ShufflesSection({ syllabusId }: ShufflesSectionProps) {
     );
 
     const addHandler = useCallback(() => {
-        const name = draft.trim();
+        const name = normalizeShuffleName(draft);
         if (!name) return;
-        if (shuffles.includes(name)) {
+        if (shuffles.some((shuffle) => normalizeShuffleName(shuffle) === name)) {
             enqueueSnackbar("שאפל בשם הזה כבר קיים במקצוע.", {
                 variant: "warning",
             });
@@ -118,9 +129,10 @@ export function ShufflesSection({ syllabusId }: ShufflesSectionProps) {
 
     const removeHandler = useCallback(
         (name: string) => {
-            if (!syllabusId) return;
+            if (!syllabusId || checking) return;
             const next = shuffles.filter((shuffle) => shuffle !== name);
 
+            setChecking(name);
             ganttApi
                 .getShuffleUsages(syllabusId, [name])
                 .then((usages) => {
@@ -140,9 +152,10 @@ export function ShufflesSection({ syllabusId }: ShufflesSectionProps) {
                         "בדיקת השימוש בשאפל נכשלה!",
                         error,
                     ),
-                );
+                )
+                .finally(() => setChecking(null));
         },
-        [syllabusId, shuffles, commit, enqueueSnackbar],
+        [syllabusId, checking, shuffles, commit, enqueueSnackbar],
     );
 
     const confirmDeletionHandler = useCallback(() => {
@@ -233,20 +246,25 @@ export function ShufflesSection({ syllabusId }: ShufflesSectionProps) {
                             key={name}
                             secondaryAction={
                                 <Tooltip title="מחיקת שאפל">
-                                    <IconButton
-                                        color="error"
-                                        edge="end"
-                                        onClick={() => removeHandler(name)}
-                                        size="small"
-                                    >
-                                        <DeleteOutlineIcon fontSize="small" />
-                                    </IconButton>
+                                    {/* A disabled button fires no events, so the tooltip hangs off a wrapper. */}
+                                    <span>
+                                        <IconButton
+                                            aria-label={`מחיקת השאפל ${name}`}
+                                            color="error"
+                                            disabled={checking !== null}
+                                            edge="end"
+                                            onClick={() => removeHandler(name)}
+                                            size="small"
+                                        >
+                                            <DeleteOutlineIcon fontSize="small" />
+                                        </IconButton>
+                                    </span>
                                 </Tooltip>
                             }
                         >
                             <ListItemText primary={name} />
                             <Chip
-                                label={`${tagCounts[name] ?? 0} פריטים`}
+                                label={shuffleUsageLabel(tagCounts[name] ?? 0)}
                                 size="small"
                                 sx={{ marginInlineEnd: 5 }}
                                 variant="outlined"
