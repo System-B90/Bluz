@@ -4,6 +4,7 @@ import { ApiSuccess, parseJsonBody, withApi } from "@/api-server/common";
 import { DbSyllabus } from "@/api-server/gantt/db-syllabus";
 import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
+import { isShuffleNameList } from "@/api-shared/gantt/shuffle-names";
 import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -43,9 +44,9 @@ export const POST = withApi(
         const body = await request.text();
         if (!body) throw new ClientApiError("Payload cannot be empty.");
 
-        const { shuffles } = parseJsonBody<{ shuffles: Array<string> }>(body);
-        if (!Array.isArray(shuffles))
-            throw new ClientApiError("shuffles must be an array.");
+        const { shuffles } = parseJsonBody<{ shuffles: unknown }>(body);
+        if (!isShuffleNameList(shuffles))
+            throw new ClientApiError("shuffles must be an array of strings.");
 
         return ApiSuccess(await DbSyllabus.applyShuffles(id, shuffles));
     },

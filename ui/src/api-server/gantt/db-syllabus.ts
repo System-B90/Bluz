@@ -11,6 +11,7 @@ import {
     ganttSyllabusesSchema,
 } from "@/api-server/gantt/schema";
 import { ClientApiError } from "@/api-shared/errors";
+import { normalizeShuffleNames } from "@/api-shared/gantt/shuffle-names";
 import { ApiSyllabus } from "@/api-shared/types/gantt/api-layer";
 import { CreateGanttSyllabusPayload } from "@/api-shared/types/gantt/create-payloads";
 import {
@@ -259,8 +260,10 @@ function removedShuffles(
  */
 async function applyShuffles(
     id: GanttSyllabusId,
-    shuffles: Array<string>,
+    requested: Array<string>,
 ): Promise<ShuffleUsages> {
+    const shuffles = normalizeShuffleNames(requested);
+
     // Reading the current shuffles and their usages OUTSIDE the transaction
     // was a TOCTOU window: a concurrent edit between the read and the write
     // was silently clobbered by the stripped lists computed from stale rows
@@ -308,15 +311,13 @@ async function updateSyllabus(
     if (updateData.shuffles === undefined) {
         return await basicOperations.updateItem(id, updateData);
     }
+    const shuffles = normalizeShuffleNames(updateData.shuffles);
 
     // The guard reads what the update then depends on, so the read and the
     // write share one transaction — otherwise a concurrent edit between them
     // could slip a newly-used shuffle past the block (#538 item 2).
     return await postgresDb.transaction(async (tx) => {
-        const removed = removedShuffles(
-            await readShuffles(id, tx),
-            updateData.shuffles!,
-        );
+        const removed = removedShuffles(await readShuffles(id, tx), shuffles);
         const usages = await findShuffleUsages(id, removed, tx);
         const blocking = [...usages.modules, ...usages.events];
 
@@ -329,7 +330,11 @@ async function updateSyllabus(
             );
         }
 
-        return await basicOperations.updateItem(id, updateData, tx);
+        return await basicOperations.updateItem(
+            id,
+            { ...updateData, shuffles },
+            tx,
+        );
     });
 }
 

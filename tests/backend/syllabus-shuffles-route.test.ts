@@ -105,8 +105,13 @@ describe("POST /api/gantt/syllabuses/[id]/shuffles", () => {
         expect(DbSyllabus.applyShuffles).toHaveBeenCalledWith("s1", []);
     });
 
-    it("rejects an empty body, a malformed body and a non-array shuffles", async () => {
-        const bad = [ undefined, "{not json", JSON.stringify({ shuffles: "א" }) ];
+    it("rejects an empty body, a malformed body and a non-string-array shuffles", async () => {
+        const bad = [
+            undefined,
+            "{not json",
+            JSON.stringify({ shuffles: "א" }),
+            JSON.stringify({ shuffles: [ "א", 7 ] }),
+        ];
 
         for (const body of bad) {
             const response = await ShufflesRoute.POST(
