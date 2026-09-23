@@ -13,7 +13,7 @@ export async function apiGetShuffleUsages(
         `/api/gantt/syllabuses/${encodeURIComponent(syllabusId)}/shuffles`,
         window.location.origin,
     );
-    url.searchParams.set("names", names.join(","));
+    for (const name of names) url.searchParams.append("name", name);
 
     return await safeApiFetcher<ShuffleUsages>(url.toString());
 }
