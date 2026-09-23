@@ -58,14 +58,23 @@ export function SyllabusDialog({
         syllabus?.description ?? "",
     );
 
-    // A single dialog instance serves every card, so the local fields are
-    // reset from whichever syllabus it was last opened for.
+    // A single dialog instance serves every card and stays mounted while
+    // closed, so the local fields are reset on every open, not only when the
+    // syllabus changes: reopening the same syllabus after it was renamed
+    // elsewhere would otherwise show the old title, and blurring the field
+    // would write it back over the rename.
     const [prevSyllabusId, setPrevSyllabusId] = useState(syllabusId);
-    if (syllabusId !== prevSyllabusId) {
+    const [prevOpen, setPrevOpen] = useState(open);
+    if (syllabusId !== prevSyllabusId || open !== prevOpen) {
         setPrevSyllabusId(syllabusId);
-        setLocalTitle(syllabus?.title ?? "");
-        setLocalDescription(syllabus?.description ?? "");
+        setPrevOpen(open);
+        if (open) {
+            setLocalTitle(syllabus?.title ?? "");
+            setLocalDescription(syllabus?.description ?? "");
+        }
     }
+
+    const titleMissing = localTitle.trim() === "";
 
     const closeHandler = useCallback(() => setOpen(false), [setOpen]);
 
@@ -145,17 +154,31 @@ export function SyllabusDialog({
 
             <DialogContent>
                 <Box
-                    alignItems="flex-start"
+                    alignItems={{ xs: "stretch", md: "flex-start" }}
                     display="flex"
-                    flexDirection="row"
+                    flexDirection={{ xs: "column", md: "row" }}
                     gap={2}
                     mt={1}
                 >
-                    <Stack spacing={2.5} width="45%">
+                    <Stack spacing={2.5} width={{ xs: "100%", md: "45%" }}>
                         <TextField
+                            error={titleMissing}
                             fullWidth
+                            helperText={
+                                titleMissing
+                                    ? "לסילבוס חייב להיות שם. השם הקודם יישמר."
+                                    : undefined
+                            }
                             label="שם הסילבוס"
-                            onBlur={() => commit({ title: localTitle })}
+                            onBlur={() => {
+                                // An empty title leaves the card nameless, so
+                                // the field falls back to the saved one.
+                                if (titleMissing) {
+                                    setLocalTitle(syllabus?.title ?? "");
+                                    return;
+                                }
+                                commit({ title: localTitle.trim() });
+                            }}
                             onChange={(e) => setLocalTitle(e.target.value)}
                             required
                             size="small"
@@ -188,7 +211,11 @@ export function SyllabusDialog({
                         <ShufflesSection syllabusId={syllabusId} />
                     </Stack>
 
-                    <Divider flexItem orientation="vertical" />
+                    <Divider
+                        flexItem
+                        orientation="vertical"
+                        sx={{ display: { xs: "none", md: "block" } }}
+                    />
 
                     <Stack flexGrow={1} spacing={1}>
                         <Typography
