@@ -40,6 +40,43 @@ export function useShuffleGroupMembers(
 }
 
 /**
+ * What applying `selected` does to the group, in the server's terms (see
+ * `applyShuffleGroup`): fewer than two names only drops the group marker and
+ * keeps every event, while a group of two or more deletes the members whose
+ * shuffle was deselected. Null when there is nothing worth warning about.
+ */
+export function describeGroupChange(
+    current: Set<string>,
+    selected: Set<string>,
+    memberCount: number,
+): { destructive: boolean; text: string } | null {
+    if (selected.size < 2) {
+        if (memberCount < 2) return null;
+        return {
+            destructive: false,
+            text: "הקבוצה תבוטל. המופעים יישארו כמופעים נפרדים, והזמן של כל אחד מהם ייספר בנפרד.",
+        };
+    }
+
+    // An event that is not grouped yet is only ever reused, never deleted.
+    if (memberCount < 2) return null;
+
+    const dropped = [...current].filter((name) => !selected.has(name));
+    const freed = selected.size - [...selected].filter((name) => current.has(name)).length;
+    // A deselected shuffle's member is reused for a newly selected one when
+    // there is one to take; only the rest are deleted.
+    const deleted = Math.max(0, dropped.length - freed);
+    if (deleted === 0) return null;
+    return {
+        destructive: true,
+        text:
+            deleted === 1
+                ? "מופע אחד של שאפל שהוסר יימחק."
+                : `${deleted} מופעים של שאפלים שהוסרו יימחקו.`,
+    };
+}
+
+/**
  * Splits one event into a shuffle group: one event per selected shuffle, all
  * carrying the same name, so each shuffle can hold the lesson at its own time
  * (#699).
@@ -114,6 +151,7 @@ export function EventShuffleGroupField({
     const isDirty =
         selected.size !== currentNames.size ||
         [...selected].some((name) => !currentNames.has(name));
+    const consequence = describeGroupChange(currentNames, selected, members.length);
 
     return (
         <Stack spacing={1.5}>
@@ -191,13 +229,13 @@ export function EventShuffleGroupField({
                 >
                     {selected.size < 2 ? "ביטול הקבוצה" : "החלת הפיצול"}
                 </Button>
-                {selected.size < 2 && currentNames.size > 1 ? (
+                {isDirty && consequence ? (
                     <Typography
-                        color="text.secondary"
+                        color={consequence.destructive ? "warning.main" : "text.secondary"}
                         sx={{ alignSelf: "center" }}
                         variant="caption"
                     >
-                        המופעים של השאפלים שהוסרו יימחקו.
+                        {consequence.text}
                     </Typography>
                 ) : null}
             </Stack>

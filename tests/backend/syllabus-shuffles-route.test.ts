@@ -41,6 +41,23 @@ describe("GET /api/gantt/syllabuses/[id]/shuffles", () => {
         ]);
     });
 
+    it("keeps a name that contains a comma whole when sent as ?name=", async () => {
+        vi.mocked(DbSyllabus.findShuffleUsages).mockResolvedValueOnce(
+            EMPTY as never,
+        );
+
+        const query = new URLSearchParams([
+            [ "name", "א, ב" ],
+            [ "name", "ג" ],
+        ]);
+        await ShufflesRoute.GET(request(`?${query}`), context());
+
+        expect(DbSyllabus.findShuffleUsages).toHaveBeenCalledWith("s1", [
+            "א, ב",
+            "ג",
+        ]);
+    });
+
     it("asks about no names at all when the param is absent", async () => {
         vi.mocked(DbSyllabus.findShuffleUsages).mockResolvedValueOnce(
             EMPTY as never,
@@ -105,8 +122,13 @@ describe("POST /api/gantt/syllabuses/[id]/shuffles", () => {
         expect(DbSyllabus.applyShuffles).toHaveBeenCalledWith("s1", []);
     });
 
-    it("rejects an empty body, a malformed body and a non-array shuffles", async () => {
-        const bad = [ undefined, "{not json", JSON.stringify({ shuffles: "א" }) ];
+    it("rejects an empty body, a malformed body and a non-string-array shuffles", async () => {
+        const bad = [
+            undefined,
+            "{not json",
+            JSON.stringify({ shuffles: "א" }),
+            JSON.stringify({ shuffles: [ "א", 7 ] }),
+        ];
 
         for (const body of bad) {
             const response = await ShufflesRoute.POST(

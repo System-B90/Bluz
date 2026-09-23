@@ -87,8 +87,8 @@ export function ShuffleDeleteDialog({
                         השאפלים {quoted} בשימוש בפריטים הבאים. מחיקתם תסיר אותם
                         גם מהפריטים האלה.
                     </Alert>
-                    <UsageList items={usages.modules} title="מודולים" />
-                    <UsageList items={usages.events} title="אירועים" />
+                    <UsageList items={usages.modules} title="מערכים" />
+                    <UsageList items={usages.events} title="מופעים" />
                     <FormControlLabel
                         control={
                             <Checkbox

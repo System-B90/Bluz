@@ -140,18 +140,28 @@ function shuffleTx(options: {
     events?: Array<{ id: string; shuffles: Array<string>; title: string }>;
 }) {
     const updates: Array<Record<string, unknown>> = [];
+    const locks: Array<string> = [];
     let selectCall = 0;
     const tx = {
-        query: {
-            ganttSyllabusesSchema: {
-                findFirst: async () => ({ shuffles: options.current }),
-            },
-        },
-        // First select() is the module-id scan, second is the module scan.
+        // First select() is the locked current-shuffles read, then the
+        // module-id scan, then the module scan.
         select: () => {
             selectCall++;
+            if (selectCall === 1) {
+                const read = chain([ { shuffles: options.current } ]);
+                return {
+                    from: () => ({
+                        where: () => ({
+                            for: (strength: string) => {
+                                locks.push(strength);
+                                return read;
+                            },
+                        }),
+                    }),
+                };
+            }
             return chain(
-                selectCall === 1
+                selectCall === 2
                     ? (options.moduleIds ?? [ "m1" ]).map((moduleId) => ({
                           moduleId,
                       }))
@@ -169,7 +179,7 @@ function shuffleTx(options: {
     vi.mocked(postgresDb.transaction).mockImplementation(
         (async (cb: (t: unknown) => unknown) => await cb(tx)) as never,
     );
-    return { tx, updates };
+    return { locks, tx, updates };
 }
 
 describe("DbSyllabus.applyShuffles", () => {
@@ -203,6 +213,22 @@ describe("DbSyllabus.applyShuffles", () => {
         expect(updates[ 0 ].shuffles).toEqual([ "א", "ב" ]);
     });
 
+    it("stores trimmed, deduplicated names so look-alike tags cannot coexist", async () => {
+        const { updates } = shuffleTx({ current: [] });
+
+        await DbSyllabus.applyShuffles(SID, [ " א ", "א", "ב  ג", "", "ב ג" ]);
+
+        expect(updates.at(-1)?.shuffles).toEqual([ "א", "ב ג" ]);
+    });
+
+    it("locks the syllabus row so concurrent edits cannot resurrect a deleted name", async () => {
+        const { locks } = shuffleTx({ current: [ "א", "ב" ] });
+
+        await DbSyllabus.applyShuffles(SID, [ "א" ]);
+
+        expect(locks).toEqual([ "update" ]);
+    });
+
     it("does the reads inside the same transaction as the writes (#538 item 2)", async () => {
         shuffleTx({ current: [ "א" ] });
 
@@ -227,6 +253,19 @@ describe("DbSyllabus.updateItem", () => {
         await expect(
             DbSyllabus.updateItem(SID, { shuffles: [ "א" ] }),
         ).rejects.toThrow(/מודול/);
+    });
+
+    it("does not treat a whitespace-only difference as removing a used shuffle", async () => {
+        shuffleTx({
+            current: [ "א" ],
+            modules: [ { id: "m1", shuffles: [ "א" ], title: "מודול" } ],
+        });
+        vi.mocked(postgresDb.update).mockReturnValue(chain([ { id: SID } ]));
+
+        const error = await DbSyllabus.updateItem(SID, { shuffles: [ " א " ] })
+            .then(() => null, (e: unknown) => e);
+
+        expect(error).not.toBeInstanceOf(ClientApiError);
     });
 
     it("does not open a transaction when the patch leaves shuffles alone", async () => {
