@@ -1,3 +1,4 @@
+import contextlib
 import json
 import os
 import sys
@@ -392,13 +393,11 @@ def create_programs(client: HiveClient):
             )
         except Exception as ex:
             tqdm.tqdm.write(f"Error creating liran: {ex}")
-            try:
+            with contextlib.suppress(Exception):
                 checkers = list(client.get_users(clearance__in=[ClearanceEnum.CHECKER]))
                 liran = next((u for u in checkers if u.username == "liran"), None)
-            except Exception:
-                pass
             if not liran:
-                raise ex
+                raise
 
     for program in tqdm.tqdm(MOCK_PROGRAMS, desc="Creating Programs", unit="program"):
         try:
@@ -421,7 +420,7 @@ def create_subjects(client: HiveClient):
                 continue
             for index, module in tqdm.tqdm(
                 enumerate(subject.modules, start=1),
-                desc="  Creating Modules for {}".format(subject.name),
+                desc=f"  Creating Modules for {subject.name}",
                 total=len(subject.modules),
                 unit="module",
             ):
@@ -467,7 +466,8 @@ def main():
     with HiveClient("admin", "Password1", hive_url, verify=False, timeout=10) as client:
         clean_existing_data(client)
 
-        try:
+        # Already exists on every run after the first.
+        with contextlib.suppress(Exception):
             client.create_user(
                 "api",
                 "Password1",
@@ -476,8 +476,6 @@ def main():
                 first_name="Api",
                 last_name="Account",
             )
-        except Exception:
-            pass
 
         create_segel(client)
         create_admins(client)

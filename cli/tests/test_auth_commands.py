@@ -51,9 +51,8 @@ def test_logout_clears_the_token_but_keeps_the_url(tmp_path, monkeypatch):
     _isolate_config(tmp_path, monkeypatch)
     Config(url="https://bluz.example.com", token="secret-token").save()
 
-    from typer.testing import CliRunner
-
     from bluz_cli.main import app
+    from typer.testing import CliRunner
 
     result = CliRunner().invoke(
         app, ["--json", "auth", "logout"], catch_exceptions=False
@@ -71,10 +70,9 @@ def test_logout_does_not_persist_an_env_token_and_warns(tmp_path, monkeypatch):
     monkeypatch.setenv("BLUZ_TOKEN", "env-token")
     monkeypatch.setenv("BLUZ_URL", "https://other.example.com")
 
-    from typer.testing import CliRunner
-
     from bluz_cli.config import _load_file
     from bluz_cli.main import app
+    from typer.testing import CliRunner
 
     result = CliRunner().invoke(app, ["auth", "logout"], catch_exceptions=False)
 
@@ -93,9 +91,8 @@ def test_config_masks_the_token_and_names_the_file(tmp_path, monkeypatch):
     _isolate_config(tmp_path, monkeypatch)
     saved = Config(url="https://bluz.example.com", token="secret-token").save()
 
-    from typer.testing import CliRunner
-
     from bluz_cli.main import app
+    from typer.testing import CliRunner
 
     result = CliRunner().invoke(
         app, ["--json", "auth", "config"], catch_exceptions=False
@@ -113,9 +110,8 @@ def test_config_masks_the_token_and_names_the_file(tmp_path, monkeypatch):
 def test_config_reports_an_unset_token_as_null(tmp_path, monkeypatch):
     _isolate_config(tmp_path, monkeypatch)
 
-    from typer.testing import CliRunner
-
     from bluz_cli.main import app
+    from typer.testing import CliRunner
 
     result = CliRunner().invoke(
         app, ["--json", "auth", "config"], catch_exceptions=False
@@ -145,10 +141,9 @@ def test_login_redeems_a_pasted_handoff_code_when_automatic_login_fails(
     which it redeems for the real session token (#520)."""
     _isolate_config(tmp_path, monkeypatch)
 
-    from typer.testing import CliRunner
-
     from bluz_cli.commands import auth
     from bluz_cli.main import app
+    from typer.testing import CliRunner
 
     # The loopback server yields nothing.
     monkeypatch.setattr(auth, "_run_callback_server", lambda url, **kw: None)

@@ -11,7 +11,6 @@ from __future__ import annotations
 
 from wire_types import Raw
 
-
 # --- bluz events (calendar events) ----------------------------------------------
 
 

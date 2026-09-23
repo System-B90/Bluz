@@ -88,6 +88,7 @@ def _run_update(
         capture_output=True,
         text=True,
         timeout=30,
+        check=False,
     )
     result.docker_calls = call_log.read_text()  # type: ignore[attr-defined]
     return result
@@ -159,6 +160,7 @@ def test_explicit_overlay_env_var_still_wins(tmp_path: Path) -> None:
         capture_output=True,
         text=True,
         timeout=30,
+        check=False,
     )
 
     assert "co-located Hive detected" not in result.stdout

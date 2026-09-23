@@ -9,7 +9,7 @@ Author: Michael K. Steinberg
 from __future__ import annotations
 
 import time
-from typing import Any
+from typing import Any, Self
 
 import httpx
 
@@ -55,7 +55,7 @@ class BluzClient:
             verify=not config.insecure,
         )
 
-    def __enter__(self) -> "BluzClient":
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *exc: object) -> None:

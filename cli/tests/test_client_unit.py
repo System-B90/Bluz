@@ -11,12 +11,12 @@ Author: Michael K. Steinberg
 from __future__ import annotations
 
 import json
-from typing import Any, Callable
-
-import httpx
-import pytest
+from collections.abc import Callable
+from typing import Any
 
 import bluz_cli.client as client_module
+import httpx
+import pytest
 from bluz_cli.client import BluzClient
 from bluz_cli.config import Config
 from bluz_cli.errors import BluzApiError, NotAuthenticatedError

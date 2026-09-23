@@ -1,1 +1,18 @@
 extend-exclude = [".agents", ".agent"]
+
+# Lints under ruff's own defaults for the version pinned in
+# .github/workflows/release-pipeline.yml and scripts/requirements.txt. Those
+# pins are what keep the result stable: ruff's default rule set moves between
+# minors (0.16 grew it from 59 rules to 413), so bump them together and fix
+# what the new version flags in the same change.
+
+[lint.flake8-bugbear]
+# Typer declares CLI parameters as `param: T = typer.Option(...)`. The call is
+# evaluated once at import and only read by Typer, so B008's
+# mutable-default concern does not apply.
+extend-immutable-calls = ["typer.Option", "typer.Argument"]
+
+[lint.per-file-ignores]
+# Best-effort demo seeding against a live Hive: every create/delete logs its
+# failure and moves on to the next item, so one bad record never aborts a run.
+"scripts/demo/populate_demo_hive.py" = ["BLE001"]

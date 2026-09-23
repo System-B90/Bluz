@@ -23,11 +23,11 @@ for _stream in (sys.stdout, sys.stderr):
         except (ValueError, OSError):
             pass
 
-import typer  # noqa: E402
+import typer
 
-from bluz_cli import __version__  # noqa: E402
-from bluz_cli.clicktree import is_group, takes_a_value  # noqa: E402
-from bluz_cli.commands import (  # noqa: E402
+from bluz_cli import __version__
+from bluz_cli.clicktree import is_group, takes_a_value
+from bluz_cli.commands import (
     ai,
     auth,
     calendar,
@@ -35,7 +35,6 @@ from bluz_cli.commands import (  # noqa: E402
     courses,
     events,
     gantt,
-    health as health_cmd,
     hive,
     integrations,
     iterations,
@@ -46,10 +45,13 @@ from bluz_cli.commands import (  # noqa: E402
     settings,
     student_view,
 )
-from bluz_cli.context import configure  # noqa: E402
-from bluz_cli.interactive import interactive as interactive_cmd  # noqa: E402
-from bluz_cli.errors import BluzCliError  # noqa: E402
-from bluz_cli.output import fail, warn  # noqa: E402
+from bluz_cli.commands import (
+    health as health_cmd,
+)
+from bluz_cli.context import configure
+from bluz_cli.errors import BluzCliError
+from bluz_cli.interactive import interactive as interactive_cmd
+from bluz_cli.output import fail, warn
 
 app = typer.Typer(
     help="Bluz CLI — drive the Bluz scheduling & curriculum API from your terminal.",

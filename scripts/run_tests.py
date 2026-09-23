@@ -5,6 +5,7 @@ Author: Antigravity
 """
 
 import hashlib
+import http.client
 import os
 import secrets
 import shlex
@@ -118,10 +119,11 @@ def wait_for_ui_ready(port: int, timeout: int = 120) -> bool:
                     for _ in range(2):
                         try:
                             urllib.request.urlopen(url, context=ctx, timeout=15).read()
-                        except Exception:
+                        except (OSError, http.client.HTTPException):
                             break
                     return True
-        except Exception:
+        # Not up yet. URLError, TLS and timeout errors are all OSError.
+        except (OSError, http.client.HTTPException):
             pass
         time.sleep(2)
     return False
@@ -344,7 +346,7 @@ def main(
             typer.secho(
                 f"Failed to register SSO client with Hive: {e}", fg=typer.colors.RED
             )
-            raise RuntimeError(f"SSO registration failed: {e}")
+            raise RuntimeError(f"SSO registration failed: {e}") from e
 
         # Set environment for docker compose
         assert client_id is not None and client_secret is not None, (
@@ -429,9 +431,9 @@ def main(
                 timeout=60,
             )
             break
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError:
             if attempt == max_retries:
-                raise e
+                raise
             typer.secho(
                 f"Database not ready yet. Retrying db:push ({attempt}/{max_retries})...",
                 fg=typer.colors.YELLOW,
@@ -514,7 +516,9 @@ def main(
     # the whole Playwright process mid-suite the moment any single test
     # needed a retry, discarding every test that hadn't run yet and reporting
     # a bare TimeoutExpired instead of Playwright's real pass/fail summary.
-    result = subprocess.run(playwright_cmd, env=test_env, shell=True, timeout=1800)
+    result = subprocess.run(
+        playwright_cmd, env=test_env, shell=True, timeout=1800, check=False
+    )
 
     if result.returncode == 0:
         typer.secho("All tests passed!", fg=typer.colors.GREEN, bold=True)
