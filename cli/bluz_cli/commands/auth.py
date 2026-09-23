@@ -331,7 +331,7 @@ def _run_callback_server(url: str, *, insecure: bool = False) -> str | None:
                         token = _redeem_handoff_code(
                             url, handoff_code, insecure=insecure
                         )
-                    except Exception:
+                    except BluzApiError:
                         self._respond(
                             400,
                             json_body=b'{"status":"error","error":"redeem_failed"}',
@@ -472,7 +472,9 @@ def login(
             token = _run_callback_server(url, insecure=bool(insecure))
             if token:
                 success("Successfully authenticated automatically!")
-        except Exception as exc:
+        # Deliberately broad: whatever stops the browser flow (a busy port, no
+        # browser, a failed redeem), the answer is the manual prompt below.
+        except Exception as exc:  # noqa: BLE001
             warn(f"Automatic login failed: {exc}")
 
         # Fallback to manual entry if automatic login did not obtain a token.
@@ -487,7 +489,7 @@ def login(
                     token = _redeem_handoff_code(
                         url, handoff_code, insecure=bool(insecure)
                     )
-                except Exception as exc:
+                except BluzApiError as exc:
                     warn(f"Could not redeem handoff code: {exc}")
             if not token:
                 # Keep only what the config *file* holds. `existing.token` may

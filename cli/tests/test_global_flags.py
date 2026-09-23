@@ -10,9 +10,8 @@ Author: Michael K. Steinberg
 
 from __future__ import annotations
 
-from typer.testing import CliRunner
-
 from bluz_cli.main import _reorder_global_flags, app
+from typer.testing import CliRunner
 
 
 def test_boolean_flag_does_not_swallow_a_trailing_global() -> None:

@@ -17,5 +17,5 @@ tqdm>=4.70.0
 # The bluz CLI's own runtime deps, so e2e can drive `bluz auth login` (#580).
 httpx>=0.28.0
 rich>=13.0.0
-ruff>=0.16.1
+ruff==0.16.8
 pytest>=8.0.0

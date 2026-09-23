@@ -8,6 +8,7 @@ Author: Michael K. Steinberg
 
 import socket
 import subprocess
+
 import typer
 from InquirerPy import inquirer
 
@@ -29,7 +30,7 @@ def check_port(port: int, host: str = "127.0.0.1", timeout: float = 1.0) -> bool
     try:
         with socket.create_connection((host, port), timeout=timeout):
             return True
-    except (socket.timeout, ConnectionRefusedError, OSError):
+    except (TimeoutError, ConnectionRefusedError, OSError):
         return False
 
 
@@ -41,7 +42,7 @@ def get_pids(proc_name: str) -> str:
         )
         pids = result.stdout.strip().replace("\n", ", ")
         return pids if pids else "Not Found"
-    except Exception:
+    except OSError:
         return "Unknown"
 
 

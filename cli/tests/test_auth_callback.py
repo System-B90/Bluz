@@ -11,10 +11,10 @@ import http.client
 import threading
 import time
 import urllib.parse
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import pytest
-
 from bluz_cli.commands import auth
 from bluz_cli.errors import BluzApiError
 

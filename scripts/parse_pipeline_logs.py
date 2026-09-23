@@ -9,7 +9,7 @@ import os
 import re
 import subprocess
 import sys
-from typing import Dict, List, Optional
+
 import typer
 
 app = typer.Typer(help="Parse failed GitHub Actions pipeline logs.")
@@ -36,7 +36,7 @@ def get_current_branch() -> str:
         return ""
 
 
-def get_latest_failed_run(branch: Optional[str] = None) -> Optional[str]:
+def get_latest_failed_run(branch: str | None = None) -> str | None:
     """Get the databaseId of the latest failed run for the branch/repository."""
     env = os.environ.copy()
     # Pop dummy token to let gh use local config/auth
@@ -74,7 +74,7 @@ def get_latest_failed_run(branch: Optional[str] = None) -> Optional[str]:
 
         # Fallback to the first failed run
         return str(runs[0].get("databaseId"))
-    except Exception as e:
+    except (OSError, subprocess.CalledProcessError, ValueError) as e:
         typer.echo(f"Error fetching run list: {e}", err=True)
         return None
 
@@ -98,9 +98,9 @@ def fetch_logs(run_id: str) -> str:
         sys.exit(1)
 
 
-def parse_logs(raw_logs: str) -> Dict[str, Dict[str, List[str]]]:
+def parse_logs(raw_logs: str) -> dict[str, dict[str, list[str]]]:
     """Group log lines by Job and Step, filtering out boilerplate."""
-    parsed: Dict[str, Dict[str, List[str]]] = {}
+    parsed: dict[str, dict[str, list[str]]] = {}
     clean_content = clean_ansi(raw_logs)
 
     # Common env/setup line prefixes or substrings to discard
@@ -154,13 +154,13 @@ def parse_logs(raw_logs: str) -> Dict[str, Dict[str, List[str]]]:
 
 @app.command()
 def main(
-    run_id: Optional[str] = typer.Option(
+    run_id: str | None = typer.Option(
         None,
         "--run-id",
         "-r",
         help="GitHub Run ID to parse. Defaults to latest on current branch.",
     ),
-    branch: Optional[str] = typer.Option(
+    branch: str | None = typer.Option(
         None, "--branch", "-b", help="Branch name to look up failed runs for."
     ),
 ):

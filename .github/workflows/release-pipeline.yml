@@ -91,13 +91,12 @@ jobs:
             - name: Install Dependencies (Python)
               # scripts/requirements.txt covers scripts/tests (it pulls
               # sb90-devops from the org pip index, which tools_impl.py
-              # imports); ./cli covers cli/tests. Ruff is pinned last so it
-              # wins over the requirements floor — an upstream release that
-              # promotes a rule must not turn this job red on an unrelated PR.
+              # imports); ./cli covers cli/tests. Ruff is pinned exactly in
+              # scripts/requirements.txt — an upstream release that promotes a
+              # rule must not turn this job red on an unrelated PR.
               run: |
                   pip install -r scripts/requirements.txt
                   pip install ./cli
-                  pip install ruff==0.15.20
 
             - name: Run ESLint
               run: npm run lint

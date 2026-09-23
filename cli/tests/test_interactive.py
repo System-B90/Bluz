@@ -9,12 +9,12 @@ Author: Michael K. Steinberg
 
 from __future__ import annotations
 
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 import click
 import pytest
 import typer
-
 from bluz_cli import interactive
 from bluz_cli.context import configure
 from bluz_cli.errors import BluzCliError

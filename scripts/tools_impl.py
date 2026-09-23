@@ -199,7 +199,9 @@ def _hive_token() -> str | None:
         if token:
             return token
     try:
-        gh = subprocess.run(["gh", "auth", "token"], capture_output=True, text=True)
+        gh = subprocess.run(
+            ["gh", "auth", "token"], capture_output=True, text=True, check=False
+        )
     except (FileNotFoundError, OSError):
         return None
     if gh.returncode == 0 and gh.stdout.strip():
@@ -214,6 +216,7 @@ def _sync_hive_stack() -> Path:
             ["git", "-C", str(HIVE_STACK_CLONE), "pull", "--ff-only"],
             capture_output=True,
             text=True,
+            check=False,
         )
         if pull.returncode != 0:
             typer.secho(
@@ -304,7 +307,7 @@ def _pull_hive_images(stack: Path) -> None:
         name = img.removeprefix("hive/").split(":")[0]
         remote = f"{HIVE_REGISTRY_PREFIX}/{name}:{sha}"
         cached = subprocess.run(
-            ["docker", "image", "inspect", remote], capture_output=True
+            ["docker", "image", "inspect", remote], capture_output=True, check=False
         )
         if cached.returncode != 0:
             typer.echo(f"Pulling {remote} -> {img}")

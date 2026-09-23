@@ -10,7 +10,6 @@ Author: Michael K. Steinberg
 
 from __future__ import annotations
 
-
 # --- bluz rooms ------------------------------------------------------------------
 
 

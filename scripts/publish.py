@@ -10,7 +10,6 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Optional, Tuple
 
 import typer
 from InquirerPy import inquirer
@@ -33,9 +32,7 @@ TAG_BASE_BRANCH_NAMES = (
 )
 
 
-def run_git(
-    cmd: str, check: bool = True, description: Optional[str] = None
-) -> Optional[str]:
+def run_git(cmd: str, check: bool = True, description: str | None = None) -> str | None:
     """
     Executes a git command with optional verbosity and progress tracking.
 
@@ -87,7 +84,7 @@ def get_remote_url() -> str:
     return f"https://github.com/{match.group(1)}"
 
 
-def get_version_info() -> Tuple[int, int, int, Optional[int]]:
+def get_version_info() -> tuple[int, int, int, int | None]:
     """
     Parses the latest git tag into semver components.
 
@@ -124,7 +121,7 @@ def get_version_info() -> Tuple[int, int, int, Optional[int]]:
     )
 
 
-def update_cli_version(version: str) -> Optional[Path]:
+def update_cli_version(version: str) -> Path | None:
     """
     Writes the new version into the bluz-cli package (single source of truth in
     cli/bluz_cli/__init__.py). Keeps the shipped Python CLI tool in lockstep with
@@ -159,7 +156,7 @@ def update_cli_version(version: str) -> Optional[Path]:
 VERSION_RE = re.compile(r"^v?(\d+)\.(\d+)\.(\d+)(?:-rc\.?(\d+))?$")
 
 
-def update_manifests(version: str) -> List[Path]:
+def update_manifests(version: str) -> list[Path]:
     """
     Writes the new version to project package.json files and the Python CLI tool.
 
@@ -169,7 +166,7 @@ def update_manifests(version: str) -> List[Path]:
     Returns:
         A list of paths that were successfully updated.
     """
-    updated: List[Path] = []
+    updated: list[Path] = []
     for path in [ROOT_PACKAGE, SESSIONS_PACKAGE]:
         if not path.exists():
             logger.warning("File %s not found. Skipping.", path)
@@ -206,12 +203,12 @@ def main(
         "--dry",
         help="Perform a dry run: execute all local steps but skip pushing and delete the tag afterward.",
     ),
-    bump: Optional[str] = typer.Option(
+    bump: str | None = typer.Option(
         None,
         "--bump",
         help="Bump type: patch, minor, or major. Bypasses the interactive prompt.",
     ),
-    rc: Optional[bool] = typer.Option(
+    rc: bool | None = typer.Option(
         None,
         "--rc/--no-rc",
         help="Whether this is a release candidate. Bypasses the interactive prompt.",
@@ -221,7 +218,7 @@ def main(
         "--yes",
         help="Skip the final confirmation prompt. Required for non-interactive runs.",
     ),
-    version_override: Optional[str] = typer.Option(
+    version_override: str | None = typer.Option(
         None,
         "--version",
         help="Explicit version to publish, bypassing the derived version math.",
@@ -270,11 +267,7 @@ def main(
                 fg=typer.colors.RED,
             )
             raise typer.Exit(code=1)
-        new_version = (
-            version_override[1:]
-            if version_override.startswith("v")
-            else version_override
-        )
+        new_version = version_override.removeprefix("v")
         new_tag = f"v{new_version}"
         latest_tuple = (major, minor, patch, curr_rc if curr_rc is not None else -1)
         new_tuple = (
@@ -332,10 +325,12 @@ def main(
         )
         new_tag = f"v{new_version}"
 
-    if not yes:
-        if not inquirer.confirm(message=f"Publish {new_tag}?", default=True).execute():
-            typer.echo("Aborted.")
-            raise typer.Exit()
+    if (
+        not yes
+        and not inquirer.confirm(message=f"Publish {new_tag}?", default=True).execute()
+    ):
+        typer.echo("Aborted.")
+        raise typer.Exit()
 
     updated_files = update_manifests(new_version)
     run_git(f"add {' '.join(p.as_posix() for p in updated_files)}")

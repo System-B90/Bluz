@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Tuple
 
 from PIL import Image
 
@@ -7,7 +6,7 @@ from PIL import Image
 def create_responsive_ico(
     png_path: Path,
     output_path: Path,
-    sizes: Tuple[int, ...] = (16, 24, 32, 48, 64, 128, 256),
+    sizes: tuple[int, ...] = (16, 24, 32, 48, 64, 128, 256),
 ):
     """
     Creates a responsive .ico file from a given PNG image with various embedded sizes.
@@ -39,13 +38,13 @@ def create_responsive_ico(
         print(f"ICO created successfully: {output_path}")
 
     except Exception as e:
-        raise RuntimeError(f"Failed to create ICO: {e}")
+        raise RuntimeError(f"Failed to create ICO: {e}") from e
 
 
 def rename_images_by_resolution(
     directory: str | Path,
     suffix_format: str = "{width}x{height}",
-    extensions: Tuple[str, ...] = (".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp"),
+    extensions: tuple[str, ...] = (".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp"),
 ) -> None:
     """
     Renames images in a directory based on their resolution.
@@ -71,7 +70,7 @@ def rename_images_by_resolution(
         try:
             with Image.open(image_path) as img:
                 width, height = img.size
-        except Exception as e:
+        except (OSError, Image.DecompressionBombError) as e:
             print(f"Skipping {image_path.name}: {e}")
             continue
 

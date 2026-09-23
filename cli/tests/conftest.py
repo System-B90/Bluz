@@ -17,9 +17,8 @@ from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 import pytest
-from typer.testing import CliRunner
-
 from bluz_cli.main import app
+from typer.testing import CliRunner
 from wire_types import Raw
 
 
