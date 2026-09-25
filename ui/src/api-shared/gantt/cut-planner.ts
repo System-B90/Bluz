@@ -566,6 +566,8 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
     // ---------------------------------------------------------------------
 
     const balancerSlotsByDay = new Map<string, Array<BalancerSlot>>();
+    const groupSiblingsByLeadKey = new Map<string, Array<BalancerSlot>>();
+    const groupBlockDurationByLeadKey = new Map<string, number>();
     const originalDayIdBySlotKey = new Map<string, string>();
     for (const [ dayId, daySlots ] of slotsByDay) {
         const built = daySlots.map((slot, ordinal) => {
@@ -583,7 +585,39 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
                 sortOrder: ordinal,
             } satisfies BalancerSlot;
         });
-        balancerSlotsByDay.set(dayId, built);
+        // Shuffle-group siblings on one day run side by side, so the balancer
+        // sees them as one slot as long as the longest member. The others ride
+        // along with it and are restored wherever it lands.
+        const leadByGroupId = new Map<string, BalancerSlot>();
+        const kept: Array<BalancerSlot> = [];
+        for (const slot of built) {
+            const groupId = eventsById.get(slot.eventId)?.groupId;
+            const lead = groupId ? leadByGroupId.get(groupId) : undefined;
+            if (!groupId || !lead || slot.isPinnedMeal || lead.isPinnedMeal) {
+                if (groupId && !lead) leadByGroupId.set(groupId, slot);
+                kept.push(slot);
+                continue;
+            }
+            groupSiblingsByLeadKey.set(lead.key, [
+                ...(groupSiblingsByLeadKey.get(lead.key) ?? []),
+                slot,
+            ]);
+            groupBlockDurationByLeadKey.set(
+                lead.key,
+                Math.max(
+                    groupBlockDurationByLeadKey.get(lead.key) ?? lead.durationMinutes,
+                    slot.durationMinutes,
+                ),
+            );
+        }
+        balancerSlotsByDay.set(
+            dayId,
+            kept.map((slot) => ({
+                ...slot,
+                durationMinutes:
+                    groupBlockDurationByLeadKey.get(slot.key) ?? slot.durationMinutes,
+            })),
+        );
     }
 
     // Only days that declare a working window take part in balancing. An
@@ -611,7 +645,25 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
         })
         : { slotsByDay: balancerSlotsByDay, moves: [], overflows: [] };
 
-    let placedSlotsByDay = balanced.slotsByDay;
+    // Unfold each group block back into its members, siblings right after
+    // the lead and at the lead's own duration again.
+    let placedSlotsByDay = new Map(
+        [ ...balanced.slotsByDay ].map(([ dayId, daySlots ]) => [
+            dayId,
+            daySlots.flatMap((slot) => {
+                const siblings = groupSiblingsByLeadKey.get(slot.key);
+                if (!siblings) return [ slot ];
+                const lead = eventsById.get(slot.eventId);
+                return [
+                    { ...slot, durationMinutes: lead ? eventDuration(lead) : 0 },
+                    ...siblings.map((sibling) => ({
+                        ...sibling,
+                        sortOrder: slot.sortOrder,
+                    })),
+                ];
+            }),
+        ]),
+    );
 
     // ---------------------------------------------------------------------
     // Constraints: reorder within a day, and propose cross-day moves.

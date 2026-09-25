@@ -133,8 +133,32 @@ describe("planCut", () => {
             byId.get("a")!.startTime.getTime(),
         );
         expect(byId.get("next")!.startTime.toISOString()).toBe(
-            venueTime("2024-01-07T09:00"),
+            venueTime("2024-01-07T09:30"),
         );
+    });
+
+    it("counts same-day shuffle-group siblings once when balancing", () => {
+        const input = baseInput({
+            events: [
+                makeEvent({ id: "a", groupId: "g1", allocatedDuration: 90 }),
+                makeEvent({ id: "b", groupId: "g1", allocatedDuration: 90 }),
+            ],
+            mappings: [
+                { eventId: "a", dayId: "w0d0", sortOrder: 0 },
+                { eventId: "b", dayId: "w0d0", sortOrder: 1 },
+            ],
+        });
+        input.days.w0d0 = { ...input.days.w0d0, totalWorkingMinutes: 120 };
+
+        const plan = planCut(input);
+        expect(plan.ok).toBe(true);
+        if (!plan.ok) return;
+
+        expect(plan.report.moves).toHaveLength(0);
+        expect(plan.occurrences.map((o) => o.occurrenceDate)).toEqual([
+            "2024-01-07",
+            "2024-01-07",
+        ]);
     });
 
     it("falls back to minimumDuration when allocatedDuration is falsy", () => {
