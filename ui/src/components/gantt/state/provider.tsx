@@ -116,56 +116,84 @@ function ModuleDialogManager({
 
     const closeSyllabusDialog: CloseSyllabusDialog = useCallback(() => setSyllabusDialogOpen(false), []);
 
-    // Restore open dialogs from the URL on load/refresh (or a deep link
-    // landing on an already-mounted page, #576), in nesting order: syllabus,
-    // then module, then event on top. A bare event link also opens its module
-    // underneath, same as clicking the event from inside an open module.
+    const stateRef = useRef(state);
     useEffect(() =>
     {
-        const urlSyllabusId = searchParams.get(
+        stateRef.current = state;
+    }, [ state ]);
+
+    // Applies the dialog params to dialog state, in nesting order: syllabus,
+    // then module, then event on top. A bare event link also opens its module
+    // underneath, same as clicking the event from inside an open module.
+    // Dialogs without a param are closed, so back/forward can undo an open.
+    const applyDialogParams = useCallback((params: URLSearchParams) =>
+    {
+        const { syllabuses, events, modules } = stateRef.current;
+        const urlSyllabusId = params.get(
             GANTT_SYLLABUS_DIALOG_PARAM,
         ) as GanttSyllabusId | null;
-        const urlModuleId = searchParams.get(
+        const urlModuleId = params.get(
             GANTT_MODULE_DIALOG_PARAM,
         ) as GanttModuleId | null;
-        const urlEventId = searchParams.get(
+        const urlEventId = params.get(
             GANTT_EVENT_DEEP_LINK_PARAM,
         ) as GanttEventId | null;
 
-        const syllabus = urlSyllabusId ? state.syllabuses[ urlSyllabusId ] : undefined;
-        const event = urlEventId ? state.events[ urlEventId ] : undefined;
+        const syllabusFound = Boolean(urlSyllabusId && syllabuses[ urlSyllabusId ]);
+        const event = urlEventId ? events[ urlEventId ] : undefined;
         const moduleId = event?.moduleId ?? urlModuleId;
-        const ganttModule = moduleId ? state.modules[ moduleId ] : undefined;
-        if (!syllabus && !ganttModule) return;
+        const ganttModule = moduleId ? modules[ moduleId ] : undefined;
 
-        queueMicrotask(() =>
+        if (syllabusFound && urlSyllabusId) setSyllabusDialogSyllabusId(urlSyllabusId);
+        setSyllabusDialogOpen(syllabusFound);
+
+        if (ganttModule && moduleId)
         {
-            if (syllabus && urlSyllabusId)
-            {
-                setSyllabusDialogSyllabusId(urlSyllabusId);
-                setSyllabusDialogOpen(true);
-            }
-            if (!ganttModule || !moduleId) return;
-
             setCurrentSyllabusId(ganttModule.syllabusId);
             setCurrentModuleId(moduleId);
             setCurrentEventId(event ? urlEventId : null);
-            setModuleDialogOpen(true);
+        }
+        setModuleDialogOpen(Boolean(ganttModule));
 
-            if (!event || !urlEventId) return;
+        if (ganttModule && moduleId && event && urlEventId)
+        {
             setEventDialogSyllabusId(ganttModule.syllabusId);
             setEventDialogModuleId(moduleId);
             setEventDialogEventId(urlEventId);
-            setEventDialogOpen(true);
+        }
+        setEventDialogOpen(Boolean(ganttModule && event));
+    }, []);
+
+    // Restore open dialogs from the URL on load/refresh (or a deep link
+    // landing on an already-mounted page, #576).
+    const [ restored, setRestored ] = useState(false);
+    const syncedOnceRef = useRef(false);
+    useEffect(() =>
+    {
+        queueMicrotask(() =>
+        {
+            applyDialogParams(searchParams);
+            setRestored(true);
         });
         // Only run once on mount: the dialogs' own open/close handlers own the URL after that.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Keep the URL in sync with every dialog's open state.
+    // Browser back/forward: the URL moved, so move the dialogs with it.
     useEffect(() =>
     {
-        if (typeof window === "undefined") return;
+        const onPopState = () =>
+            applyDialogParams(new URLSearchParams(window.location.search));
+        window.addEventListener("popstate", onPopState);
+        return () => window.removeEventListener("popstate", onPopState);
+    }, [ applyDialogParams ]);
+
+    // Keep the URL in sync with every dialog's open state. Each change is its
+    // own history entry so back/forward walks through opened/closed dialogs;
+    // after a popstate the state already matches the URL, so nothing is pushed.
+    useEffect(() =>
+    {
+        if (typeof window === "undefined" || !restored) return;
 
         const nextParams = new URLSearchParams(window.location.search);
         const desired: Array<[string, null | string]> = [
@@ -181,13 +209,18 @@ function ModuleDialogManager({
             if (value) nextParams.set(param, value);
             else nextParams.delete(param);
         }
+        // The first sync only normalizes the landing URL (e.g. strips a stale
+        // id); it is not a navigation, so it must not add a history entry.
+        const isFirstSync = !syncedOnceRef.current;
+        syncedOnceRef.current = true;
         if (!changed) return;
 
         const hash = window.location.hash;
         const nextSearch = nextParams.toString();
         const nextUrl = `${pathname}${nextSearch ? `?${nextSearch}` : ""}${hash}`;
 
-        window.history.replaceState(window.history.state, "", nextUrl);
+        if (isFirstSync) window.history.replaceState(window.history.state, "", nextUrl);
+        else window.history.pushState(window.history.state, "", nextUrl);
     }, [
         syllabusDialogOpen,
         syllabusDialogSyllabusId,
@@ -196,6 +229,7 @@ function ModuleDialogManager({
         eventDialogOpen,
         eventDialogEventId,
         pathname,
+        restored,
     ]);
 
     return (

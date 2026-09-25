@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -171,5 +171,29 @@ describe("gantt ?ge= deep link", () => {
         expect(new URLSearchParams(window.location.search).get("ge")).toBe(
             "e1",
         );
+    });
+
+    it("opens and closes dialogs on browser back/forward", async () => {
+        renderProvider("");
+        await waitFor(() => {
+            expect(screen.getByTestId("module-dialog")).toBeDefined();
+        });
+
+        const popTo = (query: string) =>
+            act(() => {
+                window.history.pushState(null, "", `/gantt?${query}`);
+                window.dispatchEvent(new PopStateEvent("popstate"));
+            });
+
+        popTo("gm=m1");
+        await waitFor(() => {
+            expect(screen.getByTestId("module-dialog-open").dataset.module).toBe("m1");
+        });
+        expect(screen.queryByTestId("event-dialog-open")).toBeNull();
+
+        popTo("");
+        await waitFor(() => {
+            expect(screen.queryByTestId("module-dialog-open")).toBeNull();
+        });
     });
 });
