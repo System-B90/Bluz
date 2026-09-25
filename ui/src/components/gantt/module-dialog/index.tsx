@@ -42,13 +42,13 @@ import {
 } from "@/components/gantt/module-dialog/utils";
 import { ShuffleSelect } from "@/components/gantt/ShuffleSelect";
 import { GanttConstraintProvider } from "@/components/gantt/state/constraints/Provider";
-import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
-import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
-import { useModule } from "@/components/gantt/state/hooks/UseModule";
 import {
     useCurriculumProviderActions,
     useCurriculumState,
-} from "@/components/gantt/state/provider";
+} from "@/components/gantt/state/context";
+import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
+import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
+import { useModule } from "@/components/gantt/state/hooks/UseModule";
 
 export type ModuleDialogProps = {
     setOpen: Dispatch<SetStateAction<boolean>>;

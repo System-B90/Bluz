@@ -5,8 +5,8 @@ import {
     GanttCurriculum,
     GanttCurriculumId,
 } from "@/api-shared/types/gantt/models";
+import { useCurriculumProviderActions } from "@/components/gantt/state/context";
 import { withGantErrorHandling } from "@/components/gantt/state/hooks/gantt-funcs/WithGantErrorHandling";
-import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
 
 export function useCurriculumActions() {
     const { dispatch } = useCurriculumProviderActions();

@@ -11,11 +11,11 @@ import { useGanttUnallocated } from "@/components/gantt/curriculum-view/tabs/gan
 import { useGanttViolations } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-violations";
 import { useGanttZoom } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-zoom";
 import { useGanttConstraints } from "@/components/gantt/state/constraints/hooks";
-import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import {
     useCurriculumProviderActions,
     useCurriculumState,
-} from "@/components/gantt/state/provider";
+} from "@/components/gantt/state/context";
+import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
 
 // Orchestrates the Gantt view's sub-hooks (search, expansion, scheduling,

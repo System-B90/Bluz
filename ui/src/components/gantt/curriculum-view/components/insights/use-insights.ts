@@ -7,9 +7,9 @@ import { useOutsiders } from "@/components/base/OutsidersProvider";
 import { buildInsightContext } from "@/components/gantt/curriculum-view/components/insights/build-context";
 import { generateInsights } from "@/components/gantt/curriculum-view/components/insights/generators";
 import { Insight } from "@/components/gantt/curriculum-view/components/insights/types";
+import { useCurriculumState } from "@/components/gantt/state/context";
 import { useGanttExecution } from "@/components/gantt/state/execution/hooks";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
-import { useCurriculumState } from "@/components/gantt/state/provider";
 import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
 
 export function useInsights(curriculum: GanttCurriculumDocument | undefined): Array<Insight> {

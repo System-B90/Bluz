@@ -12,7 +12,7 @@ import { useMemo } from "react";
 
 import { GanttEventId, GanttModuleId } from "@/api-shared/types/gantt/models";
 import { ModuleEventView } from "@/components/gantt/module-dialog/ModuleEventView";
-import { useCurriculumState } from "@/components/gantt/state/provider";
+import { useCurriculumState } from "@/components/gantt/state/context";
 
 export function ModuleEventGroupRow({
     moduleId,

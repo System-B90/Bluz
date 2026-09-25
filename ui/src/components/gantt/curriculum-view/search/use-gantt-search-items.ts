@@ -6,7 +6,7 @@ import {
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
-import { useCurriculumState } from "@/components/gantt/state/provider";
+import { useCurriculumState } from "@/components/gantt/state/context";
 
 export type GanttSearchItemType = "event" | "module" | "syllabus";
 

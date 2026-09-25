@@ -20,7 +20,7 @@ import {
     TEMPORAL_CONFLICT_MESSAGE,
 } from "@/components/gantt/module-dialog/constraints/ConstraintRows";
 import { useConstraintEditor } from "@/components/gantt/module-dialog/constraints/use-constraint-editor";
-import { useCurriculumState } from "@/components/gantt/state/provider";
+import { useCurriculumState } from "@/components/gantt/state/context";
 
 /**
  * A read-only constraint row used to surface the default sibling ordering

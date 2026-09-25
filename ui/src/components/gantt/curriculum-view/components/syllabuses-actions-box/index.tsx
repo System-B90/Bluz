@@ -13,10 +13,10 @@ import { CreateSyllabusButton } from "@/components/gantt/curriculum-view/compone
 import { GanttFilterButton } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box/GanttFilterButton";
 import { SyllabusSelectionField } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box/SyllabusSelectionField";
 import { GanttSearchField } from "@/components/gantt/curriculum-view/search/GanttSearchField";
+import { useCurriculumState } from "@/components/gantt/state/context";
 import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
-import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export type SyllabusesActionsBoxProps = {
     curriculumId: GanttCurriculumId;

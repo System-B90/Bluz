@@ -24,9 +24,9 @@ import { EventDialogContent } from "@/components/gantt/event-dialog/DialogConten
 import { EventDialogHeader } from "@/components/gantt/event-dialog/DialogHeader";
 import { MoveEventDialog } from "@/components/gantt/module-dialog/MoveEventDialog";
 import { GanttConstraintProvider } from "@/components/gantt/state/constraints/Provider";
+import { useCurriculumProviderActions, useCurriculumState } from "@/components/gantt/state/context";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import { useEvent } from "@/components/gantt/state/hooks/UseEvent";
-import { useCurriculumProviderActions, useCurriculumState } from "@/components/gantt/state/provider";
 
 export type EventDialogProps = {
     setOpen: Dispatch<SetStateAction<boolean>>;

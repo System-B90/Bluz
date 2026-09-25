@@ -1,6 +1,6 @@
 import { CURRICULUM_QUERY_PARAM } from "@/api-shared/types/gantt/models";
 import { ITERATION_QUERY_PARAM } from "@/api-shared/types/iteration";
-import { GANTT_EVENT_DEEP_LINK_PARAM } from "@/components/gantt/state/provider";
+import { GANTT_EVENT_DEEP_LINK_PARAM } from "@/components/gantt/state/context";
 import { Event } from "@/components/schedule/types/event";
 
 export type EventFieldProps = {

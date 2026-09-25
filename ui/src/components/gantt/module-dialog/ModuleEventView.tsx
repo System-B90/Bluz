@@ -30,9 +30,9 @@ import { NumberSpinner } from "@/components/base/NumberSpinner";
 import { useConfirmDialog } from "@/components/base/UseConfirmDialog";
 import { EVENT_ANCHOR_PREFIX } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
 import { MoveEventDialog } from "@/components/gantt/module-dialog/MoveEventDialog";
+import { useCurriculumProviderActions, useCurriculumState } from "@/components/gantt/state/context";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import { useEvent } from "@/components/gantt/state/hooks/UseEvent";
-import { useCurriculumProviderActions, useCurriculumState } from "@/components/gantt/state/provider";
 
 function ModuleEventTitle({
     moduleEvent,

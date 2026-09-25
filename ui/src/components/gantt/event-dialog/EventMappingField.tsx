@@ -17,8 +17,8 @@ import {
 } from "@/api-shared/types/gantt/models";
 import { getDayNameDisplay } from "@/api-shared/types/gantt/models/day";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
+import { useCurriculumState } from "@/components/gantt/state/context";
 import { notifyMappingsChanged } from "@/components/gantt/state/mappings/change-bus";
-import { useCurriculumState } from "@/components/gantt/state/provider";
 
 /**
  * Lets the user allocate this event to a week/day directly from the event

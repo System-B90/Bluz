@@ -11,7 +11,7 @@ import {
     GanttSyllabusGroupProps,
     SpanVariant,
 } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
-import { useCurriculumState } from "@/components/gantt/state/provider";
+import { useCurriculumState } from "@/components/gantt/state/context";
 
 function getSpanBorderRadius(spanVariant: SpanVariant) {
     switch (spanVariant) {

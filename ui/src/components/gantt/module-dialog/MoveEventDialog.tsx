@@ -13,8 +13,8 @@ import { useState, useId } from "react";
 
 import { GanttEventId, GanttModuleId } from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
+import { useCurriculumState } from "@/components/gantt/state/context";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
-import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export function MoveEventDialog({
     open,

@@ -15,9 +15,9 @@ import { GanttBlock } from "@/components/gantt/curriculum-view/tabs/gantt-view-t
 import { GanttCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttCell";
 import { GanttEventRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttEventRow";
 import { GanttModuleRowProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
+import { useCurriculumState } from "@/components/gantt/state/context";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
-import { useCurriculumState } from "@/components/gantt/state/provider";
 import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
 import { calculateMinimumRequiredTimeForModule } from "@/components/gantt/utils";
 

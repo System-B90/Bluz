@@ -7,11 +7,11 @@ import {
     GanttModuleId,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
-import { makeEntityActions } from "@/components/gantt/state/hooks/gantt-funcs/MakeEntityActions";
 import {
     useCurriculumProviderActions,
     useCurriculumState,
-} from "@/components/gantt/state/provider";
+} from "@/components/gantt/state/context";
+import { makeEntityActions } from "@/components/gantt/state/hooks/gantt-funcs/MakeEntityActions";
 
 export function useModuleActions() {
     const { dispatch } = useCurriculumProviderActions();

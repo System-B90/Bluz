@@ -17,9 +17,9 @@ import {
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { ClosingSaturdayChip } from "@/components/gantt/curriculum-view/tabs/weeks-tab/ClosingSaturdayChip";
 import { DayEntry } from "@/components/gantt/curriculum-view/tabs/weeks-tab/DayEntry";
+import { useCurriculumState } from "@/components/gantt/state/context";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 import { useCurriculumWeek } from "@/components/gantt/state/hooks/UseWeek";
-import { useCurriculumState } from "@/components/gantt/state/provider";
 
 type WeekPanelProps = {
     curriculumId: GanttCurriculumId;

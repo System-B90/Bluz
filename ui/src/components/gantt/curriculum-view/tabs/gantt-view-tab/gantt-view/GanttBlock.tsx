@@ -11,7 +11,7 @@ import { GanttBlockProps } from "@/components/gantt/curriculum-view/tabs/gantt-v
 import {
     useCurriculumProviderActions,
     useCurriculumState,
-} from "@/components/gantt/state/provider";
+} from "@/components/gantt/state/context";
 import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
 
 const GanttBlockComponent: React.FC<GanttBlockProps> = ({

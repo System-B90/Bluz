@@ -21,12 +21,12 @@ import
 } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttEventCells";
 import { GanttEventLabelCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttEventLabelCell";
 import { GanttEventRowProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
-import { useGanttExecution } from "@/components/gantt/state/execution/hooks";
 import
 {
     useCurriculumProviderActions,
     useCurriculumState,
-} from "@/components/gantt/state/provider";
+} from "@/components/gantt/state/context";
+import { useGanttExecution } from "@/components/gantt/state/execution/hooks";
 import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
 
 const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({

@@ -1,6 +1,6 @@
 import { ModuleEventDocument } from "@/api-client/gantt/module-event";
 import { GanttEventId } from "@/api-shared/types/gantt/models";
-import { useCurriculumState } from "@/components/gantt/state/provider";
+import { useCurriculumState } from "@/components/gantt/state/context";
 
 export function useEvent(eventId: null): undefined;
 export function useEvent(

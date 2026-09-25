@@ -19,9 +19,9 @@ import {
     GanttCurriculumId,
 } from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
+import { useCurriculumState } from "@/components/gantt/state/context";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
-import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export type WeekLengthMenuProps = {
     curriculum: GanttCurriculum;

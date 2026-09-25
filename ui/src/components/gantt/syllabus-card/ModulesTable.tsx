@@ -32,7 +32,7 @@ import {
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
-import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
+import { useCurriculumProviderActions } from "@/components/gantt/state/context";
 import { CreateModuleButton } from "@/components/gantt/syllabus-card/CreateModuleButton";
 import { ModuleRow } from "@/components/gantt/syllabus-card/ModuleRow";
 

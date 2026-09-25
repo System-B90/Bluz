@@ -12,8 +12,8 @@ import {
     getCurriculumScheduledMinutes,
     getTentativeMinutesForModuleIds,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { useCurriculumState } from "@/components/gantt/state/context";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
-import { useCurriculumState } from "@/components/gantt/state/provider";
 import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
 import { calculateMinimumRequiredTimeForCurriculum } from "@/components/gantt/utils";
 

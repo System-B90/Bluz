@@ -12,9 +12,9 @@ import {
     formatHoursLabel,
     getTentativeMinutesForModuleIds,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { useCurriculumState } from "@/components/gantt/state/context";
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
-import { useCurriculumState } from "@/components/gantt/state/provider";
 import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
 import {
     calculateMinimumRequiredTimeForSyllabus,

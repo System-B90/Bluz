@@ -16,11 +16,11 @@ import {
     GanttWeek,
     GanttWeekId,
 } from "@/api-shared/types/gantt/models";
-import { withGantErrorHandling } from "@/components/gantt/state/hooks/gantt-funcs/WithGantErrorHandling";
 import {
     useCurriculumProviderActions,
     useCurriculumState,
-} from "@/components/gantt/state/provider";
+} from "@/components/gantt/state/context";
+import { withGantErrorHandling } from "@/components/gantt/state/hooks/gantt-funcs/WithGantErrorHandling";
 
 export type UseWeekActionsReturn = {
     createWeek: (payload: CreateGanttWeekPayload) => Promise<GanttWeek>;

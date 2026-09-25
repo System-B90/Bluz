@@ -17,11 +17,11 @@ import {
     GanttModuleId,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
-import { useModule } from "@/components/gantt/state/hooks/UseModule";
 import {
     useCurriculumProviderActions,
     useCurriculumState,
-} from "@/components/gantt/state/provider";
+} from "@/components/gantt/state/context";
+import { useModule } from "@/components/gantt/state/hooks/UseModule";
 import { calculateMinimumRequiredTimeForModule } from "@/components/gantt/utils";
 
 export function ModuleRow({

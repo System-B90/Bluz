@@ -9,8 +9,8 @@ import { ToggleArchiveAction } from "@/components/gantt/curriculum-fab/action-it
 import { ToggleDraftAction } from "@/components/gantt/curriculum-fab/action-items/ToggleDraftAction";
 import { GanttCreationDeletionCallbackProps } from "@/components/gantt/curriculum-fab/CurriculumActionItems";
 import { CurriculmImportExportButton } from "@/components/gantt/curriculum-view/components/curriculum-about-card/CurriculumImportExportButton";
+import { useCurriculumProviderActions } from "@/components/gantt/state/context";
 import { useCurriculumList } from "@/components/gantt/state/curriculum-list";
-import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
 
 export type CurriculumStatusActionsProps = {
     curriculumId: GanttCurriculumId | null;

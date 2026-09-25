@@ -3,7 +3,7 @@ import {
     GanttDayId,
     GanttWeekId,
 } from "@/api-shared/types/gantt/models";
-import { useCurriculumState } from "@/components/gantt/state/provider";
+import { useCurriculumState } from "@/components/gantt/state/context";
 
 export function useCurriculumDay(dayId: null): undefined;
 export function useCurriculumDay(

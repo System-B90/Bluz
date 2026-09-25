@@ -20,7 +20,7 @@ import {
     getWeekOverAllocationSeverity,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
-import { useCurriculumState } from "@/components/gantt/state/provider";
+import { useCurriculumState } from "@/components/gantt/state/context";
 
 function getCapacityColor(status: CapacityStatus): string {
     if (status === "error") return "error.main";

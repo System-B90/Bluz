@@ -26,8 +26,8 @@ import {
     resolveWeekDayMinutes,
 } from "@/api-shared/types/gantt/templates";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
+import { useCurriculumState } from "@/components/gantt/state/context";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
-import { useCurriculumState } from "@/components/gantt/state/provider";
 
 type Props = {
     curriculum: GanttCurriculum;

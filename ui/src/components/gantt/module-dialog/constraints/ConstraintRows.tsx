@@ -8,7 +8,7 @@ import { ConstraintListItem } from "@/components/gantt/module-dialog/constraints
 import { DraftConstraintForm } from "@/components/gantt/module-dialog/constraints/DraftConstraintForm";
 import { ConstraintEditor } from "@/components/gantt/module-dialog/constraints/use-constraint-editor";
 import { useTargetOptions } from "@/components/gantt/module-dialog/constraints/use-target-options";
-import { useCurriculumState } from "@/components/gantt/state/provider";
+import { useCurriculumState } from "@/components/gantt/state/context";
 
 export type ConstraintRowsProps = {
     editor: ConstraintEditor;

@@ -11,8 +11,8 @@ import { useCallback } from "react";
 import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
+import { useCurriculumProviderActions } from "@/components/gantt/state/context";
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
-import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
 
 export type SyllabusCardActionsProps = {
     syllabusId: GanttSyllabusId;

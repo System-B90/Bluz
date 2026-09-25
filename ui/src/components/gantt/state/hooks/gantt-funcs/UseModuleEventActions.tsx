@@ -11,12 +11,12 @@ import {
     ModuleEventType,
     RoomRequirement,
 } from "@/api-shared/types/gantt/models";
-import { makeEntityActions } from "@/components/gantt/state/hooks/gantt-funcs/MakeEntityActions";
-import { withGantErrorHandling } from "@/components/gantt/state/hooks/gantt-funcs/WithGantErrorHandling";
 import {
     useCurriculumProviderActions,
     useCurriculumState,
-} from "@/components/gantt/state/provider";
+} from "@/components/gantt/state/context";
+import { makeEntityActions } from "@/components/gantt/state/hooks/gantt-funcs/MakeEntityActions";
+import { withGantErrorHandling } from "@/components/gantt/state/hooks/gantt-funcs/WithGantErrorHandling";
 
 export function useModuleEventActions() {
     const { dispatch, requestReveal } = useCurriculumProviderActions();

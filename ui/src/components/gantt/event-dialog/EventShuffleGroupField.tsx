@@ -17,11 +17,11 @@ import {
 } from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
-import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import {
     useCurriculumProviderActions,
     useCurriculumState,
-} from "@/components/gantt/state/provider";
+} from "@/components/gantt/state/context";
+import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 
 /** The events sharing `groupId`, in the module's own order. */
 export function useShuffleGroupMembers(

@@ -12,9 +12,9 @@ import
 import { EmptyState } from "@/components/base/EmptyState";
 import { SyllabusesActionsBox } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box";
 import { useProgressiveItemCount } from "@/components/gantt/curriculum-view/tabs/UseProgressiveItemCount";
+import { useCurriculumState } from "@/components/gantt/state/context";
 import { useGanttFilters } from "@/components/gantt/state/filters/Provider";
 import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
-import { useCurriculumState } from "@/components/gantt/state/provider";
 import { SyllabusCard } from "@/components/gantt/syllabus-card";
 
 type SyllabusesTabProps = {

@@ -9,8 +9,8 @@ import {
     GanttModuleId,
 } from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
+import { useCurriculumProviderActions } from "@/components/gantt/state/context";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
-import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
 import { GanttRecurrenceExceptionContext } from "@/components/gantt/state/recurrence-exceptions/context";
 import { ganttRecurrenceExceptionReducer } from "@/components/gantt/state/recurrence-exceptions/reducer";
 

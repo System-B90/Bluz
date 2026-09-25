@@ -12,8 +12,8 @@ import { GanttDayId, GanttModuleId, GanttSyllabusId } from "@/api-shared/types/g
 import { DndDragEventActiveData } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/dnd-types";
 import { hashSyllabusToColor } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/utils";
 import { WorkTimeChip } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeekPanel";
+import { useCurriculumState } from "@/components/gantt/state/context";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
-import { useCurriculumState } from "@/components/gantt/state/provider";
 import { useSyllabusNames } from "@/components/gantt/state/providers/SyllabusNamesProvider";
 import { calculateMinimumRequiredTimeForModule } from "@/components/gantt/utils";
 

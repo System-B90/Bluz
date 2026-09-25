@@ -19,12 +19,12 @@ import { normalizeShuffleName } from "@/api-shared/gantt/shuffle-names";
 import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
 import { ShuffleUsages } from "@/api-shared/types/gantt/shuffles";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
-import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
-import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 import {
     useCurriculumProviderActions,
     useCurriculumState,
-} from "@/components/gantt/state/provider";
+} from "@/components/gantt/state/context";
+import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
+import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 import { ShuffleDeleteDialog } from "@/components/gantt/syllabus-dialog/ShuffleDeleteDialog";
 
 const NO_USAGES: ShuffleUsages = { events: [], modules: [] };

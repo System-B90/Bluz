@@ -11,9 +11,9 @@ import
     ModuleEventType,
 } from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
+import { useCurriculumProviderActions } from "@/components/gantt/state/context";
 import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
-import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
 
 export function CreateModuleButton({
     syllabusId,

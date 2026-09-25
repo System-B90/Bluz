@@ -12,7 +12,7 @@ import { WeekDayVisualizer } from "@/components/gantt/module-dialog/constraints/
 import {
     useCurriculumProviderActions,
     useCurriculumState,
-} from "@/components/gantt/state/provider";
+} from "@/components/gantt/state/context";
 
 function RelationalConstraintHumanReadableEntry({
     constraint,

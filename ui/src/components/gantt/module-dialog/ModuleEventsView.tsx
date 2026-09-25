@@ -34,11 +34,11 @@ import {
 } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
 import { ModuleEventGroupRow } from "@/components/gantt/module-dialog/ModuleEventGroupRow";
 import { ModuleEventView } from "@/components/gantt/module-dialog/ModuleEventView";
-import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import {
     useCurriculumProviderActions,
     useCurriculumState,
-} from "@/components/gantt/state/provider";
+} from "@/components/gantt/state/context";
+import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 
 function CreateModuleEventButton({ moduleId }: { moduleId: GanttModuleId }) {
     const { enqueueSnackbar } = useSnackbar();

@@ -19,7 +19,7 @@ import
     GanttSearchItemType,
     useGanttSearchItems,
 } from "@/components/gantt/curriculum-view/search/use-gantt-search-items";
-import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
+import { useCurriculumProviderActions } from "@/components/gantt/state/context";
 
 const ITEM_VISUALS: Record<
     GanttSearchItemType,
