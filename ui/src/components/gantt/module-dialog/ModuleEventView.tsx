@@ -220,12 +220,10 @@ export function ModuleEventView({
                     sx={ { m: 0, p: 0 } }
                 >
                     <NumberSpinner
-                        largeStep={ 45 }
                         onValueChange={ (v) =>
                             v ? handleCommit({ minimumDuration: v }) : {}
                         }
                         size="small"
-                        step={ 5 }
                         value={ moduleEvent?.minimumDuration ?? 0 }
                     />
                 </FormControl>

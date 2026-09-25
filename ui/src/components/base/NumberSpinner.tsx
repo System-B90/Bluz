@@ -5,26 +5,66 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import FormControl from "@mui/material/FormControl";
 import OutlinedInput from "@mui/material/OutlinedInput";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import Typography from "@mui/material/Typography";
 import * as React from "react";
 
+type DurationUnit = "hours" | "minutes";
+
+const UNIT_STEPS: Record<DurationUnit, { step: number; largeStep: number }> = {
+    minutes: { step: 5, largeStep: 45 },
+    hours: { step: 0.25, largeStep: 0.75 },
+};
+
+// Session-wide unit shared by every spinner: flipping one flips them all.
+let sessionUnit: DurationUnit = "minutes";
+const listeners = new Set<() => void>();
+const subscribe = (l: () => void) => {
+    listeners.add(l);
+    return () => listeners.delete(l);
+};
+const setSessionUnit = (u: DurationUnit) => {
+    sessionUnit = u;
+    listeners.forEach((l) => l());
+};
+const useSessionUnit = () =>
+    React.useSyncExternalStore(subscribe, () => sessionUnit, () => "minutes" as const);
+
+/**
+ * Duration spinner. `value` / `onValueChange` are always minutes; the
+ * דק׳/שעות toggle only changes what the user sees and types. `step` /
+ * `largeStep` default per unit and, when passed, apply in the shown unit.
+ */
 export function NumberSpinner({
     id: idProp,
     _label,
     error,
     size = "medium",
+    value,
+    onValueChange,
+    step,
+    largeStep,
     ...other
-}: BaseNumberField.Root.Props & {
+}: Omit<BaseNumberField.Root.Props, "onValueChange"> & {
     _label?: never;
     size?: "medium" | "small";
     error?: boolean;
+    onValueChange?: (minutes: null | number) => void;
 }) {
     let id = React.useId();
     if (idProp) {
         id = idProp;
     }
+    const unit = useSessionUnit();
+    const factor = unit === "hours" ? 60 : 1;
     return (
         <BaseNumberField.Root
             {...other}
+            largeStep={largeStep ?? UNIT_STEPS[unit].largeStep}
+            onValueChange={(v) =>
+                onValueChange?.(v == null ? null : Math.round(v * factor))
+            }
             render={(props, state) => (
                 <FormControl
                     disabled={state.disabled}
@@ -47,6 +87,8 @@ export function NumberSpinner({
                     {props.children}
                 </FormControl>
             )}
+            step={step ?? UNIT_STEPS[unit].step}
+            value={value == null ? value : value / factor}
         >
             <Box sx={{ display: "flex" }}>
                 <BaseNumberField.Decrement
@@ -123,6 +165,20 @@ export function NumberSpinner({
                     <AddIcon fontSize={size} />
                 </BaseNumberField.Increment>
             </Box>
+            <ToggleButtonGroup
+                exclusive
+                onChange={(_e, v: DurationUnit | null) => v && setSessionUnit(v)}
+                size="small"
+                sx={{ alignSelf: "center", mt: 0.5 }}
+                value={unit}
+            >
+                <ToggleButton sx={{ py: 0, px: 0.75 }} value="minutes">
+                    <Typography variant="caption">דק&apos;</Typography>
+                </ToggleButton>
+                <ToggleButton sx={{ py: 0, px: 0.75 }} value="hours">
+                    <Typography variant="caption">שעות</Typography>
+                </ToggleButton>
+            </ToggleButtonGroup>
         </BaseNumberField.Root>
     );
 }
