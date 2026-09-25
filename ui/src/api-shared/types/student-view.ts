@@ -35,6 +35,12 @@ export type StudentEvent = {
     rooms: Array<string>;
     /** Course / shuffle display names. */
     courses: Array<string>;
+    /**
+     * `courses` plus every ancestor and descendant shuffle, as display names.
+     * Filtering by a shuffle matches on this, so a child shuffle sees its
+     * parents' events and a parent sees its children's.
+     */
+    relatedCourses: Array<string>;
 };
 
 export type ApiStudentScheduleGetPayload = void;

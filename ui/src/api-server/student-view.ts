@@ -7,6 +7,7 @@ import { DbSettings } from "@/api-server/db-settings";
 import { createHiveServiceClient } from "@/api-server/hive/service-client";
 import { authOptions } from "@/api-server/hive/sso";
 import { DatabaseController } from "@/api-server/mongo-db-controller";
+import { relatedCourses } from "@/api-shared/course-tree";
 import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 import { ForbiddenError, UserNotLoggedInError } from "@/api-shared/errors";
 import { Clearance } from "@/api-shared/types/hive";
@@ -196,6 +197,9 @@ export async function buildStudentSchedule(
             .map((room) => roomNames.get(`${room.source}:${room.id}`))
             .filter((name): name is string => Boolean(name)),
         courses: (event.courses ?? [])
+            .map((courseId) => courseNames.get(courseId))
+            .filter((name): name is string => Boolean(name)),
+        relatedCourses: [...relatedCourses(event.courses ?? [], courses)]
             .map((courseId) => courseNames.get(courseId))
             .filter((name): name is string => Boolean(name)),
     }));

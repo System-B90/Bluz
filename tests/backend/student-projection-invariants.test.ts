@@ -165,6 +165,7 @@ describe("buildStudentSchedule — the projection cannot be widened by data", ()
         "endTime",
         "id",
         "name",
+        "relatedCourses",
         "rooms",
         "startTime",
     ];
@@ -306,6 +307,26 @@ describe("buildStudentSchedule — the projection cannot be widened by data", ()
         const { events } = await buildStudentSchedule("2026-03-04", CONTROLLER);
 
         expect(events.map((event) => event.id)).toEqual(["a", "b"]);
+    });
+
+    it("relates an event to its shuffle's ancestors and descendants only", async () => {
+        vi.mocked(DbCourses.get).mockResolvedValue([
+            { id: "root", name: "מחזור", parentId: null },
+            { id: "mid", name: "ניצה", parentId: "root" },
+            { id: "leaf", name: "ניצה 1", parentId: "mid" },
+            { id: "sibling", name: "לחם", parentId: "root" },
+        ] as never);
+        vi.mocked(DbEvent.getInRange).mockResolvedValue([
+            baseEvent({ courses: ["mid"] }),
+        ] as never);
+
+        const [event] = (await buildStudentSchedule("2026-03-04", CONTROLLER))
+            .events;
+
+        expect(event.courses).toEqual(["ניצה"]);
+        expect(event.relatedCourses.sort()).toEqual(
+            ["מחזור", "ניצה", "ניצה 1"].sort(),
+        );
     });
 
     it("asks the database only for the requested day, with hidden excluded", async () => {

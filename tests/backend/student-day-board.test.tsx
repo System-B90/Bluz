@@ -33,6 +33,7 @@ const EVENTS = [
     {
         color: "#111111",
         courses: ["מחזור א"],
+        relatedCourses: ["מחזור א"],
         endTime: "2026-03-04T07:00:00.000Z",
         id: "e1",
         name: "הרצאה בוקר",
@@ -42,6 +43,7 @@ const EVENTS = [
     {
         color: "#222222",
         courses: ["מחזור ב"],
+        relatedCourses: ["מחזור ב"],
         endTime: "2026-03-04T09:00:00.000Z",
         id: "e2",
         name: "סדנת צהריים",
@@ -51,6 +53,7 @@ const EVENTS = [
     {
         color: "#333333",
         courses: ["מחזור א"],
+        relatedCourses: ["מחזור א"],
         endTime: "2026-03-04T11:00:00.000Z",
         id: "e3",
         name: "תרגול ערב",

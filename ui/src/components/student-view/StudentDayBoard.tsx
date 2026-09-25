@@ -142,7 +142,7 @@ export function StudentDayBoard({ date }: { date?: string }) {
     // name a class or room the student was not already allowed to see — no
     // extra request, and nothing beyond what the projection already carries.
     const courseOptions = useMemo(
-        () => collectNames(events, (event) => event.courses),
+        () => collectNames(events, (event) => event.relatedCourses),
         [events],
     );
 
@@ -155,7 +155,8 @@ export function StudentDayBoard({ date }: { date?: string }) {
         () =>
             (events ?? []).filter(
                 (event) =>
-                    activeCourse === ALL || event.courses.includes(activeCourse),
+                    activeCourse === ALL ||
+                    event.relatedCourses.includes(activeCourse),
             ),
         [activeCourse, events],
     );
