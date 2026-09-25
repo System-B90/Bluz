@@ -1,4 +1,5 @@
 import BedtimeIcon from "@mui/icons-material/Bedtime";
+import SynagogueIcon from "@mui/icons-material/Synagogue";
 import WbSunnyIcon from "@mui/icons-material/WbSunny";
 import WbTwilightIcon from "@mui/icons-material/WbTwilight";
 import dayjs, { Dayjs } from "dayjs";
@@ -57,6 +58,7 @@ export function PrayerSettings()
         <BaseTimeSettingsCard
             description="זמני תפילות קבועים המשתקפים ביומן"
             disabled={ isReadOnlyIteration }
+            icon={ <SynagogueIcon /> }
             rows={ rows }
             sx={ { height: "100%" } }
             title="זמני תפילות"

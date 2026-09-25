@@ -83,6 +83,7 @@ export function MealTimesSetting()
         <BaseTimeSettingsCard
             description="זמני ארוחות מועדפים"
             disabled={ isReadOnlyIteration }
+            icon={ <RestaurantIcon /> }
             rows={ rows }
             title="שעות ארוחות"
         />
