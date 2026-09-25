@@ -96,6 +96,7 @@ export function NumberSpinner({
                     size={size}
                     sx={(theme) => ({
                         flexDirection: "row",
+                        width: "fit-content",
                         alignItems: "center",
                         gap: 0.25,
                         px: 0.5,
@@ -135,7 +136,6 @@ export function NumberSpinner({
 
             <Box
                 sx={{
-                    flex: 1,
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
@@ -144,12 +144,14 @@ export function NumberSpinner({
             >
                 <BaseNumberField.Input
                     id={id}
-                    render={
+                    render={(props, state) => (
                         <Box
                             component="input"
+                            {...props}
                             sx={{
-                                width: "100%",
-                                minWidth: "3ch",
+                                // Size to the value: a native input defaults
+                                // to ~20 characters wide.
+                                width: `${Math.max(state.inputValue.length, 3) + 1}ch`,
                                 border: 0,
                                 outline: 0,
                                 p: 0,
@@ -162,7 +164,7 @@ export function NumberSpinner({
                                 textAlign: "center",
                             }}
                         />
-                    }
+                    )}
                 />
                 {unitToggle ? <ToggleButtonGroup
                     exclusive
