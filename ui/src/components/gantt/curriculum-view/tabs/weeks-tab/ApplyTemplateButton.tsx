@@ -12,8 +12,9 @@ import ListItemText from "@mui/material/ListItemText";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Typography from "@mui/material/Typography";
+import { Command, useCommands } from "@system-b90/command-palette";
 import { useSnackbar } from "notistack";
-import { MouseEvent, useCallback, useState } from "react";
+import { MouseEvent, useCallback, useMemo, useState } from "react";
 
 import {
     GanttCurriculum,
@@ -25,6 +26,7 @@ import {
     GanttCurriculumTemplate,
     resolveWeekDayMinutes,
 } from "@/api-shared/types/gantt/templates";
+import { COMMAND_GROUPS } from "@/components/app-commands/labels";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useCurriculumState } from "@/components/gantt/state/context";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
@@ -57,6 +59,22 @@ export function ApplyTemplateButton({ curriculum, curriculumId }: Props) {
         },
         [closeMenu],
     );
+
+    const templateCommands = useMemo<Array<Command>>(
+        () =>
+            CURRICULUM_TEMPLATES.map((template) => ({
+                id: `gantt.weeks.template.${template.id}`,
+                title: `החלת תבנית ${template.label} על השבועות`,
+                subtitle: `${template.weekCount} שבועות`,
+                group: COMMAND_GROUPS.gantt,
+                icon: <AutoFixHighIcon />,
+                keywords: ["apply template", "weeks", "תבנית"],
+                enabled: !isApplying,
+                run: () => handleSelectTemplate(template),
+            })),
+        [handleSelectTemplate, isApplying],
+    );
+    useCommands(templateCommands);
 
     const applyTemplate = useCallback(async () => {
         if (!pendingTemplate) return;

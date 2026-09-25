@@ -10,9 +10,10 @@ import ListItemText from "@mui/material/ListItemText";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Tooltip from "@mui/material/Tooltip";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 
 import { safeTitle } from "@/api-shared/common";
+import { useCommand } from "@/components/app-commands/use-command";
 
 export type ImportExportMenuButtonProps = {
     onExport: () => Promise<unknown> | unknown;
@@ -34,6 +35,11 @@ export type ImportExportMenuButtonProps = {
     onExportError?: (error: unknown) => void;
     onExportExcel?: () => Promise<void> | void;
     exportExcelLabel?: string;
+    /**
+     * Mirror the menu's items in the command palette as `<id>.export`,
+     * `<id>.export.excel` and `<id>.import`, under `group`.
+     */
+    command?: { id: string; group: string; keywords?: Array<string> };
 };
 
 export function ImportExportMenuButton({
@@ -56,9 +62,11 @@ export function ImportExportMenuButton({
     onExportError,
     onExportExcel,
     exportExcelLabel = "ייצוא לאקסל",
+    command,
 }: ImportExportMenuButtonProps)
 {
     const [ anchorEl, setAnchorEl ] = useState<HTMLElement | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const open = Boolean(anchorEl);
 
     const handleClick = useCallback(
@@ -134,10 +142,50 @@ export function ImportExportMenuButton({
         (e: React.ChangeEvent<HTMLInputElement>) =>
         {
             onImport(e);
+            // The input outlives the menu; clear it so re-picking the same
+            // file still fires `change`.
+            e.target.value = "";
             handleClose();
         },
         [ onImport, handleClose ],
     );
+
+    const openFilePicker = useCallback(() => fileInputRef.current?.click(), []);
+
+    const commandKeywords = [ ...(command?.keywords ?? []), "json", triggerLabel ];
+    useCommand(command
+        ? {
+            id: `${command.id}.export`,
+            title: exportLabel,
+            group: command.group,
+            icon: <DownloadIcon />,
+            keywords: [ "export", "download", "ייצוא", ...commandKeywords ],
+            enabled: !exportDisabled && !loading,
+            run: handleExportClick,
+        }
+        : null);
+    useCommand(command && onExportExcel
+        ? {
+            id: `${command.id}.export.excel`,
+            title: exportExcelLabel,
+            group: command.group,
+            icon: <TableChartIcon />,
+            keywords: [ "export", "excel", "xlsx", "אקסל", ...commandKeywords ],
+            enabled: !exportDisabled && !loading,
+            run: handleExportExcelClick,
+        }
+        : null);
+    useCommand(command
+        ? {
+            id: `${command.id}.import`,
+            title: importLabel,
+            group: command.group,
+            icon: <UploadIcon />,
+            keywords: [ "import", "upload", "ייבוא", ...commandKeywords ],
+            enabled: !importDisabled && !loading,
+            run: openFilePicker,
+        }
+        : null);
 
     const trigger = iconOnly ? (
         <Tooltip title={ triggerLabel }>
@@ -212,20 +260,22 @@ export function ImportExportMenuButton({
                     </ListItemIcon>
                     <ListItemText>{ exportLabel }</ListItemText>
                 </MenuItem>
-                <MenuItem component="label" disabled={ importDisabled }>
+                <MenuItem disabled={ importDisabled } onClick={ openFilePicker }>
                     <ListItemIcon>
                         <UploadIcon fontSize="small" />
                     </ListItemIcon>
                     <ListItemText>{ importLabel }</ListItemText>
-                    <input
-                        accept={ accept }
-                        disabled={ importDisabled }
-                        hidden
-                        onChange={ handleImportChange }
-                        type="file"
-                    />
                 </MenuItem>
             </Menu>
+            { /* Outside the menu so it exists while the menu is closed. */ }
+            <input
+                accept={ accept }
+                disabled={ importDisabled }
+                hidden
+                onChange={ handleImportChange }
+                ref={ fileInputRef }
+                type="file"
+            />
         </>
     );
 }

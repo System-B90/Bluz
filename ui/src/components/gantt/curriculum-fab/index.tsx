@@ -123,6 +123,9 @@ export function CurriculumFab({
             <Popover
                 anchorEl={ anchorEl }
                 anchorOrigin={ { vertical: "top", horizontal: "right" } }
+                // Stay mounted while closed: the action items inside register
+                // their command-palette mirrors.
+                keepMounted
                 onClose={ handleClosePanel }
                 open={ isOpen }
                 slotProps={ {

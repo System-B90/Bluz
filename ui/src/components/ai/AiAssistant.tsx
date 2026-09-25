@@ -56,6 +56,8 @@ import {
     AiTimelineKind,
     useAiChat,
 } from "@/components/ai/use-ai-chat";
+import { COMMAND_GROUPS } from "@/components/app-commands/labels";
+import { useCommand } from "@/components/app-commands/use-command";
 import { useIterationScope } from "@/components/base/IterationProvider";
 
 const PANEL_WIDTH = 420;
@@ -388,6 +390,28 @@ export function AiAssistant() {
         exportChat,
     } = useAiChat({ iterationId, curriculumId });
 
+    const toggleOpen = React.useCallback(() => setOpen((value) => !value), []);
+    const available = Boolean(enabled && userEnabled);
+
+    useCommand({
+        id: "ai.toggle",
+        title: open ? 'סגירת עוזר ה-AI' : 'פתיחת עוזר ה-AI',
+        group: COMMAND_GROUPS.ai,
+        icon: <AutoAwesomeIcon />,
+        keywords: ["ai", "assistant", "chat", "עוזר", "בינה"],
+        enabled: available,
+        run: toggleOpen,
+    });
+    useCommand({
+        id: "ai.reset",
+        title: "שיחה חדשה עם עוזר ה-AI",
+        group: COMMAND_GROUPS.ai,
+        icon: <DeleteSweepIcon />,
+        keywords: ["new chat", "reset", "clear", "שיחה חדשה"],
+        enabled: available && !busy && timeline.length > 0,
+        run: reset,
+    });
+
     const scrollRef = React.useRef<HTMLDivElement>(null);
     // Tracked on scroll rather than read during the effect: by the time the
     // new content has rendered, the measurement that decides whether to follow
@@ -459,7 +483,7 @@ export function AiAssistant() {
                 <Fab
                     aria-label="ai-assistant"
                     color="primary"
-                    onClick={() => setOpen((value) => !value)}
+                    onClick={toggleOpen}
                     sx={{
                         position: "fixed",
                         bottom: LAUNCHER_BOTTOM,

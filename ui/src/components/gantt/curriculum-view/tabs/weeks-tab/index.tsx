@@ -1,3 +1,4 @@
+import DensitySmallIcon from "@mui/icons-material/DensitySmall";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Box from "@mui/material/Box";
@@ -13,6 +14,8 @@ import { useSnackbar } from "notistack";
 import React, { memo, useCallback, useState } from "react";
 
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { COMMAND_GROUPS } from "@/components/app-commands/labels";
+import { useCommand } from "@/components/app-commands/use-command";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { ImportExportMenuButton } from "@/components/base/ImportExportMenuButton";
 import { ApplyTemplateButton } from "@/components/gantt/curriculum-view/tabs/weeks-tab/ApplyTemplateButton";
@@ -50,6 +53,26 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
 
     const { enqueueSnackbar } = useSnackbar();
     const { createWeek, updateWeek, deleteWeek, updateDay } = useWeekActions();
+
+    const toggleSummary = useCallback(() => setIsSummaryCollapsed((prev) => !prev), []);
+    const toggleCompact = useCallback(() => setIsCompact((prev) => !prev), []);
+
+    useCommand({
+        id: "gantt.weeks.summary.toggle",
+        title: isSummaryCollapsed ? "הרחבת סיכום השבועות" : "צמצום סיכום השבועות",
+        group: COMMAND_GROUPS.gantt,
+        icon: isSummaryCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />,
+        keywords: ["weeks summary", "collapse", "expand", "סיכום"],
+        run: toggleSummary,
+    });
+    useCommand({
+        id: "gantt.weeks.compact.toggle",
+        title: isCompact ? "תצוגה מלאה של השבועות" : "תצוגה מצומצמת של השבועות",
+        group: COMMAND_GROUPS.gantt,
+        icon: <DensitySmallIcon />,
+        keywords: ["compact", "dense", "מצומצם", "דחוס"],
+        run: toggleCompact,
+    });
 
     const handleExportWeeks = useCallback(() => {
         if (!curriculum) return;
@@ -292,9 +315,7 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
                                         ? "הרחב את סיכום השבועות"
                                         : "צמצם את סיכום השבועות"
                                 }
-                                onClick={() =>
-                                    setIsSummaryCollapsed((prev) => !prev)
-                                }
+                                onClick={toggleSummary}
                                 size="small"
                             >
                                 {isSummaryCollapsed ? (
@@ -323,6 +344,7 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
                             />
                             <ImportExportMenuButton
                                 color="primary"
+                                command={{ id: "gantt.weeks", group: COMMAND_GROUPS.gantt, keywords: ["weeks", "שבועות"] }}
                                 exportLabel="ייצוא שבועות"
                                 importLabel="ייבוא שבועות"
                                 onExport={handleExportWeeks}
@@ -354,9 +376,7 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
                                     control={
                                         <Switch
                                             checked={isCompact}
-                                            onChange={(e) =>
-                                                setIsCompact(e.target.checked)
-                                            }
+                                            onChange={toggleCompact}
                                             size="small"
                                         />
                                     }

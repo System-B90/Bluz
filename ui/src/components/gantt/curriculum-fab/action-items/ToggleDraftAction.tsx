@@ -34,6 +34,7 @@ export function ToggleDraftAction({
     return (
         <ActionItemButton
             color={sourceCurriculum?.isDraft ? "success" : "warning"}
+            command={{ id: "gantt.curriculum.draft.toggle", keywords: ["publish", "draft", "פרסום", "דראפט"] }}
             loading={loading}
             onClick={clickHandler}
             startIcon={

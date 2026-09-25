@@ -5,11 +5,8 @@ import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { BluzHelpButton } from "@/components/app-onboarding/BluzHelpButton";
 import { CutToScheduleAction } from "@/components/gantt/curriculum-fab/action-items/CutToScheduleAction";
-import { ToggleArchiveAction } from "@/components/gantt/curriculum-fab/action-items/ToggleArchiveAction";
-import { ToggleDraftAction } from "@/components/gantt/curriculum-fab/action-items/ToggleDraftAction";
 import { GanttCreationDeletionCallbackProps } from "@/components/gantt/curriculum-fab/CurriculumActionItems";
 import { CurriculmImportExportButton } from "@/components/gantt/curriculum-view/components/curriculum-about-card/CurriculumImportExportButton";
-import { useCurriculumProviderActions } from "@/components/gantt/state/context";
 import { useCurriculumList } from "@/components/gantt/state/curriculum-list";
 
 export type CurriculumStatusActionsProps = {
@@ -18,15 +15,14 @@ export type CurriculumStatusActionsProps = {
     setCurrentCurriculum?: Dispatch<SetStateAction<GanttCurriculumId | null>>;
 } & GanttCreationDeletionCallbackProps;
 
-type ActionKey = "cutToSchedule" | "importExport" | "toggleArchive" | "toggleDraft";
+type ActionKey = "cutToSchedule" | "importExport";
 
 export function CurriculumStatusActions({
     curriculumId,
     curriculum,
     onCreate,
 }: CurriculumStatusActionsProps) {
-    const { dispatch } = useCurriculumProviderActions();
-    const { updateCurriculum, onCreate: contextOnCreate } = useCurriculumList();
+    const { onCreate: contextOnCreate } = useCurriculumList();
     const handleCreate = onCreate ?? contextOnCreate;
     const [ activeAction, setActiveAction ] = useState<ActionKey | null>(null);
 
@@ -34,18 +30,6 @@ export function CurriculumStatusActions({
         (key: ActionKey) => (loading: boolean) =>
             setActiveAction(loading ? key : null),
         [],
-    );
-
-    const onUpdate = useCallback(
-        (updatedCurriculum: GanttCurriculumDocument) => {
-            if (!curriculumId) return;
-            dispatch({
-                type: "UPDATE_CURRICULUM",
-                payload: { id: curriculumId, updates: updatedCurriculum },
-            });
-            updateCurriculum(curriculumId, updatedCurriculum);
-        },
-        [ curriculumId, dispatch, updateCurriculum ],
     );
 
     if (!curriculumId) return null;
@@ -63,20 +47,6 @@ export function CurriculumStatusActions({
                 onProcessingChange={ makeProcessingHandler("importExport") }
             />
 
-            <ToggleDraftAction
-                disabled={ !curriculum }
-                loading={ activeAction === "toggleDraft" }
-                onProcessingChange={ makeProcessingHandler("toggleDraft") }
-                onUpdate={ onUpdate }
-                sourceCurriculum={ curriculum }
-            />
-            <ToggleArchiveAction
-                disabled={ !curriculum }
-                loading={ activeAction === "toggleArchive" }
-                onProcessingChange={ makeProcessingHandler("toggleArchive") }
-                onUpdate={ onUpdate }
-                sourceCurriculum={ curriculum }
-            />
             <CutToScheduleAction
                 disabled={ !curriculum }
                 loading={ activeAction === "cutToSchedule" }

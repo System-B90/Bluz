@@ -1,3 +1,4 @@
+import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import Box, { BoxProps } from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
@@ -6,6 +7,8 @@ import { useSnackbar } from "notistack";
 import React, { useCallback } from "react";
 
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { COMMAND_GROUPS } from "@/components/app-commands/labels";
+import { useCommand } from "@/components/app-commands/use-command";
 import { GANTT_ANCHORS } from "@/components/app-onboarding/anchors";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { ImportExportMenuButton } from "@/components/base/ImportExportMenuButton";
@@ -39,6 +42,19 @@ export function SyllabusesActionsBox({
     const curriculum = state.curriculums[ curriculumId ];
 
     const { createSyllabus } = useSyllabusActions();
+
+    const allExpanded = expandedCount === visibleSyllabusCount;
+    useCommand(onToggleAllExpanded
+        ? {
+            id: "gantt.syllabuses.expand.toggle",
+            title: allExpanded ? "לצמצם הכל" : "להרחיב הכל",
+            group: COMMAND_GROUPS.gantt,
+            icon: <UnfoldMoreIcon />,
+            keywords: [ "expand all", "collapse all", "הרחבה", "צמצום" ],
+            enabled: visibleSyllabusCount > 0,
+            run: onToggleAllExpanded,
+        }
+        : null);
     const { createModule } = useModuleActions();
     const { createEvent } = useModuleEventActions();
 
@@ -242,13 +258,14 @@ export function SyllabusesActionsBox({
                     size="small"
                     variant="outlined"
                 >
-                    { expandedCount === visibleSyllabusCount
+                    { allExpanded
                         ? "לצמצם הכל"
                         : "להרחיב הכל" }
                 </Button>
             ) }
             <ImportExportMenuButton
                 color="primary"
+                command={ { id: "gantt.syllabuses", group: COMMAND_GROUPS.gantt, keywords: [ "syllabuses", "סילבוסים" ] } }
                 exportLabel="ייצוא סילבוסים"
                 importLabel="ייבוא סילבוסים"
                 onExport={ handleExport }

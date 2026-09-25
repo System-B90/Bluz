@@ -42,6 +42,7 @@ export function ToggleArchiveAction({
     return (
         <ActionItemButton
             color={sourceCurriculum?.isArchived ? "info" : "inherit"}
+            command={{ id: "gantt.curriculum.archive.toggle", keywords: ["archive", "unarchive", "restore", "ארכיון"] }}
             loading={loading}
             onClick={clickHandler}
             startIcon={
