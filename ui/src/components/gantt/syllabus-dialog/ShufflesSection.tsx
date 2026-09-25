@@ -38,6 +38,9 @@ import { ShuffleDeleteDialog } from "@/components/gantt/syllabus-dialog/ShuffleD
 
 const NO_USAGES: ShuffleUsages = { events: [], modules: [] };
 const NO_DESCRIPTIONS: ShuffleDescriptions = {};
+// Shared input name: the browser keys its saved autocomplete entries on it,
+// so every description field offers what was typed in any dialog before.
+const SHUFFLE_DESCRIPTION_AUTOCOMPLETE = "shuffle-description";
 
 export type ShufflesSectionProps = {
     syllabusId: GanttSyllabusId | null;
@@ -166,8 +169,9 @@ function ShuffleDescriptionField({
 
     return (
         <TextField
-            autoComplete="off"
+            autoComplete="on"
             fullWidth
+            name={SHUFFLE_DESCRIPTION_AUTOCOMPLETE}
             onBlur={() => {
                 if (draft.trim() !== value) onCommit(draft);
             }}
@@ -433,9 +437,10 @@ export function ShufflesSection({ syllabusId }: ShufflesSectionProps) {
                     size="small"
                 />
                 <TextField
-                    autoComplete="off"
+                    autoComplete="on"
                     fullWidth
                     label="תיאור"
+                    name={SHUFFLE_DESCRIPTION_AUTOCOMPLETE}
                     onChange={(e) => setDraftDescription(e.target.value)}
                     size="small"
                     slotProps={{
