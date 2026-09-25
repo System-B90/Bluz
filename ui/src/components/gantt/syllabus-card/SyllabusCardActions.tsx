@@ -54,7 +54,17 @@ export function SyllabusCardActions({
             >
                 עריכת סילבוס
             </Button>
-            <Stack direction="row" gap={0.5} sx={{ marginInlineStart: "auto" }}>
+            <Stack
+                direction="row"
+                gap={0.5}
+                sx={{
+                    marginInlineStart: "auto",
+                    "& .MuiChip-root .MuiChip-icon": {
+                        marginInlineEnd: -0.25,
+                        marginInlineStart: 0.75,
+                    },
+                }}
+            >
                 <Tooltip title="שאפלים במקצוע">
                     <Chip
                         icon={<GroupsIcon fontSize="small" />}
