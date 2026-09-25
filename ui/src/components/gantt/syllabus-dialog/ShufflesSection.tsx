@@ -42,8 +42,8 @@ type PendingDeletion = {
 /** The usage chip's label: how many modules and events carry the shuffle. */
 export function shuffleUsageLabel(count: number): string {
     if (count === 0) return "לא בשימוש";
-    if (count === 1) return "פריט אחד";
-    return `${count} פריטים`;
+    if (count === 1) return "מערך/מופע אחד";
+    return `${count} מערכים/מופעים`;
 }
 
 /** How many of the syllabus' modules and events carry each shuffle name. */
@@ -116,7 +116,9 @@ export function ShufflesSection({ syllabusId }: ShufflesSectionProps) {
     const addHandler = useCallback(() => {
         const name = normalizeShuffleName(draft);
         if (!name) return;
-        if (shuffles.some((shuffle) => normalizeShuffleName(shuffle) === name)) {
+        if (
+            shuffles.some((shuffle) => normalizeShuffleName(shuffle) === name)
+        ) {
             enqueueSnackbar("שאפל בשם הזה כבר קיים במקצוע.", {
                 variant: "warning",
             });
@@ -206,8 +208,9 @@ export function ShufflesSection({ syllabusId }: ShufflesSectionProps) {
     return (
         <Stack gap={1.5}>
             <Alert severity="info">
-                השאפלים שייכים למקצוע. מערכים ומופעים מתויגים בשאפלים האלה, ומופע
-                יחיד יכול להתפצל לקבוצה — מופע לכל שאפל, באותו שם ובזמנים שונים.
+                השאפלים שייכים למקצוע. מערכים ומופעים מתויגים בשאפלים האלה,
+                ומופע יחיד יכול להתפצל לקבוצה — מופע לכל שאפל, באותו שם ובזמנים
+                שונים.
             </Alert>
 
             <Stack alignItems="flex-start" direction="row" gap={1}>

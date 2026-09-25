@@ -1,4 +1,3 @@
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import FormControl from "@mui/material/FormControl";
@@ -6,11 +5,15 @@ import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import { useCallback, useId } from "react";
 
 import { CourseId } from "@/api-shared/types/course";
-import { GanttSyllabus, GanttSyllabusId } from "@/api-shared/types/gantt/models";
+import {
+    GanttSyllabus,
+    GanttSyllabusId,
+} from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
@@ -30,7 +33,9 @@ const EMPTY_LEADS: Array<number> = [];
  * (#702). Both are what the gantt filters narrow by, and the leads are pinned
  * to the top of every orchestrator select under the syllabus.
  */
-export function SyllabusLinksSection({ syllabusId }: SyllabusLinksSectionProps) {
+export function SyllabusLinksSection({
+    syllabusId,
+}: SyllabusLinksSectionProps) {
     const { enqueueSnackbar } = useSnackbar();
     const coursesLabelId = useId();
     const leadsLabelId = useId();
@@ -81,36 +86,44 @@ export function SyllabusLinksSection({ syllabusId }: SyllabusLinksSectionProps) 
 
     return (
         <Stack gap={2}>
-            {courseIds.length === 0 ? (
-                <Alert severity="warning">
-                    למקצוע אין מסלול משויך. שיוך לפחות מסלול אחד מאפשר לסנן את
-                    הגאנט לפי מסלול.
-                </Alert>
-            ) : null}
-
             <FormControl fullWidth size="small">
-                <InputLabel id={coursesLabelId}>מסלולים</InputLabel>
+                <InputLabel id={coursesLabelId} shrink>
+                    מסלולים
+                </InputLabel>
                 <Select<Array<CourseId>>
+                    displayEmpty
                     label="מסלולים"
                     labelId={coursesLabelId}
                     multiple
+                    notched
                     onChange={onCoursesChange}
-                    renderValue={(selected) => (
-                        <Box display="flex" flexWrap="wrap" gap={0.5}>
-                            {selected.map((id) => {
-                                const course = getCourse(id);
-                                if (!course) return null;
-                                return (
-                                    <Chip
-                                        key={id}
-                                        label={course.name}
-                                        size="small"
-                                        sx={{ bgcolor: course.color }}
-                                    />
-                                );
-                            })}
-                        </Box>
-                    )}
+                    renderValue={(selected) =>
+                        selected.length === 0 ? (
+                            <Typography
+                                color="warning.main"
+                                component="span"
+                                variant="body2"
+                            >
+                                למקצוע אין מסלול משויך. שיוך לפחות מסלול אחד
+                                מאפשר לסנן את הגאנט לפי מסלול.
+                            </Typography>
+                        ) : (
+                            <Box display="flex" flexWrap="wrap" gap={0.5}>
+                                {selected.map((id) => {
+                                    const course = getCourse(id);
+                                    if (!course) return null;
+                                    return (
+                                        <Chip
+                                            key={id}
+                                            label={course.name}
+                                            size="small"
+                                            sx={{ bgcolor: course.color }}
+                                        />
+                                    );
+                                })}
+                            </Box>
+                        )
+                    }
                     value={courseIds}
                 >
                     {courses.map((course) => (

@@ -8,6 +8,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import { Dispatch, SetStateAction, useCallback, useState } from "react";
@@ -83,7 +84,8 @@ export function SyllabusDialog({
             if (!syllabusId || !syllabus) return;
 
             const changed = Object.entries(updates).some(
-                ([key, value]) => syllabus[key as keyof GanttSyllabus] !== value,
+                ([key, value]) =>
+                    syllabus[key as keyof GanttSyllabus] !== value,
             );
             if (!changed) return;
 
@@ -203,7 +205,10 @@ export function SyllabusDialog({
                         <SyllabusLinksSection syllabusId={syllabusId} />
 
                         <Divider flexItem>
-                            <Typography color="text.secondary" variant="caption">
+                            <Typography
+                                color="text.secondary"
+                                variant="caption"
+                            >
                                 שאפלים
                             </Typography>
                         </Divider>
@@ -235,14 +240,20 @@ export function SyllabusDialog({
             </DialogContent>
 
             <DialogActions>
+                <Tooltip title="הסילבוס יישאר במערכת, אך לא יהיה משויך עוד לתוכנית הלימודים">
+                    <Button
+                        color="warning"
+                        onClick={() => void unlinkHandler()}
+                        startIcon={<LinkOffIcon fontSize="small" />}
+                    >
+                        הסרה מהגאנט
+                    </Button>
+                </Tooltip>
                 <Button
-                    color="warning"
-                    onClick={() => void unlinkHandler()}
-                    startIcon={<LinkOffIcon fontSize="small" />}
+                    color="primary"
+                    onClick={closeHandler}
+                    variant="contained"
                 >
-                    הסרה מהגאנט
-                </Button>
-                <Button color="primary" onClick={closeHandler} variant="contained">
                     סגירה
                 </Button>
             </DialogActions>

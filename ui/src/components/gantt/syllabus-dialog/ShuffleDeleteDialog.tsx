@@ -84,8 +84,8 @@ export function ShuffleDeleteDialog({
             <DialogContent>
                 <Stack gap={1.5}>
                     <Alert severity="warning">
-                        השאפלים {quoted} בשימוש בפריטים הבאים. מחיקתם תסיר אותם
-                        גם מהפריטים האלה.
+                        השאפלים {quoted} בשימוש במערכים ובמופעים הבאים. מחיקתם
+                        תסיר אותם גם מהם.
                     </Alert>
                     <UsageList items={usages.modules} title="מערכים" />
                     <UsageList items={usages.events} title="מופעים" />
@@ -98,7 +98,7 @@ export function ShuffleDeleteDialog({
                                 }
                             />
                         }
-                        label="הבנתי, יש להסיר את השאפלים גם מהפריטים המפורטים."
+                        label="הבנתי, יש להסיר את השאפלים גם מהמערכים ומהמופעים המפורטים."
                     />
                 </Stack>
             </DialogContent>
