@@ -18,11 +18,10 @@ export function InstructorCard({
 }: {
     instructor: CourseUser;
     isOverlay?: boolean;
-})
-{
+}) {
     return (
         <Card
-            sx={ (theme) => ({
+            sx={(theme) => ({
                 p: 1.2,
                 display: "flex",
                 alignItems: "center",
@@ -38,50 +37,54 @@ export function InstructorCard({
                 cursor: isOverlay ? "grabbing" : "grab",
                 "&:hover": {
                     borderColor: "secondary.main",
-                    bgcolor: "action.hover",
+                    // The cursor always hovers the drag overlay, and the
+                    // translucent hover color let the list show through it.
+                    bgcolor: isOverlay ? "background.paper" : "action.hover",
                     transform: isOverlay ? "none" : "translateY(-1px)",
                     boxShadow: isOverlay
                         ? undefined
                         : `0 4px 12px rgb(${theme.vars.palette.primary.mainChannel} / 0.1)`,
                 },
                 ...theme.applyStyles("dark", {
-                    bgcolor: "rgba(255, 255, 255, 0.03)",
+                    bgcolor: isOverlay
+                        ? "background.paper"
+                        : "rgba(255, 255, 255, 0.03)",
                     "&:hover": {
                         boxShadow: isOverlay
                             ? undefined
                             : "0 4px 12px rgba(0, 0, 0, 0.25)",
                     },
                 }),
-            }) }
+            })}
         >
             <HiveAvatar
-                alt={ instructor.display_name ?? "" }
-                hiveId={ instructor.id }
-                sx={ {
+                alt={instructor.display_name ?? ""}
+                hiveId={instructor.id}
+                sx={{
                     bgcolor: "secondary.light",
                     color: "secondary.contrastText",
                     width: 26,
                     height: 26,
                     fontSize: "0.75rem",
                     fontWeight: 700,
-                } }
+                }}
             />
             <Typography
-                sx={ {
+                sx={{
                     fontWeight: 700,
                     fontSize: "0.8rem",
                     color: "text.primary",
                     userSelect: "none",
-                } }
+                    whiteSpace: "nowrap",
+                }}
             >
-                { instructor.display_name }
+                {instructor.display_name}
             </Typography>
         </Card>
     );
 }
 
-function DraggableInstructorItem({ instructor }: { instructor: CourseUser; })
-{
+function DraggableInstructorItem({ instructor }: { instructor: CourseUser }) {
     const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
         id: `instructor-${instructor.id}`,
         data: {
@@ -92,36 +95,34 @@ function DraggableInstructorItem({ instructor }: { instructor: CourseUser; })
 
     return (
         <Box
-            ref={ setNodeRef }
-            { ...listeners }
-            { ...attributes }
-            sx={ {
+            ref={setNodeRef}
+            {...listeners}
+            {...attributes}
+            sx={{
                 opacity: isDragging ? 0.4 : 1,
                 touchAction: "none",
-            } }
+            }}
         >
-            <InstructorCard instructor={ instructor } />
+            <InstructorCard instructor={instructor} />
         </Box>
     );
 }
 
-export function InstructorSourceList()
-{
+export function InstructorSourceList() {
     const { instructors } = useHiveUsers();
-    const [ search, setSearch ] = useState("");
+    const [search, setSearch] = useState("");
 
-    const filtered = useMemo(() =>
-    {
+    const filtered = useMemo(() => {
         const query = search.trim().toLowerCase();
         if (!query) return instructors;
         return instructors.filter((instructor) =>
             instructor.display_name.toLowerCase().includes(query),
         );
-    }, [ instructors, search ]);
+    }, [instructors, search]);
 
     return (
         <Box
-            sx={ (theme) => ({
+            sx={(theme) => ({
                 width: 220,
                 borderLeft: "1px solid",
                 borderColor: "divider",
@@ -132,40 +133,45 @@ export function InstructorSourceList()
                 height: "100%",
                 boxSizing: "border-box",
                 bgcolor: "rgba(103, 200, 221, 0.02)",
-                ...theme.applyStyles("dark", { bgcolor: "rgba(255, 255, 255, 0.01)" }),
-            }) }
+                ...theme.applyStyles("dark", {
+                    bgcolor: "rgba(255, 255, 255, 0.01)",
+                }),
+            })}
         >
             <Box>
                 <Typography
-                    sx={ {
+                    sx={{
                         fontWeight: 800,
                         fontSize: "0.95rem",
                         color: "text.primary",
                         mb: 0.5,
-                    } }
+                    }}
                 >
                     מדריכים זמינים
                 </Typography>
                 <Typography
-                    sx={ {
+                    sx={{
                         fontSize: "0.72rem",
                         color: "text.secondary",
-                    } }
+                    }}
                 >
                     גרור מדריך לתוך מסלול כדי לשייכו
                 </Typography>
             </Box>
 
             <TextField
-                onChange={ (e) => setSearch(e.target.value) }
+                onChange={(e) => setSearch(e.target.value)}
                 placeholder="חיפוש מדריך..."
                 size="small"
-                slotProps={ {
+                slotProps={{
                     input: {
                         startAdornment: (
                             <InputAdornment position="start">
                                 <SearchIcon
-                                    sx={ { fontSize: 16, color: "text.secondary" } }
+                                    sx={{
+                                        fontSize: 16,
+                                        color: "text.secondary",
+                                    }}
                                 />
                             </InputAdornment>
                         ),
@@ -175,13 +181,13 @@ export function InstructorSourceList()
                             bgcolor: "background.paper",
                         },
                     },
-                } }
-                value={ search }
+                }}
+                value={search}
                 variant="outlined"
             />
 
             <Box
-                sx={ {
+                sx={{
                     display: "flex",
                     flexDirection: "column",
                     gap: 1,
@@ -190,23 +196,23 @@ export function InstructorSourceList()
                     pr: 0.5,
                     pt: 1,
                     mt: -1,
-                } }
+                }}
             >
-                { filtered.map((inst) => (
-                    <DraggableInstructorItem instructor={ inst } key={ inst.id } />
-                )) }
-                { filtered.length === 0 && (
+                {filtered.map((inst) => (
+                    <DraggableInstructorItem instructor={inst} key={inst.id} />
+                ))}
+                {filtered.length === 0 && (
                     <Typography
                         align="center"
-                        sx={ {
+                        sx={{
                             color: "text.secondary",
                             fontSize: "0.78rem",
                             mt: 4,
-                        } }
+                        }}
                     >
                         לא נמצאו מדריכים
                     </Typography>
-                ) }
+                )}
             </Box>
         </Box>
     );
