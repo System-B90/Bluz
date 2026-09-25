@@ -51,6 +51,7 @@ vi.mock("@/components/base/IterationProvider", () => ({
         currentIterationId: undefined,
         iterations: [],
     }),
+    useActiveIterationHiveUrl: () => undefined,
 }));
 
 import { EventType } from "@/api-shared/types/event";
