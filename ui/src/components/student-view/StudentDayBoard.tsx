@@ -342,6 +342,9 @@ export function StudentDayBoard({ date }: { date?: string }) {
                 <Calendar
                     components={components}
                     date={day.toDate()}
+                    // Students must never see tiles stacked over each other:
+                    // concurrent events in a room share its width instead.
+                    dayLayoutAlgorithm="no-overlap"
                     defaultView={Views.DAY}
                     endAccessor="end"
                     eventPropGetter={(event) => {

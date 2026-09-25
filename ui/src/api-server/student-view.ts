@@ -4,10 +4,11 @@ import { DbCourses } from "@/api-server/db-courses";
 import { DbCustomColors } from "@/api-server/db-custom-colors";
 import { DbEvent, DbEventDocument } from "@/api-server/db-event";
 import { DbSettings } from "@/api-server/db-settings";
+import { HiveClient } from "@/api-server/hive/client";
 import { createHiveServiceClient } from "@/api-server/hive/service-client";
 import { authOptions } from "@/api-server/hive/sso";
 import { DatabaseController } from "@/api-server/mongo-db-controller";
-import { relatedCourses } from "@/api-shared/course-tree";
+import { relatedCoursesResolver } from "@/api-shared/course-tree";
 import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 import { ForbiddenError, UserNotLoggedInError } from "@/api-shared/errors";
 import { Clearance } from "@/api-shared/types/hive";
@@ -21,7 +22,7 @@ import {
 import { AuthSessionData } from "@/api-shared/types/sso";
 import {
     ApiStudentScheduleGetResponse,
-    StudentEvent,
+    StudentEventWire,
 } from "@/api-shared/types/student-view";
 
 /** Colour used when nothing resolves — matches the calendar's own fallback. */
@@ -95,10 +96,11 @@ export function resolveStudentViewDate(
  * string, which never identifies the subject. Hive being unavailable degrades
  * to the fallback colour instead of failing the request.
  */
-async function getSubjectColors(): Promise<Map<string, string>> {
+async function getSubjectColors(
+    hive: Promise<HiveClient>,
+): Promise<Map<string, string>> {
     try {
-        const hive = await createHiveServiceClient();
-        const subjects = await hive.getSubjects();
+        const subjects = await (await hive).getSubjects();
         return new Map(
             subjects
                 .filter((subject) => Boolean(subject.color))
@@ -133,6 +135,7 @@ function resolveColorHex(
 /** Room id → display name, for both Hive and custom rooms. */
 async function getRoomNames(
     controller: DatabaseController,
+    hive: Promise<HiveClient>,
 ): Promise<Map<string, string>> {
     const names = new Map<string, string>();
     const customRooms = await controller.rooms.find({}).toArray();
@@ -140,8 +143,7 @@ async function getRoomNames(
         names.set(`${RoomSource.Custom}:${room.id}`, room.name);
     }
     try {
-        const hive = await createHiveServiceClient();
-        for (const room of await hive.getRooms()) {
+        for (const room of await (await hive).getRooms()) {
             // `display_name` is the room's full path ("רמת גן / Bis90 / Room");
             // the calendar's own column headers use the short `name`.
             names.set(`${RoomSource.Hive}:${room.id}`, room.name || room.display_name);
@@ -167,44 +169,68 @@ export async function buildStudentSchedule(
     const dayStart = dayjs.tz(date, DATE_FORMAT, APP_TIMEZONE).startOf("day");
     const dayEnd = dayStart.add(1, "day");
 
-    const events = await DbEvent.getInRange(
-        dayStart.toDate(),
-        dayEnd.toDate(),
-        undefined,
-        { hidden: { $ne: true } },
-        controller,
-    );
+    // One service-client login shared by both Hive lookups; each still
+    // degrades on its own when Hive is down.
+    const hive = createHiveServiceClient();
+    hive.catch(() => undefined);
 
-    const [customColorDocs, courses, roomNames, scheduleSetting] =
-        await Promise.all([
-            DbCustomColors.get(),
-            DbCourses.get(undefined, controller),
-            getRoomNames(controller),
-            DbSettings.get(SCHEDULE_SETTINGS_KEY, undefined, controller) as
-                Promise<null | ScheduleSettings>,
-        ]);
+    const [
+        events,
+        customColorDocs,
+        courses,
+        roomNameById,
+        subjectColors,
+        scheduleSetting,
+    ] = await Promise.all([
+        DbEvent.getInRange(
+            dayStart.toDate(),
+            dayEnd.toDate(),
+            undefined,
+            { hidden: { $ne: true } },
+            controller,
+        ),
+        DbCustomColors.get(),
+        DbCourses.get(undefined, controller),
+        getRoomNames(controller, hive),
+        getSubjectColors(hive),
+        DbSettings.get(SCHEDULE_SETTINGS_KEY, undefined, controller) as
+            Promise<null | ScheduleSettings>,
+    ]);
     const customColors = new Map(customColorDocs.map((c) => [c.id, c.hex]));
-    const courseNames = new Map(courses.map((c) => [c.id, c.name]));
-    const subjectColors = await getSubjectColors();
+    const courseNameById = new Map(courses.map((c) => [c.id, c.name]));
+    const resolveRelated = relatedCoursesResolver(courses);
 
-    const projected: Array<StudentEvent> = events.map((event) => ({
-        id: event.id,
-        name: event.name,
-        startTime: new Date(event.startTime).toISOString(),
-        endTime: new Date(event.endTime).toISOString(),
-        color: resolveColorHex(event, customColors, subjectColors),
-        rooms: (event.rooms ?? [])
-            .map((room) => roomNames.get(`${room.source}:${room.id}`))
-            .filter((name): name is string => Boolean(name)),
-        courses: (event.courses ?? [])
-            .map((courseId) => courseNames.get(courseId))
-            .filter((name): name is string => Boolean(name)),
-        relatedCourses: [...relatedCourses(event.courses ?? [], courses)]
-            .map((courseId) => courseNames.get(courseId))
-            .filter((name): name is string => Boolean(name)),
-    }));
+    const roomNames = new Interner<string>();
+    const courseNames = new Interner<string>();
+    const courseGroups = new Interner<string, Array<number>>();
+    /** Course ids → group index. Unknown ids are dropped, order is kept. */
+    const groupOf = (courseIds: Iterable<string>): number => {
+        const indices: Array<number> = [];
+        for (const id of courseIds) {
+            const name = courseNameById.get(id);
+            if (name) indices.push(courseNames.add(name));
+        }
+        return courseGroups.add(indices.join(","), indices);
+    };
 
-    projected.sort((a, b) => a.startTime.localeCompare(b.startTime));
+    const projected: Array<StudentEventWire> = events
+        .map((event) => {
+            const courseIds = event.courses ?? [];
+            return {
+                id: event.id,
+                name: event.name,
+                startTime: new Date(event.startTime).toISOString(),
+                endTime: new Date(event.endTime).toISOString(),
+                color: resolveColorHex(event, customColors, subjectColors),
+                rooms: (event.rooms ?? []).flatMap((room) => {
+                    const name = roomNameById.get(`${room.source}:${room.id}`);
+                    return name ? [roomNames.add(name)] : [];
+                }),
+                courses: groupOf(courseIds),
+                relatedCourses: groupOf(resolveRelated(courseIds)),
+            };
+        })
+        .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
     return {
         calendarDayEndTime:
@@ -212,7 +238,25 @@ export async function buildStudentSchedule(
         calendarDayStartTime:
             scheduleSetting?.calendarDayStartTime ??
             DEFAULT_CALENDAR_DAY_START_TIME,
+        courseGroups: courseGroups.values,
+        courseNames: courseNames.values,
         date,
         events: projected,
+        roomNames: roomNames.values,
     };
+}
+
+/** Assigns each distinct key a stable position in `values`. */
+class Interner<K, V = K> {
+    readonly values: Array<V> = [];
+    private readonly indexByKey = new Map<K, number>();
+
+    add(key: K, value: V = key as unknown as V): number {
+        let index = this.indexByKey.get(key);
+        if (index === undefined) {
+            index = this.values.push(value) - 1;
+            this.indexByKey.set(key, index);
+        }
+        return index;
+    }
 }

@@ -43,11 +43,36 @@ export type StudentEvent = {
     relatedCourses: Array<string>;
 };
 
+/**
+ * Wire form of `StudentEvent`. Course and room names are shared by most of a
+ * day's events, and `relatedCourses` can span a whole course tree, so each
+ * name is sent once and events reference it by position:
+ * - `rooms` indexes `ApiStudentScheduleGetResponse.roomNames`.
+ * - `courses` / `relatedCourses` index `courseGroups`, whose entries index
+ *   `courseNames`. Events with the same course set share one group.
+ *
+ * Indices are positions in this one response only — never course or room ids.
+ */
+export type StudentEventWire = Omit<
+    StudentEvent,
+    "courses" | "relatedCourses" | "rooms"
+> & {
+    courses: number;
+    relatedCourses: number;
+    rooms: Array<number>;
+};
+
 export type ApiStudentScheduleGetPayload = void;
 export type ApiStudentScheduleGetResponse = {
     /** The day the events belong to, `yyyy-MM-dd` in the app timezone. */
     date: string;
-    events: Array<StudentEvent>;
+    events: Array<StudentEventWire>;
+    /** Course / shuffle display names referenced by `courseGroups`. */
+    courseNames: Array<string>;
+    /** Distinct course-name index sets referenced by events. */
+    courseGroups: Array<Array<number>>;
+    /** Room display names referenced by `events[].rooms`. */
+    roomNames: Array<string>;
     /**
      * The staff calendar's own grid bounds (`HH:mm`), so the student board
      * shows the same window instead of a bare 00:00-24:00 day. Carried on the
@@ -56,6 +81,12 @@ export type ApiStudentScheduleGetResponse = {
     calendarDayStartTime: string;
     calendarDayEndTime: string;
 };
+
+/** Client-side result of `apiGetStudentSchedule`, names resolved. */
+export type StudentSchedule = Omit<
+    ApiStudentScheduleGetResponse,
+    "courseGroups" | "courseNames" | "events" | "roomNames"
+> & { events: Array<StudentEvent> };
 
 /**
  * Query param staff may use to preview another day. Ignored — and rejected —
