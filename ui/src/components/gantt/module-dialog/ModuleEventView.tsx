@@ -2,7 +2,6 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import DriveFileMoveIcon from "@mui/icons-material/DriveFileMove";
 import EditIcon from "@mui/icons-material/Edit";
 import FileCopyIcon from "@mui/icons-material/FileCopy";
 import FormControl from "@mui/material/FormControl";
@@ -29,7 +28,6 @@ import { InstructorSelect } from "@/components/base/InstructorSelect";
 import { NumberSpinner } from "@/components/base/NumberSpinner";
 import { useConfirmDialog } from "@/components/base/UseConfirmDialog";
 import { EVENT_ANCHOR_PREFIX } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
-import { MoveEventDialog } from "@/components/gantt/module-dialog/MoveEventDialog";
 import { ShuffleChip } from "@/components/gantt/ShuffleChip";
 import { useCurriculumProviderActions, useCurriculumState } from "@/components/gantt/state/context";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
@@ -88,7 +86,6 @@ export function ModuleEventView({
     const { deleteEvent, updateEvent, duplicateEvent } = useModuleEventActions();
     const { openEventDialog } = useCurriculumProviderActions();
     const state = useCurriculumState();
-    const [ moveDialogOpen, setMoveDialogOpen ] = useState(false);
     const parentSyllabusId = state.modules[ moduleId ]?.syllabusId;
     const leadInstructorIds =
         (parentSyllabusId && state.syllabuses[ parentSyllabusId ]?.leadInstructorIds) ||
@@ -256,19 +253,10 @@ export function ModuleEventView({
                 <IconButton onClick={ handleDuplicateClick } size="small" title="שכפול המופע">
                     <FileCopyIcon color="info" fontSize="small" />
                 </IconButton>
-                <IconButton onClick={ () => setMoveDialogOpen(true) } size="small" title="העבר מופע למערך אחר">
-                    <DriveFileMoveIcon color="action" fontSize="small" />
-                </IconButton>
                 <IconButton onClick={ () => void handleDeleteClick() } size="small" title="מחיקת המופע">
                     <DeleteIcon color="error" fontSize="small" />
                 </IconButton>
             </TableCell>
-            <MoveEventDialog
-                currentModuleId={ moduleId }
-                eventId={ eventId }
-                onClose={ () => setMoveDialogOpen(false) }
-                open={ moveDialogOpen }
-            />
             { confirmDialog }
         </TableRow>
     );
