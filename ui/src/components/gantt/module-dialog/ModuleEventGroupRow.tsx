@@ -73,7 +73,7 @@ export function ModuleEventGroupRow({
                 }}
             >
                 <TableCell sx={{ width: "1rem", pr: 0 }}>
-                    <IconButton size="small">
+                    <IconButton size="small" sx={{ p: 0 }}>
                         <ExpandMoreIcon
                             fontSize="small"
                             sx={{
