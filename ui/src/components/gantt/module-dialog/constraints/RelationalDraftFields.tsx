@@ -10,8 +10,13 @@ import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
+import { useMemo, useState } from "react";
 
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
+import {
+    searchableMenuProps,
+    SelectSearchHeader,
+} from "@/components/base/SelectSearchHeader";
 import {
     DraftConstraint,
     RelationalDraft,
@@ -33,12 +38,30 @@ export function RelationalDraftFields({
     const maxVal = draft.maxDelay ? Number(draft.maxDelay) : NaN;
     const isInvalid = !isNaN(minVal) && !isNaN(maxVal) && minVal > maxVal;
 
+    const [searchQuery, setSearchQuery] = useState("");
+    const filteredOptions = useMemo(() => {
+        const query = searchQuery.trim().toLowerCase();
+        if (!query) return Object.entries(targetOptions);
+        return Object.entries(targetOptions)
+            .map(([syllabusId, options]): [string, Array<TargetOption>] => [
+                syllabusId,
+                curriculumState.syllabuses[syllabusId]?.title
+                    .toLowerCase()
+                    .includes(query)
+                    ? options
+                    : options.filter((o) =>
+                        o.title.toLowerCase().includes(query),
+                    ),
+            ])
+            .filter(([, options]) => options.length > 0);
+    }, [targetOptions, curriculumState, searchQuery]);
+
     return (
         <Stack direction="column" spacing={0} sx={{ flexGrow: 1 }}>
             <Stack direction="row" spacing={1} sx={{ flexGrow: 1 }}>
                 <Select
                     displayEmpty
-                    MenuProps={{ PaperProps: { style: { maxHeight: 400 } } }}
+                    MenuProps={searchableMenuProps(undefined)}
                     onChange={(e) => {
                         const selectedId = e.target.value;
                         let selectedType: "" | "event" | "module" = "";
@@ -57,6 +80,7 @@ export function RelationalDraftFields({
                             targetType: selectedType,
                         });
                     }}
+                    onClose={() => setSearchQuery("")}
                     renderValue={(value) => {
                         if (!value) return "בחירת יעד";
                         for (const group of Object.values(targetOptions)) {
@@ -69,12 +93,20 @@ export function RelationalDraftFields({
                     sx={{ minWidth: 200, flexGrow: 1 }}
                     value={draft.targetId}
                 >
-                    {Object.entries(targetOptions).map(
+                    <SelectSearchHeader
+                        onChange={setSearchQuery}
+                        placeholder="חיפוש יעד..."
+                        value={searchQuery}
+                    />
+                    {filteredOptions.map(
                         ([syllabusId, options]) => {
                             const syllabus =
                                 curriculumState.syllabuses[syllabusId];
                             return [
-                                <ListSubheader key={`header-${syllabusId}`}>
+                                <ListSubheader
+                                    disableSticky
+                                    key={`header-${syllabusId}`}
+                                >
                                     {syllabus.title}
                                 </ListSubheader>,
                                 ...options.map((option) => {
