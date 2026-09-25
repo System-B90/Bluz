@@ -2,10 +2,9 @@ import { NumberField as BaseNumberField } from "@base-ui/react/number-field";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import FormControl from "@mui/material/FormControl";
-import InputAdornment from "@mui/material/InputAdornment";
-import OutlinedInput from "@mui/material/OutlinedInput";
+import IconButton from "@mui/material/IconButton";
+import { alpha } from "@mui/material/styles";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
@@ -80,6 +79,7 @@ export function NumberSpinner({
     const sharedUnit = useSessionUnit();
     const unit = unitToggle ? sharedUnit : "minutes";
     const factor = unit === "hours" ? 60 : 1;
+    const small = size === "small";
     return (
         <BaseNumberField.Root
             {...other}
@@ -94,17 +94,32 @@ export function NumberSpinner({
                     ref={props.ref}
                     required={state.required}
                     size={size}
-                    sx={{
-                        "& .MuiButton-root": {
-                            borderColor: "divider",
-                            minWidth: 0,
-                            bgcolor: "action.hover",
-                            "&:not(.Mui-disabled)": {
-                                color: "text.primary",
-                            },
+                    sx={(theme) => ({
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 0.25,
+                        px: 0.5,
+                        py: small ? 0.25 : 0.5,
+                        border: 1,
+                        borderColor: error ? "error.main" : "divider",
+                        borderRadius: 2,
+                        bgcolor: "background.paper",
+                        transition: theme.transitions.create([
+                            "border-color",
+                            "box-shadow",
+                        ]),
+                        "&:hover": { borderColor: error ? "error.main" : "text.secondary" },
+                        "&:focus-within": {
+                            borderColor: error ? "error.main" : "primary.main",
+                            boxShadow: `0 0 0 3px ${alpha(
+                                error
+                                    ? theme.palette.error.main
+                                    : theme.palette.primary.main,
+                                0.15,
+                            )}`,
                         },
-                    }}
-                    variant="outlined"
+                        ...(state.disabled && { opacity: 0.5, pointerEvents: "none" }),
+                    })}
                 >
                     {props.children}
                 </FormControl>
@@ -112,110 +127,77 @@ export function NumberSpinner({
             step={step ?? UNIT_STEPS[unit].step}
             value={value == null ? value : value / factor}
         >
-            <Box sx={{ display: "flex" }}>
-                <BaseNumberField.Decrement
-                    render={
-                        <Button
-                            aria-label="Decrease"
-                            size={size}
-                            sx={{
-                                // Logical, not physical: in RTL the decrement
-                                // button sits on the right, so squaring the
-                                // physical right corners rounds the joint with
-                                // the input and squares the group's outer edge.
-                                borderStartEndRadius: 0,
-                                borderEndEndRadius: 0,
-                                borderInlineEnd: "0px",
-                                "&.Mui-disabled": {
-                                    borderInlineEnd: "0px",
-                                },
-                            }}
-                            variant="outlined"
-                        />
-                    }
-                >
-                    <RemoveIcon fontSize={size} />
-                </BaseNumberField.Decrement>
+            <BaseNumberField.Decrement
+                render={<IconButton aria-label="Decrease" size={size} />}
+            >
+                <RemoveIcon fontSize={size} />
+            </BaseNumberField.Decrement>
 
+            <Box
+                sx={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    minWidth: 0,
+                }}
+            >
                 <BaseNumberField.Input
                     id={id}
-                    render={(props, state) => (
-                        <OutlinedInput
-                            endAdornment={
-                                unitToggle ? <InputAdornment
-                                    position="end"
-                                    sx={{ height: "auto", m: 0, mb: 0.5 }}
-                                >
-                                    <ToggleButtonGroup
-                                        exclusive
-                                        onChange={(_e, v: DurationUnit | null) => v && setSessionUnit(v)}
-                                        size="small"
-                                        value={unit}
-                                    >
-                                        <ToggleButton sx={{ py: 0, px: 0.75 }} value="minutes">
-                                            <Typography variant="caption">דק&apos;</Typography>
-                                        </ToggleButton>
-                                        <ToggleButton sx={{ py: 0, px: 0.75 }} value="hours">
-                                            <Typography variant="caption">שעות</Typography>
-                                        </ToggleButton>
-                                    </ToggleButtonGroup>
-                                </InputAdornment> : null
-                            }
-                            inputRef={props.ref}
-                            onBlur={props.onBlur}
-                            onChange={props.onChange}
-                            onFocus={props.onFocus}
-                            onKeyDown={props.onKeyDown}
-                            onKeyUp={props.onKeyUp}
-                            slotProps={{
-                                input: {
-                                    ...props,
-                                    size:
-                                        Math.max(
-                                            (other.min?.toString() || "")
-                                                .length,
-                                            state.inputValue.length || 1,
-                                        ) + 1,
-                                    sx: {
-                                        textAlign: "center",
-                                        // MUI zeroes the end padding when an end
-                                        // adornment exists; restore it so the number
-                                        // stays centered above the toggle.
-                                        paddingInlineEnd: "14px",
-                                    },
-                                },
-                            }}
-                            sx={{
-                                pr: 0,
-                                borderRadius: 0,
-                                flex: 1,
-                                flexDirection: "column",
-                            }}
-                            value={state.inputValue}
-                        />
-                    )}
-                />
-
-                <BaseNumberField.Increment
                     render={
-                        <Button
-                            aria-label="Increase"
-                            size={size}
+                        <Box
+                            component="input"
                             sx={{
-                                borderStartStartRadius: 0,
-                                borderEndStartRadius: 0,
-                                borderInlineStart: "0px",
-                                "&.Mui-disabled": {
-                                    borderInlineStart: "0px",
-                                },
+                                width: "100%",
+                                minWidth: "3ch",
+                                border: 0,
+                                outline: 0,
+                                p: 0,
+                                bgcolor: "transparent",
+                                color: "text.primary",
+                                font: "inherit",
+                                fontSize: small ? "0.875rem" : "1rem",
+                                fontWeight: 500,
+                                fontVariantNumeric: "tabular-nums",
+                                textAlign: "center",
                             }}
-                            variant="outlined"
                         />
                     }
+                />
+                {unitToggle ? <ToggleButtonGroup
+                    exclusive
+                    onChange={(_e, v: DurationUnit | null) => v && setSessionUnit(v)}
+                    size="small"
+                    sx={{
+                        mt: 0.25,
+                        "& .MuiToggleButton-root": {
+                            border: 0,
+                            borderRadius: 99,
+                            py: 0,
+                            px: 0.75,
+                            color: "text.secondary",
+                            "&.Mui-selected": {
+                                color: "primary.main",
+                                bgcolor: (t) => alpha(t.palette.primary.main, 0.12),
+                            },
+                        },
+                    }}
+                    value={unit}
                 >
-                    <AddIcon fontSize={size} />
-                </BaseNumberField.Increment>
+                    <ToggleButton value="minutes">
+                        <Typography variant="caption">דק&apos;</Typography>
+                    </ToggleButton>
+                    <ToggleButton value="hours">
+                        <Typography variant="caption">שעות</Typography>
+                    </ToggleButton>
+                </ToggleButtonGroup> : null}
             </Box>
+
+            <BaseNumberField.Increment
+                render={<IconButton aria-label="Increase" size={size} />}
+            >
+                <AddIcon fontSize={size} />
+            </BaseNumberField.Increment>
         </BaseNumberField.Root>
     );
 }
