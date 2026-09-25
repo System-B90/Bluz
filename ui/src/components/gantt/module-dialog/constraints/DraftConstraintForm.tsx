@@ -61,7 +61,7 @@ export function DraftConstraintForm({
                 justifyContent="space-between"
                 spacing={1}
             >
-                <Stack direction="row" flexGrow={1} spacing={1}>
+                <Stack direction="row" flexGrow={1} minWidth={0} spacing={1}>
                     <Select
                         onChange={(e) =>
                             handleTypeChange(e.target.value as ConstraintType)
@@ -95,7 +95,7 @@ export function DraftConstraintForm({
 
                 <Stack
                     direction="row"
-                    flexShrink={1}
+                    flexShrink={0}
                     justifyContent="flex-end"
                     spacing={0}
                 >

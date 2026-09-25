@@ -57,8 +57,8 @@ export function RelationalDraftFields({
     }, [targetOptions, curriculumState, searchQuery]);
 
     return (
-        <Stack direction="column" spacing={0} sx={{ flexGrow: 1 }}>
-            <Stack direction="row" spacing={1} sx={{ flexGrow: 1 }}>
+        <Stack direction="column" spacing={0} sx={{ flexGrow: 1, minWidth: 0 }}>
+            <Stack direction="row" spacing={1} sx={{ flexGrow: 1, minWidth: 0 }}>
                 <Select
                     displayEmpty
                     MenuProps={searchableMenuProps(undefined)}
@@ -90,7 +90,15 @@ export function RelationalDraftFields({
                         return value;
                     }}
                     size="small"
-                    sx={{ minWidth: 200, flexGrow: 1 }}
+                    sx={{
+                        flex: "1 1 0",
+                        minWidth: 120,
+                        "& .MuiSelect-select": {
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                        },
+                    }}
                     value={draft.targetId}
                 >
                     <SelectSearchHeader
@@ -171,14 +179,14 @@ export function RelationalDraftFields({
                         })
                     }
                     size="small"
-                    sx={{ minWidth: 100 }}
+                    sx={{ minWidth: 100, flexShrink: 0 }}
                     value={draft.relation}
                 >
                     <MenuItem value="after">אחרי</MenuItem>
                     <MenuItem value="before">לפני</MenuItem>
                 </Select>
 
-                <Stack flexGrow={0}>
+                <Stack flexGrow={0} flexShrink={0}>
                     <Box sx={{ display: "flex", flexDirection: "row", gap: 1 }}>
                         <TextField
                             label="מינימום"
