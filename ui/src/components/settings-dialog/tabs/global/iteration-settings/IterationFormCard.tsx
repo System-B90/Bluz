@@ -191,6 +191,7 @@ export function IterationFormCard({
                 <Box>
                     <Box alignItems="flex-start" display="flex" gap={ 1 }>
                         <SettingsTextField
+                            inputProps={ { dir: "ltr" } }
                             label="כתובת הייב (אופציונלי)"
                             onChange={ (e) => setValue("hiveUrl", e.target.value) }
                             placeholder="https://..."
