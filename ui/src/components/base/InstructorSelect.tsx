@@ -48,10 +48,8 @@ function useOutsiderData(
     outsiders: Array<any>,
     searchQuery: string,
     favoriteIds: Array<string>,
-)
-{
-    return useMemo(() =>
-    {
+) {
+    return useMemo(() => {
         const query = searchQuery.trim().toLowerCase();
         const filtered = query
             ? outsiders.filter((o) => o.name.toLowerCase().includes(query))
@@ -60,8 +58,7 @@ function useOutsiderData(
         const favorites: Array<any> = [];
         const others: Array<any> = [];
 
-        filtered.forEach((o) =>
-        {
+        filtered.forEach((o) => {
             if (favoriteIds.includes(o.id)) favorites.push(o);
             else others.push(o);
         });
@@ -70,7 +67,7 @@ function useOutsiderData(
         others.sort((a, b) => sortHe(a.name, b.name));
 
         return { favorites, others };
-    }, [ outsiders, searchQuery, favoriteIds ]);
+    }, [outsiders, searchQuery, favoriteIds]);
 }
 
 export function InstructorSelect<T = unknown>({
@@ -81,12 +78,11 @@ export function InstructorSelect<T = unknown>({
     pinnedIds = NO_PINNED,
     pinnedLabel = "אחראי מקצוע",
     ...props
-}: CustomInstructorSelectProps<T>)
-{
+}: CustomInstructorSelectProps<T>) {
     const { outsiders } = useOutsiders();
     const { getInstructor } = useHiveUsers();
 
-    const [ searchQuery, setSearchQuery ] = useState("");
+    const [searchQuery, setSearchQuery] = useState("");
     const searchInputRef = useRef<HTMLInputElement>(null);
 
     const { courseGroups, unassigned } = useGroupedInstructors({
@@ -100,8 +96,7 @@ export function InstructorSelect<T = unknown>({
         favoriteOutsiders,
     );
 
-    const pinned = useMemo(() =>
-    {
+    const pinned = useMemo(() => {
         const query = searchQuery.trim().toLowerCase();
         return pinnedIds
             .map(getInstructor)
@@ -111,7 +106,7 @@ export function InstructorSelect<T = unknown>({
                     inst.display_name.toLowerCase().includes(query),
             )
             .sort((a, b) => sortHe(a.display_name, b.display_name));
-    }, [ pinnedIds, getInstructor, searchQuery ]);
+    }, [pinnedIds, getInstructor, searchQuery]);
 
     const NAVIGATION_KEYS = [
         "Escape",
@@ -125,14 +120,11 @@ export function InstructorSelect<T = unknown>({
         "Tab",
     ];
 
-    const handleSearchEvent = (e: React.KeyboardEvent | React.MouseEvent) =>
-    {
-        if (e.type === "keydown")
-        {
+    const handleSearchEvent = (e: React.KeyboardEvent | React.MouseEvent) => {
+        if (e.type === "keydown") {
             const key = (e as React.KeyboardEvent).key;
 
-            if (key === "ArrowDown" || key === "ArrowUp")
-            {
+            if (key === "ArrowDown" || key === "ArrowUp") {
                 // MUI's MenuList navigates via `nextElementSibling` off the
                 // currently focused element. That works between MenuItems
                 // (direct <li> children of the list) but not from the
@@ -147,15 +139,12 @@ export function InstructorSelect<T = unknown>({
                     )
                     : [];
                 const target =
-                    key === "ArrowDown"
-                        ? items[0]
-                        : items[items.length - 1];
+                    key === "ArrowDown" ? items[0] : items[items.length - 1];
                 target?.focus();
                 return;
             }
 
-            if (NAVIGATION_KEYS.includes(key))
-            {
+            if (NAVIGATION_KEYS.includes(key)) {
                 // Let these bubble up so the Select's menu can handle
                 // navigation between options instead of them being trapped
                 // by the search field.
@@ -167,21 +156,37 @@ export function InstructorSelect<T = unknown>({
 
     return (
         <Select<T>
-            { ...props }
-            MenuProps={ {
+            {...props}
+            MenuProps={{
                 autoFocus: false,
                 ...props.MenuProps,
                 PaperProps: {
                     ...props.MenuProps?.PaperProps,
                     sx: {
                         maxHeight: 400,
+                        // The list scrolls instead of the paper, so the
+                        // scrollbar stays inside the rounded corners.
+                        display: "flex",
+                        flexDirection: "column",
+                        overflow: "hidden",
                         ...props.MenuProps?.PaperProps?.sx,
+                    },
+                },
+                MenuListProps: {
+                    ...props.MenuProps?.MenuListProps,
+                    sx: {
+                        flex: 1,
+                        minHeight: 0,
+                        overflowY: "auto",
+                        // The sticky search box pins below the list's top
+                        // padding, which would let rows show above it.
+                        pt: 0,
+                        ...props.MenuProps?.MenuListProps?.sx,
                     },
                 },
                 TransitionProps: {
                     ...props.MenuProps?.TransitionProps,
-                    onEntered: (...args) =>
-                    {
+                    onEntered: (...args) => {
                         // The TextField's own `autoFocus` fires on mount, but
                         // MUI's Menu focus-traps back to the list right after
                         // — this re-focuses the search box once the menu has
@@ -190,14 +195,14 @@ export function InstructorSelect<T = unknown>({
                         props.MenuProps?.TransitionProps?.onEntered?.(...args);
                     },
                 },
-            } }
+            }}
         >
             <ListSubheader
                 component="div"
-                onClick={ handleSearchEvent }
-                onKeyDown={ handleSearchEvent }
-                onKeyUp={ handleSearchEvent }
-                sx={ {
+                onClick={handleSearchEvent}
+                onKeyDown={handleSearchEvent}
+                onKeyUp={handleSearchEvent}
+                sx={{
                     p: 1.5,
                     position: "sticky",
                     top: 0,
@@ -206,111 +211,111 @@ export function InstructorSelect<T = unknown>({
                     borderBottom: "1px solid",
                     borderColor: "divider",
                     lineHeight: "normal",
-                } }
+                }}
             >
                 <TextField
                     autoFocus
                     fullWidth
-                    inputRef={ searchInputRef }
-                    onChange={ (e) => setSearchQuery(e.target.value) }
+                    inputRef={searchInputRef}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={
                         excludeTeachers ? "חיפוש מדריך..." : "חיפוש..."
                     }
                     size="small"
-                    value={ searchQuery }
+                    value={searchQuery}
                 />
             </ListSubheader>
 
-            { children }
+            {children}
 
-            { pinned.length > 0
+            {pinned.length > 0
                 ? [
                     <ListSubheader
                         disableSticky
                         key="group-pinned"
-                        sx={ styles.subheaderPinned }
+                        sx={styles.subheaderPinned}
                     >
-                        { pinnedLabel }
+                        {pinnedLabel}
                     </ListSubheader>,
                     ...pinned.map((inst) => (
-                        <MenuItem key={ `pinned-${inst.id}` } value={ inst.id }>
-                            { inst.display_name }
+                        <MenuItem key={`pinned-${inst.id}`} value={inst.id}>
+                            {inst.display_name}
                         </MenuItem>
                     )),
                 ]
-                : null }
+                : null}
 
-            { showOutsiders && favorites.length > 0
+            {showOutsiders && favorites.length > 0
                 ? [
                     <ListSubheader
                         disableSticky
                         key="group-favs"
-                        sx={ styles.subheaderWarning }
+                        sx={styles.subheaderWarning}
                     >
-                        אנשי חוץ מועדפים
+                          אנשי חוץ מועדפים
                     </ListSubheader>,
                     ...favorites.map((o) => (
-                        <MenuItem key={ `outsider-${o.id}` } value={ o.id }>
-                            { o.name }
+                        <MenuItem key={`outsider-${o.id}`} value={o.id}>
+                            {o.name}
                         </MenuItem>
                     )),
                 ]
-                : null }
+                : null}
 
-            { courseGroups.flatMap(({ course, instructors }) => [
+            {courseGroups.flatMap(({ course, instructors }) => [
                 <ListSubheader
                     disableSticky
-                    key={ `group-${course.id}` }
-                    sx={ styles.subheaderDefault }
+                    key={`group-${course.id}`}
+                    sx={styles.subheaderDefault}
                 >
-                    { course.name }
+                    {course.name}
                 </ListSubheader>,
                 ...instructors.map((inst) => (
                     <MenuItem
-                        key={ `course-${course.id}-${inst.id}` }
-                        value={ inst.id }
+                        key={`course-${course.id}-${inst.id}`}
+                        value={inst.id}
                     >
-                        { inst.display_name }
+                        {inst.display_name}
                     </MenuItem>
                 )),
-            ]) }
+            ])}
 
-            { unassigned.length > 0
+            {unassigned.length > 0
                 ? [
                     <ListSubheader
                         disableSticky
                         key="group-unassigned"
-                        sx={ styles.subheaderDefault }
+                        sx={styles.subheaderDefault}
                     >
-                        ללא מסלול
+                          ללא מסלול
                     </ListSubheader>,
                     ...unassigned.map((inst) => (
                         <MenuItem
-                            key={ `unassigned-${inst.id}` }
-                            value={ inst.id }
+                            key={`unassigned-${inst.id}`}
+                            value={inst.id}
                         >
-                            { inst.display_name }
+                            {inst.display_name}
                         </MenuItem>
                     )),
                 ]
-                : null }
+                : null}
 
-            { showOutsiders && others.length > 0
+            {showOutsiders && others.length > 0
                 ? [
                     <ListSubheader
                         disableSticky
                         key="group-others"
-                        sx={ styles.subheaderDefault }
+                        sx={styles.subheaderDefault}
                     >
-                        אנשי חוץ נוספים
+                          אנשי חוץ נוספים
                     </ListSubheader>,
                     ...others.map((o) => (
-                        <MenuItem key={ `outsider-${o.id}` } value={ o.id }>
-                            { o.name }
+                        <MenuItem key={`outsider-${o.id}`} value={o.id}>
+                            {o.name}
                         </MenuItem>
                     )),
                 ]
-                : null }
+                : null}
         </Select>
     );
 }
