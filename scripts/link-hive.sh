@@ -87,7 +87,18 @@ fi
 echo -e "\n${BLUE}>> Bringing Bluz up with the co-located Hive overlay...${NC}"
 export HIVE_NETWORK_NAME
 DEPLOY_DIR="$(cd "$(dirname "$0")/../deploy" && pwd)"
-docker compose -f "$DEPLOY_DIR/docker-compose.yml" -f "$DEPLOY_DIR/docker-compose.hive-local.yml" up -d
+# Keep whatever overlays the running stack was started with (e.g. docker:dev's
+# dev overlay); dropping them recreates ui in the wrong mode.
+RUNNING_FILES="$(docker inspect bluz-ui --format '{{index .Config.Labels "com.docker.compose.project.config_files"}}' 2>/dev/null || true)"
+[ -n "$RUNNING_FILES" ] || RUNNING_FILES="$DEPLOY_DIR/docker-compose.yml"
+case ",$RUNNING_FILES," in
+    *docker-compose.hive-local.yml*) ;;
+    *) RUNNING_FILES="$RUNNING_FILES,$DEPLOY_DIR/docker-compose.hive-local.yml" ;;
+esac
+COMPOSE_ARGS=()
+IFS=',' read -ra FILES <<< "$RUNNING_FILES"
+for f in "${FILES[@]}"; do COMPOSE_ARGS+=(-f "$f"); done
+docker compose --env-file "$DEPLOY_DIR/../.env" "${COMPOSE_ARGS[@]}" up -d
 
 echo -e "\n${GREEN}=========================================${NC}"
 echo -e "${GREEN} Bluz is linked to the local Hive stack. ${NC}"

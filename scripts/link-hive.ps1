@@ -97,7 +97,14 @@ if ($existingAliases -contains $hiveHostname) {
 Write-Host "`n>> Bringing Bluz up with the co-located Hive overlay..." -ForegroundColor Blue
 $env:HIVE_NETWORK_NAME = $hiveNetwork
 $deployDir = Join-Path $PSScriptRoot "..\deploy"
-docker compose -f (Join-Path $deployDir "docker-compose.yml") -f (Join-Path $deployDir "docker-compose.hive-local.yml") up -d
+$hiveOverlay = Join-Path $deployDir "docker-compose.hive-local.yml"
+# Keep whatever overlays the running stack was started with (e.g. docker:dev's
+# dev overlay); dropping them recreates ui in the wrong mode.
+$runningFiles = docker inspect bluz-ui --format '{{index .Config.Labels "com.docker.compose.project.config_files"}}' 2>$null
+$composeFiles = if ($LASTEXITCODE -eq 0 -and $runningFiles) { $runningFiles -split "," } else { @(Join-Path $deployDir "docker-compose.yml") }
+if (-not ($composeFiles | Where-Object { $_ -like "*docker-compose.hive-local.yml" })) { $composeFiles += $hiveOverlay }
+$composeArgs = $composeFiles | ForEach-Object { "-f"; $_ }
+docker compose --env-file (Join-Path $PSScriptRoot "..\.env") @composeArgs up -d
 if ($LASTEXITCODE -ne 0) { Stop-WithError "docker compose up failed." }
 
 Write-Host "`n=========================================" -ForegroundColor Green
