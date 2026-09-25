@@ -215,6 +215,7 @@ export function ShufflesSection({ syllabusId }: ShufflesSectionProps) {
 
             <Stack alignItems="flex-start" direction="row" gap={1}>
                 <TextField
+                    autoComplete="off"
                     fullWidth
                     label="שם השאפל"
                     onChange={(e) => setDraft(e.target.value)}

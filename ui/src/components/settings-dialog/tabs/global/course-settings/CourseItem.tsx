@@ -13,6 +13,7 @@ import MenuItem from "@mui/material/MenuItem";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import RtlProvider from "@mui/system/RtlProvider";
 import
 {
     MuiColorInput,
@@ -326,47 +327,60 @@ export function CourseItem({
 
                     {/* Color Input Dot */ }
                     <Box sx={ { display: "flex", alignItems: "center" } }>
-                        <MuiColorInput
-                            format="hex"
-                            fullWidth={ false }
-                            isAlphaHidden
-                            onChange={ handleColorChange }
-                            PopoverProps={ { sx: { direction: "ltr" } } }
-                            size="small"
-                            sx={ {
-                                p: 0,
-                                m: 0,
-                                width: "18px",
-                                height: "18px",
-                                minWidth: 0,
-                                "& .MuiInputBase-root": {
-                                    padding: 0,
+                        {/* The hue gradient is pinned left-to-right; an RTL
+                            Slider would drag against it. */ }
+                        <RtlProvider value={ false }>
+                            <MuiColorInput
+                                format="hex"
+                                fullWidth={ false }
+                                isAlphaHidden
+                                onChange={ handleColorChange }
+                                PopoverProps={ {
+                                    sx: {
+                                        direction: "ltr",
+                                        // The RTL stylis plugin flips the
+                                        // thumb's centering translate; pin it.
+                                        "& .MuiSlider-thumb": {
+                                            transform: "translate(-50%, -50%) /*! @noflip */",
+                                        },
+                                    },
+                                } }
+                                size="small"
+                                sx={ {
+                                    p: 0,
+                                    m: 0,
                                     width: "18px",
                                     height: "18px",
-                                    borderRadius: "50%",
-                                    overflow: "hidden",
-                                    border: "none",
-                                    "& .MuiOutlinedInput-notchedOutline": {
-                                        border: "none",
-                                    },
-                                    "& input": { display: "none" },
-                                    "& .MuiInputAdornment-root": {
-                                        m: 0,
-                                        width: "100%",
-                                        height: "100%",
-                                    },
-                                    "& .MuiButtonBase-root": {
-                                        width: "100%",
-                                        height: "100%",
+                                    minWidth: 0,
+                                    "& .MuiInputBase-root": {
+                                        padding: 0,
+                                        width: "18px",
+                                        height: "18px",
                                         borderRadius: "50%",
-                                        border: "1px solid rgba(0,0,0,0.15)",
-                                        transition: "all 0.2s ease",
-                                        "&:hover": { transform: "scale(1.2)" },
+                                        overflow: "hidden",
+                                        border: "none",
+                                        "& .MuiOutlinedInput-notchedOutline": {
+                                            border: "none",
+                                        },
+                                        "& input": { display: "none" },
+                                        "& .MuiInputAdornment-root": {
+                                            m: 0,
+                                            width: "100%",
+                                            height: "100%",
+                                        },
+                                        "& .MuiButtonBase-root": {
+                                            width: "100%",
+                                            height: "100%",
+                                            borderRadius: "50%",
+                                            border: "1px solid rgba(0,0,0,0.15)",
+                                            transition: "all 0.2s ease",
+                                            "&:hover": { transform: "scale(1.2)" },
+                                        },
                                     },
-                                },
-                            } }
-                            value={ color }
-                        />
+                                } }
+                                value={ color }
+                            />
+                        </RtlProvider>
                     </Box>
 
                     {/* Editable Name Field */ }
