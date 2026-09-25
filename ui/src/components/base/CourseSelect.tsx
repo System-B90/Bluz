@@ -2,7 +2,7 @@ import Checkbox from "@mui/material/Checkbox";
 import ListItemText from "@mui/material/ListItemText";
 import MenuItem from "@mui/material/MenuItem";
 import Select, { SelectProps } from "@mui/material/Select";
-import { useMemo, useState } from "react";
+import { ReactNode, useMemo, useState } from "react";
 
 import { CourseId } from "@/api-shared/types/course";
 import { buildCourseOptions } from "@/components/base/course-options";
@@ -20,6 +20,8 @@ type BaseCourseSelectProps = Omit<
     rootId?: CourseId | null;
     /** Include shuffle-courses created by the cut pipeline. */
     showShuffles?: boolean;
+    /** Custom display of the selected ids. Default: comma-joined names. */
+    renderSelected?: (ids: Array<CourseId>) => ReactNode;
 };
 type SingleCourseSelectProps = BaseCourseSelectProps & {
     multiple?: false;
@@ -45,6 +47,7 @@ const INDENT_PER_DEPTH = 2;
 export function CourseSelect({
     rootId = null,
     showShuffles = true,
+    renderSelected,
     multiple,
     value,
     onChange,
@@ -81,12 +84,13 @@ export function CourseSelect({
                 setSearchQuery("");
                 props.onClose?.(...args);
             }}
-            renderValue={(current) =>
-                (Array.isArray(current) ? current : [current])
-                    .filter(Boolean)
-                    .map(nameOf)
-                    .join(", ")
-            }
+            renderValue={(current) => {
+                const ids = (Array.isArray(current) ? current : [current])
+                    .filter(Boolean);
+                return renderSelected
+                    ? renderSelected(ids)
+                    : ids.map(nameOf).join(", ");
+            }}
             value={value}
         >
             <SelectSearchHeader

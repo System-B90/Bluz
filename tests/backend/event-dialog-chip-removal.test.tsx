@@ -59,6 +59,23 @@ describe("CourseField chip removal (#615)", () => {
 
         expect(onBlurCallback).toHaveBeenCalledWith({ courses: ["c2"] });
     });
+
+    it("reports a course picked from the searchable menu once it closes", () => {
+        const onBlurCallback = vi.fn();
+        render(
+            <CourseField
+                event={{ courses: ["c1"], type: EventType.LECTURE }}
+                onBlurCallback={onBlurCallback}
+            />,
+        );
+
+        fireEvent.mouseDown(screen.getByRole("combobox"));
+        expect(screen.getByPlaceholderText("חיפוש מסלול...")).toBeTruthy();
+        fireEvent.click(screen.getByRole("option", { name: "מסלול ב" }));
+        fireEvent.keyDown(screen.getByRole("listbox"), { key: "Escape" });
+
+        expect(onBlurCallback).toHaveBeenCalledWith({ courses: ["c1", "c2"] });
+    });
 });
 
 describe("RoomField chip removal (#616)", () => {

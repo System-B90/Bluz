@@ -2,12 +2,10 @@ import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import FormControl, { FormControlProps } from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
-import { SelectChangeEvent } from "@mui/material/Select";
-import Select from "@mui/material/Select";
 import { useCallback, useState, useId } from "react";
 
 import { CourseId } from "@/api-shared/types/course";
+import { CourseSelect } from "@/components/base/CourseSelect";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
 import { eventHasCourses } from "@/components/schedule/types/event";
@@ -20,7 +18,7 @@ export function CourseField({
     ...props
 }: CourseFieldProps & FormControlProps) {
     const labelId = useId();
-    const { courses, getCourse } = useCourses();
+    const { getCourse } = useCourses();
     const [currentCourseIds, setCurrentCourseIds] = useState(
         Array.isArray(event?.courses) ? event.courses : [],
     );
@@ -31,22 +29,6 @@ export function CourseField({
     // The caller (EventClassification.tsx) remounts this component with
     // key={`${event.id}-${event.updatedAt}`}, which resets this state
     // instead of relying on an effect to resync it.
-    const handleChange = useCallback(
-        (event: SelectChangeEvent<typeof currentCourseIds>) => {
-            const {
-                target: { value },
-            } = event;
-
-            // On autofill we get a stringified value.
-            const newCourses = (
-                typeof value === "string" ? value.split(",") : value
-            ).filter((id): id is CourseId => typeof id === "string"); // Type guard to ensure we only have strings
-
-            setCurrentCourseIds(newCourses);
-        },
-        [],
-    );
-
     const handleDelete = useCallback(
         (courseIdToDelete: CourseId) => {
             const remaining = currentCourseIds.filter(
@@ -72,12 +54,13 @@ export function CourseField({
             disabled={event?.type ? !eventHasCourses(event.type) : false}
         >
             <InputLabel id={ labelId }>מסלולים</InputLabel>
-            <Select label="מסלולים"
+            <CourseSelect
+                label="מסלולים"
                 labelId={ labelId }
                 multiple
-                onChange={handleChange}
+                onChange={setCurrentCourseIds}
                 onClose={onClose}
-                renderValue={(selected: Array<CourseId>) => (
+                renderSelected={(selected) => (
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                         {selected.map((value) => (
                             <Chip
@@ -85,23 +68,13 @@ export function CourseField({
                                 label={getCourse(value)?.name ?? value}
                                 onDelete={() => handleDelete(value)}
                                 onMouseDown={(event) => event.stopPropagation()}
-                                size="small" // Optional: makes them fit better
+                                size="small"
                             />
                         ))}
                     </Box>
                 )}
                 value={currentCourseIds}
-            >
-                {courses.map((course) => (
-                    <MenuItem
-                        color={course.color ?? undefined}
-                        key={course.id}
-                        value={course.id}
-                    >
-                        {course.name}
-                    </MenuItem>
-                ))}
-            </Select>
+            />
         </FormControl>
     );
 }
