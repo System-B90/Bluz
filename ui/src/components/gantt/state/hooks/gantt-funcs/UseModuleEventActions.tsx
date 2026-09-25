@@ -11,6 +11,7 @@ import {
     ModuleEventType,
     RoomRequirement,
 } from "@/api-shared/types/gantt/models";
+import { useHiveModules } from "@/components/base/HiveModulesProvider";
 import {
     useCurriculumProviderActions,
     useCurriculumState,
@@ -83,6 +84,31 @@ export function useModuleEventActions() {
     // Scroll-to + flash a freshly created/duplicated event in the timeline,
     // reusing the Gantt view's reveal mechanism (#325). No-op when the event's
     // syllabus can't be resolved (e.g. store not yet populated).
+    const { getModule: getHiveModule } = useHiveModules();
+    const getHiveModuleRef = useRef(getHiveModule);
+    useEffect(() => {
+        getHiveModuleRef.current = getHiveModule;
+    }, [getHiveModule]);
+
+    // An event created without its own Hive link inherits the Bluz module's
+    // first linked Hive module, plus that module's parent subject.
+    const inheritHiveLink = useCallback(
+        (
+            moduleId: GanttModuleId,
+            hiveSubjectId: null | number,
+            hiveModuleId: null | number,
+        ): [null | number, null | number] => {
+            if (hiveSubjectId !== null || hiveModuleId !== null)
+                return [hiveSubjectId, hiveModuleId];
+            const linkedId = stateRef.current.modules[moduleId]?.hiveIds?.[0];
+            if (linkedId === undefined) return [null, null];
+            const subjectId =
+                getHiveModuleRef.current(linkedId)?.parent_subject ?? null;
+            return [subjectId, subjectId === null ? null : linkedId];
+        },
+        [],
+    );
+
     const revealCreatedEvent = useCallback(
         (moduleId: GanttModuleId, eventId?: GanttEventId) => {
             if (!eventId) return;
@@ -103,8 +129,13 @@ export function useModuleEventActions() {
             hiveModuleId: null | number = null,
             hiveLessonId: null | number = null,
             orchestratorId: null | number = null,
-        ) =>
-            actions
+        ) => {
+            [hiveSubjectId, hiveModuleId] = inheritHiveLink(
+                moduleId,
+                hiveSubjectId,
+                hiveModuleId,
+            );
+            return actions
                 .create(
                     {
                         title,
@@ -121,7 +152,8 @@ export function useModuleEventActions() {
                         recurrenceEndDate: null,
                         isCritical: false,
                         isPaWindow: false,
-                        splitAcrossBreaks: defaultModuleEventSplitAcrossBreaks(type),
+                        splitAcrossBreaks:
+                            defaultModuleEventSplitAcrossBreaks(type),
                         comment: null,
                         groupId: null,
                         hiveSubjectId,
@@ -144,7 +176,8 @@ export function useModuleEventActions() {
                         recurrenceEndDate: null,
                         isCritical: false,
                         isPaWindow: false,
-                        splitAcrossBreaks: defaultModuleEventSplitAcrossBreaks(type),
+                        splitAcrossBreaks:
+                            defaultModuleEventSplitAcrossBreaks(type),
                         comment: null,
                         constraints: [],
                         groupId: null,
@@ -156,8 +189,9 @@ export function useModuleEventActions() {
                 .then((event) => {
                     revealCreatedEvent(moduleId, event?.id);
                     return event;
-                }),
-        [actions, revealCreatedEvent],
+                });
+        },
+        [actions, inheritHiveLink, revealCreatedEvent],
     );
 
     const duplicateEvent = useCallback(
