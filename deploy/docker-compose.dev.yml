@@ -2,6 +2,10 @@ name: bluz
 
 services:
     ui:
+        # Own tag: the base file names ui ghcr.io/.../ui:latest, and building the
+        # dev target under that name makes later non-build runs of other stacks
+        # boot the dev image (npm run dev, then a "docker: not found" loop).
+        image: bluz-ui:dev
         build:
             target: dev
         command: npm run next:dev
