@@ -2,6 +2,7 @@
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import EventRepeatIcon from "@mui/icons-material/EventRepeat";
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
 import PaletteIcon from "@mui/icons-material/Palette";
 import PersonIcon from "@mui/icons-material/Person";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -37,6 +38,12 @@ const TABS: Array<TabCommand> = [
         title: "כללי",
         icon: <SettingsIcon />,
         keywords: ["global", "general"],
+    },
+    {
+        tab: "courses",
+        title: "בניית קורסים",
+        icon: <MenuBookIcon />,
+        keywords: ["courses", "course builder", "קורסים"],
     },
     {
         tab: "colors",

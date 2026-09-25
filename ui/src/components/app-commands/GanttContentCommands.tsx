@@ -12,6 +12,7 @@ import {
     GanttSearchItemType,
     useGanttSearchItems,
 } from "@/components/gantt/curriculum-view/search/use-gantt-search-items";
+import { useCurriculumProviderActions } from "@/components/gantt/state/context";
 
 const ICONS: Record<GanttSearchItemType, ReactNode> = {
     syllabus: <SchoolIcon />,
@@ -32,10 +33,29 @@ const TYPE_KEYWORDS: Record<GanttSearchItemType, Array<string>> = {
  */
 const UNFILTERED_LIMIT = 20;
 
-function toCommand(
-    item: GanttSearchItem,
-    goToSyllabus: (syllabusId: GanttSearchItem["syllabusId"]) => void,
-): Command {
+type Openers = ReturnType<typeof useCurriculumProviderActions> & {
+    goToSyllabus: (syllabusId: GanttSearchItem["syllabusId"]) => void;
+};
+
+/**
+ * Scroll to the owning syllabus, then open the item's own dialog. An event
+ * opens over its module's dialog, the same stack an event deep link restores.
+ */
+function openItem(item: GanttSearchItem, openers: Openers): void {
+    const { syllabusId, moduleId, eventId } = item;
+    openers.goToSyllabus(syllabusId);
+
+    if (item.type === "syllabus") {
+        openers.openSyllabusDialog(syllabusId);
+    } else if (item.type === "module" && moduleId) {
+        openers.openModuleDialog(syllabusId, moduleId);
+    } else if (item.type === "event" && moduleId && eventId) {
+        openers.openModuleDialog(syllabusId, moduleId, eventId);
+        openers.openEventDialog(syllabusId, moduleId, eventId);
+    }
+}
+
+function toCommand(item: GanttSearchItem, openers: Openers): Command {
     return {
         id: `gantt.${item.type}.${item.id}`,
         title: item.title,
@@ -44,9 +64,7 @@ function toCommand(
         kind: "entity",
         icon: ICONS[item.type],
         keywords: TYPE_KEYWORDS[item.type],
-        // Modules and events live inside a syllabus card, so scrolling to the
-        // owning syllabus is the deepest navigation the gantt view exposes.
-        run: () => goToSyllabus(item.syllabusId),
+        run: () => openItem(item, openers),
     };
 }
 
@@ -61,15 +79,17 @@ function toCommand(
 export function GanttContentCommands() {
     const items = useGanttSearchItems();
     const { goToSyllabus } = useGanttSearchNav();
+    const actions = useCurriculumProviderActions();
 
     const factory = useCallback(
         (query: { text: string }) => {
             const source = query.text
                 ? items
                 : items.slice(0, UNFILTERED_LIMIT);
-            return source.map((item) => toCommand(item, goToSyllabus));
+            const openers = { ...actions, goToSyllabus };
+            return source.map((item) => toCommand(item, openers));
         },
-        [items, goToSyllabus],
+        [items, goToSyllabus, actions],
     );
 
     useCommands(factory);

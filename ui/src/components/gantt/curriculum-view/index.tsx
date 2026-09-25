@@ -5,6 +5,7 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { GanttContentCommands } from "@/components/app-commands/GanttContentCommands";
+import { useGanttTabCommands } from "@/components/app-commands/use-gantt-tab-commands";
 import { GanttOnboarding } from "@/components/app-onboarding/gantt/GanttOnboarding";
 import { GANTT_TAB_COUNT } from "@/components/app-onboarding/gantt/tabs";
 import { GanttCreationDeletionCallbackProps } from "@/components/gantt/curriculum-fab/CurriculumActionItems";
@@ -42,6 +43,8 @@ export function CurriculumView({
             ? parsedViewIndex
             : 0;
     });
+
+    useGanttTabCommands({ selectedTabIndex, setSelectedTabIndex });
 
     useEffect(() =>
     {
