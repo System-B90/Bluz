@@ -52,7 +52,7 @@
         "@opentelemetry/api-logs": "^0.221.0",
         "@system-b90/command-palette": "^0.1.0",
         "@system-b90/hive-core": "^0.3.0",
-        "@system-b90/hive-nextauth": "^0.1.3",
+        "@system-b90/hive-nextauth": "^0.1.4",
         "@system-b90/onboarding": "^0.1.0",
         "@system-b90/session-ws": "^0.7.0",
         "@types/qrcode": "^1.5.6",
@@ -118,8 +118,5 @@
     },
     "allowScripts": {
         "esbuild@0.27.7": true
-    },
-    "overrides": {
-        "@system-b90/hive-core": "^0.3.0"
     }
 }
