@@ -152,12 +152,12 @@ describe("gantt ?ge= deep link", () => {
     });
 
     it("keeps unrelated params while rewriting the URL", async () => {
-        renderProvider("cid=c1&it=2026-a&ge=nope");
+        renderProvider("gc=c1&it=2026-a&ge=nope");
 
         await waitFor(() => {
             const params = new URLSearchParams(window.location.search);
             expect(params.get("ge")).toBeNull();
-            expect(params.get("cid")).toBe("c1");
+            expect(params.get("gc")).toBe("c1");
             expect(params.get("it")).toBe("2026-a");
         });
     });

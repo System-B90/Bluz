@@ -277,7 +277,7 @@ export function AiAssistant() {
     const [userEnabled, setUserEnabled] = React.useState(true);
     const [draft, setDraft] = React.useState("");
     const { iterationId } = useIterationScope();
-    // The Gantt screen keeps the open curriculum in `?cid=`, so the assistant
+    // The Gantt screen keeps the open curriculum in `?gc=`, so the assistant
     // picks up "this gantt" from the URL instead of being threaded a prop
     // through every screen that might host it.
     const curriculumId =

@@ -72,12 +72,12 @@ test.describe("Gantt Page", () => {
     test("auto-selects the first curriculum on load", async ({ page }) => {
         // `CurriculumFab` selects `sortedIds[0]` on mount whenever any
         // curriculum exists (curriculum-fab/index.tsx), so landing on /gantt
-        // with no `cid` resolves to a selection rather than the
+        // with no `gc` resolves to a selection rather than the
         // "בחרו גאנט כדי להתחיל לעבוד" placeholder. That placeholder is only
         // reachable with zero curricula, which `beforeEach` rules out — the
         // old version of this test asserted it unconditionally and could
         // never pass. See #176.
-        await expect(page).toHaveURL(/[?&]cid=/, { timeout: 10_000 });
+        await expect(page).toHaveURL(/[?&]gc=/, { timeout: 10_000 });
         await expect(
             page.getByText("בחרו גאנט כדי להתחיל לעבוד"),
         ).toHaveCount(0);
@@ -151,12 +151,12 @@ test.describe("Gantt Page", () => {
 
             expect(loadingOrContent).toBeTruthy();
 
-            // URL should now contain ?cid= parameter
-            await expect(page).toHaveURL(/cid=/);
+            // URL should now contain ?gc= parameter
+            await expect(page).toHaveURL(/gc=/);
         }
     });
 
-    test("URL cid parameter syncs with selected curriculum", async ({
+    test("URL gc parameter syncs with selected curriculum", async ({
         page,
     }) => {
         const curriculumItems = await openCurriculumList(page);
@@ -165,14 +165,14 @@ test.describe("Gantt Page", () => {
             await curriculumItems.first().click();
             await page.waitForTimeout(1000);
 
-            // Verify URL has cid
+            // Verify URL has gc
             const url = page.url();
-            expect(url).toContain("cid=");
+            expect(url).toContain("gc=");
 
-            // Extract cid value
+            // Extract gc value
             const urlObj = new URL(url);
-            const cid = urlObj.searchParams.get("cid");
-            expect(cid).toBeTruthy();
+            const gc = urlObj.searchParams.get("gc");
+            expect(gc).toBeTruthy();
         }
     });
 

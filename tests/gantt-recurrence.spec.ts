@@ -43,7 +43,7 @@ async function createAndSelectCurriculum(page: Page): Promise<void> {
     await expect(draftButton).toBeVisible({ timeout: 10_000 });
     await draftButton.click();
 
-    await expect(page).toHaveURL(/cid=/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/gc=/, { timeout: 10_000 });
     await page.keyboard.press("Escape");
 
     // Escape starts the popover's exit transition; its backdrop stays mounted

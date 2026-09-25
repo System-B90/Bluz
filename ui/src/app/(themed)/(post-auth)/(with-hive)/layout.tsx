@@ -85,7 +85,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                     ) : null}
 
                     {/*
-                      * `AiAssistant` reads `?cid=` to know which gantt is open,
+                      * `AiAssistant` reads `?gc=` to know which gantt is open,
                       * and `useSearchParams` suspends during prerender.
                       */}
                     <React.Suspense fallback={null}>

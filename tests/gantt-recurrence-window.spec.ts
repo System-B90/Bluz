@@ -34,7 +34,7 @@ async function createAndSelectCurriculum(page: Page): Promise<void> {
     await expect(draftButton).toBeVisible({ timeout: 10_000 });
     await draftButton.click();
 
-    await expect(page).toHaveURL(/cid=/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/gc=/, { timeout: 10_000 });
     await page.keyboard.press("Escape");
     await expect(page.locator(".MuiBackdrop-root")).toHaveCount(0, {
         timeout: 15_000,
@@ -233,7 +233,7 @@ test.describe("Gantt recurrence window and skipped occurrences (#468, #469)", ()
         // could never pass here: it asserted 1 echo and always saw 2. The
         // test's premise that "the curriculum starts today" was simply never
         // true.
-        const curriculumId = new URL(page.url()).searchParams.get("cid");
+        const curriculumId = new URL(page.url()).searchParams.get("gc");
         expect(curriculumId, "curriculum id must be in the URL").toBeTruthy();
         const startDate = dateInAppTimezone(0);
         const patched = await page.request.patch(

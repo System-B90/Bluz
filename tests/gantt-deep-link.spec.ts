@@ -10,7 +10,7 @@ import { expect, test, waitForAppLoad } from "./fixtures";
  * produces — and the param must survive a reload and disappear when the
  * dialog closes. The behaviour was rebuilt four times in a row (deep link
  * highlighting the syllabus only, the module dialog missing behind it, the
- * cid being clobbered, then two params doing one job), with no test pinning
+ * gc being clobbered, then two params doing one job), with no test pinning
  * any of it.
  */
 
@@ -118,7 +118,7 @@ async function gotoDeepLink(
     eventId: string = fixture.eventId,
 ): Promise<void> {
     await page.goto(
-        `/gantt?cid=${fixture.curriculumId}&ge=${eventId}`,
+        `/gantt?gc=${fixture.curriculumId}&ge=${eventId}`,
         { waitUntil: "commit", timeout: 60_000 },
     );
     await waitForAppLoad(page);
@@ -155,9 +155,9 @@ test.describe("Gantt event deep link", () => {
             page.getByRole("dialog").filter({ hasText: fixture.eventTitle }),
         ).toBeVisible({ timeout: 30_000 });
 
-        // A clobbered cid was its own regression: the gantt then has no
+        // A clobbered gc was its own regression: the gantt then has no
         // curriculum to load and the link silently does nothing.
-        expect(new URL(page.url()).searchParams.get("cid")).toBe(
+        expect(new URL(page.url()).searchParams.get("gc")).toBe(
             fixture.curriculumId,
         );
         expect(new URL(page.url()).searchParams.get("ge")).toBe(
@@ -189,7 +189,7 @@ test.describe("Gantt event deep link", () => {
     // does clear the param with `history.replaceState`, but IterationProvider
     // then issues a `router.replace` built from the URL Next still believes is
     // current, putting `ge` back (it lands alongside the `it=current` backfill
-    // in the same tick). Same clobber family as the cid regression this deep
+    // in the same tick). Same clobber family as the gc regression this deep
     // link already went through. Unskip with the fix.
     test.fixme("drops ?ge= from the URL when the event dialog is closed", async ({
         page,
@@ -209,7 +209,7 @@ test.describe("Gantt event deep link", () => {
         await expect
             .poll(() => new URL(page.url()).searchParams.get("ge"))
             .toBeNull();
-        expect(new URL(page.url()).searchParams.get("cid")).toBe(
+        expect(new URL(page.url()).searchParams.get("gc")).toBe(
             fixture.curriculumId,
         );
     });

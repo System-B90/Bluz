@@ -3,10 +3,10 @@ import { describe, expect, it } from "vitest";
 import { buildGanttEventLink } from "@/components/schedule/event-dialog/utils";
 
 // Regression for the "go to gantt event" link silently failing: `ge` alone
-// isn't enough — the gantt page needs `cid` to load a curriculum, and drops
+// isn't enough — the gantt page needs `gc` to load a curriculum, and drops
 // to the wrong/no iteration without `it`.
 describe("buildGanttEventLink", () => {
-    it("sets ge, cid and it together", () => {
+    it("sets ge, gc and it together", () => {
         const link = buildGanttEventLink(
             { ganttEventId: "evt-1", ganttCurriculumId: "curr-1" },
             "2026a",
@@ -14,7 +14,7 @@ describe("buildGanttEventLink", () => {
         const url = new URL(link!, "http://localhost");
         expect(url.pathname).toBe("/gantt");
         expect(url.searchParams.get("ge")).toBe("evt-1");
-        expect(url.searchParams.get("cid")).toBe("curr-1");
+        expect(url.searchParams.get("gc")).toBe("curr-1");
         expect(url.searchParams.get("it")).toBe("2026a");
     });
 

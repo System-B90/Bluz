@@ -9,7 +9,7 @@ export type EventFieldProps = {
 };
 
 /**
- * Builds the "go to gantt event" link. `cid` and `it` must both ride along
+ * Builds the "go to gantt event" link. `gc` and `it` must both ride along
  * or the gantt page has no curriculum/iteration to load and `ge` is a
  * no-op (#…). Returns undefined when the event has no gantt curriculum
  * linkage — old cut events, or events never cut — so the caller can hide

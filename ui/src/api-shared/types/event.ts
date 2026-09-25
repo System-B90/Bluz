@@ -94,7 +94,7 @@ export type Event = {
     ganttOccurrenceDate?: string;
     /**
      * Curriculum the event was cut from (עקרון "גזירה ללו"ז"). Lets the
-     * schedule event dialog's "go to gantt" link resolve `?cid=` — without it
+     * schedule event dialog's "go to gantt" link resolve `?gc=` — without it
      * the gantt page has no curriculum to load and the link is a no-op.
      * Absent for normal events and for events cut before this field existed.
      */

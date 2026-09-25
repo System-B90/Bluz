@@ -19,4 +19,4 @@ export type GanttCurriculumId = GanttCurriculum["id"];
  * here rather than in `api-server` so the browser can build the same URLs
  * the routes parse.
  */
-export const CURRICULUM_QUERY_PARAM = "cid";
+export const CURRICULUM_QUERY_PARAM = "gc";
