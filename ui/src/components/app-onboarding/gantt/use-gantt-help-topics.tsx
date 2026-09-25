@@ -62,17 +62,6 @@ export function useGanttHelpTopics() {
                 ),
             },
             {
-                id: "gantt.preview",
-                group: HELP_GROUPS.gantt,
-                title: "תצוגה מקדימה",
-                body: (
-                    <Body>
-                        לשונית &quot;תצוגה מקדימה&quot; מציגה את השבוע כפי
-                        שייראה בלו&quot;ז, כולל הפסקות ותפילות, בלי לכתוב כלום.
-                    </Body>
-                ),
-            },
-            {
                 id: "gantt.cut",
                 group: HELP_GROUPS.gantt,
                 title: 'גזירה ללו"ז — ומה קורה לאירועים קיימים',

@@ -6,6 +6,7 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { GanttContentCommands } from "@/components/app-commands/GanttContentCommands";
 import { GanttOnboarding } from "@/components/app-onboarding/gantt/GanttOnboarding";
+import { GANTT_TAB_COUNT } from "@/components/app-onboarding/gantt/tabs";
 import { GanttCreationDeletionCallbackProps } from "@/components/gantt/curriculum-fab/CurriculumActionItems";
 import { CurriculumViewSidebar } from "@/components/gantt/curriculum-view/components/sidebars";
 import { GanttSearchNavProvider } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
@@ -34,7 +35,12 @@ export function CurriculumView({
             ? parseInt(viewIndexFromUrl, 10)
             : 0;
 
-        return Number.isFinite(parsedViewIndex) ? parsedViewIndex : 0;
+        // Old links can carry the index of a since-removed tab.
+        return Number.isFinite(parsedViewIndex)
+            && parsedViewIndex >= 0
+            && parsedViewIndex < GANTT_TAB_COUNT
+            ? parsedViewIndex
+            : 0;
     });
 
     useEffect(() =>

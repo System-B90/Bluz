@@ -9,9 +9,9 @@ export const GANTT_TAB_INDEX = {
     syllabuses: 0,
     weeks: 1,
     timeline: 2,
-    cutPreview: 3,
-    timeframeEvents: 4,
 } as const;
+
+export const GANTT_TAB_COUNT = Object.keys(GANTT_TAB_INDEX).length;
 
 /**
  * Tab content mounts a couple of frames after the tab changes (the tab strip

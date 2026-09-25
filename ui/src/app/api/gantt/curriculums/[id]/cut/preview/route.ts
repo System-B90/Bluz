@@ -14,8 +14,8 @@ type RouteContext = {
 
 /**
  * GET: dry-run cut preview — the planner's dated, timed occurrences for this
- * curriculum, with no gating and no writes. Powers the week-preview and
- * timeframe-events tabs in the curriculum view.
+ * curriculum, with no gating and no writes. Used by the bluz CLI
+ * (`curriculums cut-preview`).
  */
 export const GET = withApi(
     async (request: NextRequest, context: RouteContext) => {

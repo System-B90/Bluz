@@ -17,10 +17,8 @@ import {
 
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { GANTT_ANCHORS } from "@/components/app-onboarding/anchors";
-import { CutPreviewTab } from "@/components/gantt/curriculum-view/tabs/cut-preview-tab";
 import { CurriculumGanttView } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab";
 import { SyllabusesTab } from "@/components/gantt/curriculum-view/tabs/syllabuses-tab";
-import { TimeframeEventsTab } from "@/components/gantt/curriculum-view/tabs/timeframe-events-tab";
 import { WeeksTab } from "@/components/gantt/curriculum-view/tabs/weeks-tab";
 
 type TabProps = {
@@ -64,8 +62,6 @@ function TabLabels({ selectedTabIndex, setSelectedTabIndex }: TabProps) {
                 <Tab label="סילבוסים" />
                 <Tab label="שבועות" />
                 <Tab label="רצף זמן" />
-                <Tab label="תצוגה מקדימה" />
-                <Tab label="אירועים בטווח" />
             </Tabs>
         </Fragment>
     );
@@ -105,10 +101,6 @@ function renderTabContent(tabIndex: number, curriculumId: GanttCurriculumId) {
         return <WeeksTab curriculumId={curriculumId} />;
     case 2:
         return <MemoizedCurriculumGanttView curriculumId={curriculumId} />;
-    case 3:
-        return <CutPreviewTab curriculumId={curriculumId} />;
-    case 4:
-        return <TimeframeEventsTab curriculumId={curriculumId} />;
     default:
         return null;
     }

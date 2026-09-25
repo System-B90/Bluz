@@ -637,7 +637,7 @@ async function buildHiveModuleSubjectMap(
 }
 
 /**
- * Dry-run of the cut ("תצוגה מקדימה", preview tabs): runs the exact same
+ * Dry-run of the cut (CLI preview route, AI preview tool): runs the exact same
  * pipeline as `cutCurriculumToSchedule` up to and including `planCut`, but
  * skips every gate (draft, iteration link, already-cut) and writes nothing.
  * Schedule timing settings come from the linked iteration when one exists,

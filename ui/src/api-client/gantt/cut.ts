@@ -3,7 +3,6 @@ import { ClientApiError } from "@/api-shared/errors";
 import {
     ApiCurriculumCutPayload,
     ApiCurriculumCutPlanResponse,
-    ApiCurriculumCutPreviewResponse,
     ApiCurriculumCutResponse,
     ApiCurriculumCutStatus,
     ApiCurriculumPullBackResponse,
@@ -101,18 +100,6 @@ export async function pullBackCurriculumSchedule(
 }
 
 /**
- * GET /api/gantt/curriculums/[id]/cut/preview — dry-run of the cut planner:
- * dated, timed occurrences (or the planner's validation errors), no writes.
- */
-export async function previewCurriculumCut(
-    curriculumId: GanttCurriculumId,
-): Promise<ApiCurriculumCutPreviewResponse> {
-    return await safeApiFetcher<ApiCurriculumCutPreviewResponse>(
-        `/api/gantt/curriculums/${encodeURIComponent(curriculumId)}/cut/preview`,
-    );
-}
-
-/**
  * PATCH /api/gantt/curriculums/[id]/cut — reload an already-cut schedule from
  * the current gantt. With `dryRun` the server only computes the diff.
  * @param curriculumId Curriculum to reload from.
@@ -146,5 +133,4 @@ export const curriculumCutApi = {
     reload: reloadCurriculumSchedule,
     status: getCurriculumCutStatus,
     pullBack: pullBackCurriculumSchedule,
-    preview: previewCurriculumCut,
 } as const;

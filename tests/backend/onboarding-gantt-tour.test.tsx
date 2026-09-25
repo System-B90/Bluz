@@ -117,11 +117,10 @@ describe("gantt onboarding tour", () => {
         await seeStep("ברוכים הבאים לגאנט");
         await advanceTo(/מה באמת קורה/);
 
-        // Content, then weeks, then the read-only preview — in that order.
+        // Content, then weeks — in that order.
         expect(setSelectedTabIndex.mock.calls.map(([index]) => index)).toEqual([
             GANTT_TAB_INDEX.syllabuses,
             GANTT_TAB_INDEX.weeks,
-            GANTT_TAB_INDEX.cutPreview,
         ]);
     });
 
