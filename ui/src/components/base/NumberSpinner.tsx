@@ -4,6 +4,7 @@ import RemoveIcon from "@mui/icons-material/Remove";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import FormControl from "@mui/material/FormControl";
+import InputAdornment from "@mui/material/InputAdornment";
 import OutlinedInput from "@mui/material/OutlinedInput";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
@@ -18,7 +19,16 @@ const UNIT_STEPS: Record<DurationUnit, { step: number; largeStep: number }> = {
 };
 
 // Session-wide unit shared by every spinner: flipping one flips them all.
-let sessionUnit: DurationUnit = "minutes";
+// Persisted in sessionStorage so it survives reloads within the tab.
+const STORAGE_KEY = "bluz.numberSpinner.unit";
+const readStoredUnit = (): DurationUnit => {
+    try {
+        return sessionStorage.getItem(STORAGE_KEY) === "hours" ? "hours" : "minutes";
+    } catch {
+        return "minutes";
+    }
+};
+let sessionUnit: DurationUnit | undefined;
 const listeners = new Set<() => void>();
 const subscribe = (l: () => void) => {
     listeners.add(l);
@@ -26,15 +36,24 @@ const subscribe = (l: () => void) => {
 };
 const setSessionUnit = (u: DurationUnit) => {
     sessionUnit = u;
+    try {
+        sessionStorage.setItem(STORAGE_KEY, u);
+    } catch {
+        // Storage blocked: unit still applies for this page's lifetime.
+    }
     listeners.forEach((l) => l());
 };
 const useSessionUnit = () =>
-    React.useSyncExternalStore(subscribe, () => sessionUnit, () => "minutes" as const);
+    React.useSyncExternalStore(subscribe, () => (sessionUnit ??= readStoredUnit()), () => "minutes" as const);
 
 /**
- * Duration spinner. `value` / `onValueChange` are always minutes; the
- * דק׳/שעות toggle only changes what the user sees and types. `step` /
- * `largeStep` default per unit and, when passed, apply in the shown unit.
+ * Duration spinner — for durations only, not general numbers.
+ *
+ * `value` / `onValueChange` are always minutes. The דק׳/שעות toggle inside
+ * the field only changes what the user sees and types; the chosen unit is
+ * shared by every spinner and kept in sessionStorage. `step` / `largeStep`
+ * default per unit and, when passed, apply in the shown unit.
+ * `unitToggle={false}` hides the toggle and pins the spinner to minutes.
  */
 export function NumberSpinner({
     id: idProp,
@@ -45,18 +64,21 @@ export function NumberSpinner({
     onValueChange,
     step,
     largeStep,
+    unitToggle = true,
     ...other
 }: Omit<BaseNumberField.Root.Props, "onValueChange"> & {
     _label?: never;
     size?: "medium" | "small";
     error?: boolean;
+    unitToggle?: boolean;
     onValueChange?: (minutes: null | number) => void;
 }) {
     let id = React.useId();
     if (idProp) {
         id = idProp;
     }
-    const unit = useSessionUnit();
+    const sharedUnit = useSessionUnit();
+    const unit = unitToggle ? sharedUnit : "minutes";
     const factor = unit === "hours" ? 60 : 1;
     return (
         <BaseNumberField.Root
@@ -119,6 +141,26 @@ export function NumberSpinner({
                     id={id}
                     render={(props, state) => (
                         <OutlinedInput
+                            endAdornment={
+                                unitToggle ? <InputAdornment
+                                    position="end"
+                                    sx={{ height: "auto", m: 0, mb: 0.5 }}
+                                >
+                                    <ToggleButtonGroup
+                                        exclusive
+                                        onChange={(_e, v: DurationUnit | null) => v && setSessionUnit(v)}
+                                        size="small"
+                                        value={unit}
+                                    >
+                                        <ToggleButton sx={{ py: 0, px: 0.75 }} value="minutes">
+                                            <Typography variant="caption">דק&apos;</Typography>
+                                        </ToggleButton>
+                                        <ToggleButton sx={{ py: 0, px: 0.75 }} value="hours">
+                                            <Typography variant="caption">שעות</Typography>
+                                        </ToggleButton>
+                                    </ToggleButtonGroup>
+                                </InputAdornment> : null
+                            }
                             inputRef={props.ref}
                             onBlur={props.onBlur}
                             onChange={props.onChange}
@@ -139,7 +181,12 @@ export function NumberSpinner({
                                     },
                                 },
                             }}
-                            sx={{ pr: 0, borderRadius: 0, flex: 1 }}
+                            sx={{
+                                pr: 0,
+                                borderRadius: 0,
+                                flex: 1,
+                                flexDirection: "column",
+                            }}
                             value={state.inputValue}
                         />
                     )}
@@ -165,20 +212,6 @@ export function NumberSpinner({
                     <AddIcon fontSize={size} />
                 </BaseNumberField.Increment>
             </Box>
-            <ToggleButtonGroup
-                exclusive
-                onChange={(_e, v: DurationUnit | null) => v && setSessionUnit(v)}
-                size="small"
-                sx={{ alignSelf: "center", mt: 0.5 }}
-                value={unit}
-            >
-                <ToggleButton sx={{ py: 0, px: 0.75 }} value="minutes">
-                    <Typography variant="caption">דק&apos;</Typography>
-                </ToggleButton>
-                <ToggleButton sx={{ py: 0, px: 0.75 }} value="hours">
-                    <Typography variant="caption">שעות</Typography>
-                </ToggleButton>
-            </ToggleButtonGroup>
         </BaseNumberField.Root>
     );
 }
