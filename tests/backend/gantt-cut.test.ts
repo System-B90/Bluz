@@ -87,8 +87,9 @@ import {
     moduleEventTypeToCalendarType,
     pullBackCutSchedule,
 } from "@/api-server/gantt/cut";
+import { lowestCommonCourse } from "@/api-shared/course-tree";
 import { Course } from "@/api-shared/types/course";
-import { PlannedOccurrence } from "@/api-shared/gantt/cut-planner";
+import { CutPlanEventInput, PlannedOccurrence } from "@/api-shared/gantt/cut-planner";
 import { EventType } from "@/api-shared/types/event";
 import { ApiCurriculum, ApiModuleEvent } from "@/api-shared/types/gantt/api-layer";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models/curriculum";
@@ -284,7 +285,7 @@ describe("countOverlappingOccurrences", () => {
             occ({ startTime: new Date("2024-01-07T08:00:00"), endTime: new Date("2024-01-07T09:00:00") }),
             occ({ startTime: new Date("2024-01-07T09:00:00"), endTime: new Date("2024-01-07T10:00:00") }),
         ];
-        expect(countOverlappingOccurrences(back2back)).toBe(0);
+        expect(countOverlappingOccurrences(back2back, [])).toBe(0);
 
         const overlapping = [
             occ({ startTime: new Date("2024-01-07T08:00:00"), endTime: new Date("2024-01-07T09:30:00") }),
@@ -292,7 +293,59 @@ describe("countOverlappingOccurrences", () => {
             // different date, cannot overlap the two above
             occ({ occurrenceDate: "2024-01-08", startTime: new Date("2024-01-08T08:00:00"), endTime: new Date("2024-01-08T12:00:00") }),
         ];
-        expect(countOverlappingOccurrences(overlapping)).toBe(1);
+        expect(countOverlappingOccurrences(overlapping, [])).toBe(1);
+    });
+
+    it("ignores shuffle-group siblings running side by side", () => {
+        const side = { startTime: new Date("2024-01-07T08:00:00"), endTime: new Date("2024-01-07T09:00:00") };
+        const occurrences = [
+            occ({ ganttEventId: "g1", ...side }),
+            occ({ ganttEventId: "g2", ...side }),
+            occ({ ganttEventId: "solo", ...side }),
+        ];
+        const events = [
+            { id: "g1", groupId: "grp" },
+            { id: "g2", groupId: "grp" },
+            { id: "solo", groupId: null },
+        ] as Array<CutPlanEventInput>;
+        // g1↔g2 skipped; solo overlaps both siblings.
+        expect(countOverlappingOccurrences(occurrences, events)).toBe(2);
+    });
+});
+
+describe("lowestCommonCourse", () => {
+    const courses = [
+        { id: "bis90", parentId: null },
+        { id: "apollo", parentId: "bis90" },
+        { id: "sphinx", parentId: "bis90" },
+        { id: "mivtzar", parentId: "bis90" },
+        { id: "other", parentId: null },
+    ];
+
+    it("returns the single assigned course", () => {
+        expect(lowestCommonCourse(["apollo"], courses)).toBe("apollo");
+    });
+
+    it("returns the shared parent of sibling courses", () => {
+        expect(lowestCommonCourse(["apollo", "mivtzar"], courses)).toBe("bis90");
+    });
+
+    it("returns the ancestor when a course and its parent are both assigned", () => {
+        expect(lowestCommonCourse(["apollo", "bis90"], courses)).toBe("bis90");
+    });
+
+    it("returns null with no courses, unknown ids, or disjoint roots", () => {
+        expect(lowestCommonCourse([], courses)).toBeNull();
+        expect(lowestCommonCourse(["ghost"], courses)).toBeNull();
+        expect(lowestCommonCourse(["apollo", "other"], courses)).toBeNull();
+    });
+
+    it("survives a parent cycle", () => {
+        const cyclic = [
+            { id: "a", parentId: "b" },
+            { id: "b", parentId: "a" },
+        ];
+        expect(lowestCommonCourse(["a"], cyclic)).toBe("a");
     });
 });
 
@@ -500,6 +553,44 @@ describe("cutCurriculumToSchedule", () => {
         expect(createdCourse.description).toBe('נגזר מסילבוס "סילבוס א"');
         const inserted = fakeEvents.insertMany.mock.calls[0][0] as Array<any>;
         expect(inserted[0].courses).toEqual([createdCourse.id]);
+    });
+
+    describe("nests shuffle courses under the syllabus's lowest common course", () => {
+        const hierarchy: Array<Course> = [
+            { id: "bis90", name: "Bis90", color: null, parentId: null },
+            { id: "apollo", name: "Apollo", color: null, parentId: "bis90" },
+            { id: "sphinx", name: "Sphinx", color: null, parentId: "bis90" },
+            { id: "mivtzar", name: "Mivtzar", color: null, parentId: "bis90" },
+        ];
+
+        const cutWithSyllabusCourses = async (courseIds: Array<string>) => {
+            const curriculum = makeCurriculum([
+                makeEvent({ id: "e1", shuffles: ["תפפ 1", "תפפ 2"], cEC: [{ eventId: "e1", curriculumId: "c1", allocatedDuration: 60 }] }),
+            ]);
+            (curriculum.c2s![0].syllabus as any).courseIds = courseIds;
+            vi.mocked(DbCurriculum.getItem).mockResolvedValue(curriculum);
+            vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(makeIteration());
+            vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([{ eventId: "e1", dayId: "w0d0", sortOrder: 0 }]);
+            vi.mocked(DbCourses.get).mockResolvedValue(hierarchy);
+
+            const outcome = await cutCurriculumToSchedule("c1");
+            expect(outcome.ok).toBe(true);
+            const created = vi.mocked(DbCourses.create).mock.calls.map((call) => call[0] as Course);
+            expect(created.map((c) => c.name)).toEqual(["תפפ 1", "תפפ 2"]);
+            return created.map((c) => c.parentId);
+        };
+
+        it("under the one assigned course", async () => {
+            expect(await cutWithSyllabusCourses(["apollo"])).toEqual(["apollo", "apollo"]);
+        });
+
+        it("under the shared parent of several assigned courses", async () => {
+            expect(await cutWithSyllabusCourses(["apollo", "mivtzar"])).toEqual(["bis90", "bis90"]);
+        });
+
+        it("at top level when the syllabus has no course", async () => {
+            expect(await cutWithSyllabusCourses([])).toEqual([null, null]);
+        });
     });
 
     it("assigns all iteration courses to an event with no shuffles", async () => {

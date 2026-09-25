@@ -21,6 +21,7 @@ import {
     getDatabaseController,
 } from "@/api-server/mongo-db-controller";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
+import { lowestCommonCourse } from "@/api-shared/course-tree";
 import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 import {
     CutPlanEventInput,
@@ -213,6 +214,8 @@ export function indexCurriculumEvents(curriculum: ApiCurriculum): {
     eventIdsByModule: Map<string, Array<string>>;
     /** Module titles, used in constraint-violation messages. */
     moduleTitleById: Map<string, string>;
+    /** Courses (מסלולים) the owning syllabus is assigned to, per event. */
+    syllabusCourseIdsByEvent: Map<string, Array<string>>;
 } {
     const eventsById = new Map<string, ApiModuleEvent>();
     const syllabusTitleByEvent = new Map<string, string>();
@@ -221,6 +224,7 @@ export function indexCurriculumEvents(curriculum: ApiCurriculum): {
     const syllabusIdByEvent = new Map<string, string>();
     const eventIdsByModule = new Map<string, Array<string>>();
     const moduleTitleById = new Map<string, string>();
+    const syllabusCourseIdsByEvent = new Map<string, Array<string>>();
 
     for (const cLink of curriculum.c2s ?? []) {
         const syllabus = cLink.syllabus;
@@ -234,6 +238,7 @@ export function indexCurriculumEvents(curriculum: ApiCurriculum): {
                 moduleHiveIdsByEvent.set(event.id, ganttModule.hiveIds ?? []);
                 moduleIdByEvent.set(event.id, ganttModule.id);
                 syllabusIdByEvent.set(event.id, syllabus.id);
+                syllabusCourseIdsByEvent.set(event.id, syllabus.courseIds ?? []);
                 eventIdsByModule.set(ganttModule.id, [
                     ...(eventIdsByModule.get(ganttModule.id) ?? []),
                     event.id,
@@ -250,6 +255,7 @@ export function indexCurriculumEvents(curriculum: ApiCurriculum): {
         syllabusIdByEvent,
         eventIdsByModule,
         moduleTitleById,
+        syllabusCourseIdsByEvent,
     };
 }
 
@@ -888,8 +894,12 @@ export async function materializeCurriculumEvents(
     const lunchTime = (mealSetting as MealSettings | null)?.lunchTime;
     const dinnerTime = (mealSetting as MealSettings | null)?.dinnerTime;
 
-    const { eventsById, syllabusTitleByEvent, moduleHiveIdsByEvent } =
-        indexCurriculumEvents(curriculum);
+    const {
+        eventsById,
+        syllabusTitleByEvent,
+        moduleHiveIdsByEvent,
+        syllabusCourseIdsByEvent,
+    } = indexCurriculumEvents(curriculum);
     const hiveModules = await buildHiveModuleSubjectMap(iteration.hiveUrl);
     const hiveModuleSubjectById = hiveModules.byModuleId;
 
@@ -918,10 +928,16 @@ export async function materializeCurriculumEvents(
     );
     const shuffleNames = new Set<string>();
     const syllabusTitleForShuffle = new Map<string, string>();
+    const syllabusCourseIdsForShuffle = new Map<string, Set<string>>();
     for (const eventId of cutEventIds) {
         const event = eventsById.get(eventId);
         for (const name of event?.shuffles ?? []) {
             shuffleNames.add(name);
+            const courseIds = syllabusCourseIdsForShuffle.get(name) ?? new Set();
+            for (const id of syllabusCourseIdsByEvent.get(eventId) ?? []) {
+                courseIds.add(id);
+            }
+            syllabusCourseIdsForShuffle.set(name, courseIds);
             if (!syllabusTitleForShuffle.has(name)) {
                 syllabusTitleForShuffle.set(
                     name,
@@ -948,6 +964,10 @@ export async function materializeCurriculumEvents(
                 id: randomUUID(),
                 name,
                 color: null,
+                parentId: lowestCommonCourse(
+                    syllabusCourseIdsForShuffle.get(name) ?? [],
+                    existingCourses,
+                ),
                 description: `נגזר מסילבוס "${syllabusTitleForShuffle.get(name) ?? ""}"`,
             };
             await DbCourses.create(course, controller);
