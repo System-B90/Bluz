@@ -3,7 +3,6 @@ import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import EventIcon from "@mui/icons-material/Event";
 import PeopleIcon from "@mui/icons-material/People";
-import SchoolIcon from "@mui/icons-material/School";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import Autocomplete from "@mui/material/Autocomplete";
@@ -49,7 +48,6 @@ import
 import { GoogleCalendarStatus } from "@/api-shared/types/google-calendar";
 import { Class, ClassTypeEnum } from "@/api-shared/types/hive";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
-import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { useOutsiders } from "@/components/base/OutsidersProvider";
 import { AiSelfTest } from "@/components/settings-dialog/tabs/AiSelfTest";
 import { iconBadgeSx, settingsCardSx } from "@/components/settings-dialog/tabs/global/common/styles";
@@ -271,7 +269,6 @@ export function PersonalSettings()
 {
     const { enqueueSnackbar } = useSnackbar();
     const { outsiders, getOutsider } = useOutsiders();
-    const { instructors: hiveInstructors } = useHiveUsers();
     const [ hiveClasses, setHiveClasses ] = useState<Array<Class>>([]);
 
     const [ state, dispatch ] = useReducer(personalSettingsReducer, {
@@ -405,25 +402,6 @@ export function PersonalSettings()
         {
             dispatch({ type: "REMOVE_GROUP", payload: id });
             enqueueSnackbar("הקבוצה הוסרה בהצלחה.", { variant: "success" });
-        },
-        [ enqueueSnackbar ],
-    );
-
-    const handleAddInstructor = useCallback(
-        (instructor: null | SelectionItem) =>
-        {
-            if (!instructor) return;
-            dispatch({ type: "ADD_INSTRUCTOR", payload: instructor.id });
-            enqueueSnackbar("המרצה התווסף בהצלחה.", { variant: "success" });
-        },
-        [ enqueueSnackbar ],
-    );
-
-    const handleRemoveInstructor = useCallback(
-        (id: string) =>
-        {
-            dispatch({ type: "REMOVE_INSTRUCTOR", payload: id });
-            enqueueSnackbar("המרצה הוסר בהצלחה.", { variant: "success" });
         },
         [ enqueueSnackbar ],
     );
@@ -577,23 +555,6 @@ export function PersonalSettings()
         [ state.groups, hiveClasses ],
     );
 
-    const availableInstructors = useMemo(
-        () =>
-            hiveInstructors
-                .filter((i) => !state.instructors.includes(String(i.id)))
-                .map((i) => ({ id: String(i.id), label: i.display_name })),
-        [ hiveInstructors, state.instructors ],
-    );
-    const selectedInstructors = useMemo(
-        () =>
-            state.instructors.map((id) =>
-            {
-                const i = hiveInstructors.find((u) => String(u.id) === id);
-                return { id, label: i ? i.display_name : id };
-            }),
-        [ state.instructors, hiveInstructors ],
-    );
-
     const availableOutsiders = useMemo(
         () =>
             outsiders
@@ -643,25 +604,6 @@ export function PersonalSettings()
                     selectedItems={ selectedGroups }
                     title="קבוצות שלי"
                 />
-                <SelectionCard
-                    availableOptions={ availableInstructors }
-                    colorTheme="secondary"
-                    description="מעקב אחר מרצים מבוקשים ביומן"
-                    emptyMessage="טרם נבחרו מרצים"
-                    icon={ <SchoolIcon className="text-[20px]" /> }
-                    onAdd={ handleAddInstructor }
-                    onRemove={ handleRemoveInstructor }
-                    searchLabel="חיפוש והוספת מרצה..."
-                    selectedItems={ selectedInstructors }
-                    title="מרצים מועדפים"
-                />
-            </Box>
-            <Box
-                sx={ {
-                    display: "flex",
-                    width: "100%",
-                } }
-            >
                 <SelectionCard
                     availableOptions={ availableOutsiders }
                     colorTheme="warning"
