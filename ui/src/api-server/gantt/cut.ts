@@ -216,6 +216,11 @@ export function indexCurriculumEvents(curriculum: ApiCurriculum): {
     moduleTitleById: Map<string, string>;
     /** Courses (מסלולים) the owning syllabus is assigned to, per event. */
     syllabusCourseIdsByEvent: Map<string, Array<string>>;
+    /**
+     * Shuffles each event runs for: its own, else its module's, else its
+     * syllabus's. Empty when none is set anywhere up the chain.
+     */
+    shufflesByEvent: Map<string, Array<string>>;
 } {
     const eventsById = new Map<string, ApiModuleEvent>();
     const syllabusTitleByEvent = new Map<string, string>();
@@ -225,6 +230,9 @@ export function indexCurriculumEvents(curriculum: ApiCurriculum): {
     const eventIdsByModule = new Map<string, Array<string>>();
     const moduleTitleById = new Map<string, string>();
     const syllabusCourseIdsByEvent = new Map<string, Array<string>>();
+    const shufflesByEvent = new Map<string, Array<string>>();
+    const firstNonEmpty = (...lists: Array<Array<string> | null | undefined>) =>
+        lists.find((list) => list && list.length > 0) ?? [];
 
     for (const cLink of curriculum.c2s ?? []) {
         const syllabus = cLink.syllabus;
@@ -239,6 +247,14 @@ export function indexCurriculumEvents(curriculum: ApiCurriculum): {
                 moduleIdByEvent.set(event.id, ganttModule.id);
                 syllabusIdByEvent.set(event.id, syllabus.id);
                 syllabusCourseIdsByEvent.set(event.id, syllabus.courseIds ?? []);
+                shufflesByEvent.set(
+                    event.id,
+                    firstNonEmpty(
+                        event.shuffles,
+                        ganttModule.shuffles,
+                        syllabus.shuffles,
+                    ),
+                );
                 eventIdsByModule.set(ganttModule.id, [
                     ...(eventIdsByModule.get(ganttModule.id) ?? []),
                     event.id,
@@ -256,6 +272,7 @@ export function indexCurriculumEvents(curriculum: ApiCurriculum): {
         eventIdsByModule,
         moduleTitleById,
         syllabusCourseIdsByEvent,
+        shufflesByEvent,
     };
 }
 
@@ -899,6 +916,7 @@ export async function materializeCurriculumEvents(
         syllabusTitleByEvent,
         moduleHiveIdsByEvent,
         syllabusCourseIdsByEvent,
+        shufflesByEvent,
     } = indexCurriculumEvents(curriculum);
     const hiveModules = await buildHiveModuleSubjectMap(iteration.hiveUrl);
     const hiveModuleSubjectById = hiveModules.byModuleId;
@@ -930,8 +948,7 @@ export async function materializeCurriculumEvents(
     const syllabusTitleForShuffle = new Map<string, string>();
     const syllabusCourseIdsForShuffle = new Map<string, Set<string>>();
     for (const eventId of cutEventIds) {
-        const event = eventsById.get(eventId);
-        for (const name of event?.shuffles ?? []) {
+        for (const name of shufflesByEvent.get(eventId) ?? []) {
             shuffleNames.add(name);
             const courseIds = syllabusCourseIdsForShuffle.get(name) ?? new Set();
             for (const id of syllabusCourseIdsByEvent.get(eventId) ?? []) {
@@ -997,12 +1014,14 @@ export async function materializeCurriculumEvents(
         const event = eventsById.get(occurrence.ganttEventId);
         if (!event) continue;
 
+        // Shuffle courses first, else the syllabus's own courses, else none.
+        const shuffles = shufflesByEvent.get(occurrence.ganttEventId) ?? [];
         const courseIds =
-            event.shuffles && event.shuffles.length > 0
-                ? event.shuffles
+            shuffles.length > 0
+                ? shuffles
                     .map((name) => shuffleCourseId.get(name))
                     .filter((id): id is string => Boolean(id))
-                : allCourseIds;
+                : syllabusCourseIdsByEvent.get(occurrence.ganttEventId) ?? [];
 
         documents.push(
             buildScheduleEvent(

@@ -593,23 +593,46 @@ describe("cutCurriculumToSchedule", () => {
         });
     });
 
-    it("assigns all iteration courses to an event with no shuffles", async () => {
-        vi.mocked(DbCurriculum.getItem).mockResolvedValue(
-            makeCurriculum([makeEvent({ id: "e1", shuffles: [], cEC: [{ eventId: "e1", curriculumId: "c1", allocatedDuration: 60 }] })]),
-        );
-        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(makeIteration());
-        vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([{ eventId: "e1", dayId: "w0d0", sortOrder: 0 }]);
-        vi.mocked(DbCourses.get).mockResolvedValue([
-            { id: "course-a", name: "A", color: null },
-            { id: "course-b", name: "B", color: null },
-        ]);
+    describe("assigns event courses up the chain", () => {
+        const cutWith = async (chain: {
+            moduleShuffles?: Array<string>;
+            syllabusShuffles?: Array<string>;
+            syllabusCourseIds?: Array<string>;
+        }) => {
+            const curriculum = makeCurriculum([makeEvent({ id: "e1", shuffles: [], cEC: [{ eventId: "e1", curriculumId: "c1", allocatedDuration: 60 }] })]);
+            const syllabus = curriculum.c2s![0].syllabus as any;
+            syllabus.shuffles = chain.syllabusShuffles;
+            syllabus.courseIds = chain.syllabusCourseIds;
+            syllabus.s2m[0].module.shuffles = chain.moduleShuffles;
+            vi.mocked(DbCurriculum.getItem).mockResolvedValue(curriculum);
+            vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(makeIteration());
+            vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([{ eventId: "e1", dayId: "w0d0", sortOrder: 0 }]);
+            vi.mocked(DbCourses.get).mockResolvedValue([
+                { id: "course-a", name: "A", color: null },
+                { id: "course-b", name: "B", color: null },
+            ]);
 
-        const outcome = await cutCurriculumToSchedule("c1");
-        expect(outcome.ok).toBe(true);
-        if (!outcome.ok) return;
-        expect(DbCourses.create).not.toHaveBeenCalled();
-        const inserted = fakeEvents.insertMany.mock.calls[0][0] as Array<any>;
-        expect(inserted[0].courses).toEqual(["course-a", "course-b"]);
+            const outcome = await cutCurriculumToSchedule("c1");
+            expect(outcome.ok).toBe(true);
+            expect(DbCourses.create).not.toHaveBeenCalled();
+            return (fakeEvents.insertMany.mock.calls[0][0] as Array<any>)[0].courses;
+        };
+
+        it("to the module's shuffles when the event has none", async () => {
+            expect(await cutWith({ moduleShuffles: ["B"], syllabusShuffles: ["A"] })).toEqual(["course-b"]);
+        });
+
+        it("to the syllabus's shuffles when the module has none", async () => {
+            expect(await cutWith({ syllabusShuffles: ["A"], syllabusCourseIds: ["course-b"] })).toEqual(["course-a"]);
+        });
+
+        it("to the syllabus's courses when no shuffle is set", async () => {
+            expect(await cutWith({ syllabusCourseIds: ["course-b"] })).toEqual(["course-b"]);
+        });
+
+        it("to no course when nothing is set", async () => {
+            expect(await cutWith({})).toEqual([]);
+        });
     });
 });
 
