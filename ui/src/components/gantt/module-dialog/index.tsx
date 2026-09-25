@@ -289,13 +289,19 @@ function ModuleDetailsForm({
                 hiveModules={hiveModules}
                 onChange={onHiveModulesChange}
             />
-            <HiveModulesView
-                hiveModules={hiveModules}
-                onRemove={(id) =>
-                    onHiveModulesChange(hiveModules.filter((m) => m !== id))
-                }
-            />
-            <HiveLessonsView hiveModules={hiveModules} />
+            <Stack alignItems="flex-start" direction="row" spacing={2}>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <HiveModulesView
+                        hiveModules={hiveModules}
+                        onRemove={(id) =>
+                            onHiveModulesChange(hiveModules.filter((m) => m !== id))
+                        }
+                    />
+                </Box>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <HiveLessonsView hiveModules={hiveModules} />
+                </Box>
+            </Stack>
         </Stack>
     );
 }
