@@ -148,6 +148,7 @@ test.describe("the student schedule endpoint", () => {
                 "endTime",
                 "id",
                 "name",
+                "relatedCourses",
                 "rooms",
                 "startTime",
             ]);
@@ -301,8 +302,11 @@ test.describe("a hostile student probing the boundary", () => {
         expect(Object.keys(data).sort()).toEqual([
             "calendarDayEndTime",
             "calendarDayStartTime",
+            "courseGroups",
+            "courseNames",
             "date",
             "events",
+            "roomNames",
         ]);
     });
 
@@ -450,21 +454,38 @@ test.describe("no packet the student page receives carries staff data", () => {
                 "endTime",
                 "id",
                 "name",
+                "relatedCourses",
                 "rooms",
                 "startTime",
             ]);
             // Values, not just keys: a colour must be a hex string and never
-            // an id, and rooms/courses must be display names.
+            // an id, and rooms/courses must be indices into this response's
+            // name tables (the wire form), never ids.
             expect(event.color).toMatch(/^#[0-9a-fA-F]{6}$/);
             expect(Array.isArray(event.rooms)).toBe(true);
-            expect(Array.isArray(event.courses)).toBe(true);
-            for (const name of [...event.rooms, ...event.courses]) {
-                expect(typeof name).toBe("string");
-                // Bluz ids are uuids; a display name never looks like one.
-                expect(name).not.toMatch(
-                    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
-                );
+            for (const room of event.rooms) {
+                expect(Number.isInteger(room)).toBe(true);
+                expect(room).toBeLessThan(data.roomNames.length);
             }
+            for (const group of [event.courses, event.relatedCourses]) {
+                expect(Number.isInteger(group)).toBe(true);
+                expect(group).toBeLessThan(data.courseGroups.length);
+            }
+        }
+
+        for (const group of data.courseGroups) {
+            for (const index of group) {
+                expect(Number.isInteger(index)).toBe(true);
+                expect(index).toBeLessThan(data.courseNames.length);
+            }
+        }
+
+        for (const name of [...data.roomNames, ...data.courseNames]) {
+            expect(typeof name).toBe("string");
+            // Bluz ids are uuids; a display name never looks like one.
+            expect(name).not.toMatch(
+                /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+            );
         }
     });
 

@@ -1,10 +1,13 @@
 import
 {
+    CollisionDetection,
     defaultDropAnimationSideEffects,
     DndContext,
     DragEndEvent,
     DragOverlay,
     DragStartEvent,
+    pointerWithin,
+    rectIntersection,
     useDroppable,
 } from "@dnd-kit/core";
 import LayersIcon from "@mui/icons-material/Layers";
@@ -106,6 +109,17 @@ function CourseDragOverlay({
         </Card>
     );
 }
+
+/**
+ * Resolve the drop from the pointer first. The default (largest rect overlap)
+ * lets a tall neighbouring course card outscore the short root drop zone the
+ * pointer is actually over, so un-nesting silently did nothing.
+ */
+const pointerFirstCollision: CollisionDetection = (args) =>
+{
+    const hits = pointerWithin(args);
+    return hits.length > 0 ? hits : rectIntersection(args);
+};
 
 function RootDropZone()
 {
@@ -306,6 +320,7 @@ export function CourseSettings()
 
     return (
         <DndContext
+            collisionDetection={ pointerFirstCollision }
             onDragCancel={ handleDragCancel }
             onDragEnd={ handleDragEnd }
             onDragStart={ handleDragStart }

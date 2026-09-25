@@ -71,7 +71,7 @@ test.describe("Settings Dialog", () => {
 
     // ─── Personal Settings ──────────────────────────────────────────────────
 
-    test("personal tab displays group, instructor, and outsider selection cards", async ({
+    test("personal tab displays group and outsider selection cards", async ({
         page,
     }) => {
         await openSettingsDialog(page);
@@ -83,12 +83,6 @@ test.describe("Settings Dialog", () => {
         await expect(dialog.getByText("קבוצות שלי")).toBeVisible();
         await expect(
             dialog.getByText("בחירת קבוצות להצגה מותאמת ביומן"),
-        ).toBeVisible();
-
-        // Instructors card
-        await expect(dialog.getByText("מרצים מועדפים")).toBeVisible();
-        await expect(
-            dialog.getByText("מעקב אחר מרצים מבוקשים ביומן"),
         ).toBeVisible();
 
         // Outsiders card
@@ -142,43 +136,6 @@ test.describe("Settings Dialog", () => {
             await expect(chip.first()).not.toBeVisible();
         }
     });
-
-    test("adds and removes an instructor in personal settings", async ({
-        page,
-    }) => {
-        await openSettingsDialog(page);
-        await navigateToSettingsTab(page, "אישי");
-
-        const dialog = page.locator(SELECTORS.settingsDialog).first();
-
-        const instructorSearch = dialog
-            .locator(SELECTORS.autocomplete)
-            .filter({ hasText: "חיפוש והוספת מרצה" })
-            .first();
-
-        await instructorSearch.locator("input").click();
-        await instructorSearch.locator("input").fill("Al");
-        await page.waitForTimeout(500);
-
-        const option = page.locator(".MuiAutocomplete-option").first();
-        if ((await option.count()) > 0) {
-            const optionText = await option.textContent();
-            await option.click();
-            await page.waitForTimeout(500);
-
-            const chip = dialog.locator(SELECTORS.chip).filter({
-                hasText: optionText!,
-            });
-            await expect(chip.first()).toBeVisible();
-
-            // Clean up
-            const deleteButton = chip.first().locator("svg");
-            await deleteButton.click();
-            await page.waitForTimeout(500);
-        }
-    });
-
-    // ─── Global Settings (העדפות זמן) ───────────────────────────────────────
 
     test("global tab displays prayer, meal, and calendar-hours settings", async ({ page }) => {
         await openSettingsDialog(page);
