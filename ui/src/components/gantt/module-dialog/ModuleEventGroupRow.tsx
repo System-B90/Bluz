@@ -49,6 +49,11 @@ export function ModuleEventGroupRow({
         [members],
     );
 
+    const syllabusId = state.modules[moduleId]?.syllabusId;
+    const shuffleDescriptions = syllabusId
+        ? state.syllabuses[syllabusId]?.shuffleDescriptions
+        : undefined;
+
     const firstMember = members[0];
     const durations = members.map((event) => event?.minimumDuration ?? 0);
     const minDuration = Math.min(...durations);
@@ -86,7 +91,10 @@ export function ModuleEventGroupRow({
                         <Typography sx={{ fontWeight: 700, marginInlineEnd: 0.5 }} variant="body2">
                             {firstMember?.title ?? ""}
                         </Typography>
-                        <ShuffleChips shuffles={members.flatMap((event) => event?.shuffles ?? [])} />
+                        <ShuffleChips
+                            descriptions={shuffleDescriptions}
+                            shuffles={members.flatMap((event) => event?.shuffles ?? [])}
+                        />
                     </Stack>
                 </TableCell>
                 <TableCell>

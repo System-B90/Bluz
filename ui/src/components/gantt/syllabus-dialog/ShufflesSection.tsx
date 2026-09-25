@@ -14,10 +14,9 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
-import { apiGetClasses } from "@/api-client/hive";
 import {
     normalizeShuffleDescriptions,
     normalizeShuffleName,
@@ -37,6 +36,7 @@ import {
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 import { ShuffleDeleteDialog } from "@/components/gantt/syllabus-dialog/ShuffleDeleteDialog";
+import { useHiveStudentGroups } from "@/components/gantt/use-hive-student-groups";
 
 const NO_USAGES: ShuffleUsages = { events: [], modules: [] };
 const NO_DESCRIPTIONS: ShuffleDescriptions = {};
@@ -66,40 +66,6 @@ function hiveDescription(group: Class | undefined): string {
     return (group?.description ?? "")
         .trim()
         .slice(0, SHUFFLE_DESCRIPTION_MAX_LENGTH);
-}
-
-/**
- * Hive student groups, keyed by normalized name. A shuffle is 1:1 with a Hive
- * student group matched by name (see `resolveDesiredRules`), so this tells a
- * shuffle whether it is linked and what its Hive description is. `null` while
- * loading or when Hive is unreachable: the section still works offline.
- */
-function useHiveStudentGroups(): Map<string, Class> | null {
-    const [groups, setGroups] = useState<Map<string, Class> | null>(null);
-
-    useEffect(() => {
-        let cancelled = false;
-        apiGetClasses()
-            .then((fetched) => {
-                if (cancelled) return;
-                setGroups(
-                    new Map(
-                        fetched.map((group) => [
-                            normalizeShuffleName(group.name),
-                            group,
-                        ]),
-                    ),
-                );
-            })
-            .catch(() => {
-                if (!cancelled) setGroups(null);
-            });
-        return () => {
-            cancelled = true;
-        };
-    }, []);
-
-    return groups;
 }
 
 /** How many of the syllabus' modules and events carry each shuffle name. */

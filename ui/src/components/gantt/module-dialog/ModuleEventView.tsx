@@ -5,8 +5,6 @@ import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import DriveFileMoveIcon from "@mui/icons-material/DriveFileMove";
 import EditIcon from "@mui/icons-material/Edit";
 import FileCopyIcon from "@mui/icons-material/FileCopy";
-import GroupsIcon from "@mui/icons-material/Groups";
-import Chip from "@mui/material/Chip";
 import FormControl from "@mui/material/FormControl";
 import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
@@ -18,6 +16,7 @@ import TextField from "@mui/material/TextField";
 import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
 
+import { ShuffleDescriptions } from "@/api-shared/gantt/shuffle-names";
 import
 {
     GanttEvent,
@@ -31,6 +30,7 @@ import { NumberSpinner } from "@/components/base/NumberSpinner";
 import { useConfirmDialog } from "@/components/base/UseConfirmDialog";
 import { EVENT_ANCHOR_PREFIX } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
 import { MoveEventDialog } from "@/components/gantt/module-dialog/MoveEventDialog";
+import { ShuffleChip } from "@/components/gantt/ShuffleChip";
 import { useCurriculumProviderActions, useCurriculumState } from "@/components/gantt/state/context";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import { useEvent } from "@/components/gantt/state/hooks/UseEvent";
@@ -60,17 +60,16 @@ function ModuleEventTitle({
 const EMPTY_LEADS: Array<number> = [];
 
 /** Shuffle tags shown inline beside an event title. */
-export function ShuffleChips({ shuffles }: { shuffles: Array<string> | null | undefined })
+export function ShuffleChips({
+    shuffles,
+    descriptions,
+}: {
+    shuffles: Array<string> | null | undefined;
+    descriptions?: ShuffleDescriptions;
+})
 {
     return (shuffles ?? []).map((shuffle) => (
-        <Chip
-            icon={ <GroupsIcon /> }
-            key={ shuffle }
-            label={ shuffle }
-            size="small"
-            sx={ { flexShrink: 0 } }
-            variant="outlined"
-        />
+        <ShuffleChip description={ descriptions?.[ shuffle ] } key={ shuffle } name={ shuffle } />
     ));
 }
 
@@ -185,7 +184,10 @@ export function ModuleEventView({
                         key={ `${moduleEvent?.title ?? "-title"}` }
                         moduleEvent={ moduleEvent }
                     />
-                    <ShuffleChips shuffles={ moduleEvent?.shuffles } />
+                    <ShuffleChips
+                        descriptions={ parentSyllabusId ? state.syllabuses[ parentSyllabusId ]?.shuffleDescriptions : undefined }
+                        shuffles={ moduleEvent?.shuffles }
+                    />
                 </Stack>
             </TableCell>
             <TableCell>
