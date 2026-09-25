@@ -6,6 +6,7 @@
 import { AiToolSpec } from "@/api-server/ai/provider";
 import { askUserTool } from "@/api-server/ai/tools/ask-user";
 import { CALENDAR_TOOLS } from "@/api-server/ai/tools/calendar";
+import { CALENDAR_ENTITY_TOOLS } from "@/api-server/ai/tools/calendar-entities";
 import { GANTT_TOOLS } from "@/api-server/ai/tools/gantt";
 import { AiTool } from "@/api-server/ai/tools/types";
 import { AiToolDanger, AiToolKind, AiToolSummary } from "@/api-shared/types/ai";
@@ -15,6 +16,7 @@ export type * from "@/api-server/ai/tools/types";
 const ALL_TOOLS: Array<AiTool<any>> = [
     askUserTool,
     ...CALENDAR_TOOLS,
+    ...CALENDAR_ENTITY_TOOLS,
     ...GANTT_TOOLS,
 ];
 
