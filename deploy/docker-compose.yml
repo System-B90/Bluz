@@ -63,7 +63,7 @@ services:
         image: mongodb/mongodb-community-server:8.0-ubuntu2204
         container_name: bluz-mongodb
         restart: unless-stopped
-        command: ["--wiredTigerCacheSizeGB", "${MONGO_CACHE_SIZE_GB:-0.5}"]
+        command: ["--quiet", "--wiredTigerCacheSizeGB", "${MONGO_CACHE_SIZE_GB:-0.5}"]
         env_file:
             - ../.env
         environment:

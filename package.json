@@ -15,7 +15,7 @@
         "db:push": "drizzle-kit push --config=drizzle/drizzle.config.ts",
         "db:studio": "drizzle-kit studio --config=drizzle/drizzle.config.ts",
         "db:seed": "python scripts/demo/populate_demo_hive.py && npx tsx scripts/demo/populate_demo_bluz.ts && npx tsx scripts/demo/populate_demo_gantt.ts",
-        "docker:dev": "docker compose --env-file .env -f deploy/docker-compose.yml -f deploy/docker-compose.dev.yml up -d && docker compose --env-file .env -f deploy/docker-compose.yml -f deploy/docker-compose.dev.yml watch ui",
+        "docker:dev": "docker compose --env-file .env -f deploy/docker-compose.yml -f deploy/docker-compose.dev.yml up --watch --no-attach mongodb --no-attach curriculum-db --no-attach proxy",
         "docker:prod": "docker compose --env-file .env -f deploy/docker-compose.yml up -d --build",
         "docker:down": "docker compose --env-file .env -f deploy/docker-compose.yml down",
         "docker:nuke": "docker compose --env-file .env -f deploy/docker-compose.yml down -v",
