@@ -73,14 +73,18 @@ export function useModuleActions() {
             syllabusId: GanttSyllabusId,
             description: string = "",
             hiveIds: Array<number> = [],
-        ) =>
-            actions.create(
+        ) => {
+            // New modules inherit the syllabus's first אחראי מקצוע as default orchestrator.
+            const defaultOrchestratorId =
+                stateRef.current.syllabuses[syllabusId]?.leadInstructorIds?.[0] ??
+                null;
+            return actions.create(
                 {
                     title,
                     syllabusId,
                     description,
                     hiveIds,
-                    defaultOrchestratorId: null,
+                    defaultOrchestratorId,
                 },
                 syllabusId,
                 (tempId): GanttModule => ({
@@ -90,9 +94,10 @@ export function useModuleActions() {
                     events: [],
                     hiveIds,
                     constraints: [],
-                    defaultOrchestratorId: null,
+                    defaultOrchestratorId,
                 }),
-            ),
+            );
+        },
         [actions],
     );
 
