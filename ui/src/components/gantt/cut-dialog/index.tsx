@@ -174,7 +174,7 @@ function CutSuccessContent({ result }: { result: ApiCurriculumCutResponse }) {
             )}
             {result.createdCourses.length > 0 && (
                 <Typography variant="body2">
-                    קורסים שנוצרו:{" "}
+                    מסלולים שנוצרו:{" "}
                     {result.createdCourses
                         .map((course) => course.name)
                         .join(", ")}

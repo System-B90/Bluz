@@ -23,6 +23,7 @@ import {
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 import {
+    CutPlanEventInput,
     CutPlanInput,
     CutPlanOptions,
     CutPlanReport,
@@ -419,10 +420,16 @@ export function buildCutPlanInput(args: {
 /**
  * Number of overlapping pairs of occurrences: two occurrences on the same date
  * whose time ranges intersect. Purely informational for the cut summary.
+ * Shuffle-group siblings (#699) run side by side by design, so a pair sharing a
+ * `groupId` is not an overlap that needs manual fixing.
  */
 export function countOverlappingOccurrences(
     occurrences: Array<PlannedOccurrence>,
+    events: Array<CutPlanEventInput>,
 ): number {
+    const groupByEvent = new Map(
+        events.map((event) => [event.id, event.groupId ?? null]),
+    );
     const byDate = new Map<string, Array<PlannedOccurrence>>();
     for (const occ of occurrences) {
         const arr = byDate.get(occ.occurrenceDate) ?? [];
@@ -436,6 +443,10 @@ export function countOverlappingOccurrences(
             for (let j = i + 1; j < group.length; j++) {
                 const a = group[i];
                 const b = group[j];
+                const groupA = groupByEvent.get(a.ganttEventId);
+                if (groupA && groupA === groupByEvent.get(b.ganttEventId)) {
+                    continue;
+                }
                 if (
                     a.startTime.getTime() < b.endTime.getTime() &&
                     b.startTime.getTime() < a.endTime.getTime()
@@ -727,7 +738,7 @@ export async function previewCurriculumCut(
     return {
         ok: true,
         occurrences,
-        overlaps: countOverlappingOccurrences(plan.occurrences),
+        overlaps: countOverlappingOccurrences(plan.occurrences, planInput.events),
         skipped,
         report: plan.report,
     };
@@ -999,7 +1010,7 @@ export async function materializeCurriculumEvents(
         createdCourses,
         documents,
         hiveSubjectsUnavailable: subjectlessLinkedEvents > 0,
-        overlaps: countOverlappingOccurrences(plan.occurrences),
+        overlaps: countOverlappingOccurrences(plan.occurrences, planInput.events),
         report: plan.report,
     };
 }
