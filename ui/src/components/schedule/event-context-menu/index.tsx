@@ -1,7 +1,6 @@
 "use client";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import GroupsIcon from "@mui/icons-material/Groups";
 import LabelOutlinedIcon from "@mui/icons-material/LabelOutlined";
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
@@ -26,7 +25,6 @@ import {
     Room,
     roomLikeToResourceKey,
 } from "@/api-shared/types/room";
-import { useCourses } from "@/components/base/CoursesProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import {
@@ -37,6 +35,7 @@ import {
     withCourseMembership,
     withInstructorMembership,
 } from "@/components/schedule/event-context-menu/actions";
+import { CourseSubmenu } from "@/components/schedule/event-context-menu/CourseSubmenu";
 import {
     PickerOption,
     PickerSubmenu,
@@ -86,7 +85,6 @@ export function EventContextMenu({
     const router = useRouter();
     const { iterationId } = useCalendar();
     const { instructors } = useHiveUsers();
-    const { courses } = useCourses();
 
     // Resolved fresh on every render so a marker toggled with the menu still
     // open immediately shows its new state, and an event deleted underneath us
@@ -331,42 +329,14 @@ export function EventContextMenu({
                 )}
             </Submenu>
 
-            <Submenu
-                icon={<GroupsIcon fontSize="small" />}
-                label="שיוך מסלולים"
-            >
-                {courses.length === 0 ? (
-                    <Typography
-                        sx={{ px: 2, py: 1, color: "text.secondary" }}
-                        variant="body2"
-                    >
-                        אין מסלולים
-                    </Typography>
-                ) : (
-                    courses.map((course) => {
-                        const state = triStateOf(targets, (event) =>
-                            event.courses.includes(course.id),
-                        );
-                        return (
-                            <MenuItem
-                                key={course.id}
-                                onClick={() => toggleCourse(course.id)}
-                            >
-                                <ListItemIcon>
-                                    <Checkbox
-                                        checked={state === "all"}
-                                        disableRipple
-                                        indeterminate={state === "some"}
-                                        size="small"
-                                        sx={{ p: 0 }}
-                                    />
-                                </ListItemIcon>
-                                <ListItemText>{course.name}</ListItemText>
-                            </MenuItem>
-                        );
-                    })
-                )}
-            </Submenu>
+            <CourseSubmenu
+                onToggle={toggleCourse}
+                stateOf={(courseId) =>
+                    triStateOf(targets, (event) =>
+                        event.courses.includes(courseId),
+                    )
+                }
+            />
 
             <Submenu icon={<LabelOutlinedIcon fontSize="small" />} label="סימון כ…">
                 {EVENT_FLAGS.map(({ key, label, hue, Icon }) => {
