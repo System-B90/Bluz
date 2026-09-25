@@ -125,7 +125,7 @@ def _is_quiet() -> bool:
 def success(message: str) -> None:
     if _is_quiet():
         return
-    console.print(f"[green]✓[/green] {message}")
+    err_console.print(f"[green]✓[/green] {message}")
 
 
 def warn(message: str) -> None:
