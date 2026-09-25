@@ -32,6 +32,7 @@ import {
 import { StudentEvent } from "@/api-shared/types/student-view";
 import { ThemeSelectorIcon } from "@/components/header/ThemeSelector";
 import { CalendarSkeleton } from "@/components/schedule/calendar/CalendarSkeleton";
+import { createNoOverlapLayout } from "@/components/student-view/no-overlap-layout";
 import {
     Calendar,
     localizer,
@@ -228,6 +229,18 @@ export function StudentDayBoard({ date }: { date?: string }) {
         };
     }, [date, hours]);
 
+    // State, not a ref: the grid mounts only after the first load, and the
+    // measuring effect must re-run when it does.
+    const [grid, setGrid] = useState<HTMLDivElement | null>(null);
+    const minTileMs = useMinTileMs(
+        grid,
+        bounds.max.getTime() - bounds.min.getTime(),
+    );
+    const dayLayout = useMemo(
+        () => createNoOverlapLayout(minTileMs)<CalendarEvent>,
+        [minTileMs],
+    );
+
     const day = dayjs(date ?? undefined)
         .tz(APP_TIMEZONE)
         .locale("he");
@@ -292,6 +305,7 @@ export function StudentDayBoard({ date }: { date?: string }) {
             </Box>
 
             <Box
+                ref={setGrid}
                 sx={
                     fullscreen
                         ? {
@@ -344,7 +358,7 @@ export function StudentDayBoard({ date }: { date?: string }) {
                     date={day.toDate()}
                     // Students must never see tiles stacked over each other:
                     // concurrent events in a room share its width instead.
-                    dayLayoutAlgorithm="no-overlap"
+                    dayLayoutAlgorithm={dayLayout}
                     defaultView={Views.DAY}
                     endAccessor="end"
                     eventPropGetter={(event) => {
@@ -438,6 +452,38 @@ function RoomHeader({
             </Box>
         </Tooltip>
     );
+}
+
+/** `.rbc-day-slot .rbc-event { min-height }` in the calendar stylesheets. */
+const MIN_TILE_PX = 20;
+
+/**
+ * How much time the grid's minimum tile height covers, rounded up to a whole
+ * minute so small resizes do not re-run the layout. A short event is drawn
+ * that tall, so the layout must reserve that much time for it or the next
+ * event is drawn over its tail. 0 until the grid can be measured.
+ */
+function useMinTileMs(
+    grid: HTMLDivElement | null,
+    spanMs: number,
+): number {
+    const [slotHeight, setSlotHeight] = useState(0);
+
+    useLayoutEffect(() => {
+        if (!grid || typeof ResizeObserver === "undefined") return;
+        const measure = () =>
+            setSlotHeight(
+                grid.querySelector<HTMLElement>(".rbc-day-slot")?.clientHeight ??
+                    0,
+            );
+        const observer = new ResizeObserver(measure);
+        observer.observe(grid);
+        measure();
+        return () => observer.disconnect();
+    }, [grid]);
+
+    if (slotHeight <= 0 || spanMs <= 0) return 0;
+    return Math.ceil((MIN_TILE_PX / slotHeight) * spanMs / 60_000) * 60_000;
 }
 
 /**

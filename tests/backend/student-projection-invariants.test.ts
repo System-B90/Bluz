@@ -1,4 +1,5 @@
 import { getServerSession } from "next-auth";
+import { resolveStudentSchedule } from "@/api-shared/student-schedule";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /*
@@ -320,8 +321,9 @@ describe("buildStudentSchedule — the projection cannot be widened by data", ()
             baseEvent({ courses: ["mid"] }),
         ] as never);
 
-        const [event] = (await buildStudentSchedule("2026-03-04", CONTROLLER))
-            .events;
+        const [event] = resolveStudentSchedule(
+            await buildStudentSchedule("2026-03-04", CONTROLLER),
+        ).events;
 
         expect(event.courses).toEqual(["ניצה"]);
         expect(event.relatedCourses.sort()).toEqual(

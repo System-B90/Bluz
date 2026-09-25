@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { resolveStudentSchedule } from "@/api-shared/student-schedule";
 import { getServerSession } from "next-auth";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -310,9 +311,10 @@ describe("the projection under hostile data", () => {
         vi.mocked(DbCourses.get).mockResolvedValue([] as never);
 
         const response = await StudentViewRoute.GET(makeRequest());
-        const [event] = (await response.json()).data.events;
+        const { data } = await response.json();
 
-        expect(event.courses).toEqual([]);
+        expect(resolveStudentSchedule(data).events[0].courses).toEqual([]);
+        expect(data.courseNames).toEqual([]);
     });
 
     it("drops a room id it cannot resolve rather than passing it through", async () => {
@@ -323,7 +325,7 @@ describe("the projection under hostile data", () => {
 
         const response = await StudentViewRoute.GET(makeRequest());
         const body = await response.text();
-        const [event] = JSON.parse(body).data.events;
+        const [event] = resolveStudentSchedule(JSON.parse(body).data).events;
 
         expect(event.rooms).toEqual([]);
         expect(body).not.toContain("4242");

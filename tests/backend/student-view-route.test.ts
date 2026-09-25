@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { resolveStudentSchedule } from "@/api-shared/student-schedule";
 import { getServerSession } from "next-auth";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -139,7 +140,8 @@ describe("GET /api/student-view/schedule — projection", () => {
         ] as never);
 
         const response = await StudentViewRoute.GET(makeRequest());
-        const [event] = (await response.json()).data.events;
+        const { data } = await response.json();
+        const [event] = data.events;
 
         expect(Object.keys(event).sort()).toEqual([
             "color",
@@ -147,11 +149,14 @@ describe("GET /api/student-view/schedule — projection", () => {
             "endTime",
             "id",
             "name",
+            "relatedCourses",
             "rooms",
             "startTime",
         ]);
         expect(event.name).toBe("שיעור");
-        expect(event.courses).toEqual(["מחזור א"]);
+        expect(resolveStudentSchedule(data).events[0].courses).toEqual([
+            "מחזור א",
+        ]);
 
         // Spelled out individually so a regression names the field it leaked.
         for (const field of [
@@ -239,8 +244,11 @@ describe("GET /api/student-view/schedule — the response envelope", () => {
         expect(Object.keys(data).sort()).toEqual([
             "calendarDayEndTime",
             "calendarDayStartTime",
+            "courseGroups",
+            "courseNames",
             "date",
             "events",
+            "roomNames",
         ]);
     });
 
@@ -292,7 +300,8 @@ describe("GET /api/student-view/schedule — the response envelope", () => {
         } as never);
 
         const response = await StudentViewRoute.GET(makeRequest());
-        const [event] = (await response.json()).data.events;
+        const [event] = resolveStudentSchedule((await response.json()).data)
+            .events;
 
         expect(event.rooms).toEqual(["כיתה 1"]);
     });

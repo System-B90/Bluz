@@ -1,4 +1,5 @@
 import { ClientApiProps, safeApiFetcher } from "@/api-client/common";
+import { resolveStudentSchedule } from "@/api-shared/student-schedule";
 import {
     ApiStudentScheduleGetResponse,
     STUDENT_VIEW_DATE_PARAM,
@@ -18,22 +19,10 @@ export const apiGetStudentSchedule = async (
     const query = date
         ? `?${STUDENT_VIEW_DATE_PARAM}=${encodeURIComponent(date)}`
         : "";
-    const { courseGroups, courseNames, events, roomNames, ...rest } =
+    return resolveStudentSchedule(
         await safeApiFetcher<ApiStudentScheduleGetResponse>(
             `/api/student-view/schedule${query}`,
             props,
-        );
-    // Resolved once per group, so events sharing a course set share one array.
-    const groups = courseGroups.map((group) =>
-        group.map((index) => courseNames[index]),
+        ),
     );
-    return {
-        ...rest,
-        events: events.map((event) => ({
-            ...event,
-            courses: groups[event.courses],
-            relatedCourses: groups[event.relatedCourses],
-            rooms: event.rooms.map((index) => roomNames[index]),
-        })),
-    };
 };
