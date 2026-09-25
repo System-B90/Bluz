@@ -7,7 +7,6 @@ import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
 import { useId } from "react";
 
 import
@@ -75,22 +74,14 @@ export function EventDetailsForm({
                     </Select>
                 </FormControl>
 
-                <Box display="flex" flexDirection="column">
-                    <NumberSpinner
-                        onValueChange={ (v) =>
-                        {
-                            if (v) commit({ minimumDuration: v });
-                        } }
-                        value={ event.minimumDuration }
-                    />
-                    <Typography
-                        color="text.secondary"
-                        sx={ { marginInlineStart: 0.5, mt: 0.5 } }
-                        variant="caption"
-                    >
-                        זמן מינימלי
-                    </Typography>
-                </Box>
+                <NumberSpinner
+                    label="זמן מינימלי"
+                    onValueChange={ (v) =>
+                    {
+                        if (v) commit({ minimumDuration: v });
+                    } }
+                    value={ event.minimumDuration }
+                />
             </Box>
 
             <Box alignItems="flex-start" display="flex" gap={ 2 }>

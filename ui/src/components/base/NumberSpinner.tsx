@@ -53,11 +53,12 @@ const useSessionUnit = () =>
  * shared by every spinner and kept in sessionStorage. `step` / `largeStep`
  * default per unit and, when passed, apply in the shown unit.
  * `unitToggle={false}` hides the toggle and pins the spinner to minutes.
+ * `label` sits in the top border, like an outlined TextField.
  * `min` defaults to 0: durations are never negative.
  */
 export function NumberSpinner({
     id: idProp,
-    _label,
+    label,
     error,
     size = "medium",
     value,
@@ -67,7 +68,7 @@ export function NumberSpinner({
     unitToggle = true,
     ...other
 }: Omit<BaseNumberField.Root.Props, "onValueChange"> & {
-    _label?: never;
+    label?: React.ReactNode;
     size?: "medium" | "small";
     error?: boolean;
     unitToggle?: boolean;
@@ -81,6 +82,7 @@ export function NumberSpinner({
     const unit = unitToggle ? sharedUnit : "minutes";
     const factor = unit === "hours" ? 60 : 1;
     const small = size === "small";
+    const accent = error ? "error.main" : undefined;
     return (
         <BaseNumberField.Root
             min={0}
@@ -96,35 +98,56 @@ export function NumberSpinner({
                     ref={props.ref}
                     required={state.required}
                     size={size}
-                    sx={(theme) => ({
+                    sx={{
                         flexDirection: "row",
                         width: "fit-content",
                         alignItems: "center",
                         gap: 0.25,
                         px: 0.5,
                         py: small ? 0.25 : 0.5,
-                        border: 1,
-                        borderColor: error ? "error.main" : "divider",
-                        borderRadius: 2,
-                        bgcolor: "background.paper",
-                        transition: theme.transitions.create([
-                            "border-color",
-                            "box-shadow",
-                        ]),
-                        "&:hover": { borderColor: error ? "error.main" : "text.secondary" },
-                        "&:focus-within": {
-                            borderColor: error ? "error.main" : "primary.main",
-                            boxShadow: `0 0 0 3px ${alpha(
-                                error
-                                    ? theme.palette.error.main
-                                    : theme.palette.primary.main,
-                                0.15,
-                            )}`,
+                        mt: label ? 0.75 : 0,
+                        "&:hover > fieldset": { borderColor: accent ?? "text.primary" },
+                        "&:focus-within > fieldset": {
+                            borderColor: accent ?? "primary.main",
+                            borderWidth: 2,
+                        },
+                        "&:focus-within > fieldset > legend": {
+                            color: accent ?? "primary.main",
                         },
                         ...(state.disabled && { opacity: 0.5, pointerEvents: "none" }),
-                    })}
+                    }}
                 >
                     {props.children}
+                    {/* Outlined border with a notch for the label, like TextField's. */}
+                    <Box
+                        component="fieldset"
+                        sx={{
+                            position: "absolute",
+                            inset: 0,
+                            top: label ? "-6px" : 0,
+                            m: 0,
+                            px: 1,
+                            py: 0,
+                            border: 1,
+                            borderColor: accent ?? "divider",
+                            borderRadius: 2,
+                            pointerEvents: "none",
+                            transition: (t) => t.transitions.create("border-color"),
+                        }}
+                    >
+                        {label ? <Box
+                            component="legend"
+                            sx={{
+                                px: 0.5,
+                                lineHeight: "12px",
+                                fontSize: "0.75rem",
+                                color: accent ?? "text.secondary",
+                                whiteSpace: "nowrap",
+                            }}
+                        >
+                            <label htmlFor={id}>{label}</label>
+                        </Box> : null}
+                    </Box>
                 </FormControl>
             )}
             step={step ?? UNIT_STEPS[unit].step}
