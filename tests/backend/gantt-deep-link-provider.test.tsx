@@ -58,10 +58,8 @@ vi.mock("@/components/gantt/state/execution/Provider", () => ({
 
 import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
-import {
-    CurriculumProvider,
-    GANTT_EVENT_DEEP_LINK_PARAM,
-} from "@/components/gantt/state/provider";
+import { GANTT_EVENT_DEEP_LINK_PARAM } from "@/components/gantt/state/context";
+import { CurriculumProvider } from "@/components/gantt/state/provider";
 
 const initialData = {
     id: "c1",
