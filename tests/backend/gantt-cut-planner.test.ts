@@ -108,6 +108,35 @@ describe("planCut", () => {
         expect(second.endTime.getTime() - second.startTime.getTime()).toBe(30 * 60 * 1000);
     });
 
+    it("starts shuffle-group siblings on the same day together", () => {
+        const a = makeEvent({ id: "a", groupId: "g1", allocatedDuration: 60 });
+        const b = makeEvent({ id: "b", groupId: "g1", allocatedDuration: 90 });
+        const next = makeEvent({ id: "next", allocatedDuration: 30 });
+        const input = baseInput({
+            events: [ a, b, next ],
+            mappings: [
+                { eventId: "a", dayId: "w0d0", sortOrder: 0 },
+                { eventId: "next", dayId: "w0d0", sortOrder: 1 },
+                { eventId: "b", dayId: "w0d0", sortOrder: 2 },
+            ],
+        });
+
+        const plan = planCut(input);
+        expect(plan.ok).toBe(true);
+        if (!plan.ok) return;
+
+        const byId = new Map(plan.occurrences.map((o) => [ o.ganttEventId, o ]));
+        expect(byId.get("a")!.startTime.toISOString()).toBe(
+            venueTime("2024-01-07T08:00"),
+        );
+        expect(byId.get("b")!.startTime.getTime()).toBe(
+            byId.get("a")!.startTime.getTime(),
+        );
+        expect(byId.get("next")!.startTime.toISOString()).toBe(
+            venueTime("2024-01-07T09:00"),
+        );
+    });
+
     it("falls back to minimumDuration when allocatedDuration is falsy", () => {
         const event = makeEvent({ id: "e1", minimumDuration: 45, allocatedDuration: 0 });
         const input = baseInput({

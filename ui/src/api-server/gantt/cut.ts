@@ -378,6 +378,7 @@ export function buildCutPlanInput(args: {
         // inert (it is disabled in `cut-rules.ts` to match).
         roomName: null,
         constraints: constraintsByEvent.get(event.id) ?? [],
+        groupId: event.groupId ?? null,
     }));
 
     return {

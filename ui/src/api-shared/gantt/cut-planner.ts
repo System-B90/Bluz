@@ -94,6 +94,11 @@ export type CutPlanEventInput = {
     roomName?: null | string;
     /** Constraints owned by this event. */
     constraints?: Array<GanttConstraint>;
+    /**
+     * Shuffle group (#699). Siblings mapped to the same day are the same lesson
+     * for different shuffles, so they share one start time instead of stacking.
+     */
+    groupId?: null | string;
 };
 
 export type CutPlanMappingInput = {
@@ -764,6 +769,10 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
             .sort((a, b) => a.startMinutes - b.startMinutes);
 
         const placed: Array<PlacedItem & { slot: BalancerSlot }> = [];
+        // First placed member of each shuffle group on this day; later
+        // siblings start with it and follow it through the break pass.
+        const groupLeadByGroupId = new Map<string, PlacedItem>();
+        const groupLeadKeyBySiblingKey = new Map<string, string>();
 
         for (const slot of daySlots) {
             const event = eventsById.get(slot.eventId);
@@ -771,6 +780,25 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
 
             const duration = eventDuration(event);
             const fixedStartMinutes = fixedTimeMinutesByEventId.get(event.id);
+
+            const groupLead = event.groupId
+                ? groupLeadByGroupId.get(event.groupId)
+                : undefined;
+            if (groupLead) {
+                // Only the part running past the lead's end extends the stack.
+                cursor = Math.max(cursor, groupLead.startMinutes + duration);
+                groupLeadKeyBySiblingKey.set(slot.key, groupLead.key);
+                placed.push({
+                    ...groupLead,
+                    slot,
+                    key: slot.key,
+                    endMinutes: groupLead.startMinutes + duration,
+                    eventType: event.type ?? ModuleEventType.Other,
+                    syllabusId: event.syllabusId ?? null,
+                    roomName: event.roomName ?? null,
+                });
+                continue;
+            }
 
             let startMinutes: number;
 
@@ -857,6 +885,9 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
                 isExistingBreak: fixedStartMinutes !== undefined,
                 isPinned: fixedStartMinutes !== undefined,
             });
+            if (event.groupId) {
+                groupLeadByGroupId.set(event.groupId, placed[ placed.length - 1 ]);
+            }
         }
 
         // -----------------------------------------------------------------
@@ -867,12 +898,46 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
         // No declared window means no slack to spread: the break pass would be
         // budgeting against a number the user never set.
         if ((options.insertBreaks ?? true) && hasDeclaredWindow(dayId)) {
+            // The break pass assumes a sequential day, so each group enters
+            // as one block spanning its longest member; siblings then take
+            // whatever shift their lead received.
+            const siblingKeysByLeadKey = new Map<string, Array<PlacedItem>>();
+            for (const item of placed) {
+                const leadKey = groupLeadKeyBySiblingKey.get(item.key);
+                if (!leadKey) continue;
+                siblingKeysByLeadKey.set(leadKey, [
+                    ...(siblingKeysByLeadKey.get(leadKey) ?? []),
+                    item,
+                ]);
+            }
             const pass = insertBreaksForDay({
-                items: placed,
+                items: placed
+                    .filter((item) => !groupLeadKeyBySiblingKey.has(item.key))
+                    .map((item) => ({
+                        ...item,
+                        endMinutes: Math.max(
+                            item.endMinutes,
+                            ...(siblingKeysByLeadKey.get(item.key) ?? []).map(
+                                (sibling) => sibling.endMinutes,
+                            ),
+                        ),
+                    })),
                 dayEndMinutes: endMinutesOf(dayId),
                 prayers: prayerWindows,
             });
-            finalItems = pass.items;
+            const originalByKey = new Map(placed.map((item) => [ item.key, item ]));
+            finalItems = pass.items.flatMap((block) => {
+                const lead = originalByKey.get(block.key);
+                if (!lead) return [ block ];
+                const shift = block.startMinutes - lead.startMinutes;
+                return [ lead, ...(siblingKeysByLeadKey.get(block.key) ?? []) ].map(
+                    (item) => ({
+                        ...item,
+                        startMinutes: item.startMinutes + shift,
+                        endMinutes: item.endMinutes + shift,
+                    }),
+                );
+            });
             generatedBreaks = pass.breaks;
         }
 
