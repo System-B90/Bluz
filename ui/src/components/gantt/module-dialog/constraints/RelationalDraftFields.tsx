@@ -85,7 +85,22 @@ export function RelationalDraftFields({
                         if (!value) return "בחירת יעד";
                         for (const group of Object.values(targetOptions)) {
                             const found = group.find((o) => o.id === value);
-                            if (found) return found.label;
+                            if (found) {
+                                return (
+                                    <Tooltip title={found.label}>
+                                        <Box
+                                            component="span"
+                                            sx={{
+                                                display: "block",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                            }}
+                                        >
+                                            {found.label}
+                                        </Box>
+                                    </Tooltip>
+                                );
+                            }
                         }
                         return value;
                     }}
