@@ -178,6 +178,10 @@ export function NumberSpinner({
                                         ) + 1,
                                     sx: {
                                         textAlign: "center",
+                                        // MUI zeroes the end padding when an end
+                                        // adornment exists; restore it so the number
+                                        // stays centered above the toggle.
+                                        paddingInlineEnd: "14px",
                                     },
                                 },
                             }}

@@ -197,7 +197,7 @@ export function ModuleEventsView({
                             </TableCell>
                             <TableCell>
                                 <Typography variant="h6">
-                                    זמן מינימלי (דק&apos;)
+                                    זמן מינימלי
                                 </Typography>
                             </TableCell>
                             <TableCell>
