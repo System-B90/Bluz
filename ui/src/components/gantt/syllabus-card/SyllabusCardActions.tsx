@@ -28,7 +28,8 @@ export function SyllabusCardActions({
 }: SyllabusCardActionsProps) {
     const { openSyllabusDialog } = useCurriculumProviderActions();
     const syllabus = useSyllabus(syllabusId);
-    const shuffleCount = (syllabus?.shuffles ?? []).length;
+    const shuffles = syllabus?.shuffles ?? [];
+    const shuffleCount = shuffles.length;
     const courseCount = (syllabus?.courseIds ?? []).length;
     const linkCount = courseCount + (syllabus?.leadInstructorIds ?? []).length;
     const { getCourse } = useCourses();
@@ -65,7 +66,27 @@ export function SyllabusCardActions({
                     },
                 }}
             >
-                <Tooltip title="שאפלים במקצוע">
+                <Tooltip
+                    title={
+                        shuffles.length > 0 ? (
+                            <>
+                                {shuffles.map((name) => {
+                                    const description =
+                                        syllabus?.shuffleDescriptions?.[name];
+                                    return (
+                                        <div key={name}>
+                                            {description
+                                                ? `${name} — ${description}`
+                                                : name}
+                                        </div>
+                                    );
+                                })}
+                            </>
+                        ) : (
+                            "אין שאפלים במקצוע"
+                        )
+                    }
+                >
                     <Chip
                         icon={<GroupsIcon fontSize="small" />}
                         label={shuffleCount}
