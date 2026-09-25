@@ -4,11 +4,13 @@ import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Link from "@mui/material/Link";
+import ListItemText from "@mui/material/ListItemText";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import { useCallback, useMemo, useState } from "react";
 
+import { ShuffleDescriptions } from "@/api-shared/gantt/shuffle-names";
 import {
     GanttEvent,
     GanttEventId,
@@ -91,6 +93,7 @@ export function EventShuffleGroupField({
     moduleId,
     syllabusId,
     shuffleOptions,
+    shuffleDescriptions = {},
 }: {
     event: GanttEvent;
     eventId: GanttEventId;
@@ -98,6 +101,8 @@ export function EventShuffleGroupField({
     syllabusId: GanttSyllabusId | null;
     /** Shuffle names defined on the parent syllabus. */
     shuffleOptions: Array<string>;
+    /** The syllabus' shuffle name → description map. */
+    shuffleDescriptions?: ShuffleDescriptions;
 }) {
     const { enqueueSnackbar } = useSnackbar();
     const { applyEventShuffleGroup } = useModuleEventActions();
@@ -172,7 +177,12 @@ export function EventShuffleGroupField({
                             />
                         }
                         key={name}
-                        label={name}
+                        label={
+                            <ListItemText
+                                primary={name}
+                                secondary={shuffleDescriptions[name]}
+                            />
+                        }
                     />
                 ))}
             </Stack>

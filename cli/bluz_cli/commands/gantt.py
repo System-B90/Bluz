@@ -788,6 +788,14 @@ def syllabus_set_shuffles(
         "--shuffles",
         help="Comma-separated shuffle names. Pass an empty string to clear them all.",
     ),
+    descriptions: list[str] | None = typer.Option(
+        None,
+        "--description",
+        "-d",
+        help="NAME=TEXT description for a shuffle (its Hive student-group "
+        "description, max 100 chars). Repeatable. Passing any replaces all "
+        "descriptions; omitting keeps the current ones.",
+    ),
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation."),
 ) -> None:
     """Replace a syllabus's shuffle list, cascading removals onto modules and events.
@@ -796,6 +804,17 @@ def syllabus_set_shuffles(
     first to see what that would strip.
     """
     names = [name.strip() for name in shuffles.split(",") if name.strip()]
+    payload: dict[str, object] = {"shuffles": names}
+    if descriptions:
+        parsed: dict[str, str] = {}
+        for entry in descriptions:
+            name, sep, text = entry.partition("=")
+            if not sep or not name.strip():
+                raise typer.BadParameter(
+                    f"Expected NAME=TEXT, got {entry!r}.", param_hint="--description"
+                )
+            parsed[name.strip()] = text.strip()
+        payload["descriptions"] = parsed
     if not yes:
         typer.confirm(
             f"Set syllabus {syllabus_id} shuffles to {names or 'none'}? "
@@ -803,9 +822,7 @@ def syllabus_set_shuffles(
             abort=True,
         )
     with state.client() as client:
-        result = client.post(
-            f"{_BASE}/syllabuses/{syllabus_id}/shuffles", json={"shuffles": names}
-        )
+        result = client.post(f"{_BASE}/syllabuses/{syllabus_id}/shuffles", json=payload)
     success(f"Set {len(names)} shuffle(s) on syllabus {syllabus_id}")
     show(result)
 

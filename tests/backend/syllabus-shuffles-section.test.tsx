@@ -9,7 +9,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  * twice while the first one is still in flight.
  */
 
-const { updateSyllabus, getShuffleUsages, enqueueSnackbar, syllabus } = vi.hoisted(() => ({
+const { updateSyllabus, getShuffleUsages, enqueueSnackbar, syllabus, apiGetClasses } = vi.hoisted(() => ({
+    apiGetClasses: vi.fn(async () => [] as Array<unknown>),
     updateSyllabus: vi.fn(async () => undefined),
     getShuffleUsages: vi.fn(),
     enqueueSnackbar: vi.fn(),
@@ -20,13 +21,14 @@ vi.mock("notistack", () => ({ useSnackbar: () => ({ enqueueSnackbar }) }));
 vi.mock("@/api-client/gantt", () => ({
     ganttApi: { getShuffleUsages, applyShuffles: vi.fn() },
 }));
+vi.mock("@/api-client/hive", () => ({ apiGetClasses }));
 vi.mock("@/components/gantt/state/hooks/UseSyllabus", () => ({
     useSyllabus: () => syllabus,
 }));
 vi.mock("@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions", () => ({
     useSyllabusActions: () => ({ updateSyllabus }),
 }));
-vi.mock("@/components/gantt/state/provider", () => ({
+vi.mock("@/components/gantt/state/context", () => ({
     useCurriculumProviderActions: () => ({ dispatch: vi.fn() }),
     useCurriculumState: () => ({ syllabuses: {}, modules: {}, events: {} }),
 }));
@@ -68,7 +70,36 @@ describe("ShufflesSection", () => {
 
         expect(updateSyllabus).toHaveBeenCalledWith(SID, {
             shuffles: [ "א", "ב", "ג ד" ],
+            shuffleDescriptions: {},
         });
+    });
+
+    it("fills a new shuffle's description from its same-named Hive group", async () => {
+        apiGetClasses.mockResolvedValueOnce([
+            { id: 7, name: "ג", description: " מחזור ג ", display_name: "ג" },
+        ]);
+        render(<ShufflesSection syllabusId={SID} />);
+        await screen.findAllByText("לא ב-Hive");
+
+        fireEvent.change(screen.getByLabelText("שם השאפל"), {
+            target: { value: "ג" },
+        });
+        fireEvent.click(screen.getByRole("button", { name: "הוספה" }));
+
+        expect(updateSyllabus).toHaveBeenCalledWith(SID, {
+            shuffles: [ "א", "ב", "ג" ],
+            shuffleDescriptions: { ג: "מחזור ג" },
+        });
+    });
+
+    it("marks which shuffles have a Hive student group", async () => {
+        apiGetClasses.mockResolvedValueOnce([
+            { id: 1, name: "א", description: "", display_name: "א" },
+        ]);
+        render(<ShufflesSection syllabusId={SID} />);
+
+        expect(await screen.findByText("Hive")).toBeTruthy();
+        expect(screen.getAllByText("לא ב-Hive")).toHaveLength(1);
     });
 
     it("checks usages once per delete, however many times it is clicked", async () => {
@@ -85,7 +116,10 @@ describe("ShufflesSection", () => {
 
         resolve({ events: [], modules: [] });
         await waitFor(() =>
-            expect(updateSyllabus).toHaveBeenCalledWith(SID, { shuffles: [ "ב" ] }),
+            expect(updateSyllabus).toHaveBeenCalledWith(SID, {
+                shuffles: [ "ב" ],
+                shuffleDescriptions: {},
+            }),
         );
         await waitFor(() => expect((button as HTMLButtonElement).disabled).toBe(false));
     });
@@ -94,7 +128,7 @@ describe("ShufflesSection", () => {
 describe("shuffleUsageLabel", () => {
     it("says a shuffle is unused instead of '0 פריטים'", () => {
         expect(shuffleUsageLabel(0)).toBe("לא בשימוש");
-        expect(shuffleUsageLabel(1)).toBe("פריט אחד");
-        expect(shuffleUsageLabel(3)).toBe("3 פריטים");
+        expect(shuffleUsageLabel(1)).toBe("מערך/מופע אחד");
+        expect(shuffleUsageLabel(3)).toBe("3 מערכים/מופעים");
     });
 });

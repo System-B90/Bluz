@@ -22,6 +22,7 @@ import {
     useTransition,
 } from "react";
 
+import { ShuffleDescriptions } from "@/api-shared/gantt/shuffle-names";
 import {
     GanttCurriculumId,
     GanttEventId,
@@ -205,6 +206,7 @@ type ModuleDetailsFormProps = {
     onCommitTitle: () => void;
     onCommitDescription: () => void;
     shuffleOptions: Array<string>;
+    shuffleDescriptions?: ShuffleDescriptions;
     shuffles: Array<string>;
     onShufflesChange: (shuffles: Array<string>) => void;
     defaultOrchestratorId: null | number;
@@ -222,6 +224,7 @@ function ModuleDetailsForm({
     onCommitTitle,
     onCommitDescription,
     shuffleOptions,
+    shuffleDescriptions,
     shuffles,
     onShufflesChange,
     defaultOrchestratorId,
@@ -257,6 +260,7 @@ function ModuleDetailsForm({
             />
 
             <ShuffleSelect
+                descriptions={shuffleDescriptions}
                 onChange={onShufflesChange}
                 options={shuffleOptions}
                 value={shuffles}
@@ -479,6 +483,7 @@ function ModuleDialogInner({
                                 onShufflesChange={(shuffles) => handleCommit({ shuffles })}
                                 setLocalDescription={setLocalDescription}
                                 setLocalTitle={setLocalTitle}
+                                shuffleDescriptions={syllabus?.shuffleDescriptions}
                                 shuffleOptions={syllabus?.shuffles ?? []}
                                 shuffles={moduleDoc?.shuffles ?? []}
                             />

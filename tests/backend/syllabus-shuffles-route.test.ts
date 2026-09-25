@@ -106,7 +106,11 @@ describe("POST /api/gantt/syllabuses/[id]/shuffles", () => {
         );
 
         expect(response.status).toBe(200);
-        expect(DbSyllabus.applyShuffles).toHaveBeenCalledWith("s1", [ "א" ]);
+        expect(DbSyllabus.applyShuffles).toHaveBeenCalledWith(
+            "s1",
+            [ "א" ],
+            undefined,
+        );
     });
 
     it("accepts an explicit empty list — that is how the last shuffle is dropped", async () => {
@@ -119,7 +123,26 @@ describe("POST /api/gantt/syllabuses/[id]/shuffles", () => {
             context(),
         );
 
-        expect(DbSyllabus.applyShuffles).toHaveBeenCalledWith("s1", []);
+        expect(DbSyllabus.applyShuffles).toHaveBeenCalledWith("s1", [], undefined);
+    });
+
+    it("forwards shuffle descriptions", async () => {
+        vi.mocked(DbSyllabus.applyShuffles).mockResolvedValueOnce(
+            EMPTY as never,
+        );
+
+        await ShufflesRoute.POST(
+            request(
+                "",
+                "POST",
+                JSON.stringify({ descriptions: { א: "תיאור" }, shuffles: [ "א" ] }),
+            ),
+            context(),
+        );
+
+        expect(DbSyllabus.applyShuffles).toHaveBeenCalledWith("s1", [ "א" ], {
+            א: "תיאור",
+        });
     });
 
     it("rejects an empty body, a malformed body and a non-string-array shuffles", async () => {
@@ -128,6 +151,8 @@ describe("POST /api/gantt/syllabuses/[id]/shuffles", () => {
             "{not json",
             JSON.stringify({ shuffles: "א" }),
             JSON.stringify({ shuffles: [ "א", 7 ] }),
+            JSON.stringify({ descriptions: [ "x" ], shuffles: [ "א" ] }),
+            JSON.stringify({ descriptions: { א: 7 }, shuffles: [ "א" ] }),
         ];
 
         for (const body of bad) {

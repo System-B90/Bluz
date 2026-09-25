@@ -1,4 +1,5 @@
 import { safeApiFetcher } from "@/api-client/common";
+import { ShuffleDescriptions } from "@/api-shared/gantt/shuffle-names";
 import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
 import { ShuffleUsages } from "@/api-shared/types/gantt/shuffles";
 
@@ -20,14 +21,16 @@ export async function apiGetShuffleUsages(
 
 /**
  * Replaces the syllabus' shuffle list, stripping every removed name off the
- * modules and events that carry it. Returns what was stripped.
+ * modules and events that carry it. Returns what was stripped. Omitting
+ * `descriptions` keeps the surviving names' current descriptions.
  */
 export async function apiApplyShuffles(
     syllabusId: GanttSyllabusId,
     shuffles: Array<string>,
+    descriptions?: ShuffleDescriptions,
 ): Promise<ShuffleUsages> {
     return await safeApiFetcher<ShuffleUsages>(
         `/api/gantt/syllabuses/${encodeURIComponent(syllabusId)}/shuffles`,
-        { method: "POST", body: JSON.stringify({ shuffles }) },
+        { method: "POST", body: JSON.stringify({ descriptions, shuffles }) },
     );
 }

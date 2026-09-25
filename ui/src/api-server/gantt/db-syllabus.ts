@@ -11,7 +11,12 @@ import {
     ganttSyllabusesSchema,
 } from "@/api-server/gantt/schema";
 import { ClientApiError } from "@/api-shared/errors";
-import { normalizeShuffleNames } from "@/api-shared/gantt/shuffle-names";
+import {
+    isShuffleDescriptions,
+    normalizeShuffleDescriptions,
+    normalizeShuffleNames,
+    ShuffleDescriptions,
+} from "@/api-shared/gantt/shuffle-names";
 import { ApiSyllabus } from "@/api-shared/types/gantt/api-layer";
 import { CreateGanttSyllabusPayload } from "@/api-shared/types/gantt/create-payloads";
 import {
@@ -225,8 +230,14 @@ async function syllabusModuleIds(
     return rows.map((row) => row.moduleId);
 }
 
+type SyllabusShuffles = {
+    descriptions: ShuffleDescriptions;
+    names: Array<string>;
+};
+
 /**
- * The syllabus' current shuffles, row-locked until the transaction ends.
+ * The syllabus' current shuffles and their descriptions, row-locked until the
+ * transaction ends.
  *
  * Postgres runs these transactions at READ COMMITTED, so without the lock two
  * concurrent edits both read the same list and the later write resurrects a
@@ -235,9 +246,12 @@ async function syllabusModuleIds(
 async function readShuffles(
     id: GanttSyllabusId,
     executor: GanttDbExecutor = postgresDb,
-): Promise<Array<string>> {
+): Promise<SyllabusShuffles> {
     const [current] = await executor
-        .select({ shuffles: ganttSyllabusesSchema.shuffles })
+        .select({
+            descriptions: ganttSyllabusesSchema.shuffleDescriptions,
+            names: ganttSyllabusesSchema.shuffles,
+        })
         .from(ganttSyllabusesSchema)
         .where(eq(ganttSyllabusesSchema.id, id))
         .for("update");
@@ -246,7 +260,10 @@ async function readShuffles(
         throw new ClientApiError(`סילבוס עם מזהה ${id} לא נמצא לעדכון`);
     }
 
-    return current.shuffles ?? [];
+    return {
+        descriptions: current.descriptions ?? {},
+        names: current.names ?? [],
+    };
 }
 
 function removedShuffles(
@@ -264,11 +281,13 @@ function removedShuffles(
  * Without the cascade the child keeps a dangling name and the UI only offers
  * to clear it once the user retypes the deleted shuffle on the syllabus — so
  * the caller confirms first (see `ShufflesSection`) and this applies both
- * sides in one transaction.
+ * sides in one transaction. Descriptions of removed names go with them;
+ * `requestedDescriptions`, when given, replaces the rest.
  */
 async function applyShuffles(
     id: GanttSyllabusId,
     requested: Array<string>,
+    requestedDescriptions?: ShuffleDescriptions,
 ): Promise<ShuffleUsages> {
     const shuffles = normalizeShuffleNames(requested);
 
@@ -278,8 +297,13 @@ async function applyShuffles(
     // (#538 item 2). Both reads now happen inside the same transaction as the
     // writes they inform.
     return await postgresDb.transaction(async (tx) => {
-        const removed = removedShuffles(await readShuffles(id, tx), shuffles);
+        const current = await readShuffles(id, tx);
+        const removed = removedShuffles(current.names, shuffles);
         const usages = await findShuffleUsages(id, removed, tx);
+        const shuffleDescriptions = normalizeShuffleDescriptions(
+            requestedDescriptions ?? current.descriptions,
+            shuffles,
+        );
         const strip = (names: Array<string>) =>
             names.filter((name) => !removed.includes(name));
         for (const usedModule of usages.modules) {
@@ -301,7 +325,7 @@ async function applyShuffles(
 
         await tx
             .update(ganttSyllabusesSchema)
-            .set({ shuffles, updatedAt: new Date() })
+            .set({ shuffles, shuffleDescriptions, updatedAt: new Date() })
             .where(eq(ganttSyllabusesSchema.id, id));
 
         return usages;
@@ -316,16 +340,34 @@ async function updateSyllabus(
     id: GanttSyllabusId,
     updateData: Partial<GanttSyllabus>,
 ): Promise<GanttSyllabus> {
-    if (updateData.shuffles === undefined) {
+    if (
+        updateData.shuffles === undefined &&
+        updateData.shuffleDescriptions === undefined
+    ) {
         return await basicOperations.updateItem(id, updateData);
     }
-    const shuffles = normalizeShuffleNames(updateData.shuffles);
+    if (
+        updateData.shuffleDescriptions !== undefined &&
+        !isShuffleDescriptions(updateData.shuffleDescriptions)
+    ) {
+        throw new ClientApiError("shuffleDescriptions must map names to text.");
+    }
 
     // The guard reads what the update then depends on, so the read and the
     // write share one transaction — otherwise a concurrent edit between them
     // could slip a newly-used shuffle past the block (#538 item 2).
     return await postgresDb.transaction(async (tx) => {
-        const removed = removedShuffles(await readShuffles(id, tx), shuffles);
+        const current = await readShuffles(id, tx);
+        const shuffles = normalizeShuffleNames(
+            updateData.shuffles ?? current.names,
+        );
+        // Descriptions are keyed by name, so they are re-pruned against the
+        // resulting names whichever of the two the PATCH carries.
+        const shuffleDescriptions = normalizeShuffleDescriptions(
+            updateData.shuffleDescriptions ?? current.descriptions,
+            shuffles,
+        );
+        const removed = removedShuffles(current.names, shuffles);
         const usages = await findShuffleUsages(id, removed, tx);
         const blocking = [...usages.modules, ...usages.events];
 
@@ -340,7 +382,7 @@ async function updateSyllabus(
 
         return await basicOperations.updateItem(
             id,
-            { ...updateData, shuffles },
+            { ...updateData, shuffles, shuffleDescriptions },
             tx,
         );
     });

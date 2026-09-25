@@ -271,6 +271,51 @@ def test_set_links_rejects_no_options(stub_bluz, run_cli):
     assert not stub.requests
 
 
+def test_set_shuffles_sends_descriptions(stub_bluz, run_cli):
+    stub = stub_bluz()
+    stub.envelope("POST", "/api/gantt/syllabuses/s-1/shuffles", {"ok": True})
+
+    result = run_cli(
+        stub,
+        "gantt",
+        "syllabuses",
+        "set-shuffles",
+        "s-1",
+        "--shuffles",
+        "a,b",
+        "--description",
+        " a = first group ",
+        "-d",
+        "b=x=y",
+        "--yes",
+    )
+
+    assert result.exit_code == 0
+    assert stub.last().body == {
+        "shuffles": ["a", "b"],
+        "descriptions": {"a": "first group", "b": "x=y"},
+    }
+
+
+def test_set_shuffles_rejects_a_description_without_a_name(stub_bluz, run_cli):
+    stub = stub_bluz()
+
+    result = run_cli(
+        stub,
+        "gantt",
+        "syllabuses",
+        "set-shuffles",
+        "s-1",
+        "--shuffles",
+        "a",
+        "--description",
+        "no-equals",
+        "--yes",
+    )
+
+    assert result.exit_code != 0
+
+
 def test_set_shuffles_can_clear_them_all(stub_bluz, run_cli):
     stub = stub_bluz()
     stub.envelope("POST", "/api/gantt/syllabuses/s-1/shuffles", {"ok": True})

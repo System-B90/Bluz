@@ -29,3 +29,45 @@ export function isShuffleNameList(names: unknown): names is Array<string> {
         Array.isArray(names) && names.every((name) => typeof name === "string")
     );
 }
+
+/**
+ * Hive's `Class.description` limit. A shuffle is 1:1 with a Hive student group,
+ * so its description is held to the same cap to stay importable both ways.
+ */
+export const SHUFFLE_DESCRIPTION_MAX_LENGTH = 100;
+
+/** Shuffle name → staff-facing description (Hive's student-group description). */
+export type ShuffleDescriptions = Record<string, string>;
+
+/**
+ * Keeps only the descriptions of `names`, trimmed and capped at Hive's limit.
+ * Blank descriptions are dropped so "no description" has one representation.
+ */
+export function normalizeShuffleDescriptions(
+    descriptions: ShuffleDescriptions | undefined,
+    names: Array<string>,
+): ShuffleDescriptions {
+    const result: ShuffleDescriptions = {};
+    for (const [rawName, rawDescription] of Object.entries(
+        descriptions ?? {},
+    )) {
+        const name = normalizeShuffleName(rawName);
+        const description = rawDescription
+            .trim()
+            .slice(0, SHUFFLE_DESCRIPTION_MAX_LENGTH);
+        if (description && names.includes(name)) result[name] = description;
+    }
+    return result;
+}
+
+/** True when `descriptions` is a plain string→string record. */
+export function isShuffleDescriptions(
+    descriptions: unknown,
+): descriptions is ShuffleDescriptions {
+    return (
+        typeof descriptions === "object" &&
+        descriptions !== null &&
+        !Array.isArray(descriptions) &&
+        Object.values(descriptions).every((value) => typeof value === "string")
+    );
+}

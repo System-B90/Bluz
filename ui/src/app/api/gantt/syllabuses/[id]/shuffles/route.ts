@@ -5,6 +5,7 @@ import { DbSyllabus } from "@/api-server/gantt/db-syllabus";
 import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import {
+    isShuffleDescriptions,
     isShuffleNameList,
     normalizeShuffleNames,
 } from "@/api-shared/gantt/shuffle-names";
@@ -42,7 +43,10 @@ export const GET = withApi(
     },
 );
 
-/** Applies the new shuffle list, cascading removals onto modules and events. */
+/**
+ * Applies the new shuffle list, cascading removals onto modules and events.
+ * An optional `descriptions` (name → text) replaces the shuffle descriptions.
+ */
 export const POST = withApi(
     async (request: NextRequest, context: RouteContext) => {
         await requireStaffSession();
@@ -51,10 +55,19 @@ export const POST = withApi(
         const body = await request.text();
         if (!body) throw new ClientApiError("Payload cannot be empty.");
 
-        const { shuffles } = parseJsonBody<{ shuffles: unknown }>(body);
+        const { descriptions, shuffles } = parseJsonBody<{
+            descriptions?: unknown;
+            shuffles: unknown;
+        }>(body);
         if (!isShuffleNameList(shuffles))
             throw new ClientApiError("shuffles must be an array of strings.");
+        if (descriptions !== undefined && !isShuffleDescriptions(descriptions))
+            throw new ClientApiError(
+                "descriptions must be an object of strings.",
+            );
 
-        return ApiSuccess(await DbSyllabus.applyShuffles(id, shuffles));
+        return ApiSuccess(
+            await DbSyllabus.applyShuffles(id, shuffles, descriptions),
+        );
     },
 );

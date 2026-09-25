@@ -112,6 +112,7 @@ export function EventDialogContent({
                                 event={ event }
                                 eventId={ eventId }
                                 moduleId={ moduleId }
+                                shuffleDescriptions={ syllabus?.shuffleDescriptions }
                                 shuffleOptions={ syllabus?.shuffles ?? [] }
                                 syllabusId={ syllabus?.id ?? null }
                             />

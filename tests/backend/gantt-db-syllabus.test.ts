@@ -135,6 +135,7 @@ describe("DbSyllabus.reorderModules", () => {
  */
 function shuffleTx(options: {
     current: Array<string>;
+    descriptions?: Record<string, string>;
     moduleIds?: Array<string>;
     modules?: Array<{ id: string; shuffles: Array<string>; title: string }>;
     events?: Array<{ id: string; shuffles: Array<string>; title: string }>;
@@ -148,7 +149,12 @@ function shuffleTx(options: {
         select: () => {
             selectCall++;
             if (selectCall === 1) {
-                const read = chain([ { shuffles: options.current } ]);
+                const read = chain([
+                    {
+                        descriptions: options.descriptions ?? {},
+                        names: options.current,
+                    },
+                ]);
                 return {
                     from: () => ({
                         where: () => ({
@@ -236,20 +242,52 @@ describe("DbSyllabus.applyShuffles", () => {
 
         expect(postgresDb.transaction).toHaveBeenCalledTimes(1);
     });
+
+    it("drops a removed shuffle's description and keeps the rest", async () => {
+        const { updates } = shuffleTx({
+            current: [ "א", "ב" ],
+            descriptions: { א: "ראשונה", ב: "שנייה" },
+        });
+
+        await DbSyllabus.applyShuffles(SID, [ "א" ]);
+
+        expect(updates.at(-1)?.shuffleDescriptions).toEqual({ א: "ראשונה" });
+    });
+
+    it("replaces descriptions when given, trimmed and capped at Hive's 100 chars", async () => {
+        const { updates } = shuffleTx({
+            current: [ "א" ],
+            descriptions: { א: "ישנה" },
+        });
+
+        await DbSyllabus.applyShuffles(SID, [ "א", "ב" ], {
+            א: "  חדשה ",
+            ב: "x".repeat(150),
+            ג: "לא שאפל",
+        });
+
+        expect(updates.at(-1)?.shuffleDescriptions).toEqual({
+            א: "חדשה",
+            ב: "x".repeat(100),
+        });
+    });
 });
 
 describe("DbSyllabus.updateItem", () => {
     beforeEach(() => vi.clearAllMocks());
 
     it("blocks dropping a shuffle that is still in use, naming the holders", async () => {
-        shuffleTx({
-            current: [ "א", "ב" ],
-            modules: [ { id: "m1", shuffles: [ "ב" ], title: "מודול" } ],
-        });
+        const inUse = () =>
+            shuffleTx({
+                current: [ "א", "ב" ],
+                modules: [ { id: "m1", shuffles: [ "ב" ], title: "מודול" } ],
+            });
 
+        inUse();
         await expect(
             DbSyllabus.updateItem(SID, { shuffles: [ "א" ] }),
         ).rejects.toThrow(/"ב"/);
+        inUse();
         await expect(
             DbSyllabus.updateItem(SID, { shuffles: [ "א" ] }),
         ).rejects.toThrow(/מודול/);
@@ -266,6 +304,26 @@ describe("DbSyllabus.updateItem", () => {
             .then(() => null, (e: unknown) => e);
 
         expect(error).not.toBeInstanceOf(ClientApiError);
+    });
+
+    it("prunes a description-only patch against the current names", async () => {
+        const { updates } = shuffleTx({ current: [ "א" ] });
+        vi.mocked(postgresDb.update).mockReturnValue(chain([ { id: SID } ]));
+
+        await DbSyllabus.updateItem(SID, {
+            shuffleDescriptions: { א: "תיאור", ב: "יתום", },
+        }).catch(() => undefined);
+
+        expect(postgresDb.transaction).toHaveBeenCalledTimes(1);
+        expect(updates.at(-1)?.shuffleDescriptions).toEqual({ א: "תיאור" });
+    });
+
+    it("rejects descriptions that are not a name → text map", async () => {
+        await expect(
+            DbSyllabus.updateItem(SID, {
+                shuffleDescriptions: [ "א" ] as never,
+            }),
+        ).rejects.toBeInstanceOf(ClientApiError);
     });
 
     it("does not open a transaction when the patch leaves shuffles alone", async () => {

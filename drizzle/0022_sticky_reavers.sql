@@ -1,0 +1,1 @@
+ALTER TABLE "s" ADD COLUMN "shuffle_descriptions" jsonb DEFAULT '{}'::jsonb NOT NULL;

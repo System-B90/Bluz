@@ -1,3 +1,4 @@
+import { ShuffleDescriptions } from "@/api-shared/gantt/shuffle-names";
 import { CourseId } from "@/api-shared/types/course";
 import { GanttModuleId } from "@/api-shared/types/gantt/models/module";
 import { BaseGantItem } from "@/api-shared/types/gantt/models/shared";
@@ -13,6 +14,11 @@ export type GanttSyllabus = {
      * Empty/undefined ⇒ the syllabus has a single, unnamed group.
      */
     shuffles?: Array<string>;
+    /**
+     * Shuffle name → description. A shuffle is a Hive student group, and this
+     * mirrors that group's staff-only description (max 100 chars).
+     */
+    shuffleDescriptions?: ShuffleDescriptions;
     /** Courses (מסלולים) this syllabus belongs to. */
     courseIds?: Array<CourseId>;
     /** Hive ids of the אחראי מקצוע instructors. */

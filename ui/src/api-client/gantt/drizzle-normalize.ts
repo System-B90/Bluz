@@ -115,6 +115,7 @@ export function normalizeApiSyllabus(
             createdAt: apiSyllabus.createdAt,
             hiveIds: [...(apiSyllabus.hiveIds ?? [])],
             shuffles: [...(apiSyllabus.shuffles ?? [])],
+            shuffleDescriptions: { ...(apiSyllabus.shuffleDescriptions ?? {}) },
             courseIds: [...(apiSyllabus.courseIds ?? [])],
             leadInstructorIds: [...(apiSyllabus.leadInstructorIds ?? [])],
             modules: syllabusModuleIds,
