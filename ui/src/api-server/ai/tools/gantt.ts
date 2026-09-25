@@ -20,7 +20,7 @@ import { GanttCurriculumId } from "@/api-shared/types/gantt/models/curriculum";
  * screen the user is on is the fallback, so "תגזור את זה" works without the
  * model having to guess an id.
  */
-function requireCurriculumId(
+export function requireCurriculumId(
     args: { curriculumId?: string },
     context: AiToolContext,
 ): GanttCurriculumId {
@@ -33,7 +33,7 @@ function requireCurriculumId(
     return id as GanttCurriculumId;
 }
 
-const CURRICULUM_ID_PARAM = {
+export const CURRICULUM_ID_PARAM = {
     type: "string",
     description:
         "מזהה הגאנט. אם המשתמש נמצא כרגע במסך גאנט אפשר להשמיט ולהשתמש בברירת המחדל.",

@@ -12,6 +12,7 @@ import {
     formatRange,
     ISO_DATE,
     NO_PARAMS,
+    ROOM_SOURCE_PARAM,
     PAGE_PARAMS,
     PageArgs,
     pageSummary,
@@ -27,7 +28,7 @@ import { resolveIterationDb } from "@/api-server/mongo-db-controller";
 import { ClientApiError } from "@/api-shared/errors";
 import { AiToolDanger, AiToolKind } from "@/api-shared/types/ai";
 import { DbEventDocument, EventType } from "@/api-shared/types/event";
-import { ResolvableRoom, RoomSource } from "@/api-shared/types/room";
+import { ResolvableRoom } from "@/api-shared/types/room";
 import { MAX_EVENT_RANGE_DAYS, MILLISECONDS_IN_A_DAY } from "@/settings";
 
 /**
@@ -65,16 +66,6 @@ function summarizeEvent(event: DbEventDocument) {
  * subject or lesson would open a real Hive queue for students.
  */
 const HIVE_FIELDS = ["subject", "hiveModule", "hiveLesson", "hiveQueues"];
-
-/**
- * `RoomSource` is a numeric enum, so `Object.values` would also advertise its
- * reverse-mapped names ("Custom", "Hive") — values the store never matches.
- */
-export const ROOM_SOURCE_PARAM = {
-    type: "integer",
-    enum: [RoomSource.Custom, RoomSource.Hive],
-    description: `מקור החדר: ${RoomSource.Custom} — חדר שהוגדר בבלוז, ${RoomSource.Hive} — חדר הייב`,
-};
 
 const ROOMS_PARAM = {
     type: "array",

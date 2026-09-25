@@ -292,17 +292,40 @@ export async function* runAiAgent(
                 // Stop the whole turn, not just this call: a later call in the
                 // batch may depend on this one's effect, so continuing without
                 // it would have the model reason about a state that never was.
-                yield {
-                    type: AiStreamEventType.ToolProposal,
-                    toolCallId: call.id,
-                    name: call.name,
-                    title: tool.title,
-                    danger: tool.danger,
-                    arguments: args,
-                    summary:
-                        tool.describe?.(args, context) ?? `הרצת ${tool.title}`,
-                    impact: tool.impact?.(args, context),
-                };
+                //
+                // Every other unapproved write in the same batch is proposed
+                // alongside it, so "fill Sunday–Thursday" is one approval of
+                // five calls rather than five round trips. Nothing here runs;
+                // the resumed turn executes whichever ids came back approved.
+                for (const proposed of toolCalls.slice(toolCalls.indexOf(call))) {
+                    const proposedTool = registry.find(proposed.name);
+                    if (
+                        !proposedTool ||
+                        !isWriteTool(proposedTool) ||
+                        approvedToolCallIds.has(proposed.id)
+                    ) {
+                        continue;
+                    }
+                    let proposedArgs: Record<string, unknown>;
+                    try {
+                        proposedArgs = parseArguments(proposed);
+                    } catch {
+                        // Reported when the resumed turn reaches it.
+                        continue;
+                    }
+                    yield {
+                        type: AiStreamEventType.ToolProposal,
+                        toolCallId: proposed.id,
+                        name: proposed.name,
+                        title: proposedTool.title,
+                        danger: proposedTool.danger,
+                        arguments: proposedArgs,
+                        summary:
+                            proposedTool.describe?.(proposedArgs, context) ??
+                            `הרצת ${proposedTool.title}`,
+                        impact: proposedTool.impact?.(proposedArgs, context),
+                    };
+                }
                 yield {
                     type: AiStreamEventType.Done,
                     messages: produced,

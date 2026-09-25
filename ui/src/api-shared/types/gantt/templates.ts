@@ -1,4 +1,4 @@
-import { GanttDayIndex } from "@/api-shared/types/gantt/models";
+import { GanttCurriculumId, GanttDayIndex } from "@/api-shared/types/gantt/models";
 
 /** Per-day working minutes keyed by GanttDayIndex. Missing keys → 0 minutes. */
 export type TemplateDayConfig = Partial<Record<GanttDayIndex, number>>;
@@ -68,3 +68,57 @@ export const HACHNAS_TEMPLATE: GanttCurriculumTemplate = {
 export const CURRICULUM_TEMPLATES: Array<GanttCurriculumTemplate> = [
     HACHNAS_TEMPLATE,
 ];
+
+/** Persistence the template seeder needs; the client and server each supply their own. */
+export type TemplateSeedOps = {
+    createWeek: (payload: {
+        curriculumId: GanttCurriculumId;
+        number: number;
+        comment: string;
+        weekendDuty: boolean;
+    }) => Promise<{
+        w2d?: Array<{
+            day: { id: string; dayIndex: number; totalWorkingMinutes: number };
+        }>;
+    }>;
+    setDayMinutes: (dayId: string, minutes: number) => Promise<unknown>;
+};
+
+/**
+ * Seeds a (blank) curriculum's weeks and per-day working minutes from a
+ * template: exactly `template.weekCount` weeks, each day's
+ * `totalWorkingMinutes` set from the resolved day-config. Only days whose
+ * default differs from the template are written.
+ */
+export async function seedCurriculumFromTemplateWith(
+    curriculumId: GanttCurriculumId,
+    template: GanttCurriculumTemplate,
+    ops: TemplateSeedOps,
+): Promise<void> {
+    for (let weekIndex = 0; weekIndex < template.weekCount; weekIndex++) {
+        const dayMinutes = resolveWeekDayMinutes(template, weekIndex);
+        const hasSaturdayDuty = (dayMinutes[GanttDayIndex.Saturday] ?? 0) > 0;
+
+        const newWeek = await ops.createWeek({
+            curriculumId,
+            number: weekIndex + 1,
+            comment: "",
+            weekendDuty: hasSaturdayDuty,
+        });
+
+        await Promise.all(
+            (newWeek.w2d ?? [])
+                .filter(
+                    (link) =>
+                        link.day.totalWorkingMinutes !==
+                        (dayMinutes[link.day.dayIndex as GanttDayIndex] ?? 0),
+                )
+                .map((link) =>
+                    ops.setDayMinutes(
+                        link.day.id,
+                        dayMinutes[link.day.dayIndex as GanttDayIndex] ?? 0,
+                    ),
+                ),
+        );
+    }
+}

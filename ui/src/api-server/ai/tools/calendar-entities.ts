@@ -8,7 +8,6 @@
  * by exactly the allow-lists and broadcasts a UI edit is.
  */
 
-import { ROOM_SOURCE_PARAM } from "@/api-server/ai/tools/calendar";
 import {
     changedFieldsImpact,
     formatRange,
@@ -20,6 +19,7 @@ import {
     parseDate,
     pickDefined,
     requireText,
+    ROOM_SOURCE_PARAM,
 } from "@/api-server/ai/tools/common";
 import { AiTool } from "@/api-server/ai/tools/types";
 import { DbCalendarDraft } from "@/api-server/db-calendar-draft";

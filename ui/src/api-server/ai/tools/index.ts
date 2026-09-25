@@ -8,6 +8,8 @@ import { askUserTool } from "@/api-server/ai/tools/ask-user";
 import { CALENDAR_TOOLS } from "@/api-server/ai/tools/calendar";
 import { CALENDAR_ENTITY_TOOLS } from "@/api-server/ai/tools/calendar-entities";
 import { GANTT_TOOLS } from "@/api-server/ai/tools/gantt";
+import { GANTT_AUTHORING_TOOLS } from "@/api-server/ai/tools/gantt-authoring";
+import { HIVE_TOOLS } from "@/api-server/ai/tools/hive";
 import { AiTool } from "@/api-server/ai/tools/types";
 import { AiToolDanger, AiToolKind, AiToolSummary } from "@/api-shared/types/ai";
 
@@ -18,6 +20,8 @@ const ALL_TOOLS: Array<AiTool<any>> = [
     ...CALENDAR_TOOLS,
     ...CALENDAR_ENTITY_TOOLS,
     ...GANTT_TOOLS,
+    ...GANTT_AUTHORING_TOOLS,
+    ...HIVE_TOOLS,
 ];
 
 const BY_NAME = new Map(ALL_TOOLS.map((tool) => [tool.name, tool]));

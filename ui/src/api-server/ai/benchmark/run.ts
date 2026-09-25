@@ -18,10 +18,15 @@ import {
 } from "@/api-server/ai/benchmark/cases";
 import {
     FIXTURE_CURRICULUM_ID,
+    FIXTURE_NOW,
     FIXTURE_TOOLS,
 } from "@/api-server/ai/benchmark/fixture";
 import { AiProvider } from "@/api-server/ai/provider";
-import { AiToolContext, createToolRegistry } from "@/api-server/ai/tools";
+import {
+    AiToolContext,
+    AiToolRegistry,
+    createToolRegistry,
+} from "@/api-server/ai/tools";
 import { AiRole, AiStreamEventType } from "@/api-shared/types/ai";
 import {
     AiBenchmarkCase,
@@ -29,7 +34,23 @@ import {
 } from "@/api-shared/types/ai-benchmark";
 import { logger } from "@/logging/pino";
 
-const REGISTRY = createToolRegistry(FIXTURE_TOOLS);
+/**
+ * The fixture registry, with every read recording the arguments it was called
+ * with — rubrics such as "read Tuesday only" grade the call, not the prose.
+ */
+function instrumentedRegistry(
+    reads: AiBenchmarkObservation["reads"],
+): AiToolRegistry {
+    return createToolRegistry(
+        FIXTURE_TOOLS.map((tool) => ({
+            ...tool,
+            execute: async (args: Record<string, unknown>, context: AiToolContext) => {
+                reads.push({ name: tool.name, args });
+                return await tool.execute(args, context);
+            },
+        })),
+    );
+}
 
 /**
  * The context handed to fixture tools.
@@ -48,6 +69,7 @@ export function benchmarkContext(actor: {
     };
     return {
         curriculumId: FIXTURE_CURRICULUM_ID,
+        now: FIXTURE_NOW,
         actor,
         readController: refuse,
         writeController: refuse,
@@ -68,6 +90,8 @@ async function runCase(
         executedWrites: [],
         askedUser: false,
         answer: "",
+        reads: [],
+        proposals: [],
     };
     let tokens = 0;
     let error: string | undefined;
@@ -80,7 +104,7 @@ async function runCase(
             // Never populated, by design: an approved id is the only thing
             // that can make a write run, and this run grants none.
             approvedToolCallIds: new Set<string>(),
-            registry: REGISTRY,
+            registry: instrumentedRegistry(observation.reads),
             signal,
         });
 
@@ -99,6 +123,10 @@ async function runCase(
             case AiStreamEventType.ToolProposal:
                 observation.toolCalls.push(event.name);
                 observation.proposedWrites.push(event.name);
+                observation.proposals.push({
+                    name: event.name,
+                    args: (event.arguments ?? {}) as Record<string, unknown>,
+                });
                 break;
             case AiStreamEventType.Choice:
                 observation.toolCalls.push("ask_user");

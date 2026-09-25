@@ -35,6 +35,11 @@ export type AiToolContext = {
     iterationId?: IterationId;
     /** Curriculum the user is looking at, when on a Gantt screen. */
     curriculumId?: string;
+    /**
+     * The moment the turn treats as "now". Defaults to the wall clock; the
+     * self-test pins it so "Tuesday" resolves to the same date every run.
+     */
+    now?: Date;
     /** The signed-in staff member, for write attribution. */
     actor: { id: string; displayName: string };
     /** Calendar store scoped to {@link iterationId}, resolved lazily. */

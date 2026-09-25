@@ -13,6 +13,7 @@ import {
     withApi,
 } from "@/api-server/common";
 import {
+    constraintInsertFromPayload,
     createConstraint,
     deleteConstraint,
     getConstraintsForCurriculum,
@@ -66,50 +67,9 @@ export const POST = withApi(
         const body =
             await requireJsonObjectBody<CreateConstraintPayload>(request);
 
-        if (!body.type) {
-            throw new ClientApiError("Missing required field: type.");
-        }
-        if (!body.id) {
-            throw new ClientApiError("Missing required field: id.");
-        }
-
-        if (!body.ownerEventId && !body.ownerModuleId) {
-            throw new ClientApiError(
-                "A constraint must have an owner identified by ownerEventId or ownerModuleId.",
-            );
-        }
-
-        if (body.type === "RELATIONAL" && !body.targetId) {
-            throw new ClientApiError(
-                "Relational constraints must specify a targetId.",
-            );
-        }
-
-        const creationData: Parameters<typeof createConstraint>[0] = {
-            id: body.id,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            type: body.type,
-            ownerEventId:
-                body.ownerType === "event" ? body.ownerEventId : undefined,
-            ownerModuleId:
-                body.ownerType === "module" ? body.ownerModuleId : undefined,
-            relation: body.type === "RELATIONAL" ? body.relation : undefined,
-            minDelayDays:
-                body.type === "RELATIONAL" ? body.minDelayDays : undefined,
-            maxDelayDays:
-                body.type === "RELATIONAL" ? body.maxDelayDays : undefined,
-        };
-        if (body.type === "TEMPORAL") {
-            creationData.allowedDays = body.allowedDays;
-            creationData.forbiddenDays = body.forbiddenDays;
-        } else {
-            creationData[
-                body.targetType === "event" ? "targetEventId" : "targetModuleId"
-            ] = body.targetId;
-        }
-
-        const constraint = await createConstraint(creationData);
+        const constraint = await createConstraint(
+            constraintInsertFromPayload(body),
+        );
 
         return ApiSuccess(constraint);
     },

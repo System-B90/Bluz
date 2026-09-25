@@ -10,6 +10,7 @@ import { AiToolContext } from "@/api-server/ai/tools/types";
 import { EventWriteOrigin } from "@/api-server/db-event-history";
 import { ClientApiError } from "@/api-shared/errors";
 import { EventChangeInitiator } from "@/api-shared/types/event-history";
+import { RoomSource } from "@/api-shared/types/room";
 
 /** Default page size for list tools — each result is re-sent every turn. */
 export const DEFAULT_PAGE_SIZE = 50;
@@ -25,6 +26,16 @@ export const NO_PARAMS = {
 export const ISO_DATE = {
     type: "string",
     description: "תאריך ושעה בפורמט ISO 8601, למשל 2026-03-01T09:00:00Z",
+};
+
+/**
+ * `RoomSource` is a numeric enum, so `Object.values` would also advertise its
+ * reverse-mapped names ("Custom", "Hive") — values the store never matches.
+ */
+export const ROOM_SOURCE_PARAM = {
+    type: "integer",
+    enum: [RoomSource.Custom, RoomSource.Hive],
+    description: `מקור החדר: ${RoomSource.Custom} — חדר שהוגדר בבלוז, ${RoomSource.Hive} — חדר הייב`,
 };
 
 /** Schema fragment every paginated list tool spreads into its properties. */

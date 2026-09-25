@@ -18,6 +18,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import CloseFullscreenIcon from "@mui/icons-material/CloseFullscreen";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
+import DownloadIcon from "@mui/icons-material/Download";
 import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 import SendIcon from "@mui/icons-material/Send";
 import StopIcon from "@mui/icons-material/Stop";
@@ -27,6 +28,8 @@ import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Fab from "@mui/material/Fab";
 import IconButton from "@mui/material/IconButton";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
@@ -39,12 +42,15 @@ import remarkGfm from "remark-gfm";
 
 import { fetchAiTools } from "@/api-client/ai";
 import { apiGetPersonalSettings } from "@/api-client/personal-settings";
+import { AiToolDanger } from "@/api-shared/types/ai";
 import { CURRICULUM_QUERY_PARAM } from "@/api-shared/types/gantt/models";
 import { ApprovalCard } from "@/components/ai/ApprovalCard";
+import { ChatExportFormat } from "@/components/ai/chat-export";
 import { ChoicePrompt } from "@/components/ai/ChoicePrompt";
 import { ThinkingBlock } from "@/components/ai/ThinkingBlock";
 import { ToolCallChip } from "@/components/ai/ToolCallChip";
 import {
+    AiApprovalCall,
     AiChatStats,
     AiTimelineItem,
     AiTimelineKind,
@@ -183,6 +189,45 @@ function AssistantBubble({ text }: { text: string }) {
     );
 }
 
+const DANGER_RANK: Record<AiToolDanger, number> = {
+    [AiToolDanger.Safe]: 0,
+    [AiToolDanger.Caution]: 1,
+    [AiToolDanger.Destructive]: 2,
+};
+
+/**
+ * One card for a batch of writes: the batch is as dangerous as its worst
+ * call, and each call gets its own bullet so the human still reads every
+ * change they are approving.
+ */
+function approvalCardProps(calls: Array<AiApprovalCall>) {
+    if (calls.length === 1) {
+        const [call] = calls;
+        return {
+            title: call.title,
+            danger: call.danger,
+            summary: call.summary,
+            impact: call.impact,
+            args: call.arguments,
+        };
+    }
+    const titles = [...new Set(calls.map((call) => call.title))];
+    return {
+        title: `${calls.length} פעולות לאישור`,
+        danger: calls.reduce(
+            (worst, call) =>
+                DANGER_RANK[call.danger] > DANGER_RANK[worst] ? call.danger : worst,
+            AiToolDanger.Safe,
+        ),
+        summary: `${titles.join(", ")} — אישור אחד לכולן`,
+        impact: [
+            ...calls.map((call) => call.summary),
+            ...new Set(calls.flatMap((call) => call.impact)),
+        ],
+        args: calls.map((call) => ({ tool: call.name, arguments: call.arguments })),
+    };
+}
+
 function TimelineEntry({
     item,
     busy,
@@ -221,20 +266,22 @@ function TimelineEntry({
                 title={item.title}
             />
         );
-    case AiTimelineKind.Approval:
+    case AiTimelineKind.Approval: {
+        const card = approvalCardProps(item.calls);
         return (
             <ApprovalCard
-                args={item.arguments}
+                args={card.args}
                 busy={busy}
-                danger={item.danger}
-                impact={item.impact}
+                danger={card.danger}
+                impact={card.impact}
                 onApprove={onApprove}
                 onReject={onReject}
                 state={item.state}
-                summary={item.summary}
-                title={item.title}
+                summary={card.summary}
+                title={card.title}
             />
         );
+    }
     case AiTimelineKind.Choice:
         return (
             <ChoicePrompt
@@ -249,6 +296,49 @@ function TimelineEntry({
     case AiTimelineKind.Failure:
         return <Alert severity="error">{item.message}</Alert>;
     }
+}
+
+/** Download the conversation as Markdown or JSON. */
+function ExportMenu({
+    disabled,
+    onExport,
+}: {
+    disabled: boolean;
+    onExport: (format: ChatExportFormat) => void;
+}) {
+    const [anchor, setAnchor] = React.useState<HTMLElement | null>(null);
+    const choose = (format: ChatExportFormat) => {
+        setAnchor(null);
+        onExport(format);
+    };
+    return (
+        <>
+            <Tooltip title="ייצוא שיחה">
+                <span>
+                    <IconButton
+                        aria-label="ייצוא שיחה"
+                        disabled={disabled}
+                        onClick={(event) => setAnchor(event.currentTarget)}
+                        size="small"
+                    >
+                        <DownloadIcon fontSize="small" />
+                    </IconButton>
+                </span>
+            </Tooltip>
+            <Menu
+                anchorEl={anchor}
+                onClose={() => setAnchor(null)}
+                open={Boolean(anchor)}
+            >
+                <MenuItem onClick={() => choose(ChatExportFormat.Markdown)}>
+                    Markdown (.md)
+                </MenuItem>
+                <MenuItem onClick={() => choose(ChatExportFormat.Json)}>
+                    JSON (.json)
+                </MenuItem>
+            </Menu>
+        </>
+    );
 }
 
 /** Model and cumulative token cost, so the bill is never invisible. */
@@ -295,6 +385,7 @@ export function AiAssistant() {
         answerChoice,
         stop,
         reset,
+        exportChat,
     } = useAiChat({ iterationId, curriculumId });
 
     const scrollRef = React.useRef<HTMLDivElement>(null);
@@ -425,6 +516,10 @@ export function AiAssistant() {
                                 )}
                             </IconButton>
                         </Tooltip>
+                        <ExportMenu
+                            disabled={busy || timeline.length === 0}
+                            onExport={exportChat}
+                        />
                         <Tooltip title="שיחה חדשה">
                             <span>
                                 <IconButton

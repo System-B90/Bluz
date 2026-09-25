@@ -7,7 +7,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  * writable-iteration controller.
  */
 
-const { dbEvent, dbRooms, dbIterations } = vi.hoisted(() => ({
+const { dbEvent, dbRooms, dbIterations, dbEventHistory } = vi.hoisted(() => ({
+    dbEventHistory: { forEvent: vi.fn(async () => []) },
     dbEvent: {
         get: vi.fn(),
         getInRange: vi.fn(async () => []),
@@ -22,10 +23,16 @@ const { dbEvent, dbRooms, dbIterations } = vi.hoisted(() => ({
 vi.mock("@/api-server/db-event", () => ({ DbEvent: dbEvent }));
 vi.mock("@/api-server/db-rooms", () => ({ DbRooms: dbRooms }));
 vi.mock("@/api-server/db-iterations", () => ({ DbIterations: dbIterations }));
+vi.mock("@/api-server/db-event-history", () => ({
+    DbEventHistory: dbEventHistory,
+}));
 
 import {
+    compareEventsTool,
     createEventTool,
     deleteEventTool,
+    getEventHistoryTool,
+    getEventTool,
     listEventsTool,
     listIterationsTool,
     updateEventTool,
@@ -218,5 +225,121 @@ describe("list_iterations", () => {
                 curriculumId: "c-1",
             },
         ]);
+    });
+});
+
+describe("list_events visibility filters (#719)", () => {
+    it("filters hidden events when asked", async () => {
+        await listEventsTool.execute({ ...RANGE, hidden: true }, context);
+        expect(filterOf()).toEqual({ hidden: true });
+    });
+
+    it("treats a legacy event with no fake flag as real", async () => {
+        await listEventsTool.execute({ ...RANGE, fake: false }, context);
+        expect(filterOf()).toEqual({ fake: { $ne: true } });
+    });
+
+    it("reports hidden, fake and colour on each event, one page at a time", async () => {
+        dbEvent.getInRange.mockResolvedValueOnce(
+            Array.from({ length: 3 }, (_, index) => ({
+                ...existingEvent,
+                id: `e${index}`,
+                hidden: index === 0,
+                fake: index === 1,
+            })) as never,
+        );
+        const result = await listEventsTool.execute(
+            { ...RANGE, limit: 2 },
+            context,
+        );
+        const page = result.data as {
+            items: Array<Record<string, unknown>>;
+            total: number;
+            nextOffset?: number;
+        };
+        expect(page.total).toBe(3);
+        expect(page.items).toHaveLength(2);
+        expect(page.nextOffset).toBe(2);
+        expect(page.items[0]).toMatchObject({
+            hidden: true,
+            fake: false,
+            color: null,
+        });
+        expect(page.items[1]).toMatchObject({ fake: true });
+    });
+});
+
+describe("fake events (#719)", () => {
+    const FAKE = {
+        name: "הרצאה",
+        startTime: "2026-03-03T07:00:00Z",
+        endTime: "2026-03-03T09:00:00Z",
+        fake: true,
+        color: "#4caf50",
+        courses: ["c1"],
+    };
+
+    it("stores the fake flag, colour and courses with no Hive linkage", async () => {
+        await createEventTool.execute(FAKE, context);
+        const [event] = dbEvent.create.mock.calls[0];
+        expect(event).toMatchObject({
+            fake: true,
+            color: "#4caf50",
+            courses: ["c1"],
+            subject: 0,
+            hiveModule: 0,
+        });
+        expect(event.hiveLesson).toBeUndefined();
+    });
+
+    it("refuses Hive fields on a fake event", async () => {
+        await expect(
+            createEventTool.execute({ ...FAKE, hiveModule: 7 } as never, context),
+        ).rejects.toThrow(ClientApiError);
+        expect(dbEvent.create).not.toHaveBeenCalled();
+    });
+
+    it("tells the approver it is a placeholder, not a Hive-synced event", () => {
+        expect(createEventTool.describe?.(FAKE, context)).toContain("פיקטיבי");
+        expect(createEventTool.impact?.(FAKE, context).join(" ")).toContain(
+            "ללא קישור להייב",
+        );
+    });
+});
+
+describe("event details tools (#719)", () => {
+    it("get_event reports a missing id as not found", async () => {
+        dbEvent.get.mockResolvedValueOnce(null);
+        await expect(
+            getEventTool.execute({ id: "nope" }, context),
+        ).rejects.toThrow("לא נמצא");
+    });
+
+    it("get_event_history reads through the read controller", async () => {
+        dbEventHistory.forEvent.mockResolvedValueOnce([
+            {
+                action: "updated",
+                initiator: "ai",
+                actorName: "מיכאל",
+                changedAt: new Date("2026-03-01T10:00:00Z"),
+                changes: [],
+            },
+        ] as never);
+        const result = await getEventHistoryTool.execute({ id: "e1" }, context);
+        expect(dbEventHistory.forEvent).toHaveBeenCalledWith(
+            "e1",
+            readController,
+        );
+        const page = result.data as { items: Array<{ changedAt: string }> };
+        expect(page.items[0].changedAt).toBe("2026-03-01T10:00:00.000Z");
+    });
+
+    it("compare_events refuses a range beyond the REST ceiling", async () => {
+        await expect(
+            compareEventsTool.execute(
+                { from: "2026-01-01T00:00:00Z", to: "2028-01-01T00:00:00Z" },
+                context,
+            ),
+        ).rejects.toThrow(ClientApiError);
     });
 });
