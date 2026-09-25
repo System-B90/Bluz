@@ -124,7 +124,9 @@ export function NumberSpinner({
                         sx={{
                             position: "absolute",
                             inset: 0,
-                            top: label ? "-6px" : 0,
+                            // The border line runs through the middle of the 12px legend;
+                            // lift it so the label adds height instead of eating it.
+                            top: label ? "-12px" : 0,
                             m: 0,
                             px: 1,
                             py: 0,
