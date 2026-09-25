@@ -23,7 +23,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
 import { GanttEventId, GanttModuleId } from "@/api-shared/types/gantt/models";
@@ -32,7 +32,7 @@ import {
     EVENT_ANCHOR_PREFIX,
     HIGHLIGHT_DURATION_MS,
 } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
-import { ModuleEventGroupRow } from "@/components/gantt/module-dialog/ModuleEventGroupRow";
+import { groupSortableId, ModuleEventGroupRow } from "@/components/gantt/module-dialog/ModuleEventGroupRow";
 import { ModuleEventView } from "@/components/gantt/module-dialog/ModuleEventView";
 import {
     useCurriculumProviderActions,
@@ -140,16 +140,38 @@ export function ModuleEventsView({
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
     );
 
+    // Top-level rows: a lone event, or a whole group (members in order).
+    const blocks = useMemo(() => {
+        const result: Array<{ id: string; groupId?: string; ids: Array<GanttEventId> }> = [];
+        for (const eventId of eventIds) {
+            const groupId = state.events[eventId]?.groupId;
+            const existing = groupId ? result.find((b) => b.groupId === groupId) : undefined;
+            if (existing) existing.ids.push(eventId);
+            else if (groupId) result.push({ id: groupSortableId(groupId), groupId, ids: [eventId] });
+            else result.push({ id: eventId, ids: [eventId] });
+        }
+        return result;
+    }, [eventIds, state.events]);
+
     const handleDragEnd = useCallback(
         (event: DragEndEvent) => {
             const { active, over } = event;
             if (!over || active.id === over.id) return;
 
-            const oldIndex = eventIds.indexOf(active.id as GanttEventId);
-            const newIndex = eventIds.indexOf(over.id as GanttEventId);
-            if (oldIndex === -1 || newIndex === -1) return;
-
-            const newOrder = arrayMove(eventIds, oldIndex, newIndex);
+            const blockFrom = blocks.findIndex((b) => b.id === active.id);
+            const blockTo = blocks.findIndex((b) => b.id === over.id);
+            let newOrder: Array<GanttEventId>;
+            if (blockFrom !== -1 && blockTo !== -1) {
+                newOrder = arrayMove(blocks, blockFrom, blockTo).flatMap((b) => b.ids);
+            } else {
+                // Members only reorder within their own group.
+                const from = eventIds.indexOf(active.id as GanttEventId);
+                const to = eventIds.indexOf(over.id as GanttEventId);
+                const groupId = state.events[active.id as GanttEventId]?.groupId;
+                if (from === -1 || to === -1 || !groupId) return;
+                if (state.events[over.id as GanttEventId]?.groupId !== groupId) return;
+                newOrder = arrayMove(eventIds, from, to);
+            }
 
             dispatch({ type: "REORDER_EVENTS", payload: { moduleId, eventIds: newOrder } });
 
@@ -166,7 +188,7 @@ export function ModuleEventsView({
                     enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת סדר המופעים נכשלה!", error);
                 });
         },
-        [dispatch, eventIds, moduleId, enqueueSnackbar],
+        [blocks, dispatch, eventIds, moduleId, enqueueSnackbar, state.events],
     );
 
     return (
@@ -209,38 +231,30 @@ export function ModuleEventsView({
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        <SortableContext items={eventIds} strategy={verticalListSortingStrategy}>
-                            {(() => {
-                                const renderedGroups = new Set<string>();
-                                return eventIds.map((eventId) => {
-                                    const groupId = state.events[eventId]?.groupId;
-                                    if (groupId) {
-                                        if (renderedGroups.has(groupId)) return null;
-                                        renderedGroups.add(groupId);
-                                        const groupEventIds = eventIds.filter(
-                                            (id) => state.events[id]?.groupId === groupId,
-                                        );
-                                        return (
-                                            <ModuleEventGroupRow
-                                                eventIds={groupEventIds}
-                                                expanded={expandedGroups.has(groupId)}
-                                                highlightedEventId={highlightedEventId}
-                                                key={groupId}
-                                                moduleId={moduleId}
-                                                onToggle={() => toggleGroup(groupId)}
-                                            />
-                                        );
-                                    }
-                                    return (
-                                        <ModuleEventView
-                                            eventId={eventId}
-                                            isHighlighted={eventId === highlightedEventId}
-                                            key={eventId}
-                                            moduleId={moduleId}
-                                        />
-                                    );
-                                });
-                            })()}
+                        <SortableContext
+                            items={blocks.map((b) => b.id)}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            {blocks.map(({ id, groupId, ids }) =>
+                                groupId ? (
+                                    <ModuleEventGroupRow
+                                        eventIds={ids}
+                                        expanded={expandedGroups.has(groupId)}
+                                        groupId={groupId}
+                                        highlightedEventId={highlightedEventId}
+                                        key={id}
+                                        moduleId={moduleId}
+                                        onToggle={() => toggleGroup(groupId)}
+                                    />
+                                ) : (
+                                    <ModuleEventView
+                                        eventId={ids[0]}
+                                        isHighlighted={ids[0] === highlightedEventId}
+                                        key={id}
+                                        moduleId={moduleId}
+                                    />
+                                ),
+                            )}
                         </SortableContext>
                     </TableBody>
                 </Table>

@@ -1,3 +1,6 @@
+import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import PersonIcon from "@mui/icons-material/Person";
 import Chip from "@mui/material/Chip";
@@ -16,14 +19,19 @@ import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { ModuleEventView, ShuffleChips } from "@/components/gantt/module-dialog/ModuleEventView";
 import { useCurriculumState } from "@/components/gantt/state/context";
 
+/** Sortable id for a group's header row; never collides with event ids. */
+export const groupSortableId = (groupId: string) => `group:${groupId}`;
+
 export function ModuleEventGroupRow({
     moduleId,
+    groupId,
     eventIds,
     expanded,
     onToggle,
     highlightedEventId,
 }: {
     moduleId: GanttModuleId;
+    groupId: string;
     eventIds: Array<GanttEventId>;
     expanded: boolean;
     onToggle: () => void;
@@ -31,6 +39,14 @@ export function ModuleEventGroupRow({
 }) {
     const state = useCurriculumState();
     const { getInstructor } = useHiveUsers();
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+        useSortable({ id: groupSortableId(groupId) });
+    // Header and members rows move together while dragging.
+    const dragStyle = {
+        transform: CSS.Translate.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+    };
 
     const members = useMemo(
         () => eventIds.map((eventId) => state.events[eventId]).filter(Boolean),
@@ -65,32 +81,37 @@ export function ModuleEventGroupRow({
 
     return (
         <>
-            <TableRow
-                onClick={onToggle}
-                sx={{
-                    cursor: "pointer",
-                    "& .MuiTableCell-root": { bgcolor: "action.hover" },
-                }}
-            >
-                <TableCell sx={{ width: "1rem", pr: 0 }}>
-                    <IconButton size="small" sx={{ p: 0 }}>
-                        <ExpandMoreIcon
-                            fontSize="small"
-                            sx={{
-                                transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
-                                transition: (theme) =>
-                                    theme.transitions.create("transform", {
-                                        duration: theme.transitions.duration.shortest,
-                                    }),
-                            }}
-                        />
-                    </IconButton>
+            <TableRow ref={setNodeRef} style={dragStyle}>
+                <TableCell sx={{ width: "1rem", pr: 0, cursor: "grab" }} {...attributes} {...listeners}>
+                    <DragIndicatorIcon fontSize="small" sx={{ color: "text.disabled", display: "block" }} />
                 </TableCell>
                 <TableCell>
                     <Stack alignItems="center" direction="row" flexWrap="wrap" gap={0.5}>
-                        <Typography sx={{ fontWeight: 700, marginInlineEnd: 0.5 }} variant="body2">
+                        <IconButton
+                            aria-label={expanded ? "כיווץ הקבוצה" : "הרחבת הקבוצה"}
+                            onClick={onToggle}
+                            size="small"
+                            sx={{ p: 0 }}
+                        >
+                            <ExpandMoreIcon
+                                fontSize="small"
+                                sx={{
+                                    transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
+                                    transition: (theme) =>
+                                        theme.transitions.create("transform", {
+                                            duration: theme.transitions.duration.shortest,
+                                        }),
+                                }}
+                            />
+                        </IconButton>
+                        <Typography
+                            onClick={onToggle}
+                            sx={{ cursor: "pointer", fontWeight: 500, marginInlineEnd: 0.5 }}
+                            variant="body2"
+                        >
                             {firstMember?.title ?? ""}
                         </Typography>
+                        <Chip label={`×${members.length}`} size="small" variant="outlined" />
                         <ShuffleChips
                             descriptions={shuffleDescriptions}
                             shuffles={members.flatMap((event) => event?.shuffles ?? [])}
@@ -124,19 +145,21 @@ export function ModuleEventGroupRow({
                 </TableCell>
                 <TableCell />
             </TableRow>
-            <TableRow>
+            <TableRow style={dragStyle}>
                 <TableCell colSpan={6} sx={{ p: 0, border: 0 }}>
                     <Collapse in={expanded} timeout="auto" unmountOnExit>
                         <Table size="small">
                             <TableBody>
-                                {eventIds.map((eventId) => (
-                                    <ModuleEventView
-                                        eventId={eventId}
-                                        isHighlighted={eventId === highlightedEventId}
-                                        key={eventId}
-                                        moduleId={moduleId}
-                                    />
-                                ))}
+                                <SortableContext items={eventIds} strategy={verticalListSortingStrategy}>
+                                    {eventIds.map((eventId) => (
+                                        <ModuleEventView
+                                            eventId={eventId}
+                                            isHighlighted={eventId === highlightedEventId}
+                                            key={eventId}
+                                            moduleId={moduleId}
+                                        />
+                                    ))}
+                                </SortableContext>
                             </TableBody>
                         </Table>
                     </Collapse>
