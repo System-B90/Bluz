@@ -1,8 +1,9 @@
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import GroupsIcon from "@mui/icons-material/Groups";
+import PersonIcon from "@mui/icons-material/Person";
 import Chip from "@mui/material/Chip";
 import Collapse from "@mui/material/Collapse";
 import IconButton from "@mui/material/IconButton";
+import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -11,7 +12,8 @@ import Typography from "@mui/material/Typography";
 import { useMemo } from "react";
 
 import { GanttEventId, GanttModuleId } from "@/api-shared/types/gantt/models";
-import { ModuleEventView } from "@/components/gantt/module-dialog/ModuleEventView";
+import { useHiveUsers } from "@/components/base/HiveUsersProvider";
+import { ModuleEventView, ShuffleChips } from "@/components/gantt/module-dialog/ModuleEventView";
 import { useCurriculumState } from "@/components/gantt/state/context";
 
 export function ModuleEventGroupRow({
@@ -28,10 +30,23 @@ export function ModuleEventGroupRow({
     highlightedEventId: GanttEventId | null;
 }) {
     const state = useCurriculumState();
+    const { getInstructor } = useHiveUsers();
 
     const members = useMemo(
         () => eventIds.map((eventId) => state.events[eventId]).filter(Boolean),
         [eventIds, state.events],
+    );
+
+    const orchestratorIds = useMemo(
+        () =>
+            Array.from(
+                new Set(
+                    members
+                        .map((event) => event?.orchestratorId)
+                        .filter((id): id is number => id != null),
+                ),
+            ),
+        [members],
     );
 
     const firstMember = members[0];
@@ -67,21 +82,12 @@ export function ModuleEventGroupRow({
                     </IconButton>
                 </TableCell>
                 <TableCell>
-                    <Typography sx={{ fontWeight: 700 }} variant="body2">
-                        {firstMember?.title ?? ""}
-                    </Typography>
-                    {members.map((event) =>
-                        (event?.shuffles ?? []).map((shuffle) => (
-                            <Chip
-                                icon={<GroupsIcon />}
-                                key={`${event?.id}:${shuffle}`}
-                                label={shuffle}
-                                size="small"
-                                sx={{ marginInlineEnd: 0.5, mt: 0.25 }}
-                                variant="outlined"
-                            />
-                        )),
-                    )}
+                    <Stack alignItems="center" direction="row" flexWrap="wrap" gap={0.5}>
+                        <Typography sx={{ fontWeight: 700, marginInlineEnd: 0.5 }} variant="body2">
+                            {firstMember?.title ?? ""}
+                        </Typography>
+                        <ShuffleChips shuffles={members.flatMap((event) => event?.shuffles ?? [])} />
+                    </Stack>
                 </TableCell>
                 <TableCell>
                     <Typography variant="body2">{firstMember?.type ?? ""}</Typography>
@@ -89,13 +95,26 @@ export function ModuleEventGroupRow({
                 <TableCell>
                     <Typography variant="body2">{durationLabel}</Typography>
                 </TableCell>
-                <TableCell colSpan={2}>
-                    <Chip
-                        label={`${members.length} מופעים`}
-                        size="small"
-                        variant="outlined"
-                    />
+                <TableCell>
+                    <Stack direction="row" flexWrap="wrap" gap={0.5}>
+                        {orchestratorIds.length > 0 ? (
+                            orchestratorIds.map((id) => (
+                                <Chip
+                                    icon={<PersonIcon />}
+                                    key={id}
+                                    label={getInstructor(id)?.display_name ?? String(id)}
+                                    size="small"
+                                    variant="outlined"
+                                />
+                            ))
+                        ) : (
+                            <Typography color="text.disabled" variant="body2">
+                                ללא אחראי
+                            </Typography>
+                        )}
+                    </Stack>
                 </TableCell>
+                <TableCell />
             </TableRow>
             <TableRow>
                 <TableCell colSpan={6} sx={{ p: 0, border: 0 }}>

@@ -10,6 +10,7 @@ import {
 import {
     ganttEventsSchema,
     ganttModule2EventsSchema,
+    ganttModulesSchema,
 } from "@/api-server/gantt/schema";
 import { ganttCurriculumEventConfigurationsSchema } from "@/api-server/gantt/schema/mappings";
 import { ClientApiError } from "@/api-shared/errors";
@@ -286,6 +287,14 @@ async function applyShuffleGroup(
         if (!origin) throw new ClientApiError(`מופע עם מזהה ${eventId} לא נמצא`);
 
         const groupId = origin.groupId ?? `g_${crypto.randomUUID()}`;
+        // New siblings are owned by the module's default אחראי, not a copy of
+        // the origin's: each shuffle's lesson usually has its own orchestrator.
+        const [parentModule] = await tx
+            .select({ defaultOrchestratorId: ganttModulesSchema.defaultOrchestratorId })
+            .from(ganttModulesSchema)
+            .where(eq(ganttModulesSchema.id, moduleId));
+        const siblingOrchestratorId =
+            parentModule?.defaultOrchestratorId ?? origin.orchestratorId;
         const existing = origin.groupId
             ? await findGroupMembers(origin.groupId, tx)
             : [origin];
@@ -339,6 +348,7 @@ async function applyShuffleGroup(
                 (await basicOperations.createNewItem(
                     {
                         ...groupSiblingFields(origin),
+                        orchestratorId: siblingOrchestratorId,
                         allocatedDuration: 0,
                         shuffles: [name],
                         groupId,
