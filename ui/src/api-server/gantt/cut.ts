@@ -21,7 +21,10 @@ import {
     getDatabaseController,
 } from "@/api-server/mongo-db-controller";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
-import { lowestCommonCourse } from "@/api-shared/course-tree";
+import {
+    lowestCommonCourse,
+    SHUFFLE_COURSE_DESCRIPTION_PREFIX,
+} from "@/api-shared/course-tree";
 import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 import {
     CutPlanEventInput,
@@ -985,7 +988,7 @@ export async function materializeCurriculumEvents(
                     syllabusCourseIdsForShuffle.get(name) ?? [],
                     existingCourses,
                 ),
-                description: `נגזר מסילבוס "${syllabusTitleForShuffle.get(name) ?? ""}"`,
+                description: `${SHUFFLE_COURSE_DESCRIPTION_PREFIX} "${syllabusTitleForShuffle.get(name) ?? ""}"`,
             };
             await DbCourses.create(course, controller);
             id = course.id;

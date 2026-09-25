@@ -105,3 +105,18 @@ export function relatedCoursesResolver(
         return related;
     };
 }
+
+/**
+ * Description prefix the cut pipeline stamps on the courses it creates for
+ * shuffles. Course has no dedicated flag, so this marker is how the UI tells a
+ * shuffle-course apart from a hand-made one.
+ */
+export const SHUFFLE_COURSE_DESCRIPTION_PREFIX = "נגזר מסילבוס";
+
+/** True when `course` was created by the cut pipeline for a shuffle. */
+export function isShuffleCourse(course: Pick<Course, "description">): boolean {
+    return (
+        course.description?.startsWith(SHUFFLE_COURSE_DESCRIPTION_PREFIX) ??
+        false
+    );
+}

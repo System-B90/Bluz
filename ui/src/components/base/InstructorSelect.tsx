@@ -1,12 +1,15 @@
 import ListSubheader from "@mui/material/ListSubheader";
 import MenuItem from "@mui/material/MenuItem";
 import Select, { SelectProps } from "@mui/material/Select";
-import TextField from "@mui/material/TextField";
-import React, { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { CourseUser } from "@/api-shared/types/hive";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { useOutsiders } from "@/components/base/OutsidersProvider";
+import {
+    searchableMenuProps,
+    SelectSearchHeader,
+} from "@/components/base/SelectSearchHeader";
 import {
     sortHe,
     useGroupedInstructors,
@@ -83,7 +86,6 @@ export function InstructorSelect<T = unknown>({
     const { getInstructor } = useHiveUsers();
 
     const [searchQuery, setSearchQuery] = useState("");
-    const searchInputRef = useRef<HTMLInputElement>(null);
 
     const { courseGroups, unassigned } = useGroupedInstructors({
         searchQuery,
@@ -108,123 +110,16 @@ export function InstructorSelect<T = unknown>({
             .sort((a, b) => sortHe(a.display_name, b.display_name));
     }, [pinnedIds, getInstructor, searchQuery]);
 
-    const NAVIGATION_KEYS = [
-        "Escape",
-        "ArrowUp",
-        "ArrowDown",
-        "ArrowLeft",
-        "ArrowRight",
-        "Home",
-        "End",
-        "Enter",
-        "Tab",
-    ];
-
-    const handleSearchEvent = (e: React.KeyboardEvent | React.MouseEvent) => {
-        if (e.type === "keydown") {
-            const key = (e as React.KeyboardEvent).key;
-
-            if (key === "ArrowDown" || key === "ArrowUp") {
-                // MUI's MenuList navigates via `nextElementSibling` off the
-                // currently focused element. That works between MenuItems
-                // (direct <li> children of the list) but not from the
-                // search TextField, which is nested several levels deep -
-                // so the first press has to manually hand focus to an
-                // actual option before native list traversal can take over.
-                e.preventDefault();
-                const list = (e.currentTarget as HTMLElement).closest("ul");
-                const items = list
-                    ? Array.from(
-                        list.querySelectorAll<HTMLElement>("li[tabindex]"),
-                    )
-                    : [];
-                const target =
-                    key === "ArrowDown" ? items[0] : items[items.length - 1];
-                target?.focus();
-                return;
-            }
-
-            if (NAVIGATION_KEYS.includes(key)) {
-                // Let these bubble up so the Select's menu can handle
-                // navigation between options instead of them being trapped
-                // by the search field.
-                return;
-            }
-        }
-        e.stopPropagation();
-    };
-
     return (
         <Select<T>
             {...props}
-            MenuProps={{
-                autoFocus: false,
-                ...props.MenuProps,
-                PaperProps: {
-                    ...props.MenuProps?.PaperProps,
-                    sx: {
-                        maxHeight: 400,
-                        // The list scrolls instead of the paper, so the
-                        // scrollbar stays inside the rounded corners.
-                        display: "flex",
-                        flexDirection: "column",
-                        overflow: "hidden",
-                        ...props.MenuProps?.PaperProps?.sx,
-                    },
-                },
-                MenuListProps: {
-                    ...props.MenuProps?.MenuListProps,
-                    sx: {
-                        flex: 1,
-                        minHeight: 0,
-                        overflowY: "auto",
-                        // The sticky search box pins below the list's top
-                        // padding, which would let rows show above it.
-                        pt: 0,
-                        ...props.MenuProps?.MenuListProps?.sx,
-                    },
-                },
-                TransitionProps: {
-                    ...props.MenuProps?.TransitionProps,
-                    onEntered: (...args) => {
-                        // The TextField's own `autoFocus` fires on mount, but
-                        // MUI's Menu focus-traps back to the list right after
-                        // — this re-focuses the search box once the menu has
-                        // actually finished opening, after that trap runs.
-                        searchInputRef.current?.focus();
-                        props.MenuProps?.TransitionProps?.onEntered?.(...args);
-                    },
-                },
-            }}
+            MenuProps={searchableMenuProps(props.MenuProps)}
         >
-            <ListSubheader
-                component="div"
-                onClick={handleSearchEvent}
-                onKeyDown={handleSearchEvent}
-                onKeyUp={handleSearchEvent}
-                sx={{
-                    p: 1.5,
-                    position: "sticky",
-                    top: 0,
-                    bgcolor: "background.paper",
-                    zIndex: 2,
-                    borderBottom: "1px solid",
-                    borderColor: "divider",
-                    lineHeight: "normal",
-                }}
-            >
-                <TextField
-                    autoFocus
-                    fullWidth
-                    inputRef={searchInputRef}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={
-                        excludeTeachers ? "חיפוש מדריך..." : "חיפוש..."
-                    }
-                    size="small"
-                    value={searchQuery}
-                />
-            </ListSubheader>
+            <SelectSearchHeader
+                onChange={setSearchQuery}
+                placeholder={excludeTeachers ? "חיפוש מדריך..." : "חיפוש..."}
+                value={searchQuery}
+            />
 
             {children}
 
