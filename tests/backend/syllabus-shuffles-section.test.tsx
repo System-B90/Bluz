@@ -28,6 +28,9 @@ vi.mock("@/components/gantt/state/hooks/UseSyllabus", () => ({
 vi.mock("@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions", () => ({
     useSyllabusActions: () => ({ updateSyllabus }),
 }));
+vi.mock("@/components/base/IterationProvider", () => ({
+    useActiveIterationHiveUrl: () => "https://hive.test",
+}));
 vi.mock("@/components/gantt/state/context", () => ({
     useCurriculumProviderActions: () => ({ dispatch: vi.fn() }),
     useCurriculumState: () => ({ syllabuses: {}, modules: {}, events: {} }),

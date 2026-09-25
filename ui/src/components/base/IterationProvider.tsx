@@ -294,3 +294,16 @@ export const useIterationScope = () => {
     }
     return context;
 };
+
+/**
+ * The Hive instance backing the currently viewed iteration — each iteration
+ * runs against its own Hive, so a hard-coded/env-default base URL would link
+ * a past iteration's data into the wrong instance.
+ */
+export const useActiveIterationHiveUrl = (): string | undefined => {
+    const { iterationId, currentIterationId, iterations } = useIterationScope();
+    return useMemo(() => {
+        const resolvedId = iterationId ?? currentIterationId;
+        return iterations.find((it) => it.id === resolvedId)?.hiveUrl;
+    }, [iterationId, currentIterationId, iterations]);
+};

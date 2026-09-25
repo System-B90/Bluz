@@ -23,7 +23,7 @@ import { CourseId } from "@/api-shared/types/course";
 import { Class, Queue } from "@/api-shared/types/hive";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { useHiveLessons } from "@/components/base/HiveLessonsProvider";
-import { useIterationScope } from "@/components/base/IterationProvider";
+import { useActiveIterationHiveUrl } from "@/components/base/IterationProvider";
 import { Event, eventHasSubject } from "@/components/schedule/types/event";
 
 type HiveQueueMappingProps = {
@@ -40,11 +40,7 @@ type HiveQueueMappingProps = {
 export function HiveQueueMapping({ event, onUpdate }: HiveQueueMappingProps) {
     const labelIdPrefix = useId();
     const { getCourse } = useCourses();
-    const { iterationId, currentIterationId, iterations } = useIterationScope();
-    const hiveUrl = useMemo(() => {
-        const resolvedId = iterationId ?? currentIterationId;
-        return iterations.find((it) => it.id === resolvedId)?.hiveUrl;
-    }, [iterationId, currentIterationId, iterations]);
+    const hiveUrl = useActiveIterationHiveUrl();
     const { getLesson } = useHiveLessons();
     // Keyed by module so a stale module's queues can never be offered while a
     // new module's are still loading — the picker either shows this module's

@@ -9,20 +9,7 @@ import { SubjectLike } from "@/api-shared/types/subject";
 import { useHiveLessons } from "@/components/base/HiveLessonsProvider";
 import { useHiveModules } from "@/components/base/HiveModulesProvider";
 import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
-import { useIterationScope } from "@/components/base/IterationProvider";
-
-/**
- * The Hive instance backing the currently viewed iteration — each iteration
- * runs against its own Hive, so a hard-coded/env-default base URL would link
- * a past iteration's events into the wrong instance.
- */
-function useActiveIterationHiveUrl(): string | undefined {
-    const { iterationId, currentIterationId, iterations } = useIterationScope();
-    return useMemo(() => {
-        const resolvedId = iterationId ?? currentIterationId;
-        return iterations.find((it) => it.id === resolvedId)?.hiveUrl;
-    }, [iterationId, currentIterationId, iterations]);
-}
+import { useActiveIterationHiveUrl } from "@/components/base/IterationProvider";
 
 export function SubjectComponent({
     subjectId,

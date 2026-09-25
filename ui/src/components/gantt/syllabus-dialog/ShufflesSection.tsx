@@ -24,10 +24,12 @@ import {
     SHUFFLE_DESCRIPTION_MAX_LENGTH,
     ShuffleDescriptions,
 } from "@/api-shared/gantt/shuffle-names";
+import { hiveClassUrl } from "@/api-shared/hive-links";
 import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
 import { ShuffleUsages } from "@/api-shared/types/gantt/shuffles";
 import { Class } from "@/api-shared/types/hive";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
+import { useActiveIterationHiveUrl } from "@/components/base/IterationProvider";
 import {
     useCurriculumProviderActions,
     useCurriculumState,
@@ -127,13 +129,20 @@ function useShuffleTagCounts(syllabusId: GanttSyllabusId | null) {
 
 /** Whether a shuffle has a same-named Hive student group to sync against. */
 function HiveLinkChip({ group }: { group: Class | undefined }) {
+    const hiveUrl = useActiveIterationHiveUrl();
     if (group) {
+        const href = hiveClassUrl(Number(group.id), hiveUrl);
         return (
             <Tooltip title={group.display_name}>
                 <Chip
+                    clickable={Boolean(href)}
                     color="success"
+                    component={href ? "a" : "div"}
+                    href={href ?? undefined}
                     label="Hive"
+                    rel="noopener noreferrer"
                     size="small"
+                    target="_blank"
                     variant="outlined"
                 />
             </Tooltip>
