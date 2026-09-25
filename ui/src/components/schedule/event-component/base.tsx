@@ -36,11 +36,6 @@ import { UnifiedEvent } from "@/components/schedule/event-component/UnifiedEvent
 import { useElementSize } from "@/components/schedule/event-component/utils";
 import { Event } from "@/components/schedule/types/event";
 
-export type ContainerSize = {
-    width: number;
-    height: number;
-};
-
 /** Below this height a continuation piece stays bare colour — no room for text. */
 const CONTINUATION_LABEL_MIN_HEIGHT = 34;
 

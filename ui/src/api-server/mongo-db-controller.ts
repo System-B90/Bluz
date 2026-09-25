@@ -1,6 +1,6 @@
 import { Collection, Db, MongoClient } from "mongodb";
 
-import { DbEventDocument } from "@/api-server/db-event";
+import type { DbEventDocument } from "@/api-server/db-event";
 import { BaseDbDocument } from "@/api-server/gantt/db-base";
 import { ClientApiError } from "@/api-shared/errors";
 import { CalendarDraft, CalendarSnapshot } from "@/api-shared/types";
