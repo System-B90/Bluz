@@ -86,7 +86,8 @@ fi
 
 echo -e "\n${BLUE}>> Bringing Bluz up with the co-located Hive overlay...${NC}"
 export HIVE_NETWORK_NAME
-docker compose -f docker-compose.yml -f docker-compose.hive-local.yml up -d
+DEPLOY_DIR="$(cd "$(dirname "$0")/../deploy" && pwd)"
+docker compose -f "$DEPLOY_DIR/docker-compose.yml" -f "$DEPLOY_DIR/docker-compose.hive-local.yml" up -d
 
 echo -e "\n${GREEN}=========================================${NC}"
 echo -e "${GREEN} Bluz is linked to the local Hive stack. ${NC}"

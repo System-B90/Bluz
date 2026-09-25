@@ -96,7 +96,8 @@ if ($existingAliases -contains $hiveHostname) {
 
 Write-Host "`n>> Bringing Bluz up with the co-located Hive overlay..." -ForegroundColor Blue
 $env:HIVE_NETWORK_NAME = $hiveNetwork
-docker compose -f docker-compose.yml -f docker-compose.hive-local.yml up -d
+$deployDir = Join-Path $PSScriptRoot "..\deploy"
+docker compose -f (Join-Path $deployDir "docker-compose.yml") -f (Join-Path $deployDir "docker-compose.hive-local.yml") up -d
 if ($LASTEXITCODE -ne 0) { Stop-WithError "docker compose up failed." }
 
 Write-Host "`n=========================================" -ForegroundColor Green
