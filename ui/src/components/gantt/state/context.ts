@@ -36,6 +36,10 @@ export type CloseEventDialog = () => void;
  * (e.g. from the schedule event dialog's "cut from" link, #576) and the
  * event dialog's own refresh-persistence share this single param. */
 export const GANTT_EVENT_DEEP_LINK_PARAM = "ge";
+/** Query param persisting the open module dialog's module id across refresh. */
+export const GANTT_MODULE_DIALOG_PARAM = "gm";
+/** Query param persisting the open syllabus dialog's syllabus id across refresh. */
+export const GANTT_SYLLABUS_DIALOG_PARAM = "gs";
 
 /**
  * Reveals a module/event row in the רצף זמן timeline: expands its ancestors,

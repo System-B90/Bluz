@@ -33,6 +33,8 @@ import
     CurriculumActionsContext,
     CurriculumStateContext,
     GANTT_EVENT_DEEP_LINK_PARAM,
+    GANTT_MODULE_DIALOG_PARAM,
+    GANTT_SYLLABUS_DIALOG_PARAM,
     OpenEventDialog,
     OpenModuleDialog,
     OpenSyllabusDialog,
@@ -114,59 +116,87 @@ function ModuleDialogManager({
 
     const closeSyllabusDialog: CloseSyllabusDialog = useCallback(() => setSyllabusDialogOpen(false), []);
 
-    // Restore both dialogs from the URL on load/refresh (or a deep link
-    // landing on an already-mounted page, #576): opens the module dialog
-    // first and the event dialog on top, same as clicking the event from
-    // inside an open module.
+    // Restore open dialogs from the URL on load/refresh (or a deep link
+    // landing on an already-mounted page, #576), in nesting order: syllabus,
+    // then module, then event on top. A bare event link also opens its module
+    // underneath, same as clicking the event from inside an open module.
     useEffect(() =>
     {
+        const urlSyllabusId = searchParams.get(
+            GANTT_SYLLABUS_DIALOG_PARAM,
+        ) as GanttSyllabusId | null;
+        const urlModuleId = searchParams.get(
+            GANTT_MODULE_DIALOG_PARAM,
+        ) as GanttModuleId | null;
         const urlEventId = searchParams.get(
             GANTT_EVENT_DEEP_LINK_PARAM,
         ) as GanttEventId | null;
-        if (!urlEventId) return;
 
-        const event = state.events[ urlEventId ];
-        if (!event) return;
-
-        const ganttModule = state.modules[ event.moduleId ];
-        if (!ganttModule) return;
+        const syllabus = urlSyllabusId ? state.syllabuses[ urlSyllabusId ] : undefined;
+        const event = urlEventId ? state.events[ urlEventId ] : undefined;
+        const moduleId = event?.moduleId ?? urlModuleId;
+        const ganttModule = moduleId ? state.modules[ moduleId ] : undefined;
+        if (!syllabus && !ganttModule) return;
 
         queueMicrotask(() =>
         {
+            if (syllabus && urlSyllabusId)
+            {
+                setSyllabusDialogSyllabusId(urlSyllabusId);
+                setSyllabusDialogOpen(true);
+            }
+            if (!ganttModule || !moduleId) return;
+
             setCurrentSyllabusId(ganttModule.syllabusId);
-            setCurrentModuleId(event.moduleId);
-            setCurrentEventId(urlEventId);
+            setCurrentModuleId(moduleId);
+            setCurrentEventId(event ? urlEventId : null);
             setModuleDialogOpen(true);
 
+            if (!event || !urlEventId) return;
             setEventDialogSyllabusId(ganttModule.syllabusId);
-            setEventDialogModuleId(event.moduleId);
+            setEventDialogModuleId(moduleId);
             setEventDialogEventId(urlEventId);
             setEventDialogOpen(true);
         });
-        // Only run once on mount: the dialog's own open/close handlers own the URL after that.
+        // Only run once on mount: the dialogs' own open/close handlers own the URL after that.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Keep the URL in sync with the event dialog's open state.
+    // Keep the URL in sync with every dialog's open state.
     useEffect(() =>
     {
         if (typeof window === "undefined") return;
 
         const nextParams = new URLSearchParams(window.location.search);
-        const currentUrlEventId = nextParams.get(GANTT_EVENT_DEEP_LINK_PARAM);
-        const nextEventId = eventDialogOpen ? eventDialogEventId : null;
-
-        if (currentUrlEventId === nextEventId) return;
-
-        if (nextEventId) nextParams.set(GANTT_EVENT_DEEP_LINK_PARAM, nextEventId);
-        else nextParams.delete(GANTT_EVENT_DEEP_LINK_PARAM);
+        const desired: Array<[string, null | string]> = [
+            [ GANTT_SYLLABUS_DIALOG_PARAM, syllabusDialogOpen ? syllabusDialogSyllabusId : null ],
+            [ GANTT_MODULE_DIALOG_PARAM, moduleDialogOpen ? currentModuleId : null ],
+            [ GANTT_EVENT_DEEP_LINK_PARAM, eventDialogOpen ? eventDialogEventId : null ],
+        ];
+        let changed = false;
+        for (const [ param, value ] of desired)
+        {
+            if (nextParams.get(param) === value) continue;
+            changed = true;
+            if (value) nextParams.set(param, value);
+            else nextParams.delete(param);
+        }
+        if (!changed) return;
 
         const hash = window.location.hash;
         const nextSearch = nextParams.toString();
         const nextUrl = `${pathname}${nextSearch ? `?${nextSearch}` : ""}${hash}`;
 
         window.history.replaceState(window.history.state, "", nextUrl);
-    }, [ eventDialogOpen, eventDialogEventId, pathname ]);
+    }, [
+        syllabusDialogOpen,
+        syllabusDialogSyllabusId,
+        moduleDialogOpen,
+        currentModuleId,
+        eventDialogOpen,
+        eventDialogEventId,
+        pathname,
+    ]);
 
     return (
         <CurriculumUIProviderInternal
@@ -178,6 +208,14 @@ function ModuleDialogManager({
             openSyllabusDialog={ openSyllabusDialog }
         >
             { children }
+            {/* Render order is stacking order on restore: syllabus, then
+                module, then event on top. */}
+            <SyllabusDialog
+                curriculumId={ curriculumId }
+                open={ syllabusDialogOpen }
+                setOpen={ setSyllabusDialogOpen }
+                syllabusId={ syllabusDialogSyllabusId }
+            />
             {/* No module-scoped key: keeping a single persistent instance lets
                 the user navigate between sibling modules without the dialog
                 unmounting/remounting (which caused a close→reopen flicker). */}
@@ -197,12 +235,6 @@ function ModuleDialogManager({
                 open={ eventDialogOpen }
                 setOpen={ setEventDialogOpen }
                 syllabusId={ eventDialogSyllabusId }
-            />
-            <SyllabusDialog
-                curriculumId={ curriculumId }
-                open={ syllabusDialogOpen }
-                setOpen={ setSyllabusDialogOpen }
-                syllabusId={ syllabusDialogSyllabusId }
             />
         </CurriculumUIProviderInternal>
     );
