@@ -331,7 +331,8 @@ def _run_callback_server(url: str, *, insecure: bool = False) -> str | None:
                         token = _redeem_handoff_code(
                             url, handoff_code, insecure=insecure
                         )
-                    except BluzApiError:
+                    except BluzApiError as exc:
+                        warn(f"Could not redeem handoff code: {exc}")
                         self._respond(
                             400,
                             json_body=b'{"status":"error","error":"redeem_failed"}',
@@ -466,10 +467,19 @@ def login(
             default=existing.url or "https://",
         ).execute()
 
+    # Settled before the browser flow: redeeming the handoff code is itself an
+    # HTTPS call, and asking only afterwards verified a self-signed cert anyway
+    # and failed every automatic login against such a server.
+    if insecure is None:
+        insecure = inquirer.confirm(
+            message="Skip TLS verification (self-signed cert)?",
+            default=existing.insecure,
+        ).execute()
+
     if not token:
         # Try automatic login first
         try:
-            token = _run_callback_server(url, insecure=bool(insecure))
+            token = _run_callback_server(url, insecure=insecure)
             if token:
                 success("Successfully authenticated automatically!")
         # Deliberately broad: whatever stops the browser flow (a busy port, no
@@ -486,9 +496,7 @@ def login(
             ).execute()
             if handoff_code:
                 try:
-                    token = _redeem_handoff_code(
-                        url, handoff_code, insecure=bool(insecure)
-                    )
+                    token = _redeem_handoff_code(url, handoff_code, insecure=insecure)
                 except BluzApiError as exc:
                     warn(f"Could not redeem handoff code: {exc}")
             if not token:
@@ -496,12 +504,6 @@ def login(
                 # come from BLUZ_TOKEN (env / cwd .env) and must not be copied
                 # into the user config file.
                 token = _load_file().get("token")
-
-    if insecure is None:
-        insecure = inquirer.confirm(
-            message="Skip TLS verification (self-signed cert)?",
-            default=existing.insecure,
-        ).execute()
 
     config = Config(url=url.rstrip("/"), token=token, insecure=insecure)
     if not config.token:
