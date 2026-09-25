@@ -53,6 +53,7 @@ const useSessionUnit = () =>
  * shared by every spinner and kept in sessionStorage. `step` / `largeStep`
  * default per unit and, when passed, apply in the shown unit.
  * `unitToggle={false}` hides the toggle and pins the spinner to minutes.
+ * `min` defaults to 0: durations are never negative.
  */
 export function NumberSpinner({
     id: idProp,
@@ -82,6 +83,7 @@ export function NumberSpinner({
     const small = size === "small";
     return (
         <BaseNumberField.Root
+            min={0}
             {...other}
             largeStep={largeStep ?? UNIT_STEPS[unit].largeStep}
             onValueChange={(v) =>
