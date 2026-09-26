@@ -136,8 +136,9 @@ bluz gantt curriculums recurrence-exceptions <id>
 
 Calendar reads and writes target the current iteration unless you pass
 `--iteration/--it` (the server's `it` query param). Writes to a past iteration
-are rejected server-side. Supported by `bluz events`, `bluz calendar drafts`,
-`bluz calendar snapshots` and `bluz calendar export-ics`.
+are rejected server-side. Supported by `bluz events`, `bluz courses`,
+`bluz calendar drafts`, `bluz calendar snapshots` and `bluz calendar export-ics`.
+Rooms and outsiders are global (not per-iteration), so they take no flag.
 
 ### Google Calendar
 

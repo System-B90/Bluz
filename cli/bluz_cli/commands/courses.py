@@ -13,6 +13,7 @@ import uuid
 import typer
 
 from bluz_cli.commands._common import (
+    ITERATION_OPTION,
     LIMIT_OPTION,
     OFFSET_OPTION,
     find_by_id,
@@ -28,21 +29,34 @@ app = typer.Typer(help="Courses.", no_args_is_help=True)
 _BASE = "/api/course"
 
 
+def _params(iteration: str | None) -> dict[str, str | None]:
+    return {"it": iteration}
+
+
 @app.command("list")
 def list_courses(
+    iteration: str = ITERATION_OPTION,
     limit: int = LIMIT_OPTION,
     offset: int = OFFSET_OPTION,
 ) -> None:
     """List all courses."""
     with state.client() as client:
-        show(client.get(_BASE), title="Courses", limit=limit, offset=offset)
+        show(
+            client.get(_BASE, params=_params(iteration)),
+            title="Courses",
+            limit=limit,
+            offset=offset,
+        )
 
 
 @app.command()
-def get(course_id: str = typer.Argument(..., help="Course id.")) -> None:
+def get(
+    course_id: str = typer.Argument(..., help="Course id."),
+    iteration: str = ITERATION_OPTION,
+) -> None:
     """Fetch a single course by id (filtered client-side — no per-id route)."""
     with state.client() as client:
-        items = client.get(_BASE)
+        items = client.get(_BASE, params=_params(iteration))
     show(find_by_id(items, course_id))
 
 
@@ -57,6 +71,7 @@ def create(
     course_id: str = typer.Option(
         None, "--id", help="Course id (generated if omitted)."
     ),
+    iteration: str = ITERATION_OPTION,
 ) -> None:
     """Create a course."""
     payload = merge_fields(
@@ -67,7 +82,7 @@ def create(
         ("instructorIds", parse_json(instructor_ids, what="--instructor-ids")),
     )
     with state.client() as client:
-        result = client.put(_BASE, json=payload)
+        result = client.put(_BASE, json=payload, params=_params(iteration))
     success(f"Created course {payload['id']}")
     show(result)
 
@@ -81,6 +96,7 @@ def update(
     instructor_ids: str = typer.Option(
         None, "--instructor-ids", help="JSON array of instructor ids."
     ),
+    iteration: str = ITERATION_OPTION,
 ) -> None:
     """Update a course."""
     payload = merge_fields(
@@ -91,7 +107,7 @@ def update(
         ("instructorIds", parse_json(instructor_ids, what="--instructor-ids")),
     )
     with state.client() as client:
-        result = client.post(_BASE, json=payload)
+        result = client.post(_BASE, json=payload, params=_params(iteration))
     success(f"Updated course {course_id}")
     show(result)
 
@@ -99,11 +115,12 @@ def update(
 @app.command()
 def delete(
     course_id: str = typer.Argument(..., help="Course id to delete."),
+    iteration: str = ITERATION_OPTION,
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation."),
 ) -> None:
     """Delete a course."""
     if not yes:
         typer.confirm(f"Delete course {course_id}?", abort=True)
     with state.client() as client:
-        client.delete(_BASE, json=course_id)
+        client.delete(_BASE, json=course_id, params=_params(iteration))
     success(f"Deleted course {course_id}")

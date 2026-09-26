@@ -79,6 +79,12 @@ OFFSET_OPTION = typer.Option(
     None, "--offset", help="Skip this many rows before showing."
 )
 
+# Reusable --iteration/--it option for iteration-scoped commands. Sent as the
+# `it` query param (ITERATION_QUERY_PARAM on the server); None = current.
+ITERATION_OPTION = typer.Option(
+    None, "--iteration", "--it", help="Iteration id to scope to (default: current)."
+)
+
 
 def merge_fields(*pairs: tuple[str, Any]) -> dict[str, Any]:
     """Build a payload dict from (key, value) pairs, dropping None values."""

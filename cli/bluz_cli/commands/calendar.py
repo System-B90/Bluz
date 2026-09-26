@@ -13,6 +13,7 @@ from pathlib import Path
 import typer
 
 from bluz_cli.commands._common import (
+    ITERATION_OPTION,
     LIMIT_OPTION,
     OFFSET_OPTION,
     merge_fields,
@@ -34,10 +35,6 @@ snapshots_app = typer.Typer(help="Calendar snapshots.", no_args_is_help=True)
 
 _DRAFTS = "/api/calendar/drafts"
 _SNAPSHOTS = "/api/calendar/snapshots"
-
-ITERATION_OPTION = typer.Option(
-    None, "--iteration", "--it", help="Iteration id to scope to (default: current)."
-)
 
 
 def _events_from(data: str | None, file: Path | None) -> list | None:
