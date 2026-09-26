@@ -255,6 +255,7 @@ export function SettingsDialog({
                             } }
                         >
                             v{ process.env.NEXT_PUBLIC_APP_VERSION }
+                            { process.env.NODE_ENV === "development" ? " (DEV)" : "" }
                         </Typography>
                     ) : null }
                 </Box>
