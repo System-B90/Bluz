@@ -5,74 +5,31 @@
  * broadcast and Hive lesson sync all happen exactly as they do for a UI edit.
  */
 
-import { AiTool, AiToolContext } from "@/api-server/ai/tools/types";
+import {
+    aiOrigin,
+    changedFieldsImpact,
+    escapeRegex,
+    formatRange,
+    ISO_DATE,
+    NO_PARAMS,
+    ROOM_SOURCE_PARAM,
+    PAGE_PARAMS,
+    PageArgs,
+    pageSummary,
+    paginate,
+    parseDate,
+} from "@/api-server/ai/tools/common";
+import { AiTool } from "@/api-server/ai/tools/types";
 import { DbEvent } from "@/api-server/db-event";
-import { EventWriteOrigin } from "@/api-server/db-event-history";
+import { DbEventHistory } from "@/api-server/db-event-history";
 import { DbIterations } from "@/api-server/db-iterations";
 import { DbRooms } from "@/api-server/db-rooms";
+import { resolveIterationDb } from "@/api-server/mongo-db-controller";
 import { ClientApiError } from "@/api-shared/errors";
 import { AiToolDanger, AiToolKind } from "@/api-shared/types/ai";
 import { DbEventDocument, EventType } from "@/api-shared/types/event";
-import { EventChangeInitiator } from "@/api-shared/types/event-history";
-import { ResolvableRoom, RoomSource } from "@/api-shared/types/room";
-
-/**
- * Marks every assistant write in the event history, so a curious operator can
- * always tell an AI edit from a human one after the fact.
- */
-function aiOrigin(context: AiToolContext): EventWriteOrigin {
-    return {
-        initiator: EventChangeInitiator.AiAssistant,
-        actor: context.actor,
-    };
-}
-
-/**
- * Escapes text before it reaches Mongo's `$regex`. The model relays whatever
- * the user typed, so an unescaped value both widens the search silently (`.`,
- * `|`) and exposes the server to catastrophic backtracking (`(a+)+b`).
- */
-function escapeRegex(value: string): string {
-    return value.replace(/[$()*+.?[\\\]^{|}]/g, "\\$&");
-}
-
-/** Rejects a date the model invented in the wrong format. */
-function parseDate(value: string, field: string): Date {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) {
-        throw new ClientApiError(`ערך תאריך לא תקין בשדה ${field}: ${value}`);
-    }
-    return date;
-}
-
-/**
- * Renders a range the way the approval card should show it.
- *
- * The card is the last thing a human reads before agreeing to a change, and
- * `2026-03-01T09:00:00Z` is not something anyone verifies correctly at a
- * glance. An unparsable value falls through to the raw string rather than
- * throwing: this runs inside `describe`, which must never break the gate it
- * is describing.
- */
-function formatRange(start: string, end: string): string {
-    const from = new Date(start);
-    const to = new Date(end);
-    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
-        return `${start} — ${end}`;
-    }
-
-    const day = from.toLocaleDateString("he-IL", {
-        weekday: "long",
-        day: "numeric",
-        month: "numeric",
-    });
-    const time = (date: Date) =>
-        date.toLocaleTimeString("he-IL", {
-            hour: "2-digit",
-            minute: "2-digit",
-        });
-    return `${day}, ${time(from)}–${time(to)}`;
-}
+import { ResolvableRoom } from "@/api-shared/types/room";
+import { MAX_EVENT_RANGE_DAYS, MILLISECONDS_IN_A_DAY } from "@/settings";
 
 /**
  * Trimmed view of an event — the full document is far too large to re-send,
@@ -95,30 +52,45 @@ function summarizeEvent(event: DbEventDocument) {
         courses: event.courses,
         instructors: event.instructors,
         locked: event.locked,
+        // Without these the model cannot tell a student-invisible event from
+        // a visible one, nor find the placeholders it created earlier.
+        hidden: event.hidden,
+        fake: event.fake ?? false,
+        color: event.color ?? null,
         notes: event.notes,
     };
 }
 
-const ISO_DATE = {
-    type: "string",
-    description: "תאריך ושעה בפורמט ISO 8601, למשל 2026-03-01T09:00:00Z",
-};
+/**
+ * Hive linkage a fake event must never carry: a placeholder wired to a real
+ * subject or lesson would open a real Hive queue for students.
+ */
+const HIVE_FIELDS = ["subject", "hiveModule", "hiveLesson", "hiveQueues"];
 
 const ROOMS_PARAM = {
     type: "array",
     description:
-        "חדרי האירוע. כל חדר הוא אובייקט עם מזהה ומקור — hive לחדרי הייב, " +
-        "custom לחדרים שהוגדרו בבלוז. קח את המזהים מ-list_rooms.",
+        "חדרי האירוע. כל חדר הוא אובייקט עם מזהה ומקור. " +
+        "קח את המזהים מ-list_rooms.",
     items: {
         type: "object",
         properties: {
             id: { type: ["string", "number"] },
-            source: { type: "string", enum: Object.values(RoomSource) },
+            source: ROOM_SOURCE_PARAM,
         },
         required: ["id", "source"],
         additionalProperties: false,
     },
 };
+
+const COURSES_PARAM = {
+    type: "array",
+    items: { type: "string" },
+    description:
+        "מזהי הקורסים (מחלקות) שרואים את האירוע. קח אותם מ-list_courses או מאירוע קיים.",
+};
+
+const EVENT_ID_PARAM = { type: "string", description: "מזהה האירוע" };
 
 export const listIterationsTool: AiTool<Record<string, never>> = {
     name: "list_iterations",
@@ -128,7 +100,7 @@ export const listIterationsTool: AiTool<Record<string, never>> = {
         "מחזיר את כל המחזורים (iterations) הקיימים, כולל המחזור הנוכחי. " +
         "השתמש בזה כדי לזהות על איזה מחזור המשתמש מדבר.",
     kind: AiToolKind.Read,
-    parameters: { type: "object", properties: {}, additionalProperties: false },
+    parameters: NO_PARAMS,
 
     async execute() {
         const iterations = await DbIterations.list();
@@ -144,25 +116,33 @@ export const listIterationsTool: AiTool<Record<string, never>> = {
     },
 };
 
-export const listRoomsTool: AiTool<Record<string, never>> = {
+export const listRoomsTool: AiTool<PageArgs> = {
     name: "list_rooms",
     title: "רשימת חדרים",
     danger: AiToolDanger.Safe,
     description:
-        "מחזיר את כל החדרים המוגדרים במחזור הנוכחי, עם המזהה והשם שלהם.",
+        "מחזיר את החדרים שהוגדרו בבלוז במחזור הנוכחי, עם המזהה והשם שלהם.",
     kind: AiToolKind.Read,
-    parameters: { type: "object", properties: {}, additionalProperties: false },
+    parameters: {
+        type: "object",
+        properties: { ...PAGE_PARAMS },
+        additionalProperties: false,
+    },
 
-    async execute(_args, context) {
+    async execute(args, context) {
         const rooms = await DbRooms.get(undefined, await context.readController());
-        return {
-            data: rooms,
-            summary: `נמצאו ${rooms.length} חדרים`,
-        };
+        const page = paginate(rooms, args);
+        return { data: page, summary: pageSummary(page, "חדרים") };
     },
 };
 
-type ListEventsArgs = { from: string; to: string; nameContains?: string };
+type ListEventsArgs = {
+    from: string;
+    to: string;
+    nameContains?: string;
+    hidden?: boolean;
+    fake?: boolean;
+} & PageArgs;
 
 export const listEventsTool: AiTool<ListEventsArgs> = {
     name: "list_events",
@@ -174,7 +154,8 @@ export const listEventsTool: AiTool<ListEventsArgs> = {
     ],
     description:
         'מחזיר את אירועי הלו"ז שחופפים לטווח תאריכים. הטווח חייב להיות ' +
-        "סביר (עד כמה שבועות). אפשר לסנן לפי מחרוזת בשם האירוע.",
+        "סביר (עד כמה שבועות). אפשר לסנן לפי מחרוזת בשם האירוע, לפי " +
+        "אירועים מוסתרים (hidden) ולפי אירועים פיקטיביים (fake).",
     kind: AiToolKind.Read,
     parameters: {
         type: "object",
@@ -185,29 +166,155 @@ export const listEventsTool: AiTool<ListEventsArgs> = {
                 type: "string",
                 description: "סינון אופציונלי לפי טקסט בשם האירוע",
             },
+            hidden: {
+                type: "boolean",
+                description:
+                    "true — רק אירועים מוסתרים מהחניכים; false — רק גלויים. השמט לכולם.",
+            },
+            fake: {
+                type: "boolean",
+                description:
+                    "true — רק אירועים פיקטיביים; false — רק אמיתיים. השמט לכולם.",
+            },
+            ...PAGE_PARAMS,
         },
         required: ["from", "to"],
         additionalProperties: false,
     },
 
     async execute(args, context) {
+        const filter: Record<string, unknown> = {};
+        if (args.nameContains) {
+            filter.name = {
+                $regex: escapeRegex(args.nameContains),
+                $options: "i",
+            };
+        }
+        if (args.hidden !== undefined) filter.hidden = args.hidden;
+        // Legacy events have no `fake` key at all, so "not fake" is `$ne`.
+        if (args.fake !== undefined) {
+            filter.fake = args.fake ? true : { $ne: true };
+        }
+
         const events = await DbEvent.getInRange(
             parseDate(args.from, "from"),
             parseDate(args.to, "to"),
             undefined,
-            args.nameContains
-                ? {
-                    name: {
-                        $regex: escapeRegex(args.nameContains),
-                        $options: "i",
-                    },
-                }
-                : undefined,
+            Object.keys(filter).length ? filter : undefined,
             await context.readController(),
         );
+        const page = paginate(events.map(summarizeEvent), args);
+        return { data: page, summary: pageSummary(page, "אירועים בטווח") };
+    },
+};
+
+export const getEventTool: AiTool<{ id: string }> = {
+    name: "get_event",
+    title: "פרטי אירוע",
+    danger: AiToolDanger.Safe,
+    description:
+        "מחזיר את כל הפרטים של אירוע אחד, כולל שדות שלא מופיעים ב-list_events " +
+        "(מרצים, תגיות, קישורי הייב, מקור הגזירה מהגאנט).",
+    kind: AiToolKind.Read,
+    parameters: {
+        type: "object",
+        properties: { id: EVENT_ID_PARAM },
+        required: ["id"],
+        additionalProperties: false,
+    },
+
+    async execute(args, context) {
+        const event = await DbEvent.get(
+            args.id,
+            { projection: { _id: 0 } },
+            await context.readController(),
+        );
+        if (!event) throw new ClientApiError(`אירוע ${args.id} לא נמצא`);
+        return { data: event, summary: `נטען האירוע "${event.name}"` };
+    },
+};
+
+export const getEventHistoryTool: AiTool<{ id: string } & PageArgs> = {
+    name: "get_event_history",
+    title: "היסטוריית אירוע",
+    danger: AiToolDanger.Safe,
+    description:
+        "מחזיר את היסטוריית השינויים של אירוע, מהחדש לישן: מי שינה, מתי ומה.",
+    kind: AiToolKind.Read,
+    parameters: {
+        type: "object",
+        properties: { id: EVENT_ID_PARAM, ...PAGE_PARAMS },
+        required: ["id"],
+        additionalProperties: false,
+    },
+
+    async execute(args, context) {
+        const entries = await DbEventHistory.forEvent(
+            args.id,
+            await context.readController(),
+        );
+        const page = paginate(
+            entries.map((entry) => ({
+                action: entry.action,
+                initiator: entry.initiator,
+                actorName: entry.actorName,
+                changedAt: new Date(entry.changedAt).toISOString(),
+                changes: entry.changes,
+            })),
+            args,
+        );
+        return { data: page, summary: pageSummary(page, "שינויים") };
+    },
+};
+
+type CompareEventsArgs = {
+    iterationA?: string;
+    iterationB?: string;
+    from: string;
+    to: string;
+};
+
+export const compareEventsTool: AiTool<CompareEventsArgs> = {
+    name: "compare_events",
+    title: "השוואת מחזורים",
+    danger: AiToolDanger.Safe,
+    description:
+        "משווה את אירועי שני מחזורים באותו טווח תאריכים ומחזיר את שתי הרשימות. " +
+        "השמט מחזור כדי להשתמש במחזור הנוכחי.",
+    kind: AiToolKind.Read,
+    parameters: {
+        type: "object",
+        properties: {
+            iterationA: { type: "string", description: "מזהה המחזור הראשון" },
+            iterationB: { type: "string", description: "מזהה המחזור השני" },
+            from: ISO_DATE,
+            to: ISO_DATE,
+        },
+        required: ["from", "to"],
+        additionalProperties: false,
+    },
+
+    async execute(args) {
+        const from = parseDate(args.from, "from");
+        const to = parseDate(args.to, "to");
+        // Same ceiling as /api/event/compare: two full scans per call.
+        const days = (to.getTime() - from.getTime()) / MILLISECONDS_IN_A_DAY;
+        if (days < 0 || days > MAX_EVENT_RANGE_DAYS) {
+            throw new ClientApiError(
+                `טווח התאריכים חייב להיות בין 0 ל-${MAX_EVENT_RANGE_DAYS} ימים`,
+            );
+        }
+        const [controllerA, controllerB] = await Promise.all([
+            resolveIterationDb(args.iterationA),
+            resolveIterationDb(args.iterationB),
+        ]);
+        const [a, b] = await Promise.all([
+            DbEvent.getInRange(from, to, undefined, undefined, controllerA),
+            DbEvent.getInRange(from, to, undefined, undefined, controllerB),
+        ]);
         return {
-            data: events.map(summarizeEvent),
-            summary: `נמצאו ${events.length} אירועים בטווח`,
+            data: { a: a.map(summarizeEvent), b: b.map(summarizeEvent) },
+            summary: `הושוו ${a.length} מול ${b.length} אירועים`,
         };
     },
 };
@@ -218,7 +325,10 @@ type CreateEventArgs = {
     endTime: string;
     type?: EventType;
     rooms?: Array<ResolvableRoom>;
+    courses?: Array<string>;
     notes?: string;
+    fake?: boolean;
+    color?: string;
 };
 
 export const createEventTool: AiTool<CreateEventArgs> = {
@@ -227,7 +337,9 @@ export const createEventTool: AiTool<CreateEventArgs> = {
     danger: AiToolDanger.Caution,
     description:
         'יוצר אירוע חדש בלו"ז של המחזור. השתמש בזה רק אחרי שווידאת מול ' +
-        "list_events שאין התנגשות, ואחרי שהמשתמש אישר את הפרטים.",
+        "list_events שאין התנגשות, ואחרי שהמשתמש אישר את הפרטים. " +
+        "fake=true יוצר מופע פיקטיבי: מוצג לחניכים כאירוע רגיל אך אינו מקושר " +
+        "להייב — רק צבע והערה. למילוי טווח ימים קרא לכלי פעם אחת לכל יום.",
     kind: AiToolKind.Write,
     parameters: {
         type: "object",
@@ -241,14 +353,24 @@ export const createEventTool: AiTool<CreateEventArgs> = {
                 description: "סוג האירוע. ברירת המחדל היא אחר",
             },
             rooms: ROOMS_PARAM,
-            notes: { type: "string" },
+            courses: COURSES_PARAM,
+            notes: { type: "string", description: "הערה חופשית לאירוע" },
+            fake: {
+                type: "boolean",
+                description: "מופע פיקטיבי (placeholder). ברירת מחדל: false",
+            },
+            color: {
+                type: "string",
+                description: "צבע ידני בפורמט hex, למשל #4caf50",
+            },
         },
         required: ["name", "startTime", "endTime"],
         additionalProperties: false,
     },
 
     describe(args) {
-        return `יצירת אירוע "${args.name}" ב-${formatRange(args.startTime, args.endTime)}`;
+        const kind = args.fake ? "אירוע פיקטיבי" : "אירוע";
+        return `יצירת ${kind} "${args.name}" ב-${formatRange(args.startTime, args.endTime)}`;
     },
 
     impact(args) {
@@ -258,11 +380,22 @@ export const createEventTool: AiTool<CreateEventArgs> = {
             ...(args.rooms?.length
                 ? [`ישובץ ל-${args.rooms.length} חדרים.`]
                 : ["ללא שיבוץ חדר."]),
-            "האירוע יסונכרן להייב ויופיע אצל כל מי שרואה את המחזור.",
+            args.fake
+                ? "מופע פיקטיבי: יוצג לחניכים כאירוע רגיל, ללא קישור להייב."
+                : "האירוע יסונכרן להייב ויופיע אצל כל מי שרואה את המחזור.",
         ];
     },
 
     async execute(args, context) {
+        if (args.fake) {
+            const hiveKeys = HIVE_FIELDS.filter((key) => key in args);
+            if (hiveKeys.length) {
+                throw new ClientApiError(
+                    `אירוע פיקטיבי לא יכול לכלול שדות הייב: ${hiveKeys.join(", ")}`,
+                );
+            }
+        }
+
         // Bluz events carry a client-generated UUID; the store rejects a
         // document without one. Every field DbEventDocument requires is set
         // directly here — no `as unknown as` — so a future field added to the
@@ -275,7 +408,7 @@ export const createEventTool: AiTool<CreateEventArgs> = {
             startTime: parseDate(args.startTime, "startTime"),
             endTime: parseDate(args.endTime, "endTime"),
             type: args.type ?? EventType.OTHER,
-            courses: [],
+            courses: args.courses ?? [],
             rooms: args.rooms ?? [],
             instructors: [],
             tags: [],
@@ -285,6 +418,8 @@ export const createEventTool: AiTool<CreateEventArgs> = {
             required: false,
             personalTalk: false,
             splitAcrossBreaks: false,
+            ...(args.fake ? { fake: true } : {}),
+            ...(args.color ? { color: args.color } : {}),
         };
 
         const created = await DbEvent.create(
@@ -306,8 +441,24 @@ type UpdateEventArgs = {
     name?: string;
     startTime?: string;
     endTime?: string;
+    type?: EventType;
     rooms?: Array<ResolvableRoom>;
+    courses?: Array<string>;
     notes?: string;
+    color?: string;
+    hidden?: boolean;
+};
+
+const UPDATE_EVENT_LABELS: Record<string, string> = {
+    name: "שם האירוע ישונה",
+    notes: "ההערות יוחלפו",
+    rooms: "שיבוץ החדרים יוחלף",
+    courses: "הקורסים שרואים את האירוע יוחלפו",
+    startTime: "שעת ההתחלה תשונה",
+    endTime: "שעת הסיום תשונה",
+    type: "סוג האירוע ישונה",
+    color: "צבע האירוע ישונה",
+    hidden: "הנראות לחניכים תשונה",
 };
 
 export const updateEventTool: AiTool<UpdateEventArgs> = {
@@ -321,12 +472,16 @@ export const updateEventTool: AiTool<UpdateEventArgs> = {
     parameters: {
         type: "object",
         properties: {
-            id: { type: "string", description: "מזהה האירוע" },
+            id: EVENT_ID_PARAM,
             name: { type: "string" },
             startTime: ISO_DATE,
             endTime: ISO_DATE,
+            type: { type: "string", enum: Object.values(EventType) },
             rooms: ROOMS_PARAM,
+            courses: COURSES_PARAM,
             notes: { type: "string" },
+            color: { type: "string" },
+            hidden: { type: "boolean", description: "הסתרה מהחניכים" },
         },
         required: ["id"],
         additionalProperties: false,
@@ -337,22 +492,8 @@ export const updateEventTool: AiTool<UpdateEventArgs> = {
     },
 
     impact(args) {
-        // One bullet per field actually being written, named in Hebrew: a
-        // human approving "עדכון אירוע e1" has no way to tell a rename from a
-        // reschedule, and those are not the same decision.
-        const labels: Record<string, string> = {
-            name: "שם האירוע ישונה",
-            notes: "ההערות יוחלפו",
-            rooms: "שיבוץ החדרים יוחלף",
-            startTime: "שעת ההתחלה תשונה",
-            endTime: "שעת הסיום תשונה",
-        };
-        const changes = Object.keys(args)
-            .filter((key) => key !== "id" && key in labels)
-            .map((key) => labels[key]);
-
         return [
-            ...(changes.length ? changes : ["לא צוינו שדות לשינוי."]),
+            ...changedFieldsImpact(args, UPDATE_EVENT_LABELS),
             "השינוי יירשם בהיסטוריית האירוע על שם העוזר וניתן לשחזור ממנה.",
         ];
     },
@@ -371,6 +512,10 @@ export const updateEventTool: AiTool<UpdateEventArgs> = {
             ...(args.name !== undefined ? { name: args.name } : {}),
             ...(args.notes !== undefined ? { notes: args.notes } : {}),
             ...(args.rooms !== undefined ? { rooms: args.rooms } : {}),
+            ...(args.courses !== undefined ? { courses: args.courses } : {}),
+            ...(args.type !== undefined ? { type: args.type } : {}),
+            ...(args.color !== undefined ? { color: args.color } : {}),
+            ...(args.hidden !== undefined ? { hidden: args.hidden } : {}),
             ...(args.startTime !== undefined
                 ? { startTime: parseDate(args.startTime, "startTime") }
                 : {}),
@@ -405,7 +550,7 @@ export const deleteEventTool: AiTool<DeleteEventArgs> = {
     kind: AiToolKind.Write,
     parameters: {
         type: "object",
-        properties: { id: { type: "string", description: "מזהה האירוע" } },
+        properties: { id: EVENT_ID_PARAM },
         required: ["id"],
         additionalProperties: false,
     },
@@ -447,6 +592,9 @@ export const CALENDAR_TOOLS = [
     listIterationsTool,
     listRoomsTool,
     listEventsTool,
+    getEventTool,
+    getEventHistoryTool,
+    compareEventsTool,
     createEventTool,
     updateEventTool,
     deleteEventTool,

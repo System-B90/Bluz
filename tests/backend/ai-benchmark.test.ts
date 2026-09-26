@@ -14,9 +14,22 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // real registry (and through it the Mongo/Drizzle stack) via the agent.
 vi.mock("@/api-server/ai/tools/calendar", () => ({ CALENDAR_TOOLS: [] }));
 vi.mock("@/api-server/ai/tools/gantt", () => ({ GANTT_TOOLS: [] }));
+vi.mock("@/api-server/ai/tools/calendar-entities", () => ({ CALENDAR_ENTITY_TOOLS: [] }));
+vi.mock("@/api-server/ai/tools/gantt-authoring", () => ({ GANTT_AUTHORING_TOOLS: [] }));
+vi.mock("@/api-server/ai/tools/hive", () => ({ HIVE_TOOLS: [] }));
 
-import { AI_BENCHMARK_CASES } from "@/api-server/ai/benchmark/cases";
-import { FIXTURE_TOOLS } from "@/api-server/ai/benchmark/fixture";
+import {
+    AI_BENCHMARK_CASES,
+    AiBenchmarkObservation,
+} from "@/api-server/ai/benchmark/cases";
+import {
+    FIXTURE_DAY,
+    FIXTURE_EVENTS,
+    FIXTURE_FAKE_IDS,
+    FIXTURE_TOOLS,
+    filterFixtureEvents,
+    isoAt,
+} from "@/api-server/ai/benchmark/fixture";
 import { benchmarkContext, runAiBenchmark } from "@/api-server/ai/benchmark/run";
 import {
     AiChatRequest,
@@ -209,5 +222,128 @@ describe("runAiBenchmark", () => {
 
         expect(result.model).toBe("fake-model");
         expect(result.totalTokens).toBe(2 * AI_BENCHMARK_CASES.length);
+    });
+});
+
+describe("fake-event benchmark cases (#719)", () => {
+    const base: AiBenchmarkObservation = {
+        toolCalls: [],
+        proposedWrites: [],
+        executedWrites: [],
+        askedUser: false,
+        answer: "",
+        reads: [],
+        proposals: [],
+    };
+    const grade = (id: string, observation: AiBenchmarkObservation) =>
+        AI_BENCHMARK_CASES.find((spec) => spec.id === id)!.checks.map((check) =>
+            check.run(observation),
+        );
+    const byId = (id: string) =>
+        FIXTURE_EVENTS.find((event) => event.id === id)!;
+    const cover = (id: string, extra: Record<string, unknown> = {}) => ({
+        name: "create_event",
+        args: {
+            name: "הרצאה",
+            type: "הרצאה",
+            startTime: byId(id).startTime,
+            endTime: byId(id).endTime,
+            courses: byId(id).courses,
+            fake: true,
+            ...extra,
+        },
+    });
+    const tuesdayRead = (extra: Record<string, unknown> = {}) => ({
+        name: "list_events",
+        args: {
+            from: isoAt(FIXTURE_DAY.TUESDAY, 0),
+            to: isoAt(FIXTURE_DAY.WEDNESDAY, 0),
+            ...extra,
+        },
+    });
+    const fill = (days: Array<number>) =>
+        days.map((day) => ({
+            name: "create_event",
+            args: {
+                name: "הרצאה",
+                startTime: isoAt(day, 9),
+                endTime: isoAt(day, 12),
+                fake: true,
+            },
+        }));
+
+    it("filters fixture events by day and visibility like production", () => {
+        const ids = filterFixtureEvents({
+            from: isoAt(FIXTURE_DAY.TUESDAY, 0),
+            to: isoAt(FIXTURE_DAY.WEDNESDAY, 0),
+            hidden: true,
+        }).map((event) => event.id);
+        expect(ids).toEqual(["fx-h1", "fx-h2", "fx-h3"]);
+    });
+
+    it("gives the new write tools fixture twins", () => {
+        const names = FIXTURE_TOOLS.map((entry) => entry.name);
+        for (const name of [
+            "create_event",
+            "create_gantt_event",
+            "restore_calendar_snapshot",
+            "delete_course",
+        ]) {
+            expect(names).toContain(name);
+        }
+    });
+
+    it("passes a correct 'match the hidden events on Tuesday' run", () => {
+        expect(
+            grade("fake-match-hidden", {
+                ...base,
+                reads: [tuesdayRead({ hidden: true })],
+                proposals: [cover("fx-h1"), cover("fx-h2")],
+            }),
+        ).not.toContain(false);
+    });
+
+    it("fails a run that covers the blocked slot or invents an instructor", () => {
+        const results = grade("fake-match-hidden", {
+            ...base,
+            reads: [tuesdayRead()],
+            proposals: [
+                cover("fx-h1", { instructors: [1] }),
+                cover("fx-h2"),
+                cover("fx-h3"),
+            ],
+        });
+        expect(results.filter((passed) => !passed).length).toBeGreaterThanOrEqual(3);
+    });
+
+    it("passes a five-day 09:00–12:00 fill of next week, fails one on Friday", () => {
+        expect(
+            grade("fake-fill-range", { ...base, proposals: fill([7, 8, 9, 10, 11]) }),
+        ).not.toContain(false);
+        expect(
+            grade("fake-fill-range", { ...base, proposals: fill([7, 8, 9, 10, 12]) }),
+        ).toContain(false);
+    });
+
+    it("credits asking on an ambiguous range", () => {
+        expect(
+            grade("fake-ambiguous-range", { ...base, askedUser: true }),
+        ).not.toContain(false);
+    });
+
+    it("credits an undo that touches only the fakes", () => {
+        const deletes = (ids: Array<string>) =>
+            ids.map((id) => ({ name: "delete_event", args: { id } }));
+        const reads = [{ name: "list_events", args: { fake: true } }];
+        expect(
+            grade("fake-undo", { ...base, reads, proposals: deletes(FIXTURE_FAKE_IDS) }),
+        ).not.toContain(false);
+        expect(
+            grade("fake-undo", {
+                ...base,
+                reads,
+                proposals: deletes([...FIXTURE_FAKE_IDS, "fx-1"]),
+            }),
+        ).toContain(false);
     });
 });

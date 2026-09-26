@@ -161,8 +161,7 @@ describe("useAiChat", () => {
         await act(async () => result.current.send("תמחק"));
         await waitFor(() =>
             expect(result.current.pendingApproval).toMatchObject({
-                toolCallId: "w1",
-                summary: "מחיקת אירוע e1",
+                calls: [{ toolCallId: "w1", summary: "מחיקת אירוע e1" }],
             }),
         );
         expect(streamAiChat).toHaveBeenCalledTimes(1);
@@ -170,6 +169,54 @@ describe("useAiChat", () => {
         await act(async () => result.current.approve());
         // Approval carries exactly the one id the user saw.
         expect(streamAiChat.mock.calls[1][0].approvedToolCallIds).toEqual(["w1"]);
+    });
+
+    it("groups a turn's proposals into one card approved as a unit", async () => {
+        const proposal = (id: string) => ({
+            type: AiStreamEventType.ToolProposal,
+            toolCallId: id,
+            name: "create_event",
+            arguments: { name: "הרצאה", fake: true },
+            summary: `יצירת ${id}`,
+        });
+        scriptTurns([
+            [
+                proposal("c1"),
+                proposal("c2"),
+                proposal("c3"),
+                doneEvent(
+                    [
+                        {
+                            role: AiRole.Assistant,
+                            content: "",
+                            toolCalls: ["c1", "c2", "c3"].map((id) => ({
+                                id,
+                                name: "create_event",
+                                arguments: "{}",
+                            })),
+                        },
+                    ],
+                    true,
+                ),
+            ],
+            [doneEvent()],
+        ]);
+
+        const { result } = renderChat();
+        await act(async () => result.current.send("תמלא"));
+        await waitFor(() =>
+            expect(result.current.pendingApproval?.calls).toHaveLength(3),
+        );
+        expect(
+            result.current.timeline.filter((item) => item.kind === "approval"),
+        ).toHaveLength(1);
+
+        await act(async () => result.current.approve());
+        expect(streamAiChat.mock.calls[1][0].approvedToolCallIds).toEqual([
+            "c1",
+            "c2",
+            "c3",
+        ]);
     });
 
     it("ignores a second approve click fired before the first POST resolves", async () => {
@@ -511,8 +558,12 @@ describe("useAiChat", () => {
 
         await waitFor(() =>
             expect(result.current.pendingApproval).toMatchObject({
-                danger: AiToolDanger.Destructive,
-                impact: ["האירוע יוסר מהלוח"],
+                calls: [
+                    {
+                        danger: AiToolDanger.Destructive,
+                        impact: ["האירוע יוסר מהלוח"],
+                    },
+                ],
                 state: AiApprovalState.Pending,
             }),
         );

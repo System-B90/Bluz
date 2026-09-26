@@ -56,6 +56,9 @@ const { calendarTools, ganttTools, readExecute, writeExecute } = vi.hoisted(
 // gantt planner. None of that is under test here.
 vi.mock("@/api-server/ai/tools/calendar", () => ({ CALENDAR_TOOLS: calendarTools }));
 vi.mock("@/api-server/ai/tools/gantt", () => ({ GANTT_TOOLS: ganttTools }));
+vi.mock("@/api-server/ai/tools/calendar-entities", () => ({ CALENDAR_ENTITY_TOOLS: [] }));
+vi.mock("@/api-server/ai/tools/gantt-authoring", () => ({ GANTT_AUTHORING_TOOLS: [] }));
+vi.mock("@/api-server/ai/tools/hive", () => ({ HIVE_TOOLS: [] }));
 
 import { runAiAgent } from "@/api-server/ai/agent";
 import {
@@ -298,6 +301,61 @@ describe("runAiAgent", () => {
 
         expect(readExecute).not.toHaveBeenCalled();
         expect(events.at(-1)).toMatchObject({ awaitingApproval: true });
+    });
+
+    it("proposes every unapproved write of a batch at once, and runs none", async () => {
+        const events = await drain(
+            runAiAgent({
+                provider: fakeProvider([
+                    {
+                        toolCalls: [
+                            call("w1", "write_thing"),
+                            call("r1", "read_thing"),
+                            call("w2", "write_thing"),
+                            call("w3", "write_thing"),
+                        ],
+                    },
+                ]),
+                messages: userTurn("תמלא שלושה ימים"),
+                context,
+                approvedToolCallIds: new Set(),
+            }),
+        );
+
+        const proposals = events.filter(
+            (event) => event.type === AiStreamEventType.ToolProposal,
+        );
+        expect(proposals.map((event) => "toolCallId" in event && event.toolCallId)).toEqual([
+            "w1",
+            "w2",
+            "w3",
+        ]);
+        expect(writeExecute).not.toHaveBeenCalled();
+        expect(readExecute).not.toHaveBeenCalled();
+        expect(events.at(-1)).toMatchObject({ awaitingApproval: true });
+    });
+
+    it("runs a whole approved batch on resume", async () => {
+        await drain(
+            runAiAgent({
+                provider: fakeProvider([{ text: "בוצע" }]),
+                messages: [
+                    ...userTurn("תמלא"),
+                    {
+                        role: AiRole.Assistant,
+                        content: "",
+                        toolCalls: [
+                            call("w1", "write_thing"),
+                            call("w2", "write_thing"),
+                        ],
+                    },
+                ],
+                context,
+                approvedToolCallIds: new Set(["w1", "w2"]),
+            }),
+        );
+
+        expect(writeExecute).toHaveBeenCalledTimes(2);
     });
 
     it("runs the pending write on resume without re-asking the model first", async () => {

@@ -28,6 +28,11 @@ import {
     AiToolDanger,
     AiUsage,
 } from "@/api-shared/types/ai";
+import {
+    buildChatExport,
+    ChatExportFormat,
+    downloadChatExport,
+} from "@/components/ai/chat-export";
 
 export enum AiTimelineKind {
     User = "user",
@@ -55,17 +60,26 @@ export enum AiApprovalState {
     Rejected = "rejected",
 }
 
+/** One write call inside an approval card. */
+export type AiApprovalCall = {
+    toolCallId: string;
+    name: string;
+    title: string;
+    danger: AiToolDanger;
+    summary: string;
+    impact: Array<string>;
+    arguments: unknown;
+};
+
 export type AiTimelineItem =
     | {
           kind: AiTimelineKind.Approval;
           id: string;
-          toolCallId: string;
-          name: string;
-          title: string;
-          danger: AiToolDanger;
-          summary: string;
-          impact: Array<string>;
-          arguments: unknown;
+          /**
+           * Every write the model proposed in one turn. A batch is approved or
+           * declined as a unit — "fill five days" is one decision, not five.
+           */
+          calls: Array<AiApprovalCall>;
           state: AiApprovalState;
       }
     | { kind: AiTimelineKind.Assistant; id: string; text: string }
@@ -158,6 +172,8 @@ export function useAiChat(scope: AiChatScope) {
             // — the whole reason the timeline reads chronologically.
             let openAssistantId: null | string = null;
             let openThinkingId: null | string = null;
+            // Proposals of one turn arrive back to back and share a card.
+            let openApprovalId: null | string = null;
 
             /** Appends, or extends the open bubble of that kind if there is one. */
             const appendText = (
@@ -281,9 +297,7 @@ export function useAiChat(scope: AiChatScope) {
                         break;
                     }
                     case AiStreamEventType.ToolProposal: {
-                        append({
-                            kind: AiTimelineKind.Approval,
-                            id: `approval-${event.toolCallId}`,
+                        const call: AiApprovalCall = {
                             toolCallId: event.toolCallId,
                             name: event.name,
                             title: event.title,
@@ -291,6 +305,24 @@ export function useAiChat(scope: AiChatScope) {
                             summary: event.summary,
                             impact: event.impact ?? [],
                             arguments: event.arguments,
+                        };
+                        if (openApprovalId) {
+                            const batchId = openApprovalId;
+                            setTimeline((items) =>
+                                items.map((item) =>
+                                    item.id === batchId &&
+                                    item.kind === AiTimelineKind.Approval
+                                        ? { ...item, calls: [...item.calls, call] }
+                                        : item,
+                                ),
+                            );
+                            break;
+                        }
+                        openApprovalId = `approval-${event.toolCallId}`;
+                        append({
+                            kind: AiTimelineKind.Approval,
+                            id: openApprovalId,
+                            calls: [call],
                             state: AiApprovalState.Pending,
                         });
                         break;
@@ -466,11 +498,10 @@ export function useAiChat(scope: AiChatScope) {
     );
 
     const settleApproval = React.useCallback(
-        (toolCallId: string, state: AiApprovalState) => {
+        (id: string, state: AiApprovalState) => {
             setTimeline((items) =>
                 items.map((item) =>
-                    item.kind === AiTimelineKind.Approval &&
-                    item.toolCallId === toolCallId
+                    item.kind === AiTimelineKind.Approval && item.id === id
                         ? { ...item, state }
                         : item,
                 ),
@@ -481,8 +512,8 @@ export function useAiChat(scope: AiChatScope) {
 
     const approve = React.useCallback(() => {
         if (!pendingApproval || busy) return;
-        settleApproval(pendingApproval.toolCallId, AiApprovalState.Approved);
-        void run([pendingApproval.toolCallId]);
+        settleApproval(pendingApproval.id, AiApprovalState.Approved);
+        void run(pendingApproval.calls.map((call) => call.toolCallId));
     }, [pendingApproval, busy, run, settleApproval]);
 
     /**
@@ -538,7 +569,7 @@ export function useAiChat(scope: AiChatScope) {
             }),
         );
 
-        settleApproval(pendingApproval.toolCallId, AiApprovalState.Rejected);
+        settleApproval(pendingApproval.id, AiApprovalState.Rejected);
         void run();
     }, [pendingApproval, busy, run, answerPendingCalls, settleApproval]);
 
@@ -574,6 +605,19 @@ export function useAiChat(scope: AiChatScope) {
         [pendingChoice, busy, run, answerPendingCalls],
     );
 
+    /** Downloads the conversation, tool calls and results included. */
+    const exportChat = React.useCallback(
+        (format: ChatExportFormat) => {
+            downloadChatExport(
+                buildChatExport(transcript.current, format, {
+                    exportedAt: new Date(),
+                    model: stats.model,
+                }),
+            );
+        },
+        [stats.model],
+    );
+
     const stop = React.useCallback(() => {
         abortRef.current?.abort();
     }, []);
@@ -601,5 +645,6 @@ export function useAiChat(scope: AiChatScope) {
         answerChoice,
         stop,
         reset,
+        exportChat,
     };
 }

@@ -53,8 +53,9 @@ describe("buildSystemPrompt", () => {
 
     it("stamps today's date so relative questions anchor correctly", () => {
         withPinnedClock(() => {
+            // Weekday and date both: "Tuesday" must resolve to a date (#719).
             expect(buildSystemPrompt(context())).toContain(
-                "התאריך היום: 2026-08-23.",
+                "היום: יום ראשון, 2026-08-23",
             );
         });
     });

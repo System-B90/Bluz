@@ -56,7 +56,11 @@ vi.mock("@/api-server/gantt", () => {
 });
 
 // Mock db-constraints
-vi.mock("@/api-server/gantt/db-constraints", () => ({
+vi.mock("@/api-server/gantt/db-constraints", async (importOriginal) => ({
+    // The payload validation is pure; only the DB calls are faked.
+    constraintInsertFromPayload: (
+        await importOriginal<typeof import("@/api-server/gantt/db-constraints")>()
+    ).constraintInsertFromPayload,
     getConstraintsForCurriculum: vi.fn(),
     getConstraintsForModule: vi.fn(),
     getConstraintsForSyllabus: vi.fn(),

@@ -8,6 +8,7 @@ import {
 } from "@/api-server/gantt/schema";
 import { ganttConstraintsSchema } from "@/api-server/gantt/schema/constraints";
 import { ClientApiError } from "@/api-shared/errors";
+import { CreateConstraintPayload } from "@/api-shared/types/gantt/create-payloads";
 import {
     GanttCurriculumId,
     GanttEventId,
@@ -75,6 +76,54 @@ export async function createConstraint(
     return (
         await postgresDb.insert(ganttConstraintsSchema).values(data).returning()
     )[0];
+}
+
+/**
+ * Validates a client (or assistant) constraint payload and maps it to the
+ * row shape. Shared by the REST route and the AI tool so both enforce the
+ * same owner/target rules.
+ */
+export function constraintInsertFromPayload(
+    body: CreateConstraintPayload,
+): typeof ganttConstraintsSchema.$inferInsert {
+    if (!body.type) {
+        throw new ClientApiError("Missing required field: type.");
+    }
+    if (!body.id) {
+        throw new ClientApiError("Missing required field: id.");
+    }
+    if (!body.ownerEventId && !body.ownerModuleId) {
+        throw new ClientApiError(
+            "A constraint must have an owner identified by ownerEventId or ownerModuleId.",
+        );
+    }
+    if (body.type === "RELATIONAL" && !body.targetId) {
+        throw new ClientApiError(
+            "Relational constraints must specify a targetId.",
+        );
+    }
+
+    const creationData: typeof ganttConstraintsSchema.$inferInsert = {
+        id: body.id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        type: body.type,
+        ownerEventId: body.ownerType === "event" ? body.ownerEventId : undefined,
+        ownerModuleId:
+            body.ownerType === "module" ? body.ownerModuleId : undefined,
+        relation: body.type === "RELATIONAL" ? body.relation : undefined,
+        minDelayDays: body.type === "RELATIONAL" ? body.minDelayDays : undefined,
+        maxDelayDays: body.type === "RELATIONAL" ? body.maxDelayDays : undefined,
+    };
+    if (body.type === "TEMPORAL") {
+        creationData.allowedDays = body.allowedDays;
+        creationData.forbiddenDays = body.forbiddenDays;
+    } else {
+        creationData[
+            body.targetType === "event" ? "targetEventId" : "targetModuleId"
+        ] = body.targetId;
+    }
+    return creationData;
 }
 
 /**
