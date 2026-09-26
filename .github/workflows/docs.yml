@@ -29,7 +29,7 @@ permissions:
 jobs:
   build:
     name: Build Documentation
-    runs-on: ${{ (inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "node", "python"]') }}
+    runs-on: ${{ (inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "node", "python"]') }}
     timeout-minutes: 20
     # mkdocs-typedoc shells out to typedoc, which walks the same UI sources
     # that OOM'd eslint and `next build` at a GitHub-hosted runner's ~2G
@@ -77,7 +77,7 @@ jobs:
   publish:
     name: Publish to System-B90/.github
     needs: build
-    runs-on: ${{ (inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "light"]') }}
+    runs-on: ${{ (inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "light"]') }}
     timeout-minutes: 10
     steps:
       - name: Download built site

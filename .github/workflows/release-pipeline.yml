@@ -43,7 +43,7 @@ jobs:
     # split did provide: a lint failure still doesn't hide a test failure.
     verify:
         name: Lint + Typecheck + Unit Tests
-        runs-on: ${{ (inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "node", "python"]') }}
+        runs-on: ${{ (inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "node", "python"]') }}
         timeout-minutes: 60
         env:
             # Same reason as ui/Dockerfile's builder stage: V8 derives its
@@ -162,7 +162,7 @@ jobs:
         name: Build UI Image
         needs: [verify]
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v')
-        runs-on: ${{ (inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "dind"]') }}
+        runs-on: ${{ (inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "dind"]') }}
         timeout-minutes: 45
         permissions:
             contents: read
@@ -214,7 +214,7 @@ jobs:
         name: Build Sessions Image
         needs: [verify]
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v')
-        runs-on: ${{ (inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "dind"]') }}
+        runs-on: ${{ (inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "dind"]') }}
         timeout-minutes: 45
         permissions:
             contents: read
@@ -269,7 +269,7 @@ jobs:
             (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v'))
             && !(github.ref_type == 'branch'
                  && startsWith(github.event.head_commit.message, 'chore: bump version to'))
-        runs-on: ${{ (inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "dind"]') }}
+        runs-on: ${{ (inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "dind"]') }}
         timeout-minutes: 45
         permissions:
             contents: read
@@ -318,7 +318,7 @@ jobs:
         name: Craft Release Packages
         needs: [build-ui, build-sessions, build-proxy]
         if: startsWith(github.ref, 'refs/tags/v')
-        runs-on: ${{ (inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "dind"]') }}
+        runs-on: ${{ (inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "dind"]') }}
         timeout-minutes: 45
         permissions:
             contents: write
@@ -479,7 +479,7 @@ jobs:
         name: Publish bluz CLI to org pip index
         needs: craft-release
         if: startsWith(github.ref, 'refs/tags/v')
-        runs-on: ${{ (inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "python"]') }}
+        runs-on: ${{ (inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "python"]') }}
         timeout-minutes: 45
 
         steps:

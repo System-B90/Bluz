@@ -81,7 +81,7 @@ jobs:
     # server closed unexpectedly" (master 23f3af5) — a rerun usually passes.
     build-test-images:
         name: Build Test Images
-        runs-on: ${{ (inputs.target == 'github-hosted' || inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "dind"]') }}
+        runs-on: ${{ (inputs.target == 'github-hosted' || inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "dind"]') }}
         # Version-bump commits on master (chore: bump version to *) only touch
         # package.json, so they'd otherwise trigger a full e2e run for nothing.
         if: >-
@@ -740,7 +740,7 @@ jobs:
     # copy.
     cleanup-test-images:
         name: Delete Test Images artifact
-        runs-on: ${{ (inputs.target == 'github-hosted' || inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "light"]') }}
+        runs-on: ${{ (inputs.target == 'github-hosted' || inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "light"]') }}
         # Must wait for BOTH suites, not just the matrix. Only one of them
         # runs on any given trigger and the other is `skipped` -- and a skipped
         # need is a *satisfied* need, so gating on the github matrix alone let
