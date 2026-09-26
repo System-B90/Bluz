@@ -23,6 +23,7 @@ import {
     AiBenchmarkObservation,
 } from "@/api-server/ai/benchmark/cases";
 import {
+    benchmarkTools,
     FIXTURE_DAY,
     FIXTURE_EVENTS,
     FIXTURE_FAKE_IDS,
@@ -36,7 +37,8 @@ import {
     AiProvider,
     AiProviderEvent,
 } from "@/api-server/ai/provider";
-import { AiToolCall, AiToolKind } from "@/api-shared/types/ai";
+import { AI_SUGGESTED_PROMPTS, AiToolCall, AiToolKind } from "@/api-shared/types/ai";
+import { AiBenchmarkCaseState, AiBenchmarkLiveCase } from "@/api-shared/types/ai-benchmark";
 
 type Scripted = { text?: string; toolCalls?: Array<AiToolCall> };
 
@@ -140,22 +142,54 @@ describe("runAiBenchmark", () => {
                         {
                             id: "c1",
                             name: "list_events",
-                            arguments: JSON.stringify({ from: "a", to: "b" }),
+                            arguments: JSON.stringify({
+                                from: isoAt(0, 0),
+                                to: isoAt(6, 0),
+                            }),
                         },
                     ],
                 },
-                { text: "יש סדנת רשתות ביום רביעי." },
+                { text: "השבוע: מתמטיקה בדידה, אלגוריתמים, סדנת רשתות ומבני נתונים." },
             ]),
             actor,
         });
 
         const scheduleCase = result.cases.find(
-            (entry) => entry.id === "read-schedule",
+            (entry) => entry.id === "suggested-week",
         );
         expect(scheduleCase?.toolCalls).toContain("list_events");
-        expect(
-            scheduleCase?.checks.every((check) => check.passed),
-        ).toBe(true);
+        expect(scheduleCase?.passed).toBe(true);
+    });
+
+    it("passes no case for a model that does nothing", async () => {
+        // Every check must demand evidence of work; "proposed nothing bad"
+        // alone used to hand an idle model most of the score.
+        const result = await runAiBenchmark({
+            provider: scriptedProvider([{ text: "בסדר." }]),
+            actor,
+        });
+        expect(result.passed).toBe(0);
+        expect(result.checksPassed).toBe(0);
+        expect(result.gateHeld).toBe(true);
+    });
+
+    it("streams per-case progress while it runs", async () => {
+        const snapshots: Array<Array<AiBenchmarkLiveCase>> = [];
+        await runAiBenchmark({
+            provider: scriptedProvider([{ text: "תשובה" }]),
+            actor,
+            onProgress: (cases) => snapshots.push(cases),
+        });
+        expect(snapshots[0].every((entry) => entry.state === AiBenchmarkCaseState.Pending)).toBe(true);
+        expect(snapshots.some((cases) => cases[0].state === AiBenchmarkCaseState.Running)).toBe(true);
+        expect(snapshots.at(-1)!.every((entry) => entry.state === AiBenchmarkCaseState.Done)).toBe(true);
+    });
+
+    it("covers every suggested chat prompt verbatim", () => {
+        const prompts = AI_BENCHMARK_CASES.map((spec) => spec.prompt);
+        for (const suggestion of AI_SUGGESTED_PROMPTS) {
+            expect(prompts).toContain(suggestion);
+        }
     });
 
     it("never approves a write, so a destructive request only ever gets proposed", async () => {
@@ -178,12 +212,9 @@ describe("runAiBenchmark", () => {
             (entry) => entry.id === "destructive-restraint",
         );
         expect(destructive?.toolCalls).toContain("delete_event");
-        // Proposed, never executed — so the gate check passes.
-        expect(
-            destructive?.checks.find((check) =>
-                check.label.includes("לא ביצע מחיקה"),
-            )?.passed,
-        ).toBe(true);
+        // Proposed, never executed — so the gate held.
+        expect(destructive?.gateHeld).toBe(true);
+        expect(result.gateHeld).toBe(true);
     });
 
     it("reports an upstream failure per case instead of losing the whole run", async () => {
@@ -281,16 +312,54 @@ describe("fake-event benchmark cases (#719)", () => {
         expect(ids).toEqual(["fx-h1", "fx-h2", "fx-h3"]);
     });
 
-    it("gives the new write tools fixture twins", () => {
-        const names = FIXTURE_TOOLS.map((entry) => entry.name);
-        for (const name of [
-            "create_event",
-            "create_gantt_event",
-            "restore_calendar_snapshot",
-            "delete_course",
-        ]) {
-            expect(names).toContain(name);
-        }
+    it("mirrors the full production surface without touching real data", async () => {
+        const production = [
+            { ...FIXTURE_TOOLS[0], name: "list_courses", execute: vi.fn() },
+            {
+                ...FIXTURE_TOOLS.find((tool) => tool.kind === AiToolKind.Write)!,
+                name: "delete_course",
+                execute: vi.fn(),
+            },
+            { ...FIXTURE_TOOLS.find((tool) => tool.name === "list_events")!, execute: vi.fn() },
+        ];
+        const tools = benchmarkTools(production);
+        const byName = (name: string) => tools.find((tool) => tool.name === name)!;
+
+        expect(() => byName("delete_course").execute({}, {} as never)).toThrow();
+        await expect(byName("list_courses").execute({}, {} as never)).resolves.toMatchObject({
+            data: { total: 0 },
+        });
+        // A modelled tool answers from the fixture, not the production execute.
+        await byName("list_events").execute({ from: isoAt(0, 0), to: isoAt(1, 0) }, {} as never);
+        for (const tool of production) expect(tool.execute).not.toHaveBeenCalled();
+        // Fixture-only tools still ride along.
+        expect(tools.map((tool) => tool.name)).toContain("list_people");
+    });
+
+    it("credits a mixed split that spans the hidden window", () => {
+        const at = (h: number, m = 0) => isoAt(FIXTURE_DAY.TUESDAY, h, m);
+        const event = (from: string, to: string, type: string) => ({
+            name: "create_event",
+            args: { name: "x", type, startTime: from, endTime: to, fake: true },
+        });
+        expect(
+            grade("fake-match-hidden", {
+                ...base,
+                reads: [tuesdayRead({ hidden: true })],
+                proposals: [
+                    event(at(9), at(10, 30), "סדנה"),
+                    event(at(10, 30), at(12, 30), "הרצאה"),
+                ],
+            }),
+        ).not.toContain(false);
+        // Ends early: the window is not covered.
+        expect(
+            grade("fake-match-hidden", {
+                ...base,
+                reads: [tuesdayRead({ hidden: true })],
+                proposals: [event(at(9), at(12), "הרצאה")],
+            }),
+        ).toContain(false);
     });
 
     it("passes a correct 'match the hidden events on Tuesday' run", () => {

@@ -17,6 +17,7 @@
 import CancelIcon from "@mui/icons-material/Cancel";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import ScienceIcon from "@mui/icons-material/Science";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -32,18 +33,38 @@ import React from "react";
 
 import { fetchAiBenchmarkJob, startAiBenchmark } from "@/api-client/ai";
 import {
-    AiBenchmarkCase,
+    AiBenchmarkCaseState,
     AiBenchmarkJob,
     AiBenchmarkJobStatus,
+    AiBenchmarkLiveCase,
     AiBenchmarkResult,
 } from "@/api-shared/types/ai-benchmark";
 
-const POLL_INTERVAL_MS = 3_000;
+const POLL_INTERVAL_MS = 1_500;
 
-function CaseRow({ entry }: { entry: AiBenchmarkCase }) {
+/** A finished result, shaped like the live rows so one list renders both. */
+const doneRows = (result: AiBenchmarkResult): Array<AiBenchmarkLiveCase> =>
+    result.cases.map((entry) => ({
+        id: entry.id,
+        title: entry.title,
+        prompt: entry.prompt,
+        state: AiBenchmarkCaseState.Done,
+        toolCalls: entry.toolCalls,
+        result: entry,
+    }));
+
+function StateIcon({ row }: { row: AiBenchmarkLiveCase }) {
+    if (row.state === AiBenchmarkCaseState.Running) return <CircularProgress size={ 16 } />;
+    if (!row.result) return <RadioButtonUncheckedIcon sx={ { color: "text.disabled", fontSize: 18 } } />;
+    return row.result.passed
+        ? <CheckCircleIcon color="success" sx={ { fontSize: 18 } } />
+        : <CancelIcon color="error" sx={ { fontSize: 18 } } />;
+}
+
+function CaseRow({ row }: { row: AiBenchmarkLiveCase }) {
     const [open, setOpen] = React.useState(false);
-    const passed = entry.checks.filter((check) => check.passed).length;
-    const allPassed = passed === entry.checks.length;
+    const entry = row.result;
+    const passed = entry?.checks.filter((check) => check.passed).length ?? 0;
 
     return (
         <Box sx={ { borderRadius: 1, bgcolor: "action.hover", px: 1, py: 0.5 } }>
@@ -53,15 +74,15 @@ function CaseRow({ entry }: { entry: AiBenchmarkCase }) {
                 sx={ { borderRadius: 1, px: 0.5, py: 0.5, width: "100%" } }
             >
                 <Stack alignItems="center" direction="row" spacing={ 1 } sx={ { width: "100%" } }>
-                    { allPassed
-                        ? <CheckCircleIcon color="success" sx={ { fontSize: 18 } } />
-                        : <CancelIcon color="error" sx={ { fontSize: 18 } } /> }
+                    <StateIcon row={ row } />
                     <Typography sx={ { flexGrow: 1, textAlign: "start" } } variant="body2">
-                        { entry.title }
+                        { row.title }
                     </Typography>
-                    <Typography color="text.secondary" variant="caption">
-                        { passed }/{ entry.checks.length }
-                    </Typography>
+                    { entry
+                        ? <Typography color="text.secondary" variant="caption">
+                            { passed }/{ entry.checks.length }
+                        </Typography>
+                        : null }
                     <ExpandMoreIcon
                         sx={ {
                             color: "text.disabled",
@@ -76,9 +97,12 @@ function CaseRow({ entry }: { entry: AiBenchmarkCase }) {
             <Collapse in={ open } unmountOnExit>
                 <Stack spacing={ 0.5 } sx={ { px: 1, py: 1 } }>
                     <Typography color="text.secondary" variant="caption">
-                        הנחיה: { entry.prompt }
+                        הנחיה: { row.prompt }
                     </Typography>
-                    { entry.checks.map((check) => (
+                    { entry?.error
+                        ? <Typography color="error" variant="caption">{ entry.error }</Typography>
+                        : null }
+                    { entry?.checks.map((check) => (
                         <Stack alignItems="flex-start" direction="row" key={ check.label } spacing={ 1 }>
                             { check.passed
                                 ? <CheckCircleIcon color="success" sx={ { fontSize: 15, mt: "2px" } } />
@@ -93,12 +117,12 @@ function CaseRow({ entry }: { entry: AiBenchmarkCase }) {
                             </Box>
                         </Stack>
                     )) }
-                    { entry.toolCalls.length
+                    { row.toolCalls.length
                         ? <Typography color="text.secondary" variant="caption">
-                            כלים שנקראו: { entry.toolCalls.join(" ← ") }
+                            כלים שנקראו: { row.toolCalls.join(" ← ") }
                         </Typography>
                         : null }
-                    { entry.answer
+                    { entry?.answer
                         ? <Typography
                             sx={ { bgcolor: "background.default", borderRadius: 1, p: 1, whiteSpace: "pre-wrap" } }
                             variant="caption"
@@ -115,6 +139,7 @@ function CaseRow({ entry }: { entry: AiBenchmarkCase }) {
 export function AiSelfTest() {
     const [running, setRunning] = React.useState(false);
     const [result, setResult] = React.useState<AiBenchmarkResult | null>(null);
+    const [live, setLive] = React.useState<Array<AiBenchmarkLiveCase> | null>(null);
     const [error, setError] = React.useState<null | string>(null);
 
     // The run lives on the server, so closing the dialog only stops *watching*
@@ -128,6 +153,7 @@ export function AiSelfTest() {
         for (;;) {
             if (signal.aborted) return;
             setRunning(job.status === AiBenchmarkJobStatus.Running);
+            if (job.cases) setLive(job.cases);
             if (job.status === AiBenchmarkJobStatus.Done) setResult(job.result ?? null);
             if (job.status === AiBenchmarkJobStatus.Failed) setError(job.error ?? "הבדיקה נכשלה");
             if (job.status !== AiBenchmarkJobStatus.Running) return;
@@ -154,6 +180,7 @@ export function AiSelfTest() {
         setRunning(true);
         setError(null);
         setResult(null);
+        setLive(null);
 
         startAiBenchmark(abort.signal)
             .then((job) => watch(job, abort.signal))
@@ -163,6 +190,8 @@ export function AiSelfTest() {
                 setError(e instanceof Error ? e.message : String(e));
             });
     };
+
+    const rows = result ? doneRows(result) : live;
 
     return (
         <Stack spacing={ 1.5 } sx={ { width: "100%" } }>
@@ -191,7 +220,13 @@ export function AiSelfTest() {
 
             { running
                 ? <>
-                    <LinearProgress sx={ { borderRadius: 1, height: 4 } } />
+                    <LinearProgress
+                        sx={ { borderRadius: 1, height: 4 } }
+                        value={ live
+                            ? 100 * live.filter((row) => row.state === AiBenchmarkCaseState.Done).length / live.length
+                            : 0 }
+                        variant={ live ? "determinate" : "indeterminate" }
+                    />
                     <Typography color="text.secondary" variant="caption">
                         הבדיקה מריצה כמה שיחות מלאות מול המודל — זה יכול לקחת דקה או שתיים.
                         אפשר לסגור את החלון; הבדיקה ממשיכה ברקע.
@@ -206,18 +241,27 @@ export function AiSelfTest() {
                     <Stack alignItems="center" direction="row" spacing={ 1 }>
                         <Chip
                             color={ result.passed === result.total ? "success" : "warning" }
-                            label={ `${result.passed}/${result.total} בדיקות עברו` }
+                            label={ `${result.passed}/${result.total} מקרים עברו` }
                             size="small"
                         />
                         <Typography color="text.secondary" variant="caption">
+                            { `${result.checksPassed}/${result.checksTotal} בדיקות · ` }
                             { result.model }
                             { result.totalTokens ? ` · ${result.totalTokens} טוקנים` : "" }
                             { ` · ${Math.round(result.durationMs / 1000)} שנ׳` }
                         </Typography>
                     </Stack>
-                    { result.cases.map((entry) => (
-                        <CaseRow entry={ entry } key={ entry.id } />
-                    )) }
+                    { result.gateHeld
+                        ? null
+                        : <Alert severity="error">
+                            כלי כתיבה רץ בלי אישור בזמן הבדיקה — תקלה בשער האישור, לא במודל.
+                        </Alert> }
+                </Stack>
+                : null }
+
+            { rows
+                ? <Stack spacing={ 1 }>
+                    { rows.map((row) => <CaseRow key={ row.id } row={ row } />) }
                 </Stack>
                 : null }
         </Stack>

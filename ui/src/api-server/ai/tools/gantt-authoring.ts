@@ -18,6 +18,7 @@ import {
     requireText,
 } from "@/api-server/ai/tools/common";
 import { requireCurriculumId, CURRICULUM_ID_PARAM } from "@/api-server/ai/tools/gantt";
+import { weekHints } from "@/api-server/ai/tools/hints";
 import { AiTool } from "@/api-server/ai/tools/types";
 import {
     constraintInsertFromPayload,
@@ -259,10 +260,7 @@ export const listWeeksTool: AiTool<{ curriculumId?: string } & PageArgs> = {
         return {
             data: page,
             summary: pageSummary(page, "שבועות"),
-            hints: [
-                'שבוע גאנט הוא תכנון. מה שקורה בפועל בתאריכים from–to נמצא בלו"ז (list_events).',
-                ...(start ? [] : ["לגאנט אין startDate, ולכן אין לשבועות תאריכים."]),
-            ],
+            hints: weekHints(Boolean(start)),
         };
     },
 };

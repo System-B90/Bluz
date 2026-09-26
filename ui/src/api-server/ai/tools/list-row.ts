@@ -16,6 +16,28 @@ export const LIST_EXTRA_FIELDS = [
 
 export type ListExtraField = (typeof LIST_EXTRA_FIELDS)[number];
 
+/** Per-result guidance for list_events; the people rules only when people show. */
+export function listEventsHints(
+    events: Array<AiEventSummary>,
+    fields: Array<ListExtraField>,
+): Array<string> {
+    const showsPeople = (fields.includes("instructors") || fields.includes("lecturers")) &&
+        events.some((event) => event.instructors.length || event.lecturers?.length);
+    return [
+        "שדה חסר = ריק או false. לשדות נוספים — fields, לאירוע מלא — get_event.",
+        ...(showsPeople
+            ? [
+                "instructors = מבוזרים. lecturers = מרצים. אלה מזהי הייב — שמות דרך list_people.",
+                "מרצה שהוא מדריך נחשב גם מבזר, אלא אם לאירוע יש מבזר אחר. איש חוץ לעולם אינו מבזר.",
+            ]
+            : []),
+    ];
+}
+
+/** Drops events without an instructor or lecturer, for `withPeople`. */
+export const hasPeople = (event: AiEventSummary) =>
+    event.instructors.length > 0 || (event.lecturers?.length ?? 0) > 0;
+
 /**
  * One list row: the base columns plus the requested extras, minus empty
  * values. A week of meals would otherwise repeat the same `[]` and `false`

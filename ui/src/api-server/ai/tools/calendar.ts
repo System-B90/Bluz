@@ -19,7 +19,14 @@ import {
     paginate,
     parseDate,
 } from "@/api-server/ai/tools/common";
-import { LIST_EXTRA_FIELDS, ListExtraField, listRow } from "@/api-server/ai/tools/list-row";
+import { ITERATION_HINTS } from "@/api-server/ai/tools/hints";
+import {
+    hasPeople,
+    LIST_EXTRA_FIELDS,
+    listEventsHints,
+    ListExtraField,
+    listRow,
+} from "@/api-server/ai/tools/list-row";
 import { AiTool } from "@/api-server/ai/tools/types";
 import { DbEvent } from "@/api-server/db-event";
 import { DbEventHistory } from "@/api-server/db-event-history";
@@ -114,9 +121,7 @@ export const listIterationsTool: AiTool<Record<string, never>> = {
                 curriculumId: iteration.ganttCurriculumId,
             })),
             summary: `נמצאו ${iterations.length} מחזורים`,
-            // An iteration whose id or label says "current" is just a name,
-            // and models trust names over flags.
-            hints: ["המחזור הנוכחי הוא זה עם isCurrent=true, בלי קשר ל-id או לשם."],
+            hints: ITERATION_HINTS,
         };
     },
 };
@@ -223,24 +228,13 @@ export const listEventsTool: AiTool<ListEventsArgs> = {
         );
         const summaries = events
             .map(summarizeEvent)
-            .filter((event) =>
-                !args.withPeople || event.instructors.length || event.lecturers?.length);
+            .filter((event) => !args.withPeople || hasPeople(event));
         const fields = args.fields ?? [];
         const page = paginate(summaries.map((event) => listRow(event, fields)), args);
-        const showsPeople = (fields.includes("instructors") || fields.includes("lecturers")) &&
-            summaries.some((event) => event.instructors.length || event.lecturers?.length);
         return {
             data: page,
             summary: pageSummary(page, "אירועים בטווח"),
-            hints: [
-                "שדה חסר = ריק או false. לשדות נוספים — fields, לאירוע מלא — get_event.",
-                ...(showsPeople
-                    ? [
-                        "instructors = מבוזרים. lecturers = מרצים.",
-                        "מרצה שהוא מדריך נחשב גם מבזר, אלא אם לאירוע יש מבזר אחר. איש חוץ לעולם אינו מבזר.",
-                    ]
-                    : []),
-            ],
+            hints: listEventsHints(summaries, fields),
         };
     },
 };

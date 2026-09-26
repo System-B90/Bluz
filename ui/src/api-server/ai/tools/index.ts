@@ -58,6 +58,11 @@ export function createToolRegistry(
     };
 }
 
+/** Every production tool, for the self-test to mirror. */
+export function allTools(): Array<AiTool<any>> {
+    return ALL_TOOLS;
+}
+
 /** The real registry: every tool the assistant has against live data. */
 export const DEFAULT_TOOL_REGISTRY = createToolRegistry(ALL_TOOLS);
 

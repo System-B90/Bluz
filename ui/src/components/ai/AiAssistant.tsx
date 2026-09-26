@@ -42,7 +42,7 @@ import remarkGfm from "remark-gfm";
 
 import { fetchAiTools } from "@/api-client/ai";
 import { apiGetPersonalSettings } from "@/api-client/personal-settings";
-import { AiToolDanger } from "@/api-shared/types/ai";
+import { AI_SUGGESTED_PROMPTS, AiToolDanger } from "@/api-shared/types/ai";
 import { CURRICULUM_QUERY_PARAM } from "@/api-shared/types/gantt/models";
 import { ApprovalCard } from "@/components/ai/ApprovalCard";
 import { ChatExportFormat } from "@/components/ai/chat-export";
@@ -72,12 +72,6 @@ const LAUNCHER_BOTTOM = 88;
  * time a token arrives makes the panel unusable mid-answer.
  */
 const AUTOSCROLL_SLACK_PX = 80;
-
-const SUGGESTIONS = [
-    'מה יש בלו"ז השבוע?',
-    "מי מבזר השבוע?",
-    "תוסיף הפסקות בין שיעורים",
-];
 
 function UserBubble({ text }: { text: string }) {
     return (
@@ -587,7 +581,7 @@ export function AiAssistant() {
                                         יכול גם לבצע שינויים — כל שינוי יוצג
                                         לאישור שלך לפני שהוא מתבצע.
                                     </Typography>
-                                    {SUGGESTIONS.map((suggestion) => (
+                                    {AI_SUGGESTED_PROMPTS.map((suggestion) => (
                                         <Chip
                                             clickable
                                             key={suggestion}
