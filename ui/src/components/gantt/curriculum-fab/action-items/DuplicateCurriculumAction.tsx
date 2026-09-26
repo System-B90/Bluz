@@ -39,6 +39,7 @@ export function DuplicateCurriculumAction({
 
     return (
         <ActionItemButton
+            command={{ id: "gantt.curriculum.duplicate", keywords: ["duplicate", "copy", "clone", "שכפול"] }}
             loading={loading}
             onClick={clickHandler}
             startIcon={<ContentCopyIcon fontSize="small" />}

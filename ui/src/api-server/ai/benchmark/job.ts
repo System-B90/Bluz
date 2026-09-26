@@ -55,7 +55,12 @@ export function startBenchmarkJob(options: {
 
     // Deliberately not awaited, and given no request signal: the run must
     // outlive the request that started it.
-    void runAiBenchmark(options)
+    void runAiBenchmark({
+        ...options,
+        onProgress: (cases) => {
+            jobs().set(options.actor.id, { ...job, cases });
+        },
+    })
         .then((result) => {
             jobs().set(options.actor.id, {
                 status: AiBenchmarkJobStatus.Done,

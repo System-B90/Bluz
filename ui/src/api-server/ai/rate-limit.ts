@@ -52,6 +52,8 @@ const benchmarkRuns = new Map<string, number>();
 
 /** @returns true when this user may start a run now (and records it). */
 export function allowAiBenchmark(userId: string): boolean {
+    // Dev iterates on prompts and tools; a cooldown there only gets in the way.
+    if (process.env.NODE_ENV === "development") return true;
     const now = Date.now();
     const last = benchmarkRuns.get(userId);
     if (last !== undefined && now - last < AI_BENCHMARK_WINDOW_MS) return false;

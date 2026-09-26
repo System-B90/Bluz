@@ -13,6 +13,7 @@ import { CurriculumViewSidebar } from "@/components/gantt/curriculum-view/compon
 import { GanttSearchNavProvider } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
 import { CurriculumViewTabs } from "@/components/gantt/curriculum-view/tabs";
 import { GanttFiltersProvider } from "@/components/gantt/state/filters/Provider";
+import { useCurriculumStatusSync } from "@/components/gantt/state/hooks/UseCurriculumStatusSync";
 
 export type CurriculumViewProps = {
     curriculumId: GanttCurriculumId | null;
@@ -44,6 +45,7 @@ export function CurriculumView({
             : 0;
     });
 
+    useCurriculumStatusSync(curriculumId);
     useGanttTabCommands({ selectedTabIndex, setSelectedTabIndex });
 
     useEffect(() =>

@@ -15,9 +15,11 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { ToolbarProps } from "react-big-calendar";
 
+import { COMMAND_GROUPS } from "@/components/app-commands/labels";
+import { useCommand } from "@/components/app-commands/use-command";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useOffline } from "@/components/base/OfflineProvider";
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
@@ -63,6 +65,32 @@ export function CalendarToolbar({
     const [ filterAnchorEl, setFilterAnchorEl ] =
         useState<HTMLButtonElement | null>(null);
     const filterOpen = Boolean(filterAnchorEl);
+    const filterButtonRef = useRef<HTMLButtonElement>(null);
+
+    const openDatePicker = useCallback(() => setOpen(true), []);
+    // Reads the anchor from the ref so the palette mirror can open it too.
+    const openFilters = useCallback(
+        () => setFilterAnchorEl(filterButtonRef.current),
+        [],
+    );
+
+    useCommand({
+        id: "schedule.date.pick",
+        title: "מעבר לתאריך",
+        group: COMMAND_GROUPS.schedule,
+        icon: <CalendarTodayIcon />,
+        keywords: [ "go to date", "date", "jump", "תאריך" ],
+        run: openDatePicker,
+    });
+    useCommand({
+        id: "schedule.filters.open",
+        title: "סננים",
+        group: COMMAND_GROUPS.schedule,
+        icon: <FilterListIcon />,
+        keywords: [ "filter", "filters", "סינון", "סנן" ],
+        enabled: showToolbar,
+        run: openFilters,
+    });
 
     const handleDateChange = useCallback(
         (val: dayjs.Dayjs | null) =>
@@ -171,7 +199,7 @@ export function CalendarToolbar({
                         { label }
                     </Typography>
                     <IconButton
-                        onClick={ () => setOpen(true) }
+                        onClick={ openDatePicker }
                         size="small"
                         sx={ {
                             color: "text.secondary",
@@ -278,9 +306,8 @@ export function CalendarToolbar({
                         >
                             <Button
                                 color="primary"
-                                onClick={ (e) =>
-                                    setFilterAnchorEl(e.currentTarget)
-                                }
+                                onClick={ openFilters }
+                                ref={ filterButtonRef }
                                 size="small"
                                 sx={ {
                                     minWidth: 38,

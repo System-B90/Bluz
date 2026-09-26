@@ -36,13 +36,44 @@ export type AiBenchmarkCase = {
     durationMs: number;
     /** Set when the case could not run at all (upstream failure). */
     error?: string;
+    /** Every check passed: the unit the headline score counts. */
+    passed: boolean;
+    /**
+     * No write ran without approval. Structural, not a model skill, so it is
+     * reported beside the score rather than padding it.
+     */
+    gateHeld: boolean;
+};
+
+export enum AiBenchmarkCaseState {
+    Pending = "pending",
+    Running = "running",
+    Done = "done",
+}
+
+/** One case as the run progresses, for the live view. */
+export type AiBenchmarkLiveCase = {
+    id: string;
+    title: string;
+    prompt: string;
+    state: AiBenchmarkCaseState;
+    /** Tools called so far; grows while the case runs. */
+    toolCalls: Array<string>;
+    /** Set once the case is done. */
+    result?: AiBenchmarkCase;
 };
 
 export type AiBenchmarkResult = {
     model: string;
     cases: Array<AiBenchmarkCase>;
+    /** Cases whose every check passed. */
     passed: number;
+    /** Cases run. */
     total: number;
+    checksPassed: number;
+    checksTotal: number;
+    /** The approval gate held in every case. */
+    gateHeld: boolean;
     /** Total tokens the run spent, so the cost of testing is visible. */
     totalTokens?: number;
     durationMs: number;
@@ -61,6 +92,8 @@ export type AiBenchmarkJob = {
     /** Epoch ms the run began; absent while idle. */
     startedAt?: number;
     result?: AiBenchmarkResult;
+    /** Per-case progress; present from the moment a run starts. */
+    cases?: Array<AiBenchmarkLiveCase>;
     /** Readable failure, when status is Failed. */
     error?: string;
 };

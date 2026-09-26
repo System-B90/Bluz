@@ -7,6 +7,7 @@ import {
     apiImportCurriculum,
     GanttCurriculumDocument,
 } from "@/api-client/gantt/curriculum";
+import { COMMAND_GROUPS } from "@/components/app-commands/labels";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { ImportExportMenuButton } from "@/components/base/ImportExportMenuButton";
 import { GanttCreationDeletionCallbackProps } from "@/components/gantt/curriculum-fab/CurriculumActionItems";
@@ -92,11 +93,15 @@ export function CurriculmImportExportButton({
     return (
         <Box alignItems="center" display="flex" gap={ 0.5 }>
             <ImportExportMenuButton
+                command={ { id: "gantt.curriculum", group: COMMAND_GROUPS.gantt, keywords: [ "curriculum", "גאנט" ] } }
                 exportDisabled={ !curriculum }
+                exportExcelLabel="ייצוא הגאנט לאקסל"
                 exportFilenamePrefix="bluz-gantt-"
+                exportLabel="ייצוא הגאנט"
                 exportTitle={ curriculum?.title }
                 iconOnly
                 importDisabled={ !curriculum }
+                importLabel="ייבוא גאנט"
                 loading={ loading }
                 onExport={ handleExport }
                 onExportError={ handleExportError }

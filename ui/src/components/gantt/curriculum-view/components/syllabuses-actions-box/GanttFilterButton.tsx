@@ -12,9 +12,11 @@ import Select, { SelectChangeEvent } from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useCallback, useId, useState } from "react";
+import { useCallback, useId, useRef, useState } from "react";
 
 import { CourseId } from "@/api-shared/types/course";
+import { COMMAND_GROUPS } from "@/components/app-commands/labels";
+import { useCommand } from "@/components/app-commands/use-command";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { InstructorSelect } from "@/components/base/InstructorSelect";
@@ -32,6 +34,18 @@ export function GanttFilterButton() {
         useGanttFilters();
     const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
     const open = Boolean(anchorEl);
+    const buttonRef = useRef<HTMLButtonElement>(null);
+    // Reads the anchor from the ref so the palette mirror can open it too.
+    const openFilters = useCallback(() => setAnchorEl(buttonRef.current), []);
+
+    useCommand({
+        id: "gantt.filters.open",
+        title: "סינון סילבוסים",
+        group: COMMAND_GROUPS.gantt,
+        icon: <FilterListIcon />,
+        keywords: ["filter", "filters", "סינון", "סנן"],
+        run: openFilters,
+    });
 
     const onCoursesChange = useCallback(
         (event: SelectChangeEvent<Array<CourseId>>) => {
@@ -64,7 +78,8 @@ export function GanttFilterButton() {
             <Tooltip title={open ? "הסתרת מסננים" : "סינון סילבוסים"}>
                 <IconButton
                     color={hasActiveFilters || open ? "primary" : "inherit"}
-                    onClick={(e) => setAnchorEl(e.currentTarget)}
+                    onClick={openFilters}
+                    ref={buttonRef}
                     size="small"
                 >
                     <Badge badgeContent={activeCount} color="primary">

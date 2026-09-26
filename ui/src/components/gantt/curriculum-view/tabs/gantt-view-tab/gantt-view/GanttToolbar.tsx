@@ -21,7 +21,10 @@ import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import React from "react";
+import { Command, useCommands } from "@system-b90/command-palette";
+import React, { useMemo } from "react";
+
+import { COMMAND_GROUPS } from "@/components/app-commands/labels";
 
 export type GanttToolbarProps = {
     title: string;
@@ -66,6 +69,68 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({
 }) =>
 {
     const theme = useTheme();
+
+    // Palette mirrors of the toolbar controls, calling the same setters.
+    const commands = useMemo<Array<Command>>(() => [
+        {
+            id: "gantt.timeline.view.toggle",
+            title: weeklyView ? "תצוגה יומית" : "תצוגה שבועית",
+            group: COMMAND_GROUPS.gantt,
+            icon: weeklyView ? <CalendarViewDayIcon /> : <CalendarViewWeekIcon />,
+            keywords: [ "weekly", "daily", "view", "שבועי", "יומי" ],
+            run: () => onWeeklyViewChange(!weeklyView),
+        },
+        {
+            id: "gantt.timeline.constraints.toggle",
+            title: showConstraints ? "הסתרת אילוצים" : "הצגת אילוצים",
+            group: COMMAND_GROUPS.gantt,
+            icon: <RuleIcon />,
+            keywords: [ "constraints", "אילוצים" ],
+            run: () => setShowConstraints(!showConstraints),
+        },
+        {
+            id: "gantt.timeline.unallocated.toggle",
+            title: showUnallocated ? "הסתרת לא משובצים" : "הצגת לא משובצים",
+            group: COMMAND_GROUPS.gantt,
+            icon: <PendingActionsIcon />,
+            keywords: [ "unallocated", "unscheduled", "לא משובצים", "פערים" ],
+            run: () => setShowUnallocated(!showUnallocated),
+        },
+        {
+            id: "gantt.timeline.sizing.toggle",
+            title: relativeDaySizing ? "בלוקים בתא מלא" : "בלוקים לפי יום",
+            group: COMMAND_GROUPS.gantt,
+            icon: relativeDaySizing ? <WidthFullIcon /> : <WidthNormalIcon />,
+            keywords: [ "block size", "relative", "full", "גודל" ],
+            enabled: weeklyView,
+            run: () => setRelativeDaySizing(!relativeDaySizing),
+        },
+        {
+            id: "gantt.timeline.collapse.toggle",
+            title: allCollapsed ? "להרחיב הכל" : "לכווץ הכל",
+            group: COMMAND_GROUPS.gantt,
+            icon: allCollapsed ? <UnfoldMoreIcon /> : <UnfoldLessIcon />,
+            keywords: [ "expand all", "collapse all", "הרחבה", "כיווץ" ],
+            run: allCollapsed ? expandAllSyllabuses : collapseAllSyllabuses,
+        },
+        {
+            id: "gantt.timeline.zoom.reset",
+            title: "בחזרה לכל השבועות",
+            group: COMMAND_GROUPS.gantt,
+            icon: <ZoomOutMapIcon />,
+            keywords: [ "zoom out", "all weeks", "שבועות" ],
+            enabled: Boolean(zoomedWeekId),
+            run: () => setZoomedWeekId(null),
+        },
+    ], [
+        weeklyView, onWeeklyViewChange,
+        showConstraints, setShowConstraints,
+        showUnallocated, setShowUnallocated,
+        relativeDaySizing, setRelativeDaySizing,
+        allCollapsed, expandAllSyllabuses, collapseAllSyllabuses,
+        zoomedWeekId, setZoomedWeekId,
+    ]);
+    useCommands(commands);
 
     return (
         <Box

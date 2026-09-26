@@ -9,13 +9,17 @@ import
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { CreateCurriculumHoverMenu } from "@/components/gantt/curriculum-fab/action-items/CreateCurriculumHoverMenu";
 import { DeleteCurriculumAction } from "@/components/gantt/curriculum-fab/action-items/DeleteCurriculumAction";
+import { ToggleArchiveAction } from "@/components/gantt/curriculum-fab/action-items/ToggleArchiveAction";
+import { ToggleDraftAction } from "@/components/gantt/curriculum-fab/action-items/ToggleDraftAction";
 import { useCurriculumList } from "@/components/gantt/state/curriculum-list";
 
 type ActionKey =
     | "createDraft"
     | "createFromTemplate"
     | "delete"
-    | "duplicate";
+    | "duplicate"
+    | "toggleArchive"
+    | "toggleDraft";
 
 export type GanttCreationDeletionCallbackProps = {
     onCreate?: (newCurriculum: GanttCurriculumDocument) => void;
@@ -37,6 +41,12 @@ export function CurriculumActionItems({
     const curriculumList = useCurriculumList();
     const handleCreate = onCreate ?? curriculumList.onCreate;
     const handleDelete = onDelete ?? curriculumList.onDelete;
+    const { updateCurriculum } = curriculumList;
+
+    const handleUpdate = useCallback(
+        (updated: GanttCurriculumDocument) => updateCurriculum(updated.id, updated),
+        [ updateCurriculum ],
+    );
 
     const [ activeAction, setActiveAction ] = useState<ActionKey | null>(null);
     const isProcessing = activeAction !== null;
@@ -64,6 +74,23 @@ export function CurriculumActionItems({
                 isDisabled={ isDisabled }
                 makeProcessingHandler={ makeProcessingHandler }
                 onCreate={ handleCreate }
+                sourceCurriculum={ sourceCurriculum }
+            />
+
+            <Divider flexItem orientation="vertical" sx={ { my: 0.5 } } />
+
+            <ToggleDraftAction
+                disabled={ isDisabled || !sourceCurriculum }
+                loading={ activeAction === "toggleDraft" }
+                onProcessingChange={ makeProcessingHandler("toggleDraft") }
+                onUpdate={ handleUpdate }
+                sourceCurriculum={ sourceCurriculum }
+            />
+            <ToggleArchiveAction
+                disabled={ isDisabled || !sourceCurriculum }
+                loading={ activeAction === "toggleArchive" }
+                onProcessingChange={ makeProcessingHandler("toggleArchive") }
+                onUpdate={ handleUpdate }
                 sourceCurriculum={ sourceCurriculum }
             />
 

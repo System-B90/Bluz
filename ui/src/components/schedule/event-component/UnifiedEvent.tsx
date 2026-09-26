@@ -3,7 +3,6 @@ import Typography from "@mui/material/Typography";
 import React from "react";
 
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
-import { ContainerSize } from "@/components/schedule/event-component/base";
 import { EventDurationLabel } from "@/components/schedule/event-component/EventDurationLabel";
 import { EventStatusIcons } from "@/components/schedule/event-component/EventStatusIcons";
 import { EventTypeIcon } from "@/components/schedule/event-component/EventTypeIcon";
@@ -15,6 +14,7 @@ import {
     ModuleComponent,
     SubjectComponent,
 } from "@/components/schedule/event-component/parts/subject";
+import { ContainerSize } from "@/components/schedule/event-component/utils";
 import {
     Event,
     EventType,

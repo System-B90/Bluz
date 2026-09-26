@@ -42,7 +42,7 @@ import remarkGfm from "remark-gfm";
 
 import { fetchAiTools } from "@/api-client/ai";
 import { apiGetPersonalSettings } from "@/api-client/personal-settings";
-import { AiToolDanger } from "@/api-shared/types/ai";
+import { AI_SUGGESTED_PROMPTS, AiToolDanger } from "@/api-shared/types/ai";
 import { CURRICULUM_QUERY_PARAM } from "@/api-shared/types/gantt/models";
 import { ApprovalCard } from "@/components/ai/ApprovalCard";
 import { ChatExportFormat } from "@/components/ai/chat-export";
@@ -56,6 +56,8 @@ import {
     AiTimelineKind,
     useAiChat,
 } from "@/components/ai/use-ai-chat";
+import { COMMAND_GROUPS } from "@/components/app-commands/labels";
+import { useCommand } from "@/components/app-commands/use-command";
 import { useIterationScope } from "@/components/base/IterationProvider";
 
 const PANEL_WIDTH = 420;
@@ -70,12 +72,6 @@ const LAUNCHER_BOTTOM = 88;
  * time a token arrives makes the panel unusable mid-answer.
  */
 const AUTOSCROLL_SLACK_PX = 80;
-
-const SUGGESTIONS = [
-    'מה יש בלו"ז השבוע?',
-    "אילו חדרים מוגדרים במחזור?",
-    "תראה לי תצוגה מקדימה של גזירת הגאנט",
-];
 
 function UserBubble({ text }: { text: string }) {
     return (
@@ -388,6 +384,28 @@ export function AiAssistant() {
         exportChat,
     } = useAiChat({ iterationId, curriculumId });
 
+    const toggleOpen = React.useCallback(() => setOpen((value) => !value), []);
+    const available = Boolean(enabled && userEnabled);
+
+    useCommand({
+        id: "ai.toggle",
+        title: open ? 'סגירת עוזר ה-AI' : 'פתיחת עוזר ה-AI',
+        group: COMMAND_GROUPS.ai,
+        icon: <AutoAwesomeIcon />,
+        keywords: ["ai", "assistant", "chat", "עוזר", "בינה"],
+        enabled: available,
+        run: toggleOpen,
+    });
+    useCommand({
+        id: "ai.reset",
+        title: "שיחה חדשה עם עוזר ה-AI",
+        group: COMMAND_GROUPS.ai,
+        icon: <DeleteSweepIcon />,
+        keywords: ["new chat", "reset", "clear", "שיחה חדשה"],
+        enabled: available && !busy && timeline.length > 0,
+        run: reset,
+    });
+
     const scrollRef = React.useRef<HTMLDivElement>(null);
     // Tracked on scroll rather than read during the effect: by the time the
     // new content has rendered, the measurement that decides whether to follow
@@ -459,7 +477,7 @@ export function AiAssistant() {
                 <Fab
                     aria-label="ai-assistant"
                     color="primary"
-                    onClick={() => setOpen((value) => !value)}
+                    onClick={toggleOpen}
                     sx={{
                         position: "fixed",
                         bottom: LAUNCHER_BOTTOM,
@@ -563,7 +581,7 @@ export function AiAssistant() {
                                         יכול גם לבצע שינויים — כל שינוי יוצג
                                         לאישור שלך לפני שהוא מתבצע.
                                     </Typography>
-                                    {SUGGESTIONS.map((suggestion) => (
+                                    {AI_SUGGESTED_PROMPTS.map((suggestion) => (
                                         <Chip
                                             clickable
                                             key={suggestion}

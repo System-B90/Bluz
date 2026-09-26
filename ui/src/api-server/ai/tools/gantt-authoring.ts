@@ -18,6 +18,7 @@ import {
     requireText,
 } from "@/api-server/ai/tools/common";
 import { requireCurriculumId, CURRICULUM_ID_PARAM } from "@/api-server/ai/tools/gantt";
+import { weekHints } from "@/api-server/ai/tools/hints";
 import { AiTool } from "@/api-server/ai/tools/types";
 import {
     constraintInsertFromPayload,
@@ -31,6 +32,7 @@ import { DbModule } from "@/api-server/gantt/db-module";
 import { DbModuleEvent } from "@/api-server/gantt/db-module-event";
 import { DbSyllabus } from "@/api-server/gantt/db-syllabus";
 import { DbWeek } from "@/api-server/gantt/db-week";
+import { dayjs } from "@/api-shared/dayjs-setup";
 import { ClientApiError } from "@/api-shared/errors";
 import { AiToolDanger, AiToolKind } from "@/api-shared/types/ai";
 import { CreateConstraintPayload } from "@/api-shared/types/gantt/create-payloads";
@@ -230,7 +232,7 @@ export const listWeeksTool: AiTool<{ curriculumId?: string } & PageArgs> = {
     title: "שבועות בגאנט",
     danger: AiToolDanger.Safe,
     kind: AiToolKind.Read,
-    description: "מחזיר את שבועות הגאנט, עם מספר, הערה וסימון תורנות סופ\"ש.",
+    description: "מחזיר את שבועות הגאנט: מספר, תאריכים, הערה וסגירת שבת (weekendDuty).",
     parameters: {
         type: "object",
         properties: { curriculumId: CURRICULUM_ID_PARAM, ...PAGE_PARAMS },
@@ -240,16 +242,26 @@ export const listWeeksTool: AiTool<{ curriculumId?: string } & PageArgs> = {
         const curriculum = (await DbCurriculum.getItem(
             requireCurriculumId(args, context),
         )) as Row;
+        // Same mapping as the Gantt screen's getDayDate: the sorted position,
+        // not the week number, is the offset from startDate.
+        const start = curriculum.startDate ? dayjs(curriculum.startDate).startOf("day") : null;
         const weeks = (curriculum.c2w ?? [])
-            .map((link: Row) => ({
-                id: link.week.id,
-                number: link.week.number,
-                comment: link.week.comment,
-                weekendDuty: link.week.weekendDuty,
-            }))
-            .sort((a: Row, b: Row) => a.number - b.number);
+            .map((link: Row) => link.week)
+            .sort((a: Row, b: Row) => a.number - b.number)
+            .map((week: Row, index: number) => ({
+                id: week.id,
+                number: week.number,
+                from: start?.add(index * 7, "day").format("YYYY-MM-DD") ?? null,
+                to: start?.add(index * 7 + 6, "day").format("YYYY-MM-DD") ?? null,
+                comment: week.comment,
+                weekendDuty: week.weekendDuty,
+            }));
         const page = paginate(weeks, args);
-        return { data: page, summary: pageSummary(page, "שבועות") };
+        return {
+            data: page,
+            summary: pageSummary(page, "שבועות"),
+            hints: weekHints(Boolean(start)),
+        };
     },
 };
 

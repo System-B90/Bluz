@@ -249,7 +249,7 @@ describe("list_events visibility filters (#719)", () => {
             })) as never,
         );
         const result = await listEventsTool.execute(
-            { ...RANGE, limit: 2 },
+            { ...RANGE, limit: 2, fields: ["hidden", "fake", "color"] },
             context,
         );
         const page = result.data as {
@@ -260,11 +260,10 @@ describe("list_events visibility filters (#719)", () => {
         expect(page.total).toBe(3);
         expect(page.items).toHaveLength(2);
         expect(page.nextOffset).toBe(2);
-        expect(page.items[0]).toMatchObject({
-            hidden: true,
-            fake: false,
-            color: null,
-        });
+        // Empty values are dropped so a long list fits the result cap.
+        expect(page.items[0]).toMatchObject({ hidden: true });
+        expect(page.items[0]).not.toHaveProperty("fake");
+        expect(page.items[0]).not.toHaveProperty("color");
         expect(page.items[1]).toMatchObject({ fake: true });
     });
 });

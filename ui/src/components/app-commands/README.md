@@ -34,6 +34,10 @@ the palette's contents follow the user around the app.
 | `useCurriculumCommands.tsx` | `gantt/curriculum-fab` | `entity` | Switch curriculum |
 | `GanttContentCommands.tsx` | `gantt/curriculum-view` | `entity` | Syllabuses, modules, events in the loaded curriculum |
 
+Beyond those files, most on-screen buttons mirror themselves from their own
+component with `useCommand` (see "Mirroring a button" below), so their commands
+live next to the button, not here.
+
 App-wide commands read from the Hive/settings data providers, so
 `BluzCommandPalette` must be mounted **inside** them — currently in
 `app/(themed)/(post-auth)/(with-hive)/layout.tsx`.
@@ -56,6 +60,24 @@ re-growing a local copy here.
 3. Give it a stable `id` (`<surface>.<thing>.<verb>`), a `group` from
    `COMMAND_GROUPS`, and English `keywords` alongside the Hebrew `title` so it
    is reachable in either language.
+
+## Mirroring a button
+
+Buttons and their palette commands must call the **same handler** — never a
+copy of its logic.
+
+- One button: `useCommand({ id, title, group, icon, run: sameHandler })` in the
+  component that owns the button. Memoised on its fields, so an inline object
+  is fine. Pass `null` to register nothing.
+- Popover/menu triggers: read the anchor from a `ref`, not the click event, so
+  the command can open it too (`CalendarToolbar`, `GanttFilterButton`).
+- Shared buttons carry it for you:
+  - `ActionItemButton` — `command={{ id, keywords }}`; title, icon, enabled and
+    `onClick` come from the button.
+  - `ImportExportMenuButton` — `command={{ id, group }}` registers
+    `<id>.export`, `<id>.export.excel` and `<id>.import`.
+- Hidden containers (popovers, menus) must stay mounted (`keepMounted`) or the
+  commands inside disappear while closed.
 
 ## Wording
 

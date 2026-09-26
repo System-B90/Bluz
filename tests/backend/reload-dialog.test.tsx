@@ -2,6 +2,7 @@
 
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { CommandPaletteProvider } from "@system-b90/command-palette";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
@@ -41,6 +42,7 @@ vi.mock("@/api-client/gantt", () => ({
     ganttApi: { cut: { cut, plan, pullBack, reload, status } },
 }));
 
+import { PALETTE_LABELS } from "@/components/app-commands/labels";
 import { CurriculumCutError } from "@/api-shared/types/gantt/cut";
 import { CurriculumReloadError } from "@/api-shared/types/gantt/reload";
 import { CutToScheduleAction } from "@/components/gantt/curriculum-fab/action-items/CutToScheduleAction";
@@ -316,10 +318,13 @@ describe("dialogs — stale state across opens", () => {
     it("still resets when the dialog is closed through its own button", async () => {
         const user = userEvent.setup();
         render(
-            <CutToScheduleAction
-                onProcessingChange={vi.fn()}
-                sourceCurriculum={curriculum}
-            />,
+            // The action mirrors its buttons in the command palette.
+            <CommandPaletteProvider labels={PALETTE_LABELS}>
+                <CutToScheduleAction
+                    onProcessingChange={vi.fn()}
+                    sourceCurriculum={curriculum}
+                />
+            </CommandPaletteProvider>,
         );
 
         await user.click(

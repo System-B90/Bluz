@@ -139,6 +139,9 @@ export function useAiChat(scope: AiChatScope) {
     // The transcript is a ref, not state: a turn appends to it while streaming
     // and every render in between would otherwise fight the update.
     const transcript = React.useRef<Array<AiMessage>>([]);
+    // Reasoning blocks for export — kept separate from transcript since they
+    // are not replayed to the model (see comment at ReasoningDelta handler).
+    const reasoning = React.useRef<Array<{ text: string }>>([]);
     const abortRef = React.useRef<AbortController | null>(null);
     // Guards run() against reentrancy: `busy` is state and only visible after
     // a render, so two clicks inside the same tick (e.g. a double-fired
@@ -235,6 +238,12 @@ export function useAiChat(scope: AiChatScope) {
                         // Reasoning never enters the transcript: it is not
                         // part of the answer, and replaying it would bill the
                         // model to re-read its own scratchpad every turn.
+                        // But we track it separately for export.
+                        if (reasoning.current.length === 0 || reasoning.current[reasoning.current.length - 1].text.endsWith("\n\n")) {
+                            reasoning.current.push({ text: event.text });
+                        } else {
+                            reasoning.current[reasoning.current.length - 1].text += event.text;
+                        }
                         openAssistantId = null;
                         openThinkingId = appendText(
                             AiTimelineKind.Thinking,
@@ -246,7 +255,12 @@ export function useAiChat(scope: AiChatScope) {
                     case AiStreamEventType.ReasoningDelta: {
                         // Same wire channel as Reasoning above, delivered in
                         // fragments instead of one block — same Thinking
-                        // bubble either way.
+                        // bubble either way. Track for export.
+                        if (reasoning.current.length > 0) {
+                            reasoning.current[reasoning.current.length - 1].text += event.text;
+                        } else {
+                            reasoning.current.push({ text: event.text });
+                        }
                         openAssistantId = null;
                         openThinkingId = appendText(
                             AiTimelineKind.Thinking,
@@ -605,13 +619,14 @@ export function useAiChat(scope: AiChatScope) {
         [pendingChoice, busy, run, answerPendingCalls],
     );
 
-    /** Downloads the conversation, tool calls and results included. */
+    /** Downloads the conversation, tool calls, results, and CoT included. */
     const exportChat = React.useCallback(
         (format: ChatExportFormat) => {
             downloadChatExport(
                 buildChatExport(transcript.current, format, {
                     exportedAt: new Date(),
                     model: stats.model,
+                    reasoning: reasoning.current.length > 0 ? reasoning.current : undefined,
                 }),
             );
         },
@@ -625,6 +640,7 @@ export function useAiChat(scope: AiChatScope) {
     const reset = React.useCallback(() => {
         abortRef.current?.abort();
         transcript.current = [];
+        reasoning.current = [];
         setTimeline([]);
         setStats({ turns: 0 });
     }, []);

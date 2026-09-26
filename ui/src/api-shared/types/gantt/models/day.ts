@@ -1,5 +1,5 @@
 import { BaseGantItem } from "@/api-shared/types/gantt/models/shared";
-import { GanttWeekId } from "@/api-shared/types/gantt/models/week";
+import type { GanttWeekId } from "@/api-shared/types/gantt/models/week";
 
 export enum GanttDayIndex {
     Sunday = 0,

@@ -19,6 +19,14 @@ import {
     paginate,
     parseDate,
 } from "@/api-server/ai/tools/common";
+import { ITERATION_HINTS } from "@/api-server/ai/tools/hints";
+import {
+    hasPeople,
+    LIST_EXTRA_FIELDS,
+    listEventsHints,
+    ListExtraField,
+    listRow,
+} from "@/api-server/ai/tools/list-row";
 import { AiTool } from "@/api-server/ai/tools/types";
 import { DbEvent } from "@/api-server/db-event";
 import { DbEventHistory } from "@/api-server/db-event-history";
@@ -51,6 +59,7 @@ function summarizeEvent(event: DbEventDocument) {
         rooms: event.rooms,
         courses: event.courses,
         instructors: event.instructors,
+        lecturers: event.lecturers,
         locked: event.locked,
         // Without these the model cannot tell a student-invisible event from
         // a visible one, nor find the placeholders it created earlier.
@@ -112,6 +121,7 @@ export const listIterationsTool: AiTool<Record<string, never>> = {
                 curriculumId: iteration.ganttCurriculumId,
             })),
             summary: `נמצאו ${iterations.length} מחזורים`,
+            hints: ITERATION_HINTS,
         };
     },
 };
@@ -142,6 +152,8 @@ type ListEventsArgs = {
     nameContains?: string;
     hidden?: boolean;
     fake?: boolean;
+    withPeople?: boolean;
+    fields?: Array<ListExtraField>;
 } & PageArgs;
 
 export const listEventsTool: AiTool<ListEventsArgs> = {
@@ -176,6 +188,17 @@ export const listEventsTool: AiTool<ListEventsArgs> = {
                 description:
                     "true — רק אירועים פיקטיביים; false — רק אמיתיים. השמט לכולם.",
             },
+            withPeople: {
+                type: "boolean",
+                description: "true — רק אירועים עם מבזר או מרצה. לשאלות כמו \"מי מבזר\".",
+            },
+            fields: {
+                type: "array",
+                items: { type: "string", enum: LIST_EXTRA_FIELDS },
+                description:
+                    "שדות להוסיף מעבר ל-id, שם ושעות. בקש רק מה שצריך לשאלה " +
+                    '(למשל "מי מבזר" — instructors, lecturers).',
+            },
             ...PAGE_PARAMS,
         },
         required: ["from", "to"],
@@ -203,8 +226,16 @@ export const listEventsTool: AiTool<ListEventsArgs> = {
             Object.keys(filter).length ? filter : undefined,
             await context.readController(),
         );
-        const page = paginate(events.map(summarizeEvent), args);
-        return { data: page, summary: pageSummary(page, "אירועים בטווח") };
+        const summaries = events
+            .map(summarizeEvent)
+            .filter((event) => !args.withPeople || hasPeople(event));
+        const fields = args.fields ?? [];
+        const page = paginate(summaries.map((event) => listRow(event, fields)), args);
+        return {
+            data: page,
+            summary: pageSummary(page, "אירועים בטווח"),
+            hints: listEventsHints(summaries, fields),
+        };
     },
 };
 

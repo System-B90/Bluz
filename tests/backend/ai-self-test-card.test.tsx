@@ -26,8 +26,11 @@ const report = {
     model: "test-model",
     durationMs: 4_000,
     totalTokens: 900,
-    passed: 1,
-    total: 2,
+    passed: 0,
+    total: 1,
+    checksPassed: 1,
+    checksTotal: 2,
+    gateHeld: true,
     cases: [
         {
             id: "read-schedule",
@@ -36,6 +39,8 @@ const report = {
             answer: "יש שלושה אירועים.",
             toolCalls: ["list_events"],
             durationMs: 1_200,
+            passed: false,
+            gateHeld: true,
             checks: [
                 { label: "השתמש בכלי קריאת האירועים", passed: true },
                 {
@@ -67,7 +72,7 @@ describe("AiSelfTest", () => {
         );
 
         await waitFor(() =>
-            expect(screen.getByText("1/2 בדיקות עברו")).toBeTruthy(),
+            expect(screen.getByText("0/1 מקרים עברו")).toBeTruthy(),
         );
         // The cost of testing is shown, not hidden — a run burns real tokens.
         expect(screen.getByText(/900 טוקנים/)).toBeTruthy();
@@ -112,7 +117,7 @@ describe("AiSelfTest", () => {
         render(<AiSelfTest />);
 
         await waitFor(() =>
-            expect(screen.getByText("1/2 בדיקות עברו")).toBeTruthy(),
+            expect(screen.getByText("0/1 מקרים עברו")).toBeTruthy(),
         );
         expect(startAiBenchmark).not.toHaveBeenCalled();
     });
@@ -122,5 +127,23 @@ describe("AiSelfTest", () => {
         render(<AiSelfTest />);
 
         await waitFor(() => expect(screen.getByText("בודק…")).toBeTruthy());
+    });
+
+    it("lists every case live while the run is in flight", async () => {
+        fetchAiBenchmarkJob.mockResolvedValue({
+            status: "running",
+            startedAt: 1,
+            cases: [
+                { id: "a", title: "מקרה ראשון", prompt: "א", state: "done", toolCalls: ["list_events"], result: report.cases[0] },
+                { id: "b", title: "מקרה שני", prompt: "ב", state: "running", toolCalls: ["list_people"] },
+                { id: "c", title: "מקרה שלישי", prompt: "ג", state: "pending", toolCalls: [] },
+            ],
+        });
+        render(<AiSelfTest />);
+
+        await waitFor(() => expect(screen.getByText("מקרה שני")).toBeTruthy());
+        expect(screen.getByText("מקרה ראשון")).toBeTruthy();
+        expect(screen.getByText("מקרה שלישי")).toBeTruthy();
+        expect(screen.getByText("1/2")).toBeTruthy();
     });
 });

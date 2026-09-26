@@ -1,22 +1,46 @@
 import CircularProgress from "@mui/material/CircularProgress";
 import IconButton, { IconButtonProps } from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
+import { Command } from "@system-b90/command-palette";
+import { MouseEvent } from "react";
+
+import { COMMAND_GROUPS } from "@/components/app-commands/labels";
+import { useCommand } from "@/components/app-commands/use-command";
 
 export type ActionItemButtonProps = {
     tooltipTitle: string;
     startIcon?: React.ReactNode;
     loading?: boolean;
-} & Omit<IconButtonProps, "size" | "sx">;
+    onClick?: (event?: MouseEvent<HTMLButtonElement>) => void;
+    /**
+     * Mirror this button in the command palette. Title, icon, enabled state
+     * and handler all come from the button itself.
+     */
+    command?: Pick<Command, "id" | "keywords" | "subtitle">;
+} & Omit<IconButtonProps, "onClick" | "size" | "sx">;
 
 export function ActionItemButton({
     tooltipTitle,
     startIcon,
     loading,
+    command,
     children: _children,
     ...props
 }: ActionItemButtonProps)
 {
     const isDisabled = Boolean(props.disabled || loading);
+    const { onClick } = props;
+
+    useCommand(command && onClick
+        ? {
+            ...command,
+            title: tooltipTitle,
+            group: COMMAND_GROUPS.gantt,
+            icon: startIcon,
+            enabled: !isDisabled,
+            run: onClick,
+        }
+        : null);
 
     return (
         <Tooltip title={ tooltipTitle }>

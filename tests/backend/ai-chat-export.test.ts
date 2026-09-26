@@ -75,6 +75,6 @@ describe("system prompt grounding", () => {
         for (const term of ["סילבוס", "גאנט", "אירוע", "מערך", "מופע", "פיקטיבי"]) {
             expect(prompt).toContain(`${term}`);
         }
-        expect(prompt).toContain("מערך — מודול");
+        expect(prompt).toContain("סילבוס ← מערך ← מופע");
     });
 });

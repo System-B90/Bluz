@@ -4,6 +4,8 @@ import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { COMMAND_GROUPS } from "@/components/app-commands/labels";
+import { useCommand } from "@/components/app-commands/use-command";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
 
@@ -24,6 +26,15 @@ export function CreateSyllabusButton({
             ),
         );
     }, [curriculumId, createSyllabus, enqueueSnackbar]);
+
+    useCommand({
+        id: "gantt.syllabus.new",
+        title: "סילבוס חדש",
+        group: COMMAND_GROUPS.gantt,
+        icon: <AddIcon />,
+        keywords: ["new syllabus", "create syllabus", "add", "סילבוס"],
+        run: clickHandler,
+    });
 
     return (
         <Button

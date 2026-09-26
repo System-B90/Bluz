@@ -263,3 +263,15 @@ export const AI_MAX_RESPONSE_TOKENS = 2_000;
  * single call — and bills it again on every later turn of the conversation.
  */
 export const AI_MAX_TOOL_RESULT_CHARS = 12_000;
+
+/**
+ * Starter prompts on the empty chat. The self-test keys a case by each one
+ * (`SUGGESTED_PROMPT_CASES`), so a new chip without a case fails typecheck.
+ */
+export const AI_SUGGESTED_PROMPTS = [
+    'מה יש בלו"ז השבוע?',
+    "מי מבזר השבוע?",
+    "תוסיף הפסקות בין שיעורים",
+] as const;
+
+export type AiSuggestedPrompt = (typeof AI_SUGGESTED_PROMPTS)[number];

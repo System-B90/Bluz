@@ -1,9 +1,6 @@
-import {
-    GanttCurriculumId,
-    GanttEventId,
-    GanttModuleId,
-} from "@/api-shared/types/gantt/models";
-import { GanttDayId } from "@/api-shared/types/gantt/models/day";
+import type { GanttCurriculumId } from "@/api-shared/types/gantt/models/curriculum";
+import type { GanttDayId } from "@/api-shared/types/gantt/models/day";
+import type { GanttEventId, GanttModuleId } from "@/api-shared/types/gantt/models/shared";
 
 /**
  * The date mapping of a module.

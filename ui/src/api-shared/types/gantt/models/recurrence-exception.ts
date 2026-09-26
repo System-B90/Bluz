@@ -1,8 +1,6 @@
-import {
-    GanttCurriculumId,
-    GanttDayId,
-    GanttEventId,
-} from "@/api-shared/types/gantt/models";
+import type { GanttCurriculumId } from "@/api-shared/types/gantt/models/curriculum";
+import type { GanttDayId } from "@/api-shared/types/gantt/models/day";
+import type { GanttEventId } from "@/api-shared/types/gantt/models/shared";
 
 /**
  * Marks a single occurrence day of a recurring event as excepted within a

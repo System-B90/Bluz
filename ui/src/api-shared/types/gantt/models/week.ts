@@ -1,4 +1,4 @@
-import { GanttDayId } from "@/api-shared/types/gantt/models/day";
+import type { GanttDayId } from "@/api-shared/types/gantt/models/day";
 import { BaseGantItem } from "@/api-shared/types/gantt/models/shared";
 
 export type GanttWeek = {

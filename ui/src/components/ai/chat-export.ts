@@ -16,6 +16,8 @@ export enum ChatExportFormat {
 export type ChatExportMeta = {
     exportedAt: Date;
     model?: string;
+    /** Thinking/reasoning blocks, in order, for inclusion in export. */
+    reasoning?: Array<{ text: string }>;
 };
 
 const ROLE_HEADING: Record<AiRole, string> = {
@@ -24,6 +26,9 @@ const ROLE_HEADING: Record<AiRole, string> = {
     [AiRole.Assistant]: "עוזר",
     [AiRole.Tool]: "תוצאת כלי",
 };
+
+const THINKING_HEADING = "שרשרת מחשבה (CoT)";
+const THINKING_EMOJI = "🤔";
 
 /** Pretty-prints a JSON string when it parses, verbatim otherwise. */
 function prettyJson(raw: string): string {
@@ -69,6 +74,17 @@ export function transcriptToMarkdown(
             );
         }
     }
+
+    // Include reasoning blocks if present
+    if (meta.reasoning?.length) {
+        lines.push("", `## ${THINKING_EMOJI} ${THINKING_HEADING}`, "");
+        for (const block of meta.reasoning) {
+            if (block.text.trim()) {
+                lines.push(block.text, "");
+            }
+        }
+    }
+
     return `${lines.join("\n")}\n`;
 }
 
@@ -81,6 +97,7 @@ export function transcriptToJson(
             exportedAt: meta.exportedAt.toISOString(),
             ...(meta.model ? { model: meta.model } : {}),
             messages,
+            ...(meta.reasoning?.length ? { reasoning: meta.reasoning } : {}),
         },
         null,
         2,

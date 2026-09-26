@@ -34,9 +34,9 @@ describe("buildSystemPrompt", () => {
         withPinnedClock(() => {
             const prompt = buildSystemPrompt(context());
 
-            expect(prompt).toContain("המשתמש המחובר: מיכאל.");
-            expect(prompt).toContain("המחזור בהקשר: 2026b.");
-            expect(prompt).toContain("הגאנט שפתוח כרגע במסך: c-1.");
+            expect(prompt).toContain("אתה משוחח עם מיכאל.");
+            expect(prompt).toContain("מחזור: 2026b.");
+            expect(prompt).toContain("גאנט פתוח במסך: c-1.");
         });
     });
 
@@ -46,8 +46,8 @@ describe("buildSystemPrompt", () => {
                 context({ iterationId: undefined, curriculumId: undefined }),
             );
 
-            expect(prompt).toContain("המשתמש עובד על המחזור הנוכחי.");
-            expect(prompt).toContain("אין גאנט פתוח במסך כרגע.");
+            expect(prompt).toContain("מחזור: הנוכחי.");
+            expect(prompt).toContain("אין גאנט פתוח במסך.");
         });
     });
 
@@ -55,7 +55,7 @@ describe("buildSystemPrompt", () => {
         withPinnedClock(() => {
             // Weekday and date both: "Tuesday" must resolve to a date (#719).
             expect(buildSystemPrompt(context())).toContain(
-                "היום: יום ראשון, 2026-08-23",
+                "היום יום ראשון, 2026-08-23",
             );
         });
     });
@@ -66,11 +66,11 @@ describe("buildSystemPrompt", () => {
 
             // The core contract: Hebrew answers, look-before-write, preview
             // before a cut, human-gated writes, and no invented identifiers.
-            expect(prompt).toContain("ענה תמיד בעברית");
-            expect(prompt).toContain("כללי עבודה:");
+            expect(prompt).toContain("ענה בעברית");
+            expect(prompt).toContain("## כללים");
             expect(prompt).toContain("preview_curriculum_cut");
             expect(prompt).toContain("cut_curriculum");
-            expect(prompt).toContain("אל תמציא מזהים");
+            expect(prompt).toContain("השתמש רק במזהים שחזרו מכלים");
         });
     });
 });

@@ -6,6 +6,7 @@
  * draft guard, because it calls the same functions the Gantt screen calls.
  */
 
+import { CURRICULUM_HINTS } from "@/api-server/ai/tools/hints";
 import { AiTool, AiToolContext } from "@/api-server/ai/tools/types";
 import { previewCurriculumCut, cutCurriculumToSchedule } from "@/api-server/gantt/cut";
 import { DbCurriculum } from "@/api-server/gantt/db-curriculum";
@@ -79,6 +80,7 @@ export const getCurriculumTool: AiTool<CurriculumArgs> = {
         return {
             data: curriculum,
             summary: `נטען הגאנט "${curriculum.title ?? id}"`,
+            hints: CURRICULUM_HINTS,
         };
     },
 };

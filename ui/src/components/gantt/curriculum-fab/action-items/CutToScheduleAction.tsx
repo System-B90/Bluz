@@ -66,6 +66,7 @@ export function CutToScheduleAction({
         <Fragment>
             <ActionItemButton
                 color={isCut ? "warning" : undefined}
+                command={{ id: "gantt.curriculum.cut", keywords: ["cut", "schedule", "pull back", "גזירה", "משיכה"] }}
                 disabled={buttonDisabled}
                 loading={loading}
                 onClick={handleClick}
@@ -87,6 +88,7 @@ export function CutToScheduleAction({
             />
             {isCut ? (
                 <ActionItemButton
+                    command={{ id: "gantt.curriculum.cut.reload", keywords: ["reload", "sync", "update schedule", "עדכון"] }}
                     disabled={disabled}
                     loading={loading}
                     onClick={handleReloadClick}

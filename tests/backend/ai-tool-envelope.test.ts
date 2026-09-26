@@ -56,13 +56,13 @@ describe("successEnvelope", () => {
         });
         expect(envelope.next).toContain("ודא מול הרשימה לפני שינוי.");
         expect(envelope.next).toContain(
-            "השתמש רק במזהים ובערכים שחזרו כאן. אל תמציא מזהים.",
+            "השתמש רק במזהים שחזרו מכלים.",
         );
     });
 
     it("tells the model a write already happened, so it does not repeat it", () => {
         const envelope = successEnvelope(writeTool, "נמחק", { id: "e1" });
-        expect(envelope.next.join(" ")).toContain("השינוי בוצע בפועל");
+        expect(envelope.next.join(" ")).toContain("השינוי בוצע.");
     });
 
     it("truncates an oversized array and says how much it kept", () => {
@@ -124,7 +124,7 @@ describe("errorEnvelope", () => {
 
         expect(envelope.ok).toBe(false);
         expect(envelope.retryable).toBe(true);
-        expect(envelope.next.join(" ")).toContain("אל תקרא לכלי הזה שוב עם אותו מזהה");
+        expect(envelope.next.join(" ")).toContain("הבא מזהים עדכניים");
     });
 
     it("puts the tool's own recovery advice first", () => {
@@ -141,7 +141,7 @@ describe("unknownToolEnvelope and declinedEnvelope", () => {
     it("tells the model invented tool names are not available", () => {
         const envelope = unknownToolEnvelope("delete_everything");
         expect(envelope.retryable).toBe(true);
-        expect(envelope.next.join(" ")).toContain("אל תמציא שמות כלים");
+        expect(envelope.next.join(" ")).toContain("השתמש רק בכלים שהוגדרו לך.");
     });
 
     it("marks a refusal as final so the model stops asking", () => {

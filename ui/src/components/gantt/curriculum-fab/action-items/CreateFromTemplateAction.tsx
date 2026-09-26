@@ -4,7 +4,8 @@ import ListItemText from "@mui/material/ListItemText";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Typography from "@mui/material/Typography";
-import { MouseEvent, useCallback, useState } from "react";
+import { Command, useCommands } from "@system-b90/command-palette";
+import { MouseEvent, useCallback, useMemo, useState } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
 import { seedCurriculumFromTemplate } from "@/api-client/gantt/apply-template";
@@ -15,6 +16,7 @@ import
     CURRICULUM_TEMPLATES,
     GanttCurriculumTemplate,
 } from "@/api-shared/types/gantt/templates";
+import { COMMAND_GROUPS } from "@/components/app-commands/labels";
 import { ActionItemButton } from "@/components/gantt/curriculum-fab/action-items/ActionItemButton";
 import { BaseActionItemProps } from "@/components/gantt/curriculum-fab/action-items/ActionItemProps";
 import { useAsyncAction } from "@/components/gantt/curriculum-fab/action-items/use-async-action";
@@ -40,7 +42,9 @@ export function CreateFromTemplateAction({
     const [ anchorEl, setAnchorEl ] = useState<HTMLElement | null>(null);
 
     const openMenu = useCallback(
-        (e: MouseEvent<HTMLButtonElement>) => setAnchorEl(e.currentTarget),
+        // Needs the click's anchor, so this button has no palette mirror of
+        // its own — the per-template commands below stand in for it.
+        (e?: MouseEvent<HTMLButtonElement>) => setAnchorEl(e?.currentTarget ?? null),
         [],
     );
     const closeMenu = useCallback(() => setAnchorEl(null), []);
@@ -70,6 +74,22 @@ export function CreateFromTemplateAction({
         },
         [ closeMenu, runAction, onCreate ],
     );
+
+    const commands = useMemo<Array<Command>>(
+        () =>
+            CURRICULUM_TEMPLATES.map((template) => ({
+                id: `gantt.curriculum.template.${template.id}`,
+                title: `גאנט חדש מתבנית ${template.label}`,
+                subtitle: `${template.weekCount} שבועות`,
+                group: COMMAND_GROUPS.gantt,
+                icon: <AutoFixHighIcon />,
+                keywords: [ "template", "new curriculum", "תבנית" ],
+                enabled: !props.disabled && !loading,
+                run: () => handleSelect(template),
+            })),
+        [ handleSelect, props.disabled, loading ],
+    );
+    useCommands(commands);
 
     return (
         <>

@@ -39,6 +39,7 @@ export function DeleteCurriculumAction({
 
             <ActionItemButton
                 color="error"
+                command={ { id: "gantt.curriculum.delete", subtitle: sourceCurriculum?.title, keywords: [ "delete curriculum", "remove", "מחיקת גאנט" ] } }
                 loading={ loading }
                 onClick={ clickHandler }
                 startIcon={ <DeleteOutlineIcon fontSize="small" /> }

@@ -30,6 +30,7 @@ export function CreateDraftAction({
 
     return (
         <ActionItemButton
+            command={ { id: "gantt.curriculum.create", keywords: [ "new curriculum", "create", "draft", "גאנט חדש" ] } }
             loading={loading}
             onClick={clickHandler}
             startIcon={<AddCircleOutlineIcon fontSize="small" />}

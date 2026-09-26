@@ -350,6 +350,7 @@ export async function* runAiAgent(
                     tool,
                     result.summary,
                     result.data,
+                    result.hints,
                 );
                 record(toolMessage(call, envelope));
                 yield {
