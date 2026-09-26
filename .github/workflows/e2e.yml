@@ -74,7 +74,7 @@ jobs:
     # server closed unexpectedly" (master 23f3af5) — a rerun usually passes.
     build-test-images:
         name: Build Test Images
-        runs-on: [self-hosted, dind, Linux]
+        runs-on: [self-hosted, Linux]
         # Version-bump commits on master (chore: bump version to *) only touch
         # package.json, so they'd otherwise trigger a full e2e run for nothing.
         if: >-
@@ -151,7 +151,7 @@ jobs:
     # green. Runs by default (push/PR) and on dispatch target=self-hosted.
     full-test-suite-selfhosted:
         name: Full Test Suite (E2E, Self-Hosted)
-        runs-on: [self-hosted, dind]
+        runs-on: [self-hosted, Linux]
         timeout-minutes: 90
         needs: build-test-images
         if: >-
@@ -728,7 +728,7 @@ jobs:
     # copy.
     cleanup-test-images:
         name: Delete Test Images Artifact
-        runs-on: [self-hosted, dind]
+        runs-on: [self-hosted, Linux]
         # Must wait for BOTH suites, not just the matrix. Only one of them
         # runs on any given trigger and the other is `skipped` -- and a skipped
         # need is a *satisfied* need, so gating on the github matrix alone let
