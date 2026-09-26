@@ -53,6 +53,12 @@ export type AiToolResult = {
     data: unknown;
     /** One Hebrew line shown in the chat transcript. */
     summary: string;
+    /**
+     * Guidance that depends on what this call returned, e.g. a rule that only
+     * matters when the payload holds people. Keeps the system prompt short:
+     * the model learns a rule at the moment it needs it.
+     */
+    hints?: Array<string>;
 };
 
 export type AiTool<TArgs = Record<string, unknown>> = {

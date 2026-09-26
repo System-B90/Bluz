@@ -17,6 +17,7 @@
 // Type-only: the benchmark test mocks this module down to `CALENDAR_TOOLS`,
 // and an `import type` is erased rather than resolved against that mock.
 import type { AiEventSummary } from "@/api-server/ai/tools/calendar";
+import { LIST_EXTRA_FIELDS, ListExtraField, listRow } from "@/api-server/ai/tools/list-row";
 import { AiTool } from "@/api-server/ai/tools/types";
 import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 import { AiToolDanger, AiToolKind } from "@/api-shared/types/ai";
@@ -81,6 +82,7 @@ export const FIXTURE_ROOMS: Array<FixtureRoom> = [
 const EVENT_DEFAULTS = {
     rooms: [],
     instructors: [] as Array<number>,
+    lecturers: [],
     locked: false,
     hidden: false,
     fake: false,
@@ -209,6 +211,7 @@ export type FixtureListEventsArgs = {
     nameContains?: string;
     hidden?: boolean;
     fake?: boolean;
+    fields?: Array<ListExtraField>;
 };
 
 /**
@@ -379,12 +382,17 @@ const listEventsFixtureTool: AiTool<FixtureListEventsArgs> = {
             nameContains: { type: "string" },
             hidden: { type: "boolean" },
             fake: { type: "boolean" },
+            fields: {
+                type: "array",
+                items: { type: "string", enum: LIST_EXTRA_FIELDS },
+            },
         },
         required: ["from", "to"],
         additionalProperties: false,
     },
     execute: async (args) => {
-        const items = filterFixtureEvents(args);
+        const items = filterFixtureEvents(args)
+            .map((event) => listRow(event, args.fields ?? []));
         return {
             data: { items, total: items.length, offset: 0 },
             summary: `נמצאו ${items.length} אירועים בטווח`,

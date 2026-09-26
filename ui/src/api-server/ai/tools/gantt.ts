@@ -79,6 +79,10 @@ export const getCurriculumTool: AiTool<CurriculumArgs> = {
         return {
             data: curriculum,
             summary: `נטען הגאנט "${curriculum.title ?? id}"`,
+            hints: [
+                'הגאנט הוא תוכנית. לשאלה על מה שקורה בפועל (מי מבזר, מה קורה השבוע) — list_events.',
+                "orchestratorId = אחראי, leadInstructorIds = אחראי מקצוע. אלה תכנון, לא נוכחות.",
+            ],
         };
     },
 };

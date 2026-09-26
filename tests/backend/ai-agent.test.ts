@@ -628,7 +628,7 @@ describe("runAiAgent", () => {
         expect(result).toMatchObject({ ok: false });
         expect(
             (result as { detail: { next: Array<string> } }).detail.next,
-        ).toContain("השתמש רק בכלים שהוגדרו לך. אל תמציא שמות כלים.");
+        ).toContain("השתמש רק בכלים שהוגדרו לך.");
     });
 
     it("carries the tool's friendly title and danger into the proposal", async () => {

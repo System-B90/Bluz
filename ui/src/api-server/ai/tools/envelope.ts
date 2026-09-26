@@ -35,7 +35,7 @@ export type AiToolEnvelope = {
 
 /** Guidance attached to every envelope, whatever the tool. */
 const BASE_SUCCESS_GUIDANCE = [
-    "השתמש רק במזהים ובערכים שחזרו כאן. אל תמציא מזהים.",
+    "השתמש רק במזהים שחזרו מכלים.",
 ];
 
 /**
@@ -45,22 +45,21 @@ const BASE_SUCCESS_GUIDANCE = [
  */
 const RECOVERY: Record<AiToolErrorKind, Array<string>> = {
     [AiToolErrorKind.InvalidArguments]: [
-        "הארגומנטים שגויים. תקן אותם לפי הסכמה של הכלי וקרא לו שוב פעם אחת.",
-        "אם אינך בטוח מה המשתמש התכוון — שאל אותו עם ask_user במקום לנחש.",
+        "תקן את הארגומנטים לפי הסכמה ונסה פעם אחת נוספת.",
+        "לא ברור מה המשתמש רצה? שאל עם ask_user.",
     ],
     [AiToolErrorKind.NotFound]: [
-        "המזהה לא קיים. הרץ שוב את כלי הקריאה המתאים כדי לקבל מזהים עדכניים.",
-        "אל תקרא לכלי הזה שוב עם אותו מזהה.",
+        "המזהה לא קיים. הבא מזהים עדכניים מכלי הקריאה המתאים.",
     ],
     [AiToolErrorKind.Rejected]: [
-        "הפעולה נדחתה על ידי חוקי המערכת. אל תנסה לעקוף אותה בכלי אחר.",
-        "הסבר למשתמש בעברית מה חסם את הפעולה ומה הוא יכול לעשות.",
+        "חוקי המערכת חסמו את הפעולה. אל תעקוף בכלי אחר.",
+        "הסבר למשתמש מה חסם ומה אפשר לעשות.",
     ],
     [AiToolErrorKind.Conflict]: [
-        "יש התנגשות עם נתונים קיימים. הצג למשתמש את ההתנגשות ובקש החלטה.",
+        "התנגשות עם נתונים קיימים. הצג אותה למשתמש ובקש החלטה.",
     ],
     [AiToolErrorKind.Unavailable]: [
-        "תקלה זמנית בשירות. אל תנסה שוב יותר מפעם אחת; אם היא חוזרת, דווח למשתמש.",
+        "תקלה זמנית. נסה שוב לכל היותר פעם אחת, ואז דווח למשתמש.",
     ],
 };
 
@@ -103,20 +102,27 @@ function capPayload(data: unknown): { data: unknown; notes: Array<string> } {
         return { data, notes: [] };
     }
 
-    if (Array.isArray(data)) {
+    // A page (`{ items, total, offset }`) truncates like the array inside it,
+    // so the model still gets valid, whole items plus the offset to resume at.
+    const page = data as { items?: unknown; offset?: number } | null;
+    const items = Array.isArray(data) ? data : Array.isArray(page?.items) ? page.items : null;
+    if (items) {
         // An array truncates meaningfully: fewer items, each one intact.
         const kept: Array<unknown> = [];
         let size = 0;
-        for (const item of data) {
+        for (const item of items) {
             size += JSON.stringify(item).length + 1;
             if (size > AI_MAX_TOOL_RESULT_CHARS) break;
             kept.push(item);
         }
+        const nextOffset = (page?.offset ?? 0) + kept.length;
         return {
-            data: kept,
+            data: Array.isArray(data) ? kept : { ...page, items: kept, nextOffset },
             notes: [
-                `התוצאה קוצצה: מוצגים ${kept.length} מתוך ${data.length} פריטים. ` +
-                    "צמצם את הטווח או הסינון כדי לראות את השאר.",
+                `התוצאה קוצצה: מוצגים ${kept.length} מתוך ${items.length} פריטים. ` +
+                    (Array.isArray(data)
+                        ? "צמצם את הטווח או הסינון."
+                        : `להמשך — offset=${nextOffset}, או צמצם את הטווח.`),
             ],
         };
     }
@@ -134,6 +140,7 @@ export function successEnvelope(
     tool: AiTool<any>,
     summary: string,
     data: unknown,
+    hints: Array<string> = [],
 ): AiToolEnvelope {
     const capped = capPayload(data);
     return {
@@ -144,9 +151,10 @@ export function successEnvelope(
         ...(capped.notes.length ? { notes: capped.notes } : {}),
         next: [
             ...capped.notes.map(() => "ציין למשתמש שהתוצאה חלקית."),
+            ...hints,
             ...(tool.nextSteps ?? []),
             ...(tool.kind === AiToolKind.Write
-                ? ["השינוי בוצע בפועל. דווח עליו למשתמש בקצרה ואל תחזור עליו."]
+                ? ["השינוי בוצע. דווח עליו בקצרה ואל תריץ אותו שוב."]
                 : []),
             ...BASE_SUCCESS_GUIDANCE,
         ],
@@ -186,8 +194,8 @@ export function unknownToolEnvelope(name: string): AiToolEnvelope {
         },
         retryable: true,
         next: [
-            "השתמש רק בכלים שהוגדרו לך. אל תמציא שמות כלים.",
-            "אם אין כלי מתאים — אמור למשתמש שהפעולה אינה נתמכת.",
+            "השתמש רק בכלים שהוגדרו לך.",
+            "אין כלי מתאים? אמור למשתמש שהפעולה אינה נתמכת.",
         ],
     };
 }
@@ -204,8 +212,8 @@ export function declinedEnvelope(
         error: { kind: AiToolErrorKind.Rejected, message: reason },
         retryable: false,
         next: [
-            "המשתמש דחה את הפעולה. אל תנסה להריץ אותה שוב.",
-            "שאל את המשתמש מה הוא כן רוצה שיקרה.",
+            "המשתמש דחה את הפעולה. אל תריץ אותה שוב.",
+            "שאל מה הוא כן רוצה.",
         ],
     };
 }
