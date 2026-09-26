@@ -1,0 +1,37 @@
+{
+    "name": "bluz",
+    "display_name": "Bluz",
+    "env_prefix": "BLUZ",
+    "release_repo": "System-B90/Bluz",
+    "roll": ["ui", "sessions", "proxy"],
+    "health": { "service": "ui", "url": "http://127.0.0.1:3000/api/health" },
+    "containers": { "ui": "bluz-ui", "proxy": "bluz-proxy" },
+    "backup": {
+        "sh": "backup/bluz-backup.sh",
+        "ps1": "backup/bluz-backup.ps1",
+        "restore_sh": "backup/bluz-restore.sh",
+        "restore_ps1": "backup/bluz-restore.ps1",
+        "root": "/var/backups/bluz",
+        "root_windows": "%ProgramData%\\bluz\\backups"
+    },
+    "state": ["nginx/ssl"],
+    "venv_packages": ["bluz-cli"],
+    "post_install": [
+        "See INSTALL.md and TROUBLESHOOTING.md in this directory."
+    ],
+    "bundle": {
+        "dir": "bluz",
+        "files": {
+            "docker-compose.yml": "deploy/docker-compose.release.yml",
+            "docker-compose.hive-local.yml": "deploy/docker-compose.hive-local.yml",
+            "setup.py": "scripts/setup.py",
+            "backup/bluz-backup.sh": "deploy/backup/bluz-backup.sh",
+            "backup/bluz-restore.sh": "deploy/backup/bluz-restore.sh",
+            "backup/bluz-backup.ps1": "deploy/backup/bluz-backup.ps1",
+            "backup/bluz-restore.ps1": "deploy/backup/bluz-restore.ps1",
+            "INSTALL.md": "docs/deployment/INSTALL.md",
+            "TROUBLESHOOTING.md": "docs/deployment/TROUBLESHOOTING.md"
+        },
+        "local_wheels": ["cli/dist/*.whl"]
+    }
+}

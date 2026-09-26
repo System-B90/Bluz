@@ -23,9 +23,6 @@ env:
     IMAGE_NAME_UI: system-b90/bluz/ui
     IMAGE_NAME_SESSIONS: system-b90/bluz/sessions
     IMAGE_NAME_PROXY: system-b90/bluz/proxy
-    # Public images required for the offline bundle
-    IMAGE_POSTGRES: postgres:15-alpine
-    IMAGE_MONGO: mongodb/mongodb-community-server:8.0-ubuntu2204
 
 jobs:
     # Lint and unit tests were separate jobs, each with its own checkout, Node
@@ -337,134 +334,28 @@ jobs:
                   username: ${{ github.actor }}
                   password: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Prepare Workspace
-              run: |
-                  mkdir -p release-online/images
-                  mkdir -p release-offline/images
-
-                  # Copy deployment scripts into both bundles
-                  cp ./scripts/install.sh ./scripts/update.sh ./scripts/setup.py ./scripts/requirements.txt release-online/
-                  cp ./scripts/install.sh ./scripts/update.sh ./scripts/setup.py ./scripts/requirements.txt release-offline/
-
-                  # Ship the release compose file (not the dev one) as docker-compose.yml
-                  # at the bundle root — see #451, the dev file breaks every documented
-                  # topology when shipped as-is.
-                  cp deploy/docker-compose.release.yml release-online/docker-compose.yml
-                  cp deploy/docker-compose.release.yml release-offline/docker-compose.yml
-
-                  # install.sh's closing message points at ./link-hive.sh, and link-hive.sh
-                  # reads docker-compose.hive-local.yml from the bundle root. Both must ship
-                  # or the co-located Hive topology is uninstallable from a release (#452).
-                  cp ./scripts/link-hive.sh ./scripts/link-hive.ps1 deploy/docker-compose.hive-local.yml release-online/
-                  cp ./scripts/link-hive.sh ./scripts/link-hive.ps1 deploy/docker-compose.hive-local.yml release-offline/
-
-                  # update.sh shells out to the backup scripts before it touches
-                  # anything, and they are the documented restore path, so both
-                  # bundles ship them at the location update.sh looks in first.
-                  mkdir -p release-online/backup release-offline/backup
-                  cp deploy/backup/bluz-backup.sh deploy/backup/bluz-restore.sh release-online/backup/
-                  cp deploy/backup/bluz-backup.sh deploy/backup/bluz-restore.sh release-offline/backup/
-
-                  # Guard: fail loudly if the bundle ever ships the dev compose file or is
-                  # missing anything install.sh references (see #451, #452).
-                  for dir in release-online release-offline; do
-                      grep -q '\.\./\.env' "${dir}/docker-compose.yml" \
-                          && { echo "::error::${dir} shipped the dev compose file"; exit 1; }
-                      for f in link-hive.sh docker-compose.hive-local.yml; do
-                          [ -f "${dir}/${f}" ] || { echo "::error::install.sh references ${f} but it is not in ${dir}"; exit 1; }
-                      done
-                  done
-
-                  # Pin online bundle to this release's tag (the "latest" GHCR tag is never published)
-                  echo "${{ github.ref_name }}" > release-online/VERSION
-
-                  # The offline bundle needs it too: `update.sh --package` reads
-                  # VERSION to learn which release a package holds, before it
-                  # loads a single image.
-                  echo "${{ github.ref_name }}" > release-offline/VERSION
-
-            - name: Export Offline Images
-              run: |
-                  TAG_NAME=${{ github.ref_name }}
-
-                  echo "Pulling freshly built custom images..."
-                  docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_UI }}:$TAG_NAME
-                  docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_SESSIONS }}:$TAG_NAME
-                  docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_PROXY }}:$TAG_NAME
-
-                  echo "Pulling public database images..."
-                  docker pull ${{ env.IMAGE_POSTGRES }}
-                  docker pull ${{ env.IMAGE_MONGO }}
-
-                  echo "Saving custom images to flat archives..."
-                  docker save ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_UI }}:$TAG_NAME -o release-offline/images/bluz-ui.tar
-                  docker save ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_SESSIONS }}:$TAG_NAME -o release-offline/images/bluz-sessions.tar
-                  docker save ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_PROXY }}:$TAG_NAME -o release-offline/images/bluz-proxy.tar
-
-                  echo "Saving database images to flat archives..."
-                  docker save ${{ env.IMAGE_POSTGRES }} -o release-offline/images/postgres.tar
-                  docker save ${{ env.IMAGE_MONGO }} -o release-offline/images/mongodb.tar
-
             - name: Setup Python
               uses: actions/setup-python@v7
               with:
                   python-version: "3.11"
 
+            # The offline bundle vendors the CLI wheel (app.json
+            # bundle.local_wheels) and installs it into the bundle's .venv.
             - name: Build Python CLI
               run: |
                   python -m pip install --upgrade pip build
                   python -m build cli/
 
-            # An offline box has no PyPI and no route to the org PEP 503 index,
-            # so shipping requirements.txt alone left install.sh's `pip install`
-            # dead on arrival. Vendor every wheel the wizard needs, plus the
-            # freshly built bluz CLI, and install.sh installs from wheels/ with
-            # --no-index.
-            #
-            # Bluz is installed on Windows as often as on Linux, so the download
-            # runs once per target platform. Both passes are strict: a dependency
-            # that stops publishing a wheel must fail the release here, not on a
-            # customer's air-gapped machine.
-            - name: Vendor Python wheels for the offline bundle
-              run: |
-                  mkdir -p release-offline/wheels
-                  for platform in manylinux2014_x86_64 win_amd64; do
-                      echo "Downloading wheels for ${platform}..."
-                      python -m pip download -r scripts/requirements.txt \
-                          --only-binary=:all: \
-                          --platform "${platform}" \
-                          --python-version 3.11 \
-                          -d release-offline/wheels
-                  done
-
-                  # The CLI itself is pure-python and platform independent.
-                  cp cli/dist/*.whl release-offline/wheels/
-
-                  # Guard: an empty or CLI-only wheels/ means the download
-                  # silently resolved nothing (see the --no-index path in
-                  # install.sh, which would then fail on the customer's box).
-                  count=$(ls release-offline/wheels/*.whl | wc -l)
-                  [ "$count" -gt 1 ] || { echo "::error::offline bundle has no vendored wheels"; exit 1; }
-                  echo "Vendored ${count} wheels."
-
-            - name: Compress Final Packages
-              run: |
-                  # The online bundle extracts into a versionless "bluz/" (#479).
-                  # Online upgrades are in place — same directory, same .env,
-                  # same nginx/ssl — so a version in the directory name would
-                  # only ever be a lie after the first update.sh run.
-                  #
-                  # The offline bundle now upgrades in place the same way
-                  # (`update.sh --package`), so it takes the versionless name
-                  # too — a version in the directory would be a lie after the
-                  # first upgrade. The two are packed one at a time because
-                  # they share that directory name.
-                  mv release-online bluz
-                  tar -czvf bluz-online-${{ github.ref_name }}.tar.gz bluz
-                  rm -rf bluz
-
-                  mv release-offline bluz
-                  tar -czvf bluz-offline-${{ github.ref_name }}.tar.gz bluz
+            # Everything the old Prepare Workspace / Export Offline Images /
+            # Vendor wheels / Compress steps did — and the guards they grew for
+            # #451, #452 and #479 — now lives in sb90-deploy, driven by
+            # deploy/app.json. Images come from docker-compose.release.yml, so
+            # the offline tars and an online pull cannot disagree.
+            - name: Craft release bundles
+              uses: System-B90/.github/actions/craft-release@main
+              with:
+                  tag: ${{ github.ref_name }}
+                  out: .
 
             - name: Publish GitHub Release
               uses: softprops/action-gh-release@v3
