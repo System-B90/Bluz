@@ -75,8 +75,8 @@ const AUTOSCROLL_SLACK_PX = 80;
 
 const SUGGESTIONS = [
     'מה יש בלו"ז השבוע?',
-    "אילו חדרים מוגדרים במחזור?",
-    "תראה לי תצוגה מקדימה של גזירת הגאנט",
+    "מי מבזר השבוע?",
+    "תוסיף הפסקות בין שיעורים",
 ];
 
 function UserBubble({ text }: { text: string }) {
