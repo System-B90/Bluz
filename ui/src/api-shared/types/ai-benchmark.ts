@@ -12,6 +12,8 @@
  * "GOOD" would be a promise this cannot keep.
  */
 
+import { AiMessage } from "@/api-shared/types/ai";
+
 /** One assertion about how the model behaved on a scripted prompt. */
 export type AiBenchmarkCheck = {
     /** Hebrew, one line: what was expected. */
@@ -32,6 +34,15 @@ export type AiBenchmarkCase = {
     toolCalls: Array<string>;
     /** The model's final prose answer. */
     answer: string;
+    /**
+     * Every message the agent loop produced — assistant turns, tool calls and
+     * the raw tool results — for the JSON export used to debug tools/prompts.
+     */
+    transcript: Array<AiMessage>;
+    /** Write proposals the gate stopped, with their parsed arguments. */
+    proposals: Array<{ name: string; args: Record<string, unknown> }>;
+    /** Reasoning/chain-of-thought text, when the model streamed any. */
+    reasoning?: string;
     /** Wall-clock time for the case. */
     durationMs: number;
     /** Set when the case could not run at all (upstream failure). */
@@ -65,6 +76,8 @@ export type AiBenchmarkLiveCase = {
 
 export type AiBenchmarkResult = {
     model: string;
+    /** The system prompt every case ran under. */
+    systemPrompt: string;
     cases: Array<AiBenchmarkCase>;
     /** Cases whose every check passed. */
     passed: number;

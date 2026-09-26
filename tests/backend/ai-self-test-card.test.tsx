@@ -24,6 +24,7 @@ import { AiSelfTest } from "@/components/settings-dialog/tabs/AiSelfTest";
 
 const report = {
     model: "test-model",
+    systemPrompt: "SYS",
     durationMs: 4_000,
     totalTokens: 900,
     passed: 0,
@@ -38,6 +39,8 @@ const report = {
             prompt: "מה מתוכנן?",
             answer: "יש שלושה אירועים.",
             toolCalls: ["list_events"],
+            transcript: [],
+            proposals: [],
             durationMs: 1_200,
             passed: false,
             gateHeld: true,

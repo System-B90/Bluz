@@ -21,13 +21,14 @@ import {
     FIXTURE_NOW,
 } from "@/api-server/ai/benchmark/fixture";
 import { AiProvider } from "@/api-server/ai/provider";
+import { buildSystemPrompt } from "@/api-server/ai/system-prompt";
 import {
     AiToolContext,
     AiToolRegistry,
     allTools,
     createToolRegistry,
 } from "@/api-server/ai/tools";
-import { AiRole, AiStreamEventType, AiToolKind } from "@/api-shared/types/ai";
+import { AiMessage, AiRole, AiStreamEventType, AiToolKind } from "@/api-shared/types/ai";
 import {
     AiBenchmarkCase,
     AiBenchmarkCaseState,
@@ -99,6 +100,8 @@ async function runCase(
     };
     let tokens = 0;
     let error: string | undefined;
+    let transcript: Array<AiMessage> = [];
+    let reasoning = "";
     const registry = instrumentedRegistry(observation.reads);
     const called = (name: string) => {
         observation.toolCalls.push(name);
@@ -122,6 +125,10 @@ async function runCase(
             case AiStreamEventType.Delta:
                 observation.answer += event.text;
                 break;
+            case AiStreamEventType.ReasoningDelta:
+            case AiStreamEventType.Reasoning:
+                reasoning += event.text;
+                break;
             case AiStreamEventType.ToolStart:
                 called(event.name);
                 if (registry.find(event.name)?.kind === AiToolKind.Write) {
@@ -143,9 +150,11 @@ async function runCase(
                 break;
             case AiStreamEventType.Done:
                 tokens += event.usage?.totalTokens ?? 0;
+                transcript = event.messages;
                 break;
             case AiStreamEventType.Error:
                 error = event.message;
+                transcript = event.messages ?? transcript;
                 break;
             default:
                 break;
@@ -185,6 +194,9 @@ async function runCase(
             prompt: spec.prompt,
             toolCalls: observation.toolCalls,
             answer: observation.answer.trim(),
+            transcript: [{ role: AiRole.User, content: spec.prompt }, ...transcript],
+            proposals: observation.proposals,
+            ...(reasoning ? { reasoning } : {}),
             durationMs: Date.now() - startedAt,
             ...(error ? { error } : {}),
             checks,
@@ -250,6 +262,7 @@ export async function runAiBenchmark(options: {
     const checks = cases.flatMap((entry) => entry.checks);
     return {
         model: options.provider.defaultModel,
+        systemPrompt: buildSystemPrompt(context),
         cases,
         passed: cases.filter((entry) => entry.passed).length,
         total: cases.length,

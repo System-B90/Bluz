@@ -4,6 +4,7 @@ import { buildSystemPrompt } from "@/api-server/ai/system-prompt";
 import { AiToolContext } from "@/api-server/ai/tools/types";
 import { AiRole } from "@/api-shared/types/ai";
 import {
+    buildBenchmarkExport,
     buildChatExport,
     ChatExportFormat,
     transcriptToMarkdown,
@@ -46,6 +47,40 @@ describe("chat export", () => {
         const file = buildChatExport(messages, ChatExportFormat.Json, meta);
         expect(file.fileName).toMatch(/^bluz-chat-.*\.json$/);
         expect(JSON.parse(file.content)).toMatchObject({ model: "m1", messages });
+    });
+
+    it("exports a benchmark run with system prompt and per-case transcript", () => {
+        const result = {
+            model: "m1",
+            systemPrompt: "SYS",
+            passed: 1,
+            total: 1,
+            checksPassed: 1,
+            checksTotal: 1,
+            gateHeld: true,
+            durationMs: 5,
+            cases: [
+                {
+                    id: "c",
+                    title: "t",
+                    prompt: "מה יש מחר?",
+                    checks: [],
+                    toolCalls: ["list_events"],
+                    answer: "אין אירועים.",
+                    transcript: messages,
+                    proposals: [],
+                    durationMs: 5,
+                    passed: true,
+                    gateHeld: true,
+                },
+            ],
+        };
+        const file = buildBenchmarkExport(result, meta.exportedAt);
+        expect(file.fileName).toMatch(/^bluz-benchmark-.*\.json$/);
+        expect(JSON.parse(file.content)).toMatchObject({
+            systemPrompt: "SYS",
+            cases: [{ transcript: messages }],
+        });
     });
 
     it("names Markdown exports .md", () => {

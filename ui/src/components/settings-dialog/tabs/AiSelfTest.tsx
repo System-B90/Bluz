@@ -16,6 +16,7 @@
 
 import CancelIcon from "@mui/icons-material/Cancel";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import DownloadIcon from "@mui/icons-material/Download";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import ScienceIcon from "@mui/icons-material/Science";
@@ -39,6 +40,10 @@ import {
     AiBenchmarkLiveCase,
     AiBenchmarkResult,
 } from "@/api-shared/types/ai-benchmark";
+import {
+    buildBenchmarkExport,
+    downloadChatExport,
+} from "@/components/ai/chat-export";
 
 const POLL_INTERVAL_MS = 1_500;
 
@@ -250,6 +255,14 @@ export function AiSelfTest() {
                             { result.totalTokens ? ` · ${result.totalTokens} טוקנים` : "" }
                             { ` · ${Math.round(result.durationMs / 1000)} שנ׳` }
                         </Typography>
+                        <Box flex={ 1 } />
+                        <Button
+                            onClick={ () => downloadChatExport(buildBenchmarkExport(result, new Date())) }
+                            size="small"
+                            startIcon={ <DownloadIcon fontSize="small" /> }
+                        >
+                            ייצוא JSON
+                        </Button>
                     </Stack>
                     { result.gateHeld
                         ? null

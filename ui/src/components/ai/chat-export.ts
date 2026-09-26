@@ -7,6 +7,7 @@
  */
 
 import { AiMessage, AiRole } from "@/api-shared/types/ai";
+import { AiBenchmarkResult } from "@/api-shared/types/ai-benchmark";
 
 export enum ChatExportFormat {
     Markdown = "md",
@@ -122,6 +123,27 @@ export function buildChatExport(
             mimeType: "text/markdown",
             content: transcriptToMarkdown(messages, meta),
         };
+}
+
+/**
+ * JSON export of a self-test run: the system prompt once, then per case the
+ * prompt, verdicts, and the full transcript (tool calls with raw arguments and
+ * results) — what is needed to see why a tool or prompt misfired.
+ */
+export function buildBenchmarkExport(
+    result: AiBenchmarkResult,
+    exportedAt: Date,
+): { fileName: string; mimeType: string; content: string } {
+    const stamp = exportedAt.toISOString().replace(/[:.]/g, "-");
+    return {
+        fileName: `bluz-benchmark-${stamp}.json`,
+        mimeType: "application/json",
+        content: JSON.stringify(
+            { exportedAt: exportedAt.toISOString(), ...result },
+            null,
+            2,
+        ),
+    };
 }
 
 /** Hands the file to the browser as a download. */
