@@ -1,10 +1,12 @@
+# Org-wide baseline (System-B90): keep the shared section identical in every repo.
+# Rules = ruff's default set for the pinned version + I, W, B, UP. The ruff pin
+# (requirements / pyproject `lint` extra / CI) is what keeps the default set stable;
+# bump it deliberately and fix what the new version flags in the same change.
+line-length = 88
 extend-exclude = [".agents", ".agent"]
 
-# Lints under ruff's own defaults for the version pinned in
-# .github/workflows/release.yml and scripts/requirements.txt. Those
-# pins are what keep the result stable: ruff's default rule set moves between
-# minors (0.16 grew it from 59 rules to 413), so bump them together and fix
-# what the new version flags in the same change.
+[lint]
+extend-select = ["I", "W", "B", "UP"]
 
 [lint.flake8-bugbear]
 # Typer declares CLI parameters as `param: T = typer.Option(...)`. The call is
