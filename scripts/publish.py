@@ -66,7 +66,7 @@ def run_git(cmd: str, check: bool = True, description: str | None = None) -> str
             if e.stderr:
                 logger.error(e.stderr.strip())
             if check:
-                raise typer.Exit(code=1)
+                raise typer.Exit(code=1) from e
             return None
 
 

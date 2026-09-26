@@ -200,9 +200,9 @@ def main(
                 env=merged_env,
             )
             typer.secho("Backend Unit Tests Passed!", fg=typer.colors.GREEN, bold=True)
-        except subprocess.CalledProcessError:
+        except subprocess.CalledProcessError as e:
             typer.secho("Backend Unit Tests Failed!", fg=typer.colors.RED, bold=True)
-            raise RuntimeError("Backend Unit Tests failed.")
+            raise RuntimeError("Backend Unit Tests failed.") from e
 
     # Determine Project Name and Environment
     slug = get_worktree_slug()
