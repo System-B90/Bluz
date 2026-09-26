@@ -1,7 +1,7 @@
 extend-exclude = [".agents", ".agent"]
 
 # Lints under ruff's own defaults for the version pinned in
-# .github/workflows/release-pipeline.yml and scripts/requirements.txt. Those
+# .github/workflows/release.yml and scripts/requirements.txt. Those
 # pins are what keep the result stable: ruff's default rule set moves between
 # minors (0.16 grew it from 59 rules to 413), so bump them together and fix
 # what the new version flags in the same change.

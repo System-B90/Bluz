@@ -41,7 +41,7 @@ Use `/caveman` mode. Less word do trick.
 
 **CI Runners**
 - One workflow per pipeline. No cloud mirrors, no `BLUZ_CI_RUNNER` variable — both were deleted after the mirrors drifted from the originals.
-- Self-hosted (`[self-hosted, dind]`) is the default everywhere: `release-pipeline.yml`, `docs.yml`, and all of `e2e.yml`. GitHub-hosted minutes are not available.
+- Self-hosted (`[self-hosted, dind]`) is the default everywhere: `release.yml`, `docs.yml`, and all of `e2e.yml`. GitHub-hosted minutes are not available.
 - Only exception: the opt-in `Full Test Suite (E2E, github-hosted)` matrix (dispatch with `target=github-hosted`) stays on `ubuntu-24.04`.
 - New job → `runs-on: [self-hosted, dind]`.
 - Every `docker/setup-buildx-action` step on self-hosted gets a unique `name:` and `cleanup: false`. Jobs share one OS user and `~/.docker/buildx`; the default ephemeral builder's cleanup tears down sibling jobs' buildkit.

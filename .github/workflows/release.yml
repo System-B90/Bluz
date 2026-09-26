@@ -1,4 +1,4 @@
-name: Build and Release Bluz
+name: Release
 
 on:
     # push is restricted to the long-lived branches on purpose. With
@@ -369,7 +369,7 @@ jobs:
                   prerelease: false
 
     publish-cli-index:
-        name: Publish bluz CLI to org pip index
+        name: Publish CLI to Org Pip Index
         needs: craft-release
         if: startsWith(github.ref, 'refs/tags/v')
         runs-on: ubuntu-latest

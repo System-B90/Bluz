@@ -16,7 +16,7 @@
 #     the never-published `latest` image tag.
 #
 # deploy/README.md documents how this file relates to the dev one; CI keeps the
-# service/image lists in sync (see .github/workflows/release-pipeline.yml).
+# service/image lists in sync (see .github/workflows/release.yml).
 
 name: bluz
 

@@ -359,7 +359,7 @@ def main(
     if not dry:
         typer.echo(f"\n🔗 {typer.style('GitHub Links:', bold=True)}")
         typer.echo(f"  Tag:      {base_url}/releases/tag/{new_tag}")
-        typer.echo(f"  Action:   {base_url}/actions/workflows/release-pipeline.yml")
+        typer.echo(f"  Action:   {base_url}/actions/workflows/release.yml")
 
 
 if __name__ == "__main__":

@@ -150,7 +150,7 @@ jobs:
     # fullyParallel=false, retries=2), so a single stack is both lighter and
     # green. Runs by default (push/PR) and on dispatch target=self-hosted.
     full-test-suite-selfhosted:
-        name: Full Test Suite (E2E, self-hosted)
+        name: Full Test Suite (E2E, Self-Hosted)
         runs-on: [self-hosted, dind]
         timeout-minutes: 90
         needs: build-test-images
@@ -319,7 +319,7 @@ jobs:
             # Frees the (~160MB) test-images artifact right away instead of
             # waiting out retention-days, which only supports whole-day
             # granularity and was already at its 1-day floor.
-            - name: Delete Test Images artifact
+            - name: Delete Test Images Artifact
               if: always()
               uses: actions/github-script@v9
               with:
@@ -607,7 +607,7 @@ jobs:
             # Frees the (~160MB) test-images artifact right away instead of
             # waiting out retention-days, which only supports whole-day
             # granularity and was already at its 1-day floor.
-            - name: Delete Test Images artifact
+            - name: Delete Test Images Artifact
               if: always()
               uses: actions/github-script@v9
               with:
@@ -727,7 +727,7 @@ jobs:
     # it. `needs` the matrix so it cannot run until every shard has taken its
     # copy.
     cleanup-test-images:
-        name: Delete Test Images artifact
+        name: Delete Test Images Artifact
         runs-on: [self-hosted, dind]
         # Must wait for BOTH suites, not just the matrix. Only one of them
         # runs on any given trigger and the other is `skipped` -- and a skipped
@@ -744,7 +744,7 @@ jobs:
             ]
         if: always() && needs.build-test-images.result == 'success'
         steps:
-            - name: Delete Test Images artifact
+            - name: Delete Test Images Artifact
               uses: actions/github-script@v7
               with:
                   script: |

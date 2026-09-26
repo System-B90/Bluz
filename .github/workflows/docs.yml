@@ -1,4 +1,4 @@
-name: Deploy Documentation
+name: Docs
 
 # GitHub Pages for the org is served from System-B90/.github, not from this
 # (private) repo, so all repos' docs live under one public site. This build
