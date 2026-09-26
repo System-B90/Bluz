@@ -12,6 +12,7 @@ import {
 import { PotentialPA } from "@/api-shared/types";
 import { CourseId } from "@/api-shared/types/course";
 import { roomLikeToResourceKey } from "@/api-shared/types/room";
+import { useCourses } from "@/components/base/CoursesProvider";
 import { Event, EventType } from "@/components/schedule/types/event";
 
 export type CalendarFiltersContextState = {
@@ -80,6 +81,30 @@ export const CalendarFiltersProvider = ({
     >([]);
     const [filteredCourses, setFilteredCourses] = useState<Array<CourseId>>([]);
     const [filteredRoom, setFilteredRoom] = useState<null | string>(null);
+    const { courses } = useCourses();
+
+    // Selecting a course also matches events of all its descendants.
+    // Expanded at match time (not stored), so deselecting a parent
+    // drops the children it pulled in.
+    const matchedCourses = useMemo(() => {
+        if (filteredCourses.length === 0) return new Set<CourseId>();
+        const childrenOf = new Map<CourseId, Array<CourseId>>();
+        for (const course of courses) {
+            if (!course.parentId) continue;
+            const siblings = childrenOf.get(course.parentId) ?? [];
+            siblings.push(course.id);
+            childrenOf.set(course.parentId, siblings);
+        }
+        const matched = new Set<CourseId>();
+        const stack = [...filteredCourses];
+        while (stack.length > 0) {
+            const id = stack.pop()!;
+            if (matched.has(id)) continue;
+            matched.add(id);
+            stack.push(...(childrenOf.get(id) ?? []));
+        }
+        return matched;
+    }, [courses, filteredCourses]);
 
     const eventFilteredOpacity = useCallback(
         (event: Event): number => {
@@ -107,7 +132,7 @@ export const CalendarFiltersProvider = ({
             }
 
             const hasMatchingCourse = event.courses.some((courseId) =>
-                filteredCourses.includes(courseId),
+                matchedCourses.has(courseId),
             );
             const noCourse =
                 filteredCourses.length === 0 || event.courses.length === 0;
@@ -160,6 +185,7 @@ export const CalendarFiltersProvider = ({
         [
             filteredInstructors,
             filteredCourses,
+            matchedCourses,
             showPAsFor,
             hidePrayers,
             filteredRoom,
