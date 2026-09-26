@@ -289,11 +289,10 @@ jobs:
                   DATABASE_URL=postgres://admin:${PG_PASS}@bluz-curriculum-db:5432/curriculum_db
                   EOF
 
-            - name: Generate self-signed SSL certificates
+            - name: Install default dev SSL certificates
               run: |
                   mkdir -p nginx/ssl
-                  openssl req -x509 -newkey rsa:4096 -keyout nginx/ssl/key.pem \
-                    -out nginx/ssl/cert.pem -sha256 -days 30 -nodes -subj "/CN=bluz.dev"
+                  cp nginx/ssl-default/cert.pem nginx/ssl-default/key.pem nginx/ssl/
 
             - name: Set up Node + Playwright
               uses: System-B90/.github/actions/setup-playwright@main
@@ -582,11 +581,10 @@ jobs:
                   DATABASE_URL=postgres://admin:${PG_PASS}@bluz-curriculum-db:5432/curriculum_db
                   EOF
 
-            - name: Generate self-signed SSL certificates
+            - name: Install default dev SSL certificates
               run: |
                   mkdir -p nginx/ssl
-                  openssl req -x509 -newkey rsa:4096 -keyout nginx/ssl/key.pem \
-                    -out nginx/ssl/cert.pem -sha256 -days 30 -nodes -subj "/CN=bluz.dev"
+                  cp nginx/ssl-default/cert.pem nginx/ssl-default/key.pem nginx/ssl/
 
             - name: Set up Node + Playwright
               uses: System-B90/.github/actions/setup-playwright@main

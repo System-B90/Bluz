@@ -23,3 +23,11 @@ This directory houses the **Nginx reverse proxy configurations**. Nginx serves a
 ### ❌ NO, do NOT put it here if:
 
 - It configures application-wide docker composition or multi-container orchestrations. Place these in the **project root** (`docker-compose.yml`).
+
+## Default dev certs
+
+`ssl-default/` holds a dev-only cert for `bluz.dev`, `*.bluz.dev`, `bluz.localhost`, `localhost`,
+`127.0.0.1`, `127.0.0.3` and `::1`, signed by the System-B90 Dev Root CA. `tools.py` and the e2e
+workflow copy it into `ssl/` when no cert exists. Trust the root once to drop browser warnings:
+see [System-B90/.github `dev-ca/`](https://github.com/System-B90/.github/tree/main/dev-ca).
+The key is public — never serve real traffic with it.

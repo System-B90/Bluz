@@ -8,6 +8,7 @@ Author: Michael K. Steinberg
 
 import os
 import secrets
+import shutil
 import socket
 import subprocess
 import sys
@@ -430,27 +431,9 @@ def _ensure_certs() -> None:
         typer.echo("nginx/ssl certs exist - keeping them.")
         return
     ssl_dir.mkdir(parents=True, exist_ok=True)
-    subprocess.run(
-        [
-            "openssl",
-            "req",
-            "-x509",
-            "-newkey",
-            "rsa:4096",
-            "-keyout",
-            str(ssl_dir / "key.pem"),
-            "-out",
-            str(ssl_dir / "cert.pem"),
-            "-sha256",
-            "-days",
-            "30",
-            "-nodes",
-            "-subj",
-            f"/CN={DEV_HOST}",
-        ],
-        check=True,
-    )
-    typer.echo("Generated self-signed nginx/ssl certs.")
+    for name in ("cert.pem", "key.pem"):
+        shutil.copy2(ROOT / "nginx" / "ssl-default" / name, ssl_dir / name)
+    typer.echo("Copied default dev certs (System-B90 Dev Root CA) to nginx/ssl.")
 
 
 @app.command("ci")

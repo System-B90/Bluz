@@ -36,6 +36,8 @@ src/session-server/dist
 # misc
 .DS_Store
 *.pem
+# Dev-only default certs signed by the System-B90 Dev Root CA (System-B90/.github dev-ca/).
+!nginx/ssl-default/*.pem
 
 # debug
 npm-debug.log*
