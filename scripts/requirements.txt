@@ -13,6 +13,9 @@ PyHiveLMS>=2.1.3
 # Shared dev-ops helpers, published to the same org index. See
 # System-B90/Bluz#226 and System-B90/devops-py.
 sb90-devops>=0.1.0
+# Shared install/upgrade/bundle flows (System-B90/deploy-py). scripts/setup.py
+# and scripts/tests import it; release bundles vendor it themselves.
+sb90-deploy>=0.1.0
 tqdm>=4.70.0
 # The bluz CLI's own runtime deps, so e2e can drive `bluz auth login` (#580).
 httpx>=0.28.0

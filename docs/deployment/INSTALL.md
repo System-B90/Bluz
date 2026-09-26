@@ -27,33 +27,44 @@ instead — see [Co-located Hive](#co-located-hive) below.
 
 ## What you need first
 
-| Requirement | Why | Check |
-| --- | --- | --- |
-| Docker Engine or Docker Desktop | Runs the stack | `docker info` |
-| Docker Compose **v2** | The bundle uses v2 syntax | `docker compose version` |
-| Python 3.11+ | Runs the configuration wizard | `python3 --version` |
-| `openssl` | Generates self-signed certificates | `openssl version` |
-| A Hive server you can reach | Bluz reads its data and uses it for SSO | open its URL in a browser |
-| A Hive account that can register SSO applications | The wizard registers Bluz automatically | — |
+| Requirement                                       | Why                                                                                                                                     | Check                     |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| Docker Engine or Docker Desktop                   | Runs the stack                                                                                                                          | `docker info`             |
+| Docker Compose **v2**                             | The bundle uses v2 syntax                                                                                                               | `docker compose version`  |
+| Python 3.10+                                      | Runs the installer, wizard and upgrades in a local `.venv` (Ubuntu 22.04's stock `python3` is enough; `python3-venv` is **not** needed) | `python3 --version`       |
+| A Hive server you can reach                       | Bluz reads its data and uses it for SSO                                                                                                 | open its URL in a browser |
+| A Hive account that can register SSO applications | The wizard registers Bluz automatically                                                                                                 | —                         |
 
 The online bundle also needs outbound access to `ghcr.io`. The offline bundle
 ships every image as a `.tar` under `images/` and every Python package the
-wizard needs as a wheel under `wheels/`, so it needs neither registry nor PyPI
-access.
+installer needs (for Linux and Windows, Python 3.10-3.13) as a wheel under
+`wheels/`, so it needs neither registry nor PyPI access.
+
+The `.sh`/`.ps1` scripts are thin launchers: they find any Python 3.6+, and
+`bootstrap.py` builds `.venv` from a Python 3.10+ and runs the shared
+[sb90-deploy](https://github.com/System-B90/deploy-py) tooling inside it. If
+the host has no Python 3.10+, it says so before touching anything.
 
 ## What the installer asks you
 
-| Prompt | What to enter |
-| --- | --- |
-| Domain name | The hostname users will type, e.g. `bluz.school.example`. Becomes `NEXTAUTH_URL` and the certificate CN. |
-| Generate self-signed certificates? | `yes` unless you are dropping your own `cert.pem`/`key.pem` into `nginx/ssl/`. |
-| Hive URL | Base URL of your Hive server, e.g. `https://hive.example`. |
-| Another web server already using 80/443? | `yes` only if this machine already serves those ports. See [Port conflicts](#port-conflicts). |
-| Hive username / password | An account allowed to register SSO applications. Used once, not stored. |
-| Override built-in Google OAuth? | `no`. Calendar sync works with no setup; this exists only for custom consent-screen branding. |
+| Prompt                                   | What to enter                                                                                            |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Domain name                              | The hostname users will type, e.g. `bluz.school.example`. Becomes `NEXTAUTH_URL` and the certificate CN. |
+| Hive URL                                 | Base URL of your Hive server, e.g. `https://hive.example`.                                               |
+| Another web server already using 80/443? | `yes` only if this machine already serves those ports. See [Port conflicts](#port-conflicts).            |
+| Hive username / password                 | An account allowed to register SSO applications. Used once, not stored.                                  |
+| Override built-in Google OAuth?          | `no`. Calendar sync works with no setup; this exists only for custom consent-screen branding.            |
 
 Everything else — database credentials, JWT and encryption keys — is generated
 for you and written to `.env`.
+
+TLS: unless `nginx/ssl/cert.pem` already covers your domain (drop your own
+certificate there first to use it), the wizard issues one signed by a local
+"System-B90 Local Dev CA" (`nginx/ssl/ca.crt`). Trust that CA once on client
+machines to silence browser warnings; it is reused across re-issues.
+
+Re-run the wizard at any time with `python3 bootstrap.py setup` — existing
+secrets are kept, not rotated.
 
 ## Layout of an installed bundle
 
@@ -62,10 +73,14 @@ bluz/
 ├── docker-compose.yml              # the stack
 ├── docker-compose.hive-local.yml   # overlay, co-located Hive only
 ├── .env                            # written by the wizard — contains secrets
-├── install.sh / install.ps1
-├── update.sh                       # in-place upgrade to a newer release (online or --package)
+├── install.sh / install.ps1        # launchers: find Python, run bootstrap.py
+├── update.sh / update.ps1          # in-place upgrade to a newer release (online or --package)
 ├── link-hive.sh / link-hive.ps1
-├── setup.py, requirements.txt      # the configuration wizard
+├── bootstrap.py, requirements.txt  # builds .venv with the deployment tools
+├── app.json                        # describes Bluz to the shared tooling
+├── setup.py                        # the configuration wizard
+├── .venv/                          # created on first run
+├── backup/                         # bluz-backup / bluz-restore (.sh and .ps1)
 ├── nginx/ssl/                      # cert.pem + key.pem
 ├── VERSION                         # which release this is
 ├── images/                         # offline bundle only — image .tar archives
@@ -119,7 +134,7 @@ BLUZ_HTTPS_PORT=8443
 
 Separate ports are the portable answer. Binding a distinct loopback IP
 (`BLUZ_BIND_IP`) also works, but on Windows it needs an admin-added loopback
-alias *and* the other stack must stop binding `0.0.0.0` — see
+alias _and_ the other stack must stop binding `0.0.0.0` — see
 [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 ## Verifying the install
@@ -149,7 +164,7 @@ tar -xzf bluz-online-v1.1.0.tar.gz   # extracts into bluz/, keeps your .env and 
 cd bluz && ./update.sh
 ```
 
-`update.sh` upgrades in place with near-zero downtime: it backs up both engines
+`update.sh` (`update.ps1` on Windows) upgrades in place with near-zero downtime: it backs up both engines
 first, pulls the new images while the old containers keep serving, then rolls
 `ui` → `sessions` → `proxy` one at a time, waiting for each to pass its
 healthcheck. Postgres migrations run inside the new `ui` image's entrypoint, so
@@ -171,20 +186,19 @@ stack — use `./install.sh` for a first install.
 
 Same upgrade, no registry access. Point `--package` at the **full new offline
 package** — the downloaded `bluz-offline-<tag>.tar.gz` or a directory it was
-already extracted into. Run it from the directory the *running* deployment lives
+already extracted into. Run it from the directory the _running_ deployment lives
 in; the package is only read from.
 
 What it does differently: the version comes from the package's `VERSION` file
 (never from GitHub), every `images/*.tar` in it is `docker load`ed — the database
 images included, since a release may move those pins — and the deployment's own
-bundle files (`docker-compose.yml`, the overlay, `install.sh`, `update.sh`,
-`link-hive.sh`, `setup.py`, `requirements.txt`, `backup/*.sh`, `VERSION`) are
-replaced with the package's, with the previous copies kept in
+bundle files (everything in the bundle except your `.env`, `nginx/ssl/`, `images/` and
+`.venv/`; `wheels/` is swapped whole) are replaced with the package's, with the previous copies kept in
 `.bundle-bak-<old-version>/`. Your `.env`, `nginx/ssl/` and every data volume are
 untouched. Everything else — backup first, roll `ui` → `sessions` → `proxy`,
 verify, rollback hint on failure — is identical.
 
-Pointing `--package` at the *online* bundle fails immediately with that
+Pointing `--package` at the _online_ bundle fails immediately with that
 diagnosis: it ships no images, so it cannot upgrade an air-gapped host.
 `--package` cannot be combined with `--version` or `--pre-release` — a package
 carries exactly one release.
