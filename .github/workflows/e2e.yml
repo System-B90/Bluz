@@ -74,7 +74,7 @@ jobs:
     # server closed unexpectedly" (master 23f3af5) — a rerun usually passes.
     build-test-images:
         name: Build Test Images
-        runs-on: [self-hosted, dind]
+        runs-on: [self-hosted, dind, Linux]
         # Version-bump commits on master (chore: bump version to *) only touch
         # package.json, so they'd otherwise trigger a full e2e run for nothing.
         if: >-
