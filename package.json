@@ -114,7 +114,7 @@
         "typedoc-plugin-markdown": "^4.12.0",
         "typescript": "^5.9.3",
         "typescript-eslint": "^8.65.0",
-        "vitest": "^4.1.10"
+        "vitest": "^4.1.11"
     },
     "allowScripts": {
         "esbuild@0.27.7": true
