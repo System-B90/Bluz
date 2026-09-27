@@ -21,6 +21,7 @@ src/session-server/dist
 /coverage
 /.auth/
 /test-results/
+/release-screenshots/
 /playwright-report/
 /blob-report/
 

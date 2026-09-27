@@ -322,6 +322,7 @@ jobs:
         permissions:
             contents: write
             packages: read
+            actions: read
 
         steps:
             - name: Checkout repository
@@ -357,6 +358,18 @@ jobs:
                   tag: ${{ github.ref_name }}
                   out: .
 
+            # Screenshots come from the master E2E run for this commit (or the latest
+            # green one); E2E doesn't run on tags. See CLAUDE.md, "Release screenshots".
+            - name: Fetch release screenshots from E2E
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  id=$(gh run list -R "$GITHUB_REPOSITORY" -w e2e.yml -s success --commit "$GITHUB_SHA" -L 1 --json databaseId -q '.[0].databaseId')
+                  [ -n "$id" ] || id=$(gh run list -R "$GITHUB_REPOSITORY" -w e2e.yml -s success -b master -L 1 --json databaseId -q '.[0].databaseId')
+                  if [ -z "$id" ] || ! gh run download "$id" -R "$GITHUB_REPOSITORY" -n release-screenshots -D release-screenshots; then
+                      echo "::warning::No release-screenshots artifact found; releasing without screenshots"
+                  fi
+
             - name: Publish GitHub Release
               uses: softprops/action-gh-release@v3
               with:
@@ -364,6 +377,7 @@ jobs:
                       bluz-online-${{ github.ref_name }}.tar.gz
                       bluz-offline-${{ github.ref_name }}.tar.gz
                       cli/dist/*
+                      release-screenshots/*.png
                   generate_release_notes: true
                   draft: false
                   prerelease: false
