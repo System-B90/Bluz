@@ -151,8 +151,19 @@ jobs:
     # green. Runs by default (push/PR) and on dispatch target=self-hosted.
     full-test-suite-selfhosted:
         name: Full Test Suite (E2E, Self-Hosted)
-        runs-on: [self-hosted, Linux]
-        timeout-minutes: 90
+        # The persistent shared Hive (System-B90/.github CLAUDE.md, "Shared
+        # persistent Hive"): no Hive boot per run. Its runners refuse
+        # setup-hive, since that would delete the shared instance.
+        runs-on: [self-hosted, shared-hive]
+        # Image load + npm ci (before the lock) + queueing for the lock (up to
+        # 40m) + the 60m Hive budget.
+        timeout-minutes: 150
+        permissions:
+            contents: read
+            packages: read
+            # shared-hive-acquire cancels the run when it exceeds its budget;
+            # also deletes the test-images artifact below.
+            actions: write
         needs: build-test-images
         if: >-
             (github.event_name != 'pull_request' || github.head_ref == 'dev')
@@ -199,46 +210,19 @@ jobs:
                           --filter "label=com.docker.compose.project=$proj" \
                           | xargs -r docker network rm || true
                   done
-                  # Reclaiming the containers is not enough on its own: the
-                  # box sat at 100% disk (455G, 0 bytes free) even after every
-                  # leaked stack was gone, and setup-hive refuses to start Hive
-                  # under 10GB free. Its own cleanup is deliberately
-                  # conservative on self-hosted runners — `docker image prune`
-                  # without -a, `volume prune` without -a — and a plain
-                  # `volume prune` skips *named* volumes, which is precisely
-                  # what a leaked compose stack leaves behind. That left
-                  # 11.75GB of volumes and 8.19GB of images reported as
-                  # reclaimable while the run failed for want of space.
-                  #
-                  # Between runs nothing on this box is meant to be alive, so
-                  # "unused" here means "garbage". Images and build cache are
-                  # re-pulled and rebuilt on demand; disk is the scarce thing.
-                  docker volume prune -af || true
-                  docker builder prune -af || true
-                  docker image prune -af || true
-
-                  docker ps -a --format 'table {{.Names}}\t{{.Status}}'
+                  # No global `docker volume/image/builder prune` here: this
+                  # host's daemon also runs the persistent shared Hive, and an
+                  # -a prune would delete its volumes and images. Only
+                  # bluz-test-* stacks (above) are ours to reclaim.
+                  docker ps -a --format 'table {{.Names}}	{{.Status}}'
                   docker system df || true
                   df -h / || true
 
-                  # Surface the host-level shortfall explicitly. If this still
-                  # reads under 10GB, the space is held outside this daemon —
-                  # stale _work/ directories or /opt/hive on the runner host —
-                  # and needs hands on the box; setup-hive will fail straight
-                  # after this with the same number.
-                  avail_gb=$(($(df -Pk / | awk 'NR==2 {print $4}') / 1024 / 1024))
-                  echo "Free disk after reclaim: ${avail_gb} GB"
-                  if [ "$avail_gb" -lt 10 ]; then
-                      echo "::warning::Only ${avail_gb} GB free after reclaiming every leaked stack, volume, image and build cache this daemon can see. The remaining space is held by the runner host itself (stale _work/ directories, /opt/hive), which CI cannot reach — the box needs manual cleanup."
-                  fi
-
-            - name: Set up Hive
-              uses: System-B90/.github/actions/setup-hive@main
+            # setup-hive used to provide this. The shared-hive runners' system
+            # Python is externally managed (PEP 668), hence the venv below too.
+            - name: Set up Python
+              uses: actions/setup-python@v6
               with:
-                  hive-token: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
-                  registry-token: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
-                  image-source: registry
-                  extra-hosts: 127.0.0.3 bluz.dev
                   python-version: "3.13"
 
             - name: Install Python dependencies (pyhive)
@@ -252,27 +236,17 @@ jobs:
                   "${RUNNER_TEMP}/pyhive-venv/bin/pip" install --upgrade pip
                   "${RUNNER_TEMP}/pyhive-venv/bin/pip" install -r scripts/requirements.txt
 
-            - name: Verify Hive admin login via pyhive
-              run: |
-                  python - <<'PY'
-                  from pyhive import HiveClient
-
-                  with HiveClient("admin", "Password1", "https://hive.test", verify=False, timeout=30) as client:
-                      print("Hive admin login OK. API version:", client.get_hive_version())
-                  PY
-
             - name: Generate CI .env
               run: |
                   PG_PASS=$(openssl rand -hex 16)
                   MONGO_PASS=4Cqoz8M7g1oYHxaOuCBsOSi7KeOvWWRP
                   cat > .env <<EOF
                   BLUZ_VERSION=latest
-                  # setup-hive checks Hive out to hive/, so its compose network
-                  # is hive_hive-net, not the hive-stack_hive-net a local
-                  # checkout produces.
+                  # The shared Hive's compose project is `hive`, so its network
+                  # is hive_hive-net (shared-hive-acquire's docker-network output).
                   HIVE_NETWORK_NAME=hive_hive-net
                   WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY=$(openssl rand -hex 32)
-                  NEXT_PUBLIC_HIVE_URL=https://hive.test
+                  NEXT_PUBLIC_HIVE_URL=https://hive.org
                   NODE_TLS_REJECT_UNAUTHORIZED=0
                   NEXTAUTH_URL=https://bluz.dev
                   NEXTAUTH_SECRET=$(openssl rand -hex 32)
@@ -343,10 +317,29 @@ jobs:
                           }
                       }
 
+            # Everything slow (npm ci, image load) is done above: the budget
+            # runs from the moment the lock is taken. 60m, not the default 25:
+            # the full suite runs serially here and takes ~30-40m.
+            - name: Acquire shared Hive
+              uses: System-B90/.github/actions/shared-hive-acquire@main
+              with:
+                  max-minutes: "60"
+                  stack-token: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
+
+            - name: Verify Hive admin login via pyhive
+              run: |
+                  python - <<'PY'
+                  from pyhive import HiveClient
+
+                  with HiveClient("admin", "Password1", "https://hive.org", verify=False, timeout=30) as client:
+                      print("Hive admin login OK. API version:", client.get_hive_version())
+                  PY
+
             - name: Run Full Test Suite
               run: python scripts/run_tests.py --seed-hive --skip-unit
               env:
                   CI: true
+                  NEXT_PUBLIC_HIVE_URL: https://hive.org
 
             - name: Upload Playwright Report
               uses: actions/upload-artifact@v7
@@ -440,10 +433,12 @@ jobs:
                   # Hive-booting job in the org (System-B90/.github#12).
                   bluz=$(docker ps -aq --filter "name=^/bluz-test-" || true)
                   [ -n "$bluz" ] && docker rm -f -v $bluz || true
+                  # Hive is NOT torn down: it is the persistent shared instance.
+                  # shared-hive-release below resets it and releases the lock.
 
-                  docker compose -f hive/docker-compose.yaml down -v --remove-orphans || true
-                  leftovers=$(docker ps -aq --filter "name=^/hive-" 2>/dev/null || true)
-                  [ -n "$leftovers" ] && docker rm -f $leftovers || true
+            - name: Release shared Hive
+              if: always()
+              uses: System-B90/.github/actions/shared-hive-release@main
 
     # ── GitHub-hosted: classic 3-shard matrix ───────────────────────────────
     # Each GitHub-hosted runner is its own VM, so 3 shards = 3 isolated stacks
