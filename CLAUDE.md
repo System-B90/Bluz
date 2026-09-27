@@ -41,7 +41,8 @@ Use `/caveman` mode. Less word do trick.
 
 **CI Runners**
 - One workflow per pipeline. No cloud mirrors, no `BLUZ_CI_RUNNER` variable — both were deleted after the mirrors drifted from the originals.
-- Self-hosted (`[self-hosted, Linux]`) is the default everywhere: `release.yml`, `docs.yml`, and all of `e2e.yml`. GitHub-hosted minutes are not available.
+- Self-hosted (`[self-hosted, Linux]`) is the default everywhere: `release.yml`, `docs.yml`, and `e2e.yml`'s image build. GitHub-hosted minutes are not available.
+- E2E suite → `[self-hosted, shared-hive]` on the persistent shared Hive (`https://hive.org`): `shared-hive-acquire` (60m budget) / `shared-hive-release`. Never `setup-hive`, never tear down `hive-*`, never global `docker … prune -a` there — it kills the shared instance. Slow work (npm ci, image load) goes before acquire.
 - Only exception: the opt-in `Full Test Suite (E2E, github-hosted)` matrix (dispatch with `target=github-hosted`) stays on `ubuntu-24.04`.
 - New job → `runs-on: [self-hosted, Linux]`.
 - Every `docker/setup-buildx-action` step on self-hosted gets a unique `name:` and `cleanup: false`. Jobs share one OS user and `~/.docker/buildx`; the default ephemeral builder's cleanup tears down sibling jobs' buildkit.

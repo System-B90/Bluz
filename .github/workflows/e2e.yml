@@ -67,8 +67,8 @@ concurrency:
     cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 jobs:
-    # Runs on the self-hosted box: GitHub-hosted minutes are not available.
-    # The builder is named and never cleaned up so this job cannot tear down
+    # Feeds only the github-hosted matrix; the self-hosted job builds its own
+    # images. The builder is named and never cleaned up so this job cannot tear down
     # the release pipeline's buildkits (same OS user, same ~/.docker/buildx).
     # Known risk: under load buildkit on the box can die with "frontend grpc
     # server closed unexpectedly" (master 23f3af5) — a rerun usually passes.
@@ -79,6 +79,7 @@ jobs:
         # package.json, so they'd otherwise trigger a full e2e run for nothing.
         if: >-
             (github.event_name != 'pull_request' || github.head_ref == 'dev')
+            && github.event_name == 'workflow_dispatch' && inputs.target == 'github-hosted'
             && !startsWith(github.event.head_commit.message, 'chore: bump version to')
         steps:
             - name: Checkout repository
@@ -143,136 +144,96 @@ jobs:
                   path: test-images/
                   retention-days: 1
 
-    # ── Self-hosted (mks-srvu): ONE unified job, ONE Hive+Bluz stack ─────────
-    # This box is a single 8-vCPU/23G host; 3 concurrent Hive stacks saturate
-    # the CPU and starve hive-postgres/redis past their healthchecks. The suite
-    # already runs one Chromium at a time (playwright.config.ts: workers=1,
-    # fullyParallel=false, retries=2), so a single stack is both lighter and
-    # green. Runs by default (push/PR) and on dispatch target=self-hosted.
+    # ── Self-hosted: the persistent shared Hive ─────────────────────────────
+    # Same shape as madash's and peek-a-boo's e2e.yml: everything slow (image
+    # builds, npm ci) runs before taking the shared Hive, the suite runs
+    # against https://hive.org, and the app stack is stopped before Hive is
+    # released. See System-B90/.github CLAUDE.md, "Shared persistent Hive".
+    # Runs by default (push) and on dispatch target=self-hosted.
     full-test-suite-selfhosted:
         name: Full Test Suite (E2E, Self-Hosted)
-        runs-on: [self-hosted, Linux]
-        timeout-minutes: 90
-        needs: build-test-images
+        runs-on: [self-hosted, shared-hive]
+        # Image builds (before the lock) + queueing for the lock (up to 40m)
+        # + the 60m Hive budget. The budget is enforced by shared-hive-acquire.
+        timeout-minutes: 150
         if: >-
             (github.event_name != 'pull_request' || github.head_ref == 'dev')
             && !(github.event_name == 'workflow_dispatch' && inputs.target == 'github-hosted')
             && !startsWith(github.event.head_commit.message, 'chore: bump version to')
+        permissions:
+            contents: read
+            packages: read
+            # shared-hive-acquire cancels this run if it holds Hive past its budget.
+            actions: write
+        env:
+            # `npm ci` and the image builds resolve @system-b90/* from GitHub
+            # Packages; GITHUB_TOKEN can't read cross-repo packages.
+            NPM_TOKEN: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
+            # The shared Hive runs as compose project "hive"; ui joins its
+            # network to resolve the hive.org alias.
+            HIVE_NETWORK_NAME: hive_hive-net
+            NEXT_PUBLIC_HIVE_URL: https://hive.org
+
         steps:
             - name: Checkout repository
               uses: actions/checkout@v7
 
-            # run_tests.py brings the Bluz stack up as compose project
-            # `bluz-test-<worktree-slug>` and never tears it down, while
-            # deploy/docker-compose.yml marks the services `restart: always`.
-            # So any run that dies before its teardown — a cancel, a timeout, a
-            # failed setup — leaves a full Bluz stack running on the box
-            # forever, and the teardown below only ever cleaned up `hive-*`.
-            # Four such stacks (two 4 days old, two 5 days old) had piled up by
-            # 0d7b947, several stuck in restart loops, and they starved this
-            # box badly enough that setup-hive hit its own 60-minute timeout
-            # without ever bringing Hive up.
-            #
-            # This box runs one e2e job at a time by design (see the job
-            # comment above), so anything matching these names at the start of
-            # a run is leaked, not live — the same assumption the `hive-*`
-            # cleanup already makes.
-            - name: Reclaim leaked test stacks
+            # ── Everything slow happens before taking the shared Hive ─────────
+            # run_tests.py brings the stack up as compose project
+            # `bluz-test-<slug>` with `restart: always` services, so a run that
+            # died before its teardown leaves one behind. Only bluz-test-* is
+            # ours: never prune here, the shared Hive lives on this daemon.
+            - name: Reclaim leaked Bluz test stacks
               run: |
-                  projects=$(docker ps -aq --filter "name=^/bluz-test-" \
-                      | xargs -r docker inspect \
-                        --format '{{index .Config.Labels "com.docker.compose.project"}}' \
-                      | sort -u || true)
-                  for proj in $projects; do
+                  for proj in $(docker ps -aq --filter "name=^/bluz-test-" \
+                      | xargs -r docker inspect --format '{{index .Config.Labels "com.docker.compose.project"}}' \
+                      | sort -u); do
                       echo "Removing leaked compose project: $proj"
                       docker compose -p "$proj" down -v --remove-orphans || true
                   done
-                  # Force-remove whatever survived the compose down (a project
-                  # whose compose file is gone still leaves labelled containers).
                   leftovers=$(docker ps -aq --filter "name=^/bluz-test-" || true)
-                  [ -n "$leftovers" ] && docker rm -f $leftovers || true
-                  for proj in $projects; do
-                      docker volume ls -q \
-                          --filter "label=com.docker.compose.project=$proj" \
-                          | xargs -r docker volume rm -f || true
-                      docker network ls -q \
-                          --filter "label=com.docker.compose.project=$proj" \
-                          | xargs -r docker network rm || true
-                  done
-                  # Reclaiming the containers is not enough on its own: the
-                  # box sat at 100% disk (455G, 0 bytes free) even after every
-                  # leaked stack was gone, and setup-hive refuses to start Hive
-                  # under 10GB free. Its own cleanup is deliberately
-                  # conservative on self-hosted runners — `docker image prune`
-                  # without -a, `volume prune` without -a — and a plain
-                  # `volume prune` skips *named* volumes, which is precisely
-                  # what a leaked compose stack leaves behind. That left
-                  # 11.75GB of volumes and 8.19GB of images reported as
-                  # reclaimable while the run failed for want of space.
-                  #
-                  # Between runs nothing on this box is meant to be alive, so
-                  # "unused" here means "garbage". Images and build cache are
-                  # re-pulled and rebuilt on demand; disk is the scarce thing.
-                  docker volume prune -af || true
-                  docker builder prune -af || true
-                  docker image prune -af || true
+                  [ -n "$leftovers" ] && docker rm -f -v $leftovers || true
 
-                  docker ps -a --format 'table {{.Names}}\t{{.Status}}'
-                  docker system df || true
-                  df -h / || true
+            - name: Install default dev SSL certificates
+              run: |
+                  mkdir -p nginx/ssl
+                  cp nginx/ssl-default/cert.pem nginx/ssl-default/key.pem nginx/ssl/
 
-                  # Surface the host-level shortfall explicitly. If this still
-                  # reads under 10GB, the space is held outside this daemon —
-                  # stale _work/ directories or /opt/hive on the runner host —
-                  # and needs hands on the box; setup-hive will fail straight
-                  # after this with the same number.
-                  avail_gb=$(($(df -Pk / | awk 'NR==2 {print $4}') / 1024 / 1024))
-                  echo "Free disk after reclaim: ${avail_gb} GB"
-                  if [ "$avail_gb" -lt 10 ]; then
-                      echo "::warning::Only ${avail_gb} GB free after reclaiming every leaked stack, volume, image and build cache this daemon can see. The remaining space is held by the runner host itself (stale _work/ directories, /opt/hive), which CI cannot reach — the box needs manual cleanup."
-                  fi
-
-            - name: Set up Hive
-              uses: System-B90/.github/actions/setup-hive@main
+            # The shared-hive runners' system Python is externally managed (PEP 668).
+            - name: Set up Python
+              uses: actions/setup-python@v6
               with:
-                  hive-token: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
-                  registry-token: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
-                  image-source: registry
-                  extra-hosts: 127.0.0.3 bluz.dev
                   python-version: "3.13"
 
-            - name: Install Python dependencies (pyhive)
-              # A venv, not a bare `pip install`: the self-hosted runner's
-              # interpreter is PEP 668 externally-managed, so the bare install
-              # aborts there. Putting it on PATH keeps later steps calling
-              # plain `python`/`pip` unchanged on either runner class.
-              run: |
-                  python -m venv "${RUNNER_TEMP}/pyhive-venv"
-                  echo "${RUNNER_TEMP}/pyhive-venv/bin" >> "$GITHUB_PATH"
-                  "${RUNNER_TEMP}/pyhive-venv/bin/pip" install --upgrade pip
-                  "${RUNNER_TEMP}/pyhive-venv/bin/pip" install -r scripts/requirements.txt
+            - name: Install Python dependencies
+              run: pip install -r scripts/requirements.txt
 
-            - name: Verify Hive admin login via pyhive
-              run: |
-                  python - <<'PY'
-                  from pyhive import HiveClient
+            - name: Set up Node + Playwright
+              uses: System-B90/.github/actions/setup-playwright@main
 
-                  with HiveClient("admin", "Password1", "https://hive.test", verify=False, timeout=30) as client:
-                      print("Hive admin login OK. API version:", client.get_hive_version())
-                  PY
+            # Built here rather than handed over as an artifact, so a rerun of
+            # this job alone still has its images. Tags match what
+            # deploy/docker-compose.yml resolves to with BLUZ_VERSION=latest.
+            - name: Build Bluz images
+              run: |
+                  docker build -f ui/Dockerfile --target runner \
+                      --build-arg NPM_TOKEN="$NPM_TOKEN" \
+                      -t ghcr.io/system-b90/bluz/ui:latest .
+                  docker build -f session-server/Dockerfile.websocket \
+                      --build-arg NPM_TOKEN="$NPM_TOKEN" \
+                      -t ghcr.io/system-b90/bluz/sessions:latest session-server/
+                  docker build -f nginx/Dockerfile.proxy \
+                      -t ghcr.io/system-b90/bluz/proxy:latest nginx/
 
             - name: Generate CI .env
               run: |
                   PG_PASS=$(openssl rand -hex 16)
-                  MONGO_PASS=4Cqoz8M7g1oYHxaOuCBsOSi7KeOvWWRP
+                  MONGO_PASS=$(openssl rand -hex 16)
                   cat > .env <<EOF
                   BLUZ_VERSION=latest
-                  # setup-hive checks Hive out to hive/, so its compose network
-                  # is hive_hive-net, not the hive-stack_hive-net a local
-                  # checkout produces.
-                  HIVE_NETWORK_NAME=hive_hive-net
+                  HIVE_NETWORK_NAME=${HIVE_NETWORK_NAME}
                   WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY=$(openssl rand -hex 32)
-                  NEXT_PUBLIC_HIVE_URL=https://hive.test
+                  NEXT_PUBLIC_HIVE_URL=${NEXT_PUBLIC_HIVE_URL}
                   NODE_TLS_REJECT_UNAUTHORIZED=0
                   NEXTAUTH_URL=https://bluz.dev
                   NEXTAUTH_SECRET=$(openssl rand -hex 32)
@@ -289,72 +250,67 @@ jobs:
                   DATABASE_URL=postgres://admin:${PG_PASS}@bluz-curriculum-db:5432/curriculum_db
                   EOF
 
-            - name: Install default dev SSL certificates
-              run: |
-                  mkdir -p nginx/ssl
-                  cp nginx/ssl-default/cert.pem nginx/ssl-default/key.pem nginx/ssl/
-
-            - name: Set up Node + Playwright
-              uses: System-B90/.github/actions/setup-playwright@main
-              env:
-                  # `npm ci` resolves the internal @system-b90/* packages from
-                  # GitHub Packages; .npmrc reads NPM_TOKEN. The default
-                  # GITHUB_TOKEN can't read cross-repo packages, so pass a PAT
-                  # with read:packages (same one the image builds use).
-                  NPM_TOKEN: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
-
-            - name: Download Test Images
-              uses: actions/download-artifact@v8
+            # ── Shared Hive: exclusive, reset, 60-minute budget ──────────────
+            # 60m, not the default 25: the full suite runs serially here.
+            - name: Acquire shared Hive
+              uses: System-B90/.github/actions/shared-hive-acquire@main
               with:
-                  name: test-images
-                  path: test-images/
+                  max-minutes: "60"
 
-            - name: Load Test Images
+            - name: Verify Hive admin login
               run: |
-                  docker load -i test-images/ui.tar
-                  docker load -i test-images/sessions.tar
-                  docker load -i test-images/proxy.tar
-                  rm -rf test-images/
+                  python - <<'PY'
+                  from pyhive import HiveClient
 
-            # Frees the (~160MB) test-images artifact right away instead of
-            # waiting out retention-days, which only supports whole-day
-            # granularity and was already at its 1-day floor.
-            - name: Delete Test Images Artifact
-              if: always()
-              uses: actions/github-script@v9
-              with:
-                  script: |
-                      const { data } = await github.rest.actions.listWorkflowRunArtifacts({
-                          owner: context.repo.owner,
-                          repo: context.repo.repo,
-                          run_id: context.runId,
-                      });
-                      const artifact = data.artifacts.find(a => a.name === 'test-images');
-                      if (artifact) {
-                          try {
-                              await github.rest.actions.deleteArtifact({
-                                  owner: context.repo.owner,
-                                  repo: context.repo.repo,
-                                  artifact_id: artifact.id,
-                              });
-                          } catch (e) {
-                              // Best-effort: another parallel shard may have deleted it first.
-                              core.warning(`Could not delete test-images artifact: ${e.message}`);
-                          }
-                      }
+                  with HiveClient("admin", "Password1", "https://hive.org", verify=False, timeout=30) as client:
+                      print("Hive admin login OK. API version:", client.get_hive_version())
+                  PY
 
+            # Starts the stack from the images above, seeds Hive + Bluz,
+            # registers the SSO client and runs Playwright.
             - name: Run Full Test Suite
               run: python scripts/run_tests.py --seed-hive --skip-unit
               env:
                   CI: true
 
+            - name: Dump Container Logs
+              if: failure()
+              run: |
+                  mkdir -p container-logs
+                  for c in $(docker ps -aq --filter "name=^/bluz-test-") $(docker ps -aq --filter "name=^/hive-core$"); do
+                    name=$(docker inspect --format '{{.Name}}' "$c" | tr -d '/')
+                    timeout 30 docker logs --tail 2000 "$c" > "container-logs/$name.log" 2>&1 || true
+                  done
+                  echo "::group::Bluz ui container log (tail)"
+                  ui=$(docker ps -a --filter "name=^/bluz-test-.*-ui" --format '{{.Names}}' | head -1)
+                  if [ -n "$ui" ]; then docker logs --tail 400 "$ui" 2>&1 || true; else echo "No Bluz UI container found."; fi
+                  echo "::endgroup::"
+
+            # Stop the app before releasing, so nothing talks to Hive while it
+            # is reset. Only this app's stack; never prune (see above).
+            - name: Stop Bluz
+              if: always()
+              run: |
+                  for proj in $(docker ps -aq --filter "name=^/bluz-test-" \
+                      | xargs -r docker inspect --format '{{index .Config.Labels "com.docker.compose.project"}}' \
+                      | sort -u); do
+                      docker compose -p "$proj" -f deploy/docker-compose.yml -f deploy/docker-compose.test.yml down -v --remove-orphans || true
+                  done
+                  leftovers=$(docker ps -aq --filter "name=^/bluz-test-" || true)
+                  [ -n "$leftovers" ] && docker rm -f -v $leftovers || true
+
+            - name: Release shared Hive
+              if: always()
+              uses: System-B90/.github/actions/shared-hive-release@main
+
+            # ── Artifacts ────────────────────────────────────────────────────
             - name: Upload Playwright Report
               uses: actions/upload-artifact@v7
               if: ${{ !cancelled() }}
               with:
                   name: playwright-report
                   path: playwright-report/
-                  retention-days: 1
+                  retention-days: 14
 
             - name: Upload Test Results
               uses: actions/upload-artifact@v7
@@ -362,48 +318,17 @@ jobs:
               with:
                   name: test-results
                   path: test-results/
-                  retention-days: 1
+                  retention-days: 7
 
-            # Written by tests/screenshots.spec.ts (see CLAUDE.md, "Release
-            # screenshots"). On the sharded matrix only one shard runs that
-            # spec, so the others have nothing to upload.
+            # Written by tests/screenshots.spec.ts (see CLAUDE.md, "Release screenshots").
             - name: Upload Release Screenshots
               uses: actions/upload-artifact@v7
               if: ${{ !cancelled() }}
               with:
                   name: release-screenshots
                   path: release-screenshots/
-                  if-no-files-found: ignore
+                  if-no-files-found: warn
                   retention-days: 90
-
-            - name: Dump Container Logs
-              if: failure()
-              run: |
-                  mkdir -p container-logs
-                  docker ps -a
-                  # Bounded: this loop ran against every container on the box
-                  # and spent 28 minutes on a wedged daemon at 0d7b947, eating
-                  # the rest of the job's timeout and delaying the teardown
-                  # below — which is what leaks the next stack.
-                  for c in $(docker ps -aq); do
-                    name=$(docker inspect --format '{{.Name}}' "$c" | tr -d '/')
-                    timeout 30 docker logs --tail 2000 "$c" \
-                      > "container-logs/$name.log" 2>&1 || true
-                  done
-                  echo "::group::Bluz UI container status + log (tail)"
-                  ui=$(docker ps -a --filter "name=-ui" --format '{{.Names}}' | head -1)
-                  if [ -n "$ui" ]; then
-                    docker inspect --format 'State={{.State.Status}} ExitCode={{.State.ExitCode}} OOMKilled={{.State.OOMKilled}} Restarts={{.RestartCount}}' "$ui" || true
-                    docker logs --tail 400 "$ui" 2>&1 || true
-                  else
-                    echo "No Bluz UI container found."
-                  fi
-                  echo "::endgroup::"
-                  echo "::group::Bluz UI migration errors (if any)"
-                  if [ -n "$ui" ]; then
-                    docker logs "$ui" 2>&1 | grep -iE "migration|Cannot find module|MODULE_NOT_FOUND" || echo "No migration-related errors found in UI container log."
-                  fi
-                  echo "::endgroup::"
 
             - name: Upload Container Logs
               uses: actions/upload-artifact@v7
@@ -411,39 +336,7 @@ jobs:
               with:
                   name: container-logs
                   path: container-logs/
-                  retention-days: 1
-
-            # Hive's services are restart: always, so nothing stops them when
-            # the job ends and they come back with the (ephemeral) runner
-            # container. Three idle runners were each holding a full Hive
-            # stack, which left the box in disk-wait at load ~30 with no jobs
-            # running — and that is what made the next run's nested containerd
-            # time out on startup. Runs after the log upload so a failing run
-            # still gets its diagnostics.
-            - name: Tear down test + Hive stacks
-              if: always()
-              run: |
-                  # The Bluz stack goes first and unconditionally: leaving it up
-                  # is what wedged this box for five days (see "Reclaim leaked
-                  # test stacks" above). `docker compose down` alone is not
-                  # enough — on a run that died before checkout finished, the
-                  # compose file may not even be on disk — so each cleanup ends
-                  # with a name-filtered `rm -f`.
-                  # -v: take the container's anonymous volumes with it. Mongo
-                  # and Postgres each create one per run, and without this they
-                  # are orphaned the moment the container goes. The reclaim step
-                  # at the top of the next run cannot recover them either: it
-                  # discovers compose projects *from surviving containers*, so
-                  # removing the containers is exactly what makes their volumes
-                  # undiscoverable. ~47GB had accumulated that way by
-                  # 2026-09-03, filling the runner and failing every
-                  # Hive-booting job in the org (System-B90/.github#12).
-                  bluz=$(docker ps -aq --filter "name=^/bluz-test-" || true)
-                  [ -n "$bluz" ] && docker rm -f -v $bluz || true
-
-                  docker compose -f hive/docker-compose.yaml down -v --remove-orphans || true
-                  leftovers=$(docker ps -aq --filter "name=^/hive-" 2>/dev/null || true)
-                  [ -n "$leftovers" ] && docker rm -f $leftovers || true
+                  retention-days: 7
 
     # ── GitHub-hosted: classic 3-shard matrix ───────────────────────────────
     # Each GitHub-hosted runner is its own VM, so 3 shards = 3 isolated stacks
