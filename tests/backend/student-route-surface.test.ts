@@ -56,6 +56,8 @@ const PUBLIC_ROUTES: Record<string, string> = {
         "Reports whether Hive is reachable. No Bluz data, no per-user data.",
     "cli-auth/redeem/route.ts":
         "Redeems a one-time code the user was handed after signing in; rate-limited and single-use.",
+    "event/export/hive/route.ts":
+        "Machine-to-machine feed for Hive's poller. Gated by its own HIVE_SCHEDULE_FEED_TOKEN bearer check, not a staff session.",
     "health/route.ts": "Liveness probe. Returns no data.",
 };
 

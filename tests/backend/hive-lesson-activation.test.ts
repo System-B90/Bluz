@@ -67,6 +67,11 @@ vi.mock("@/api-server/hive/service-client", () => ({
     createHiveServiceClient: vi.fn(),
     hasHiveServiceCredentials: vi.fn(() => true),
 }));
+vi.mock("@/api-server/db-settings", () => ({
+    DbSettings: {
+        hiveLessonDriver: vi.fn(async () => "activator"),
+    },
+}));
 
 import {
     runLessonActivationTick,
