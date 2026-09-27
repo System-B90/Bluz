@@ -2,6 +2,7 @@ import Box from "@mui/material/Box";
 
 import { CalendarHoursSetting } from "@/components/settings-dialog/tabs/global/CalendarHoursSetting";
 import { DayStartTimeSetting } from "@/components/settings-dialog/tabs/global/DayStartTimeSetting";
+import { HiveIntegrationSetting } from "@/components/settings-dialog/tabs/global/HiveIntegrationSetting";
 import { MealTimesSetting } from "@/components/settings-dialog/tabs/global/MealTimesSetting";
 import { PrayerSettings } from "@/components/settings-dialog/tabs/global/PrayerSettings";
 
@@ -27,6 +28,9 @@ export function GlobalSettings()
             </Box>
             <Box sx={ { flex: "1 1 340px", minWidth: 300 } }>
                 <PrayerSettings />
+            </Box>
+            <Box sx={ { flex: "1 1 340px", minWidth: 300 } }>
+                <HiveIntegrationSetting />
             </Box>
         </Box>
     );

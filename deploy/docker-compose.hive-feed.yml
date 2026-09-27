@@ -7,6 +7,10 @@
 # If-None-Match and rewrites the file only when Bluz answers 200, i.e. only
 # when the schedule actually changed. An unchanged tick is a 304 and a no-op.
 #
+# Switched on in Bluz: Settings → global → "שילוב שיעורים בהייב" → "ICS להייב".
+# That choice is exclusive with Bluz's own lesson activator. While it is off,
+# the feed serves an empty calendar, so Hive drops the Bluz events it loaded.
+#
 # Requires, in Bluz's .env:
 #   HIVE_SCHEDULE_FEED_TOKEN   shared secret (e.g. `openssl rand -hex 32`)
 #   HIVE_API_USERNAME/PASSWORD service account the feed resolves Hive names with

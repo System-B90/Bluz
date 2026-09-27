@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
 import { DbIterations } from "@/api-server/db-iterations";
+import { DbSettings } from "@/api-server/db-settings";
 import { HiveClient } from "@/api-server/hive/client";
 import { createHiveServiceClient } from "@/api-server/hive/service-client";
 import {
@@ -16,6 +17,7 @@ import { CourseId } from "@/api-shared/types/course";
 import { DbEventDocument, eventTypeToHebrew } from "@/api-shared/types/event";
 import { HiveLessonId } from "@/api-shared/types/hive";
 import { RoomSource } from "@/api-shared/types/room";
+import { HiveLessonDriver } from "@/api-shared/types/settings/hive-integration";
 
 /*
  * The Bluz schedule as a calendar Hive can load in "external" schedule mode.
@@ -216,6 +218,18 @@ async function loadHiveLookup(
 
 export type HiveScheduleFeed = { body: string; etag: string };
 
+const EMPTY_LOOKUP: HiveFeedLookup = {
+    groupEmail: () => undefined,
+    lesson: () => undefined,
+    roomName: () => undefined,
+    subjectName: () => undefined,
+};
+
+function withEtag(body: string): HiveScheduleFeed {
+    const etag = `"${createHash("sha256").update(body).digest("base64url")}"`;
+    return { body, etag };
+}
+
 /**
  * The current iteration's schedule as a Hive feed, resolved with the Bluz
  * service account (the feed is fetched by a machine, never a browser).
@@ -229,6 +243,15 @@ export async function loadHiveScheduleFeed(
     const iteration = await DbIterations.currentOrNull();
     if (!iteration) return null;
     const db = getDatabaseController(iteration.dbName);
+
+    // Feed switched off: publish an empty calendar rather than an error, so
+    // Hive's diff drops every Bluz event it loaded and its own lesson
+    // assignment stops, leaving the activator as the only driver.
+    if ((await DbSettings.hiveLessonDriver(db)) !== HiveLessonDriver.ICS_FEED) {
+        return withEtag(
+            buildHiveScheduleIcs([], EMPTY_LOOKUP, { lessonCategory: "" }),
+        );
+    }
 
     const events = await db.events
         .find({
@@ -252,6 +275,5 @@ export async function loadHiveScheduleFeed(
         lessonCategory:
             process.env.HIVE_FEED_LESSON_CATEGORY || DEFAULT_LESSON_CATEGORY,
     });
-    const etag = `"${createHash("sha256").update(body).digest("base64url")}"`;
-    return { body, etag };
+    return withEtag(body);
 }
