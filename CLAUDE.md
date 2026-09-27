@@ -46,6 +46,12 @@ Use `/caveman` mode. Less word do trick.
 - New job → `runs-on: [self-hosted, Linux]`.
 - Every `docker/setup-buildx-action` step on self-hosted gets a unique `name:` and `cleanup: false`. Jobs share one OS user and `~/.docker/buildx`; the default ephemeral builder's cleanup tears down sibling jobs' buildkit.
 
+**Release Screenshots**
+- Automatic, in CI. `tests/screenshots.spec.ts` captures login, schedule, gantt → `release-screenshots/`. `e2e.yml` uploads them as the `release-screenshots` artifact. On a `v*` tag, `release.yml` fetches it from the master E2E run for the tagged commit (else the latest green one) and attaches the PNGs to the GitHub Release.
+- New or visibly changed user-facing page → add/update its shot in `tests/screenshots.spec.ts`, same PR.
+- Before tagging: master E2E green for that commit; check its `release-screenshots` artifact.
+- Shots aren't assertions. Look at them. Never commit screenshots by hand.
+
 **Windows / PowerShell**
 - Always Windows 11 + PowerShell (v5/v7).
 - Standard PS chaining: `;`. Logical chaining: `pwsh -Command "cmd1 && cmd2"`.
