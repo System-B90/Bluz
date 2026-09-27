@@ -1,4 +1,5 @@
 import { DbIterations } from "@/api-server/db-iterations";
+import { DbSettings } from "@/api-server/db-settings";
 import { HiveClient } from "@/api-server/hive/client";
 import { resolveDesiredRules } from "@/api-server/hive/lesson-sync";
 import {
@@ -14,6 +15,7 @@ import {
     eventOpensHiveQueue,
 } from "@/api-shared/types/event";
 import { HiveActivationTickResult } from "@/api-shared/types/hive-activation";
+import { HiveLessonDriver } from "@/api-shared/types/settings/hive-integration";
 import { logger } from "@/logging/pino";
 
 /*
@@ -110,6 +112,15 @@ export async function runLessonActivationTick(
         if (!controller && !currentIteration) return result;
         const db =
             controller ?? getDatabaseController(currentIteration!.dbName);
+
+        // Hive drives lessons itself from the ICS feed; activating here too
+        // would race its `update_schedule` task on the same classes.
+        if (
+            (await DbSettings.hiveLessonDriver(db)) ===
+            HiveLessonDriver.ICS_FEED
+        ) {
+            return result;
+        }
 
         // One tick only ever looks at events around "now"; the lag cap means
         // nothing older can activate anyway.

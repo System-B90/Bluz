@@ -23,6 +23,9 @@ _NOT_CLI_SURFACE = {
     # next-auth's own handler: the browser sign-in flow. `bluz login` drives
     # it through a real browser and redeems a handoff code instead.
     "auth/[...nextauth]",
+    # Machine-to-machine ICS feed for Hive's external-schedule poller. Bearer
+    # token auth, no user session — not something a CLI user calls.
+    "event/export/hive",
 }
 
 

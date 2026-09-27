@@ -15,6 +15,10 @@ import { updatePrayerEvents } from "@/api-server/prayer";
 import { requireStaffSession } from "@/api-server/session-user";
 import { inplaceDateFixupToDate } from "@/api-shared/date-fixer";
 import { ClientApiError } from "@/api-shared/errors";
+import {
+    HIVE_INTEGRATION_SETTING_KEY,
+    isHiveLessonDriver,
+} from "@/api-shared/types/settings/hive-integration";
 import { MEAL_TIMES_SETTING_KEY } from "@/api-shared/types/settings/meal";
 import {
     PRAYER_TIMES_SETTING_KEY,
@@ -30,6 +34,7 @@ import {
 } from "@/api-shared/types/settings/settings";
 
 const SETTING_NAMES: ReadonlySet<string> = new Set<SettingName>([
+    HIVE_INTEGRATION_SETTING_KEY,
     MEAL_TIMES_SETTING_KEY,
     PRAYER_TIMES_SETTING_KEY,
     SCHEDULE_SETTINGS_KEY,
@@ -98,6 +103,12 @@ export const POST: ServerApiSettingUpdate = withApi(
                 iterationId,
             });
         } else {
+            if (
+                name === HIVE_INTEGRATION_SETTING_KEY &&
+                !isHiveLessonDriver(value.lessonDriver)
+            ) {
+                throw new ClientApiError("מצב שילוב הייב לא מוכר");
+            }
             await DbSettings.set(name, value, { upsert: true }, controller);
         }
 

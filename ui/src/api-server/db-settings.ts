@@ -7,6 +7,12 @@ import {
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 import {
+    DEFAULT_HIVE_LESSON_DRIVER,
+    HIVE_INTEGRATION_SETTING_KEY,
+    HiveLessonDriver,
+    isHiveLessonDriver,
+} from "@/api-shared/types/settings/hive-integration";
+import {
     DEFAULT_BREAKFAST_TIME,
     DEFAULT_DINNER_TIME,
     DEFAULT_LUNCH_TIME,
@@ -126,7 +132,25 @@ async function initDbSettings(
     }
 }
 
+/**
+ * Which path opens Hive lessons for this iteration. A missing or corrupt
+ * setting falls back to the activator, i.e. behaviour before the setting.
+ */
+async function getHiveLessonDriver(
+    controller: DatabaseController = databaseController,
+): Promise<HiveLessonDriver> {
+    const setting = await getDbSetting(
+        HIVE_INTEGRATION_SETTING_KEY,
+        undefined,
+        controller,
+    );
+    return isHiveLessonDriver(setting?.lessonDriver)
+        ? setting.lessonDriver
+        : DEFAULT_HIVE_LESSON_DRIVER;
+}
+
 export namespace DbSettings {
+    export const hiveLessonDriver = getHiveLessonDriver;
     export const get = getDbSetting;
     export const set = setDbSetting;
     export const init = initDbSettings;

@@ -1,0 +1,63 @@
+# Bluz — overlay that feeds Bluz's schedule into Hive's "external" schedule mode.
+#
+# Hive (HIVE_SCHEDULE_MODE=external) has no push API for events: it re-reads
+# /mnt/calendars/Calendar.ics — a host directory, HIVE_CALENDAR_DIRS_PATH in
+# Hive's .env, mounted read-only — every 35s. Bluz never pushes anything.
+# Instead this sidecar *pulls* Bluz's feed (GET /api/event/export/hive) with
+# If-None-Match and rewrites the file only when Bluz answers 200, i.e. only
+# when the schedule actually changed. An unchanged tick is a 304 and a no-op.
+#
+# Switched on in Bluz: Settings → global → "שילוב שיעורים בהייב" → "ICS להייב".
+# That choice is exclusive with Bluz's own lesson activator. While it is off,
+# the feed serves an empty calendar, so Hive drops the Bluz events it loaded.
+#
+# Requires, in Bluz's .env:
+#   HIVE_SCHEDULE_FEED_TOKEN   shared secret (e.g. `openssl rand -hex 32`)
+#   HIVE_API_USERNAME/PASSWORD service account the feed resolves Hive names with
+#   HIVE_CALENDAR_DIRS_PATH    the SAME host dir Hive mounts at /mnt/calendars
+#   HIVE_FEED_LESSON_CATEGORY  optional; Hive category with has_lesson (default שיעור)
+#
+# Usage — from the bundle root:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.hive-feed.yml up -d
+#
+# Hive on another host? Skip this file; run the same loop there against
+# https://<bluz>/api/event/export/hive, or point any calendar client at it.
+
+services:
+    hive-feed:
+        image: curlimages/curl:8.10.1
+        container_name: bluz-hive-feed
+        restart: unless-stopped
+        user: "${HIVE_FEED_UID:-1000}:${HIVE_FEED_GID:-1000}"
+        environment:
+            FEED_URL: http://ui:3000/api/event/export/hive
+            FEED_TOKEN: ${HIVE_SCHEDULE_FEED_TOKEN:?set HIVE_SCHEDULE_FEED_TOKEN}
+            FEED_INTERVAL: ${HIVE_FEED_INTERVAL:-30}
+        volumes:
+            - "${HIVE_CALENDAR_DIRS_PATH:?set HIVE_CALENDAR_DIRS_PATH}:/calendars"
+        networks:
+            - bluz_net
+        depends_on:
+            ui:
+                condition: service_healthy
+        # Write to a temp file and rename: Hive must never read half a file.
+        # A failed fetch leaves the last good calendar in place.
+        entrypoint:
+            - /bin/sh
+            - -c
+            - |
+                while true; do
+                  code=$$(curl -sS -o /calendars/.Calendar.ics.tmp -w '%{http_code}' \
+                    --etag-compare /calendars/.etag --etag-save /calendars/.etag.new \
+                    -H "Authorization: Bearer $$FEED_TOKEN" "$$FEED_URL")
+                  if [ "$$code" = "200" ]; then
+                    mv /calendars/.Calendar.ics.tmp /calendars/Calendar.ics
+                    mv /calendars/.etag.new /calendars/.etag
+                    echo "$$(date -u +%FT%TZ) calendar updated"
+                  elif [ "$$code" != "304" ]; then
+                    echo "$$(date -u +%FT%TZ) feed fetch failed: HTTP $$code" >&2
+                  fi
+                  rm -f /calendars/.Calendar.ics.tmp /calendars/.etag.new
+                  sleep "$$FEED_INTERVAL"
+                done
