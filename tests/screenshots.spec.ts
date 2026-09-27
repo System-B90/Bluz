@@ -37,7 +37,11 @@ async function shoot(page: Page, name: string): Promise<void>
     // Not `networkidle`: the app holds a WebSocket open, so it never idles
     // (see waitForHydration). Hydration plus a short settle covers data loads.
     await waitForHydration(page);
-    await page.waitForTimeout(1_500);
+    // Bounded: a panel that never resolves still gets captured.
+    await expect(page.locator(".MuiSkeleton-root, [role='progressbar']"))
+        .toHaveCount(0, { timeout: 30_000 })
+        .catch(() => {});
+    await page.waitForTimeout(1_000);
     await page.screenshot({ path: `${ OUT_DIR }/${ name }.png`, fullPage: true });
 }
 
