@@ -92,6 +92,41 @@ export function SelectSearchHeader({
     );
 }
 
+const EDITING_SHORTCUTS = new Set(["a", "c", "v", "x", "z", "y"]);
+
+/**
+ * Keys pressed while a menu item has focus that belong to the search box:
+ * printable characters (which MUI would otherwise spend on type-ahead), "/",
+ * Backspace/Delete, and editing shortcuts such as Ctrl+A.
+ */
+function isSearchKey(e: React.KeyboardEvent): boolean {
+    if (e.key === "Backspace" || e.key === "Delete") return true;
+    if (e.ctrlKey || e.metaKey) {
+        return !e.altKey && EDITING_SHORTCUTS.has(e.key.toLowerCase());
+    }
+    return !e.altKey && e.key.length === 1;
+}
+
+/** Capture-phase list handler: routes search keys back to the search box. */
+function returnFocusToSearch(e: React.KeyboardEvent<HTMLElement>) {
+    const input = e.currentTarget.querySelector<HTMLInputElement>(
+        "[data-select-search] input",
+    );
+    if (!input || e.target === input || !isSearchKey(e)) return;
+
+    // Stopped here so MenuList's type-ahead never sees the key.
+    e.stopPropagation();
+    input.focus();
+    if (e.key === "/") {
+        // "/" is the conventional "go to search" key, not a character to type.
+        e.preventDefault();
+        input.select();
+    }
+    // Anything else keeps its default action, which now lands in the
+    // freshly focused input: the character is typed, Backspace deletes,
+    // Ctrl+A selects the query.
+}
+
 /**
  * MenuProps for a Select topped by `SelectSearchHeader`: the list scrolls
  * under the sticky search box and the box takes focus once the menu opens.
@@ -116,6 +151,10 @@ export function searchableMenuProps(
         },
         MenuListProps: {
             ...menuProps?.MenuListProps,
+            onKeyDownCapture: (event) => {
+                returnFocusToSearch(event);
+                menuProps?.MenuListProps?.onKeyDownCapture?.(event);
+            },
             sx: {
                 flex: 1,
                 minHeight: 0,

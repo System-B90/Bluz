@@ -35,6 +35,8 @@ export function HiveSubjectSelect({
             label={label}
             options={subjects}
             parseValue={String}
+            searchable
+            searchPlaceholder="חיפוש מקצוע..."
             {...rest}
         />
     );

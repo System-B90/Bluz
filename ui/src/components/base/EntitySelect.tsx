@@ -2,7 +2,12 @@ import FormControl, { FormControlProps } from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
-import { useMemo, useId } from "react";
+import { useMemo, useId, useState } from "react";
+
+import {
+    searchableMenuProps,
+    SelectSearchHeader,
+} from "@/components/base/SelectSearchHeader";
 
 /** Minimal shape every Hive entity offered in a dropdown satisfies. */
 export type NamedEntity<TId extends number | string> = {
@@ -27,6 +32,10 @@ export type EntitySelectProps<TId extends number | string> = {
     disableWhenEmpty?: boolean;
     /** Coerce the raw `<select>` value back to the id type. */
     parseValue: (raw: string) => TId;
+    /** Top the menu with a type-to-filter search box. */
+    searchable?: boolean;
+    /** Placeholder for the search box. */
+    searchPlaceholder?: string;
 } & Omit<FormControlProps, "onChange">;
 
 /**
@@ -43,6 +52,8 @@ export function EntitySelect<TId extends number | string>({
     emptyLabel,
     disableWhenEmpty = true,
     parseValue,
+    searchable = false,
+    searchPlaceholder = "חיפוש...",
     disabled,
     ...formControlProps
 }: EntitySelectProps<TId>) {
@@ -51,6 +62,18 @@ export function EntitySelect<TId extends number | string>({
         () => [...options].sort((a, b) => a.name.localeCompare(b.name, "he")),
         [options],
     );
+    const [searchQuery, setSearchQuery] = useState("");
+    const visible = useMemo(() => {
+        const query = searchQuery.trim().toLowerCase();
+        if (!query) return sorted;
+        // The selected option always stays: MUI renders a blank field for a
+        // value with no matching MenuItem.
+        return sorted.filter(
+            (option) =>
+                option.id === value ||
+                option.name.toLowerCase().includes(query),
+        );
+    }, [sorted, searchQuery, value]);
 
     return (
         <FormControl
@@ -60,6 +83,7 @@ export function EntitySelect<TId extends number | string>({
             <InputLabel id={ labelId }>{label}</InputLabel>
             <Select label={label}
                 labelId={ labelId }
+                MenuProps={searchable ? searchableMenuProps(undefined) : undefined}
                 onChange={(e) =>
                     onChange(
                         e.target.value === "" || e.target.value == null
@@ -67,14 +91,22 @@ export function EntitySelect<TId extends number | string>({
                             : parseValue(String(e.target.value)),
                     )
                 }
+                onClose={() => setSearchQuery("")}
                 value={value ?? ""}
             >
+                {searchable ? (
+                    <SelectSearchHeader
+                        onChange={setSearchQuery}
+                        placeholder={searchPlaceholder}
+                        value={searchQuery}
+                    />
+                ) : null}
                 {allowEmpty ? (
                     <MenuItem value="">
                         <em>{emptyLabel}</em>
                     </MenuItem>
                 ) : null}
-                {sorted.map((option) => (
+                {visible.map((option) => (
                     <MenuItem key={option.id} value={option.id}>
                         {option.name}
                     </MenuItem>

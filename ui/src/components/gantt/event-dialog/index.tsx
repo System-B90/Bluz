@@ -46,7 +46,7 @@ function EventDialogInner({
 }: Omit<EventDialogProps, "curriculumId">)
 {
     const { deleteEvent } = useModuleEventActions();
-    const { openModuleDialog } = useCurriculumProviderActions();
+    const { openModuleDialog, openSyllabusDialog } = useCurriculumProviderActions();
 
     const [ isContentReady, setIsContentReady ] = useState(false);
     const [ moveDialogOpen, setMoveDialogOpen ] = useState(false);
@@ -67,6 +67,13 @@ function EventDialogInner({
         setOpen(false);
         openModuleDialog(syllabusId, moduleId);
     }, [ syllabusId, moduleId, setOpen, openModuleDialog ]);
+
+    const handleSyllabusClick = useCallback(() =>
+    {
+        if (!syllabusId) return;
+        setOpen(false);
+        openSyllabusDialog(syllabusId);
+    }, [ syllabusId, setOpen, openSyllabusDialog ]);
 
     // A gantt delete has no undo, so one stray click on מחיקה used to
     // drop the event — and its placement, constraints and shuffles — for
@@ -110,6 +117,7 @@ function EventDialogInner({
                 eventTitle={ event?.title }
                 moduleTitle={ ganttModule?.title }
                 onModuleClick={ ganttModule ? handleModuleClick : undefined }
+                onSyllabusClick={ syllabus ? handleSyllabusClick : undefined }
                 syllabusTitle={ syllabus?.title }
             />
 

@@ -1,17 +1,44 @@
 import DialogTitle from "@mui/material/DialogTitle";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { ReactNode } from "react";
+
+/** A breadcrumb label that opens its entity when given a handler. */
+export function DialogCrumb({ children, onClick }: { children: ReactNode; onClick?: () => void })
+{
+    return (
+        <Typography
+            component="span"
+            onClick={ onClick }
+            onKeyDown={ onClick
+                ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }
+                : undefined }
+            role={ onClick ? "link" : undefined }
+            sx={ {
+                color: "text.secondary",
+                cursor: onClick ? "pointer" : undefined,
+                "&:hover": onClick ? { textDecoration: "underline" } : undefined,
+            } }
+            tabIndex={ onClick ? 0 : undefined }
+            variant="caption"
+        >
+            { children }
+        </Typography>
+    );
+}
 
 export function EventDialogHeader({
     eventTitle,
     moduleTitle,
     syllabusTitle,
     onModuleClick,
+    onSyllabusClick,
 }: {
     eventTitle?: string;
     moduleTitle?: string;
     syllabusTitle?: string;
     onModuleClick?: () => void;
+    onSyllabusClick?: () => void;
 })
 {
     return (
@@ -26,24 +53,9 @@ export function EventDialogHeader({
                         sx={ { color: "text.secondary" } }
                         variant="caption"
                     >
-                        { syllabusTitle }
+                        { !!syllabusTitle && <DialogCrumb onClick={ onSyllabusClick }>{ syllabusTitle }</DialogCrumb> }
                         { !!syllabusTitle && !!moduleTitle && " / " }
-                        { !!moduleTitle && (
-                            <Typography
-                                component="span"
-                                onClick={ onModuleClick }
-                                sx={ {
-                                    color: "text.secondary",
-                                    cursor: onModuleClick ? "pointer" : undefined,
-                                    "&:hover": onModuleClick
-                                        ? { textDecoration: "underline" }
-                                        : undefined,
-                                } }
-                                variant="caption"
-                            >
-                                { moduleTitle }
-                            </Typography>
-                        ) }
+                        { !!moduleTitle && <DialogCrumb onClick={ onModuleClick }>{ moduleTitle }</DialogCrumb> }
                     </Typography>
                 ) }
             </Stack>
