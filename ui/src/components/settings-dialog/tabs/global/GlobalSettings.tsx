@@ -5,6 +5,7 @@ import { DayStartTimeSetting } from "@/components/settings-dialog/tabs/global/Da
 import { HiveIntegrationSetting } from "@/components/settings-dialog/tabs/global/HiveIntegrationSetting";
 import { MealTimesSetting } from "@/components/settings-dialog/tabs/global/MealTimesSetting";
 import { PrayerSettings } from "@/components/settings-dialog/tabs/global/PrayerSettings";
+import { StudentViewSetting } from "@/components/settings-dialog/tabs/global/StudentViewSetting";
 
 export function GlobalSettings()
 {
@@ -31,6 +32,9 @@ export function GlobalSettings()
             </Box>
             <Box sx={ { flex: "1 1 340px", minWidth: 300 } }>
                 <HiveIntegrationSetting />
+            </Box>
+            <Box sx={ { flex: "1 1 340px", minWidth: 300 } }>
+                <StudentViewSetting />
             </Box>
         </Box>
     );

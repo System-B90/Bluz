@@ -19,6 +19,11 @@ import {
     SCHEDULE_SETTINGS_KEY,
     ScheduleSettings,
 } from "@/api-shared/types/settings/schedule";
+import {
+    resolveStudentViewSettings,
+    STUDENT_VIEW_SETTING_KEY,
+    studentEventName,
+} from "@/api-shared/types/settings/student-view";
 import { AuthSessionData } from "@/api-shared/types/sso";
 import {
     ApiStudentScheduleGetResponse,
@@ -89,25 +94,40 @@ export function resolveStudentViewDate(
     return parsed.format(DATE_FORMAT);
 }
 
+type SubjectDisplay = {
+    /** Subject id → hex colour. */
+    colors: Map<string, string>;
+    /** Subject id → Hive `symbol` (e.g. "פא"), for student event names (#744). */
+    symbols: Map<string, string>;
+};
+
 /**
- * Subject colours, keyed by subject id, resolved with the Bluz *service*
- * account rather than the caller's token: a student must not be able to reach
- * Hive through Bluz, and the only thing derived from the lookup is a hex
- * string, which never identifies the subject. Hive being unavailable degrades
- * to the fallback colour instead of failing the request.
+ * Subject colours and symbols, keyed by subject id, resolved with the Bluz
+ * *service* account rather than the caller's token: a student must not be
+ * able to reach Hive through Bluz. Only a hex string and the short symbol are
+ * derived from the lookup — never the subject id or full name. Hive being
+ * unavailable degrades to the fallback colour and a symbol-less name instead
+ * of failing the request.
  */
-async function getSubjectColors(
+async function getSubjectDisplay(
     hive: Promise<HiveClient>,
-): Promise<Map<string, string>> {
+): Promise<SubjectDisplay> {
     try {
         const subjects = await (await hive).getSubjects();
-        return new Map(
-            subjects
-                .filter((subject) => Boolean(subject.color))
-                .map((subject) => [String(subject.id), subject.color as string]),
-        );
+        return {
+            colors: new Map(
+                subjects
+                    .filter((subject) => Boolean(subject.color))
+                    .map((subject) => [String(subject.id), subject.color as string]),
+            ),
+            symbols: new Map(
+                subjects
+                    .filter((subject) => Boolean(subject.symbol))
+                    .map((subject) => [String(subject.id), subject.symbol]),
+            ),
+        };
     } catch {
-        return new Map();
+        return { colors: new Map(), symbols: new Map() };
     }
 }
 
@@ -179,8 +199,9 @@ export async function buildStudentSchedule(
         customColorDocs,
         courses,
         roomNameById,
-        subjectColors,
+        subjectDisplay,
         scheduleSetting,
+        studentViewSetting,
     ] = await Promise.all([
         DbEvent.getInRange(
             dayStart.toDate(),
@@ -192,10 +213,13 @@ export async function buildStudentSchedule(
         DbCustomColors.get(),
         DbCourses.get(undefined, controller),
         getRoomNames(controller, hive),
-        getSubjectColors(hive),
+        getSubjectDisplay(hive),
         DbSettings.get(SCHEDULE_SETTINGS_KEY, undefined, controller) as
             Promise<null | ScheduleSettings>,
+        DbSettings.get(STUDENT_VIEW_SETTING_KEY, undefined, controller),
     ]);
+    const { colors: subjectColors, symbols: subjectSymbols } = subjectDisplay;
+    const studentViewSettings = resolveStudentViewSettings(studentViewSetting);
     const customColors = new Map(customColorDocs.map((c) => [c.id, c.hex]));
     const courseNameById = new Map(courses.map((c) => [c.id, c.name]));
     const resolveRelated = relatedCoursesResolver(courses);
@@ -218,7 +242,12 @@ export async function buildStudentSchedule(
             const courseIds = event.courses ?? [];
             return {
                 id: event.id,
-                name: event.name,
+                // Symbol mode by default: the real name stays server-side.
+                name: studentEventName(
+                    event,
+                    subjectSymbols.get(String(event.subject)),
+                    studentViewSettings,
+                ),
                 startTime: new Date(event.startTime).toISOString(),
                 endTime: new Date(event.endTime).toISOString(),
                 color: resolveColorHex(event, customColors, subjectColors),
