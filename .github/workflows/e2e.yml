@@ -103,8 +103,8 @@ jobs:
                   target: runner
                   load: true
                   tags: ghcr.io/system-b90/bluz/ui:latest
-                  build-args: |
-                      NPM_TOKEN=${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
+                  secrets: |
+                      npm_token=${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
                   cache-from: type=gha,scope=e2e-ui
                   cache-to: type=gha,mode=max,scope=e2e-ui
 
@@ -115,8 +115,8 @@ jobs:
                   file: session-server/Dockerfile.websocket
                   load: true
                   tags: ghcr.io/system-b90/bluz/sessions:latest
-                  build-args: |
-                      NPM_TOKEN=${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
+                  secrets: |
+                      npm_token=${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
                   cache-from: type=gha,scope=e2e-sessions
                   cache-to: type=gha,mode=max,scope=e2e-sessions
 
@@ -217,10 +217,10 @@ jobs:
             - name: Build Bluz images
               run: |
                   docker build -f ui/Dockerfile --target runner \
-                      --build-arg NPM_TOKEN="$NPM_TOKEN" \
+                      --secret id=npm_token,env=NPM_TOKEN \
                       -t ghcr.io/system-b90/bluz/ui:latest .
                   docker build -f session-server/Dockerfile.websocket \
-                      --build-arg NPM_TOKEN="$NPM_TOKEN" \
+                      --secret id=npm_token,env=NPM_TOKEN \
                       -t ghcr.io/system-b90/bluz/sessions:latest session-server/
                   docker build -f nginx/Dockerfile.proxy \
                       -t ghcr.io/system-b90/bluz/proxy:latest nginx/
