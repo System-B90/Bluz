@@ -9,8 +9,10 @@ import
     GanttCurriculumId,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { EmptyState } from "@/components/base/EmptyState";
 import { SyllabusesActionsBox } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box";
+import { orchestratedFirst } from "@/components/gantt/curriculum-view/tabs/syllabuses-tab/orchestrated-first";
 import { useProgressiveItemCount } from "@/components/gantt/curriculum-view/tabs/UseProgressiveItemCount";
 import { useCurriculumState } from "@/components/gantt/state/context";
 import { useGanttFilters } from "@/components/gantt/state/filters/Provider";
@@ -72,16 +74,21 @@ export const SyllabusesTab = memo(function SyllabusesTab({
     const { syllabusMatches, hasActiveFilters, description, clearFilters } =
         useGanttFilters();
     const allSyllabuses = curriculum?.syllabuses ?? EMPTY_SYLLABUS_IDS;
+    const { userData } = useAuth();
     const syllabuses = useMemo(
         () =>
-            hasActiveFilters
+        {
+            const filtered = hasActiveFilters
                 ? allSyllabuses.filter((id) =>
                 {
                     const syllabus = state.syllabuses[ id ];
                     return syllabus ? syllabusMatches(syllabus) : false;
                 })
-                : allSyllabuses,
-        [ allSyllabuses, hasActiveFilters, syllabusMatches, state.syllabuses ],
+                : allSyllabuses;
+            // The syllabuses I orchestrate come first (#748).
+            return orchestratedFirst(filtered, userData?.id ? Number(userData.id) : null, state);
+        },
+        [ allSyllabuses, hasActiveFilters, syllabusMatches, state, userData?.id ],
     );
     const visibleSyllabusCount = useProgressiveItemCount(syllabuses.length, {
         batchSize: SYLLABUS_CARD_BATCH_SIZE,
