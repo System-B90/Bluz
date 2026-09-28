@@ -3,15 +3,14 @@ FROM node:22-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# GitHub Packages read token for @system-b90/* (npm resolves ${NPM_TOKEN} from env)
-ARG NPM_TOKEN
-ENV NPM_TOKEN=${NPM_TOKEN}
-
 COPY package.json package-lock.json .npmrc ./
 COPY ui/docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-RUN --mount=type=cache,target=/root/.npm npm ci --ignore-scripts
+# GitHub Packages read token for @system-b90/* arrives as a BuildKit secret
+# (`npm_token`), never as ARG/ENV, so it can't land in image config, layers or
+# provenance. .npmrc resolves ${NPM_TOKEN} from the env of this one command.
+RUN --mount=type=cache,target=/root/.npm     --mount=type=secret,id=npm_token     NPM_TOKEN="$(cat /run/secrets/npm_token)" npm ci --ignore-scripts
 
 FROM deps AS dev
 WORKDIR /app

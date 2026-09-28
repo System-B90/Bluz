@@ -6,8 +6,8 @@ services:
         build:
             context: ./../
             dockerfile: ui/Dockerfile
-            args:
-                NPM_TOKEN: ${NPM_TOKEN}
+            secrets:
+                - npm_token
         container_name: bluz-ui
         restart: unless-stopped
         env_file:
@@ -99,8 +99,8 @@ services:
         build:
             context: ../session-server
             dockerfile: Dockerfile.websocket
-            args:
-                NPM_TOKEN: ${NPM_TOKEN}
+            secrets:
+                - npm_token
         container_name: bluz-sessions
         restart: unless-stopped
         env_file:
@@ -158,3 +158,9 @@ networks:
         # working with no configuration; CI sets HIVE_NETWORK_NAME.
         name: ${HIVE_NETWORK_NAME:-hive-stack_hive-net}
         external: true
+
+secrets:
+    # Build-time only (`npm run docker:*` exports it via sb90_devops.with_npm_token;
+    # CI sets it). Never an ARG/ENV, so it stays out of image layers.
+    npm_token:
+        environment: NPM_TOKEN

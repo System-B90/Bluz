@@ -25,8 +25,8 @@ services:
         build:
             context: ./../
             dockerfile: ui/Dockerfile
-            args:
-                NPM_TOKEN: ${NPM_TOKEN}
+            secrets:
+                - npm_token
             target: runner
         container_name: ${TEST_PROJECT_NAME:-bluz-test}-ui
         # No hive.org entry here on purpose. Hive's nginx publishes on its own
