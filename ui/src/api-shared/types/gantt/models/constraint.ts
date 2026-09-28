@@ -124,10 +124,35 @@ export function hasConflictingTemporalConstraints(
     return intersectAllowedDayIndices(temporal).size === 0;
 }
 
-type ConstraintDisplayState = {
-    modules: Record<GanttModuleId, { title: string }>;
-    events: Record<GanttEventId, { title: string }>;
+export type ConstraintDisplayState = {
+    syllabuses: Record<string, { title: string }>;
+    modules: Record<GanttModuleId, { title: string; syllabusId: string }>;
+    events: Record<GanttEventId, { title: string; moduleId: GanttModuleId }>;
 };
+
+const NOT_FOUND = "*לא נמצא*";
+const PATH_SEPARATOR = " › ";
+
+/**
+ * Fully qualified name of a constraint endpoint: "syllabus › module" for a
+ * module, "syllabus › module › event" for an event. Missing ancestors are
+ * dropped; a missing entity itself reads as "not found".
+ */
+export function qualifiedEntityName(
+    type: EntityType,
+    id: string,
+    state: ConstraintDisplayState,
+): string {
+    const event = type === "event" ? state.events[id as GanttEventId] : undefined;
+    if (type === "event" && !event) return NOT_FOUND;
+    const moduleId = event ? event.moduleId : (id as GanttModuleId);
+    const ganttModule = state.modules[moduleId];
+    if (type === "module" && !ganttModule) return NOT_FOUND;
+    const syllabus = ganttModule && state.syllabuses[ganttModule.syllabusId];
+    return [syllabus?.title, ganttModule?.title, event?.title]
+        .filter((part): part is string => !!part)
+        .join(PATH_SEPARATOR);
+}
 
 export function constraintToHumanReadableString(
     constraint: GanttConstraint,
@@ -146,19 +171,23 @@ export function constraintToHumanReadableString(
         const targetTypeName =
             constraint.targetType === "module" ? "המערך" : "המופע";
 
-        let ownerName = " ";
-        if (constraint.ownerType === "event") {
-            ownerName =
-                state.events[constraint.ownerEventId]?.title ?? "*לא נמצא*";
-        } else {
-            ownerName =
-                state.modules[constraint.ownerModuleId]?.title ?? "*לא נמצא*";
-        }
+        const ownerName = qualifiedEntityName(
+            constraint.ownerType,
+            constraint.ownerType === "event"
+                ? constraint.ownerEventId
+                : constraint.ownerModuleId,
+            state,
+        );
+        const targetName = qualifiedEntityName(
+            constraint.targetType,
+            constraint.targetId,
+            state,
+        );
 
         if (constraint.relation === "after") {
-            return `${ownerTypeName} ${ownerName} יתחיל אחרי ש${targetTypeName} ${target.title} יסתיים`;
+            return `${ownerTypeName} ${ownerName} יתחיל אחרי ש${targetTypeName} ${targetName} יסתיים`;
         } else if (constraint.relation === "before") {
-            return `${ownerTypeName} ${ownerName} יסתיים לפני ש${targetTypeName} ${target.title} יתחיל`;
+            return `${ownerTypeName} ${ownerName} יסתיים לפני ש${targetTypeName} ${targetName} יתחיל`;
         }
     } else {
         return "[___]";

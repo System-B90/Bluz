@@ -4,6 +4,7 @@ import Typography from "@mui/material/Typography";
 import {
     ConstraintType,
     GanttConstraint,
+    qualifiedEntityName,
     RelationalConstraint,
     TemporalConstraint,
 } from "@/api-shared/types/gantt/models/constraint";
@@ -22,19 +23,22 @@ function RelationalConstraintHumanReadableEntry({
     const state = useCurriculumState();
     const { openModuleDialog, openEventDialog } = useCurriculumProviderActions();
 
-    const target =
-        constraint.targetType === "module"
-            ? state.modules[constraint.targetId]
-            : state.events[constraint.targetId];
-
     const ownerTypeName = constraint.ownerType === "event" ? "המופע" : "המערך";
     const targetTypeName =
         constraint.targetType === "module" ? "המערך" : "המופע";
 
-    const ownerName =
-        (constraint.ownerType === "event"
-            ? state.events[constraint.ownerEventId]?.title
-            : state.modules[constraint.ownerModuleId]?.title) ?? "*לא נמצא*";
+    const ownerName = qualifiedEntityName(
+        constraint.ownerType,
+        constraint.ownerType === "event"
+            ? constraint.ownerEventId
+            : constraint.ownerModuleId,
+        state,
+    );
+    const targetName = qualifiedEntityName(
+        constraint.targetType,
+        constraint.targetId,
+        state,
+    );
 
     const openOwner = () => {
         if (constraint.ownerType === "event") {
@@ -142,7 +146,7 @@ function RelationalConstraintHumanReadableEntry({
                 sx={{ cursor: "pointer", textDecoration: "underline" }}
                 variant="body2"
             >
-                {target?.title ?? "*לא נמצא*"}
+                {targetName}
             </Typography>
             <Box width="0.2rem" />
             <Typography color="text.primary" variant="body2">
