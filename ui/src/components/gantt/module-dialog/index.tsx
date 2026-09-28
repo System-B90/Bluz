@@ -34,6 +34,7 @@ import {
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { InstructorSelect } from "@/components/base/InstructorSelect";
 import { useConfirmDialog } from "@/components/base/UseConfirmDialog";
+import { DialogCrumb } from "@/components/gantt/event-dialog/DialogHeader";
 import { ModuleConstraintsView } from "@/components/gantt/module-dialog/constraints/ModuleConstraintsView";
 import { ModuleEventsView } from "@/components/gantt/module-dialog/ModuleEventsView";
 import {
@@ -63,9 +64,10 @@ export type ModuleDialogProps = {
 type ModuleDialogHeaderProps = {
     moduleTitle?: string;
     syllabusTitle?: string;
+    onSyllabusClick?: () => void;
 }
 
-function ModuleDialogHeader({ moduleTitle, syllabusTitle }: ModuleDialogHeaderProps) {
+function ModuleDialogHeader({ moduleTitle, syllabusTitle, onSyllabusClick }: ModuleDialogHeaderProps) {
     return (
         <DialogTitle sx={{ pb: 1 }}>
             <Stack spacing={0.5}>
@@ -78,7 +80,7 @@ function ModuleDialogHeader({ moduleTitle, syllabusTitle }: ModuleDialogHeaderPr
                         sx={{ color: "text.secondary" }}
                         variant="caption"
                     >
-                        סילבוס: {syllabusTitle}
+                        סילבוס: <DialogCrumb onClick={onSyllabusClick}>{syllabusTitle}</DialogCrumb>
                     </Typography>
                 )}
             </Stack>
@@ -315,7 +317,7 @@ function ModuleDialogInner({
     ...props
 }: Omit<ModuleDialogProps, "curriculumId">) {
     const { enqueueSnackbar } = useSnackbar();
-    const { closeModuleDialog, openModuleDialog } = useCurriculumProviderActions();
+    const { closeModuleDialog, openModuleDialog, openSyllabusDialog } = useCurriculumProviderActions();
     const { createModule, deleteModule, updateModule } = useModuleActions();
     const { createEvent } = useModuleEventActions();
 
@@ -383,6 +385,12 @@ function ModuleDialogInner({
     const handleClose = useCallback(() => {
         setOpen(false);
     }, [setOpen]);
+
+    const handleSyllabusClick = useCallback(() => {
+        if (!syllabusId) return;
+        setOpen(false);
+        openSyllabusDialog(syllabusId);
+    }, [syllabusId, setOpen, openSyllabusDialog]);
 
     const handleCommit = useCallback(
         (updates: Partial<GanttModule>) => {
@@ -455,6 +463,7 @@ function ModuleDialogInner({
         >
             <ModuleDialogHeader
                 moduleTitle={moduleDoc?.title}
+                onSyllabusClick={syllabus ? handleSyllabusClick : undefined}
                 syllabusTitle={syllabus?.title}
             />
 
