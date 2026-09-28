@@ -32,12 +32,17 @@ import {
     ApiSettingUpdateResponse,
     SettingName,
 } from "@/api-shared/types/settings/settings";
+import {
+    isStudentViewSettings,
+    STUDENT_VIEW_SETTING_KEY,
+} from "@/api-shared/types/settings/student-view";
 
 const SETTING_NAMES: ReadonlySet<string> = new Set<SettingName>([
     HIVE_INTEGRATION_SETTING_KEY,
     MEAL_TIMES_SETTING_KEY,
     PRAYER_TIMES_SETTING_KEY,
     SCHEDULE_SETTINGS_KEY,
+    STUDENT_VIEW_SETTING_KEY,
 ]);
 
 /** Narrows the URL slug to a known setting; anything else is a 400. */
@@ -108,6 +113,12 @@ export const POST: ServerApiSettingUpdate = withApi(
                 !isHiveLessonDriver(value.lessonDriver)
             ) {
                 throw new ClientApiError("מצב שילוב הייב לא מוכר");
+            }
+            if (
+                name === STUDENT_VIEW_SETTING_KEY &&
+                !isStudentViewSettings(value)
+            ) {
+                throw new ClientApiError("הגדרות תצוגת חניכים לא תקינות");
             }
             await DbSettings.set(name, value, { upsert: true }, controller);
         }

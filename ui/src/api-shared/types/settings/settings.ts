@@ -14,17 +14,23 @@ import {
     ScheduleSettings,
     SCHEDULE_SETTINGS_KEY,
 } from "@/api-shared/types/settings/schedule";
+import {
+    STUDENT_VIEW_SETTING_KEY,
+    StudentViewSettings,
+} from "@/api-shared/types/settings/student-view";
 
 export type Setting = PrayerSettings &
     ScheduleSettings &
     MealSettings &
-    HiveIntegrationSettings;
+    HiveIntegrationSettings &
+    StudentViewSettings;
 
 export type SettingName =
     | typeof HIVE_INTEGRATION_SETTING_KEY
     | typeof MEAL_TIMES_SETTING_KEY
     | typeof PRAYER_TIMES_SETTING_KEY
-    | typeof SCHEDULE_SETTINGS_KEY;
+    | typeof SCHEDULE_SETTINGS_KEY
+    | typeof STUDENT_VIEW_SETTING_KEY;
 
 export type ApiSettingGetPayload = void;
 export type ApiSettingGetResponse = Setting;
