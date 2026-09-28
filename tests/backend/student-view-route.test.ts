@@ -153,7 +153,9 @@ describe("GET /api/student-view/schedule — projection", () => {
             "rooms",
             "startTime",
         ]);
-        expect(event.name).toBe("שיעור");
+        // Symbol mode (#744): the real name never leaves the server. No Hive
+        // symbol resolves in this fixture, so only the type label remains.
+        expect(event.name).toBe("הרצאת");
         expect(resolveStudentSchedule(data).events[0].courses).toEqual([
             "מחזור א",
         ]);
@@ -209,8 +211,23 @@ describe("GET /api/student-view/schedule — projection", () => {
         const response = await StudentViewRoute.GET(makeRequest());
         const [event] = (await response.json()).data.events;
 
-        expect(event.name).toBe("פיקטיבי");
+        // Named like any other lecture — neither the fake name nor a marker.
+        expect(event.name).toBe("הרצאת");
         expect(event).not.toHaveProperty("fake");
+    });
+
+    it("sends the real name only when the studentView setting says full", async () => {
+        asUser(HANICH);
+        vi.mocked(DbSettings.get).mockImplementation((async (key: string) =>
+            key === "studentView"
+                ? { eventNameMode: "full", typeLabels: {} }
+                : null) as never);
+        vi.mocked(DbEvent.getInRange).mockResolvedValue([staffEvent()] as never);
+
+        const response = await StudentViewRoute.GET(makeRequest());
+        const [event] = (await response.json()).data.events;
+
+        expect(event.name).toBe("שיעור");
     });
 
     it("resolves a colour id to a hex value so no subject id crosses the wire", async () => {

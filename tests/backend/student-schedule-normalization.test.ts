@@ -442,6 +442,7 @@ describe("buildStudentSchedule — efficiency", () => {
         expect(DbEvent.getInRange).toHaveBeenCalledTimes(1);
         expect(DbCourses.get).toHaveBeenCalledTimes(1);
         expect(DbCustomColors.get).toHaveBeenCalledTimes(1);
-        expect(DbSettings.get).toHaveBeenCalledTimes(1);
+        // Once per settings key: schedule hours and student-view naming.
+        expect(DbSettings.get).toHaveBeenCalledTimes(2);
     });
 });
