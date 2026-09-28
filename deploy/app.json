@@ -16,6 +16,13 @@
     },
     "state": ["nginx/ssl"],
     "venv_packages": ["bluz-cli"],
+    "release": {
+        "manifests": [
+            "package.json",
+            "session-server/package.json",
+            { "path": "cli/bluz_cli/__init__.py", "format": "python" }
+        ]
+    },
     "post_install": [
         "See INSTALL.md and TROUBLESHOOTING.md in this directory."
     ],
