@@ -14,6 +14,7 @@ import {
     ganttSyllabus2ModulesSchema,
 } from "@/api-server/gantt/schema";
 import { ganttCurriculumEventConfigurationsSchema } from "@/api-server/gantt/schema/mappings";
+import { M2E_ORDER, nextModuleSortOrder } from "@/api-server/gantt/sort-order";
 import { ClientApiError } from "@/api-shared/errors";
 import {
     AllocateTimeToEventCallback,
@@ -49,6 +50,7 @@ const basicOperations = drizzleOperationsBuilder<
         parentKey: "syllabusId",
         selfKey: "moduleId",
         cardinality: "one",
+        nextSortOrder: (id) => nextModuleSortOrder(id as GanttSyllabusId),
     },
 });
 
@@ -57,7 +59,7 @@ async function getFullModule(id: GanttModuleId): Promise<ApiModule> {
         where: eq(ganttModulesSchema.id, id),
         with: {
             m2e: {
-                orderBy: [asc(ganttModule2EventsSchema.sortOrder)],
+                orderBy: M2E_ORDER,
                 with: {
                     event: {
                         with: {
@@ -85,6 +87,7 @@ async function addModuleToSyllabus(
         await postgresDb.insert(ganttSyllabus2ModulesSchema).values({
             syllabusId: syllabusId,
             moduleId: moduleId,
+            sortOrder: nextModuleSortOrder(syllabusId),
         });
         return await getFullModule(moduleId);
     } catch (error: unknown) {

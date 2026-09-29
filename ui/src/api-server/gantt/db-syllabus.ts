@@ -1,4 +1,4 @@
-import { and, arrayOverlaps, asc, eq, inArray, sql } from "drizzle-orm";
+import { and, arrayOverlaps, eq, inArray, sql } from "drizzle-orm";
 
 import { GanttDbExecutor, postgresDb } from "@/api-server/gantt";
 import { asWireShape, drizzleOperationsBuilder, FOREIGN_KEY_VIOLATION, postgresErrorCode, UNIQUE_VIOLATION } from "@/api-server/gantt/db-base";
@@ -10,6 +10,7 @@ import {
     ganttSyllabus2ModulesSchema,
     ganttSyllabusesSchema,
 } from "@/api-server/gantt/schema";
+import { M2E_ORDER, S2M_ORDER } from "@/api-server/gantt/sort-order";
 import { ClientApiError } from "@/api-shared/errors";
 import {
     isShuffleDescriptions,
@@ -58,12 +59,12 @@ async function getFullSyllabus(id: GanttSyllabusId): Promise<ApiSyllabus> {
         where: eq(ganttSyllabusesSchema.id, id),
         with: {
             s2m: {
-                orderBy: [asc(ganttSyllabus2ModulesSchema.sortOrder)],
+                orderBy: S2M_ORDER,
                 with: {
                     module: {
                         with: {
                             m2e: {
-                                orderBy: [asc(ganttModule2EventsSchema.sortOrder)],
+                                orderBy: M2E_ORDER,
                                 with: {
                                     event: {
                                         with: {

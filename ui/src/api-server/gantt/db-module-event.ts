@@ -13,6 +13,7 @@ import {
     ganttModulesSchema,
 } from "@/api-server/gantt/schema";
 import { ganttCurriculumEventConfigurationsSchema } from "@/api-server/gantt/schema/mappings";
+import { nextEventSortOrder } from "@/api-server/gantt/sort-order";
 import { ClientApiError } from "@/api-shared/errors";
 import { ApiModuleEvent } from "@/api-shared/types/gantt/api-layer";
 import { CreateGanttEventPayload } from "@/api-shared/types/gantt/create-payloads";
@@ -40,6 +41,7 @@ const basicOperations = drizzleOperationsBuilder<
         parentKey: "moduleId",
         selfKey: "eventId",
         cardinality: "one",
+        nextSortOrder: (id) => nextEventSortOrder(id as GanttModuleId),
     },
 });
 
@@ -70,6 +72,7 @@ async function addEventToModule(
         await postgresDb.insert(ganttModule2EventsSchema).values({
             moduleId: moduleId,
             eventId: eventId,
+            sortOrder: nextEventSortOrder(moduleId),
         });
         return await getFullModuleEvent(eventId);
     } catch (error: unknown) {
