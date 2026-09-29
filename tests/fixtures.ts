@@ -332,6 +332,20 @@ export async function navigateToSettingsTab(
 }
 
 /**
+ * Backdrops of modals that are actually open. A `keepMounted` popover (the
+ * gantt FAB, #720) keeps its backdrop in the DOM while closed, marked
+ * `MuiModal-hidden`; a bare `.MuiBackdrop-root` count sees it forever (#743).
+ */
+export function openModalBackdrops(page: Page): Locator {
+    return page.locator(".MuiModal-root:not(.MuiModal-hidden) > .MuiBackdrop-root");
+}
+
+/** Waits until no modal, dialog, menu or popover is left open. */
+export async function expectNoOpenModal(page: Page, timeout = 15_000): Promise<void> {
+    await expect(openModalBackdrops(page)).toHaveCount(0, { timeout });
+}
+
+/**
  * Waits for the page to be fully loaded after navigation.
  * Checks that the AppBar is visible as a signal the authenticated app loaded.
  */

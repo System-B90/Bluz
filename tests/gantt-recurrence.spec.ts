@@ -3,6 +3,7 @@ import { Locator, Page } from "@playwright/test";
 import {
     closeEventAndModuleDialogs,
     expect,
+    expectNoOpenModal,
     openEventEditDialog,
     test,
     waitForAppLoad,
@@ -52,9 +53,7 @@ async function createAndSelectCurriculum(page: Page): Promise<void> {
     // click then waited out the whole test budget on an element that was
     // visible and enabled but could never receive the click — reported as
     // "Target page, context or browser has been closed" after teardown.
-    await expect(page.locator(".MuiBackdrop-root")).toHaveCount(0, {
-        timeout: 15_000,
-    });
+    await expectNoOpenModal(page, 15_000);
 }
 
 /** Adds `count` weeks to the currently-selected curriculum via the weeks tab. */
