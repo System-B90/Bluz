@@ -3,6 +3,7 @@ import { Locator, Page } from "@playwright/test";
 import {
     closeEventAndModuleDialogs,
     expect,
+    expectNoOpenModal,
     openEventEditDialog,
     test,
     waitForAppLoad,
@@ -36,9 +37,7 @@ async function createAndSelectCurriculum(page: Page): Promise<void> {
 
     await expect(page).toHaveURL(/gc=/, { timeout: 10_000 });
     await page.keyboard.press("Escape");
-    await expect(page.locator(".MuiBackdrop-root")).toHaveCount(0, {
-        timeout: 15_000,
-    });
+    await expectNoOpenModal(page, 15_000);
 }
 
 async function addWeeks(page: Page, count: number): Promise<void> {
