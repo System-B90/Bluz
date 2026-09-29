@@ -141,7 +141,8 @@ test.describe("File exports", () => {
         await expect(exportTrigger).toBeEnabled({ timeout: 10_000 });
         await exportTrigger.click();
 
-        const excelItem = page.getByRole("menuitem", { name: "ייצוא לאקסל" });
+        // The about card names its item "ייצוא הגאנט לאקסל" (#720).
+        const excelItem = page.getByRole("menuitem", { name: "ייצוא הגאנט לאקסל" });
         await expect(excelItem).toBeVisible();
 
         const [download] = await Promise.all([
