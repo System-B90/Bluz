@@ -53,12 +53,6 @@ For the TypeScript client and server modules, see the online reference:
 | --- | --- |
 | GET, POST, PUT, DELETE | `/api/custom-colors` |
 
-## docs
-
-| Methods | Path |
-| --- | --- |
-| GET | `/api/docs` |
-
 ## event
 
 | Methods | Path |
@@ -84,6 +78,7 @@ For the TypeScript client and server modules, see the online reference:
 | POST | `/api/gantt/curriculums/{id}/execution/recreate` |
 | GET | `/api/gantt/curriculums/{id}/export` |
 | GET | `/api/gantt/curriculums/{id}/export/excel` |
+| POST | `/api/gantt/curriculums/{id}/import-syllabus` |
 | GET, POST, PATCH, DELETE | `/api/gantt/curriculums/{id}/mappings` |
 | GET | `/api/gantt/curriculums/{id}/recurrence-exceptions` |
 | POST | `/api/gantt/curriculums/import` |
@@ -104,6 +99,7 @@ For the TypeScript client and server modules, see the online reference:
 | POST | `/api/gantt/modules/{id}/reorder-events` |
 | GET, POST | `/api/gantt/syllabuses` |
 | GET, PATCH, DELETE | `/api/gantt/syllabuses/{id}` |
+| GET | `/api/gantt/syllabuses/{id}/export` |
 | POST, DELETE | `/api/gantt/syllabuses/{id}/link` |
 | POST | `/api/gantt/syllabuses/{id}/reorder-modules` |
 | GET, POST | `/api/gantt/syllabuses/{id}/shuffles` |
