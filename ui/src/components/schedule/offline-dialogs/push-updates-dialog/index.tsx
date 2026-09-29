@@ -420,6 +420,7 @@ export function PushOfflineUpdatesDialog() {
                             color="error"
                             disabled={loading}
                             onClick={handleRevert}
+                            sx={{ marginInlineEnd: "auto" }}
                             variant="outlined"
                         >
                             שחזר הכל

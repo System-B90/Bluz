@@ -195,6 +195,10 @@ export const AuthProvider = ({
     );
 };
 
+/** Like useAuth, but returns undefined outside an AuthProvider instead of throwing. */
+export const useOptionalAuth = (): AuthContextState | undefined =>
+    useContext(AuthContext);
+
 export const useAuth = (): AuthContextState => {
     const context = useContext(AuthContext);
 

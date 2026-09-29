@@ -7,6 +7,7 @@ import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { COMMAND_GROUPS } from "@/components/app-commands/labels";
 import { useCommand } from "@/components/app-commands/use-command";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
+import { useCurriculumProviderActions } from "@/components/gantt/state/context";
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
 
 export function CreateSyllabusButton({
@@ -16,16 +17,24 @@ export function CreateSyllabusButton({
 }) {
     const { enqueueSnackbar } = useSnackbar();
     const { createSyllabus } = useSyllabusActions();
+    const { openSyllabusDialog } = useCurriculumProviderActions();
 
     const clickHandler = useCallback(() => {
-        createSyllabus("סילבוס חדש", curriculumId).catch((error) =>
-            enqueueApiErrorSnackbar(
-                enqueueSnackbar,
-                "יצירת הסילבוס נכשלה!",
-                error,
-            ),
-        );
-    }, [curriculumId, createSyllabus, enqueueSnackbar]);
+        createSyllabus("סילבוס חדש", curriculumId)
+            .then((syllabus) => {
+                // The new card lands among many others with no visible cue,
+                // so confirm it and open it for editing (#758).
+                enqueueSnackbar("נוצר סילבוס חדש", { variant: "success" });
+                openSyllabusDialog(syllabus.id);
+            })
+            .catch((error) =>
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "יצירת הסילבוס נכשלה!",
+                    error,
+                ),
+            );
+    }, [curriculumId, createSyllabus, enqueueSnackbar, openSyllabusDialog]);
 
     useCommand({
         id: "gantt.syllabus.new",
