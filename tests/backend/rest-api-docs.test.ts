@@ -1,30 +1,22 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 /**
- * The REST API reference ships with the offline bundle and the app (#760).
+ * The REST API reference ships with the offline bundle (#760).
  */
-
-const { requireStaffSession } = vi.hoisted(() => ({
-    requireStaffSession: vi.fn(async () => ({ id: "1" })),
-}));
-vi.mock("@/api-server/session-user", () => ({ requireStaffSession }));
 
 // @ts-expect-error -- plain ESM script, no type declarations.
 import * as restDocs from "../../scripts/rest-docs.mjs";
-import { GET } from "@/app/api/docs/route";
-import { REST_API_MARKDOWN } from "@/app/api/docs/rest-api.generated";
 
 const REPO = join(__dirname, "..", "..");
 const read = (p: string) => readFileSync(join(REPO, p), "utf8").replace(/\r\n/g, "\n");
-const { API_ROOT, collectEndpoints, exportedMethods, renderAppModule, renderRestDocs, toUrlPath } =
+const { API_ROOT, collectEndpoints, exportedMethods, renderRestDocs, toUrlPath } =
     restDocs as {
         API_ROOT: string;
         collectEndpoints: () => Array<{ path: string; methods: Array<string> }>;
         exportedMethods: (source: string) => Array<string>;
-        renderAppModule: (markdown?: string) => string;
         renderRestDocs: () => string;
         toUrlPath: (file: string) => string;
     };
@@ -88,14 +80,6 @@ describe("generated reference", () => {
         expect(read("docs/rest-api.md")).toBe(renderRestDocs());
     });
 
-    it("the app's copy is up to date (run `npm run docs:rest`)", () => {
-        expect(read("ui/src/app/api/docs/rest-api.generated.ts")).toBe(renderAppModule());
-    });
-
-    it("the app serves the same text as the bundle", () => {
-        expect(REST_API_MARKDOWN).toBe(read("docs/rest-api.md"));
-    });
-
     it("lists every route file that exports a method", () => {
         const listed = new Set(collectEndpoints().map((e) => e.path));
         for (const file of routeFiles(API_ROOT)) {
@@ -108,10 +92,6 @@ describe("generated reference", () => {
         const md = renderRestDocs();
         expect(md).toContain("`/api/gantt/syllabuses/{id}/reorder-modules`");
         expect(md).toContain("`/api/gantt/modules/{id}/reorder-events`");
-    });
-
-    it("lists itself", () => {
-        expect(renderRestDocs()).toContain("| GET | `/api/docs` |");
     });
 
     it("is sorted by path", () => {
@@ -153,26 +133,5 @@ describe("discoverability", () => {
 
     it("npm run docs:rest regenerates it", () => {
         expect(JSON.parse(read("package.json")).scripts["docs:rest"]).toContain("scripts/rest-docs.mjs");
-    });
-});
-
-describe("GET /api/docs", () => {
-    it("returns the reference as readable text", async () => {
-        const response = await GET(new Request("http://x/api/docs"));
-        expect(response.status).toBe(200);
-        expect(response.headers.get("Content-Type")).toContain("text/plain");
-        expect(await response.text()).toBe(REST_API_MARKDOWN);
-    });
-
-    it("requires a staff session", async () => {
-        requireStaffSession.mockClear();
-        await GET(new Request("http://x/api/docs"));
-        expect(requireStaffSession).toHaveBeenCalledTimes(1);
-    });
-
-    it("does not serve it when the session check fails", async () => {
-        requireStaffSession.mockRejectedValueOnce(new Error("no session"));
-        const response = await GET(new Request("http://x/api/docs"));
-        expect(response.status).not.toBe(200);
     });
 });
