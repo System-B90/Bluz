@@ -559,8 +559,16 @@ def main(
     # the whole Playwright process mid-suite the moment any single test
     # needed a retry, discarding every test that hadn't run yet and reporting
     # a bare TimeoutExpired instead of Playwright's real pass/fail summary.
+    # The suite has since passed 270 tests; at 1800s a handful of failing
+    # specs (3 attempts x 120s each) used up the budget around the 50th test,
+    # so nothing after it ever ran (#743). 90 minutes by default; override
+    # with E2E_TIMEOUT_SECONDS.
     result = subprocess.run(
-        playwright_cmd, env=test_env, shell=True, timeout=1800, check=False
+        playwright_cmd,
+        env=test_env,
+        shell=True,
+        timeout=int(os.environ.get("E2E_TIMEOUT_SECONDS", "5400")),
+        check=False,
     )
 
     if result.returncode == 0:

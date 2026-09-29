@@ -154,8 +154,8 @@ jobs:
         name: Full Test Suite (E2E, Self-Hosted)
         runs-on: [self-hosted, shared-hive]
         # Image builds (before the lock) + queueing for the lock (up to 40m)
-        # + the 60m Hive budget. The budget is enforced by shared-hive-acquire.
-        timeout-minutes: 150
+        # + the 120m Hive budget. The budget is enforced by shared-hive-acquire.
+        timeout-minutes: 210
         if: >-
             (github.event_name != 'pull_request' || github.head_ref == 'dev')
             && !(github.event_name == 'workflow_dispatch' && inputs.target == 'github-hosted')
@@ -250,12 +250,13 @@ jobs:
                   DATABASE_URL=postgres://admin:${PG_PASS}@bluz-curriculum-db:5432/curriculum_db
                   EOF
 
-            # ── Shared Hive: exclusive, reset, 60-minute budget ──────────────
-            # 60m, not the default 25: the full suite runs serially here.
+            # ── Shared Hive: exclusive, reset, 120-minute budget ─────────────
+            # 120m, not the default 25: the full suite runs serially here and
+            # run_tests.py allows Playwright up to 90m (#743).
             - name: Acquire shared Hive
               uses: System-B90/.github/actions/shared-hive-acquire@main
               with:
-                  max-minutes: "60"
+                  max-minutes: "120"
                   # Lets the action bootstrap the shared Hive on a fresh host
                   # (read access to pyhive).
                   stack-token: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
