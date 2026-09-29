@@ -80,9 +80,15 @@ export function ModulesTable({
 
             ganttApi
                 .reorderModules(syllabusId, newOrder)
-                .catch((error) =>
-                    enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת סדר המערכים נכשלה!", error),
-                );
+                .catch((error) => {
+                    // Put the rows back where the server still has them,
+                    // or the card shows an order that never persisted.
+                    dispatch({
+                        type: "REORDER_MODULES",
+                        payload: { syllabusId, moduleIds: syllabusModules },
+                    });
+                    enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת סדר המערכים נכשלה!", error);
+                });
         },
         [dispatch, syllabusId, syllabusModules, enqueueSnackbar],
     );

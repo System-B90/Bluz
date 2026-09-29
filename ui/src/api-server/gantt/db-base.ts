@@ -1,4 +1,4 @@
-import { desc, eq, getTableColumns, inArray } from "drizzle-orm";
+import { desc, eq, getTableColumns, inArray, SQL } from "drizzle-orm";
 import { AnyPgColumn, PgTableWithColumns } from "drizzle-orm/pg-core";
 
 import { GanttDbExecutor, postgresDb } from "@/api-server/gantt";
@@ -195,6 +195,12 @@ export type ParentJunctionConfig = {
      *   a scalar would pick an arbitrary parent. Surfaced as a sorted array.
      */
     cardinality: "many" | "one";
+    /**
+     * `sort_order` expression for a child appended under `parentId`. Set on
+     * ordered junctions so a new child lands last instead of on the column
+     * default (0), which put it first after a reload (#761).
+     */
+    nextSortOrder?: (parentId: string) => SQL;
 };
 
 /**
@@ -374,6 +380,9 @@ export function drizzleOperationsBuilder<
                 const values = {
                     [parentJunction.parentKey]: parentIdValue,
                     [parentJunction.selfKey]: id,
+                    ...(parentJunction.nextSortOrder && {
+                        sortOrder: parentJunction.nextSortOrder(parentIdValue),
+                    }),
                 };
                 await tx.insert(parentJunction.table).values(values);
             }

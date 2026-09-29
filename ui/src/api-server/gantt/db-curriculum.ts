@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 import { postgresDb } from "@/api-server/gantt";
 import {
@@ -20,6 +20,7 @@ import {
     ganttWeeksSchema,
 } from "@/api-server/gantt/schema";
 import { ganttCurriculumsSchema } from "@/api-server/gantt/schema/curriculums";
+import { M2E_ORDER, S2M_ORDER } from "@/api-server/gantt/sort-order";
 import { ClientApiError } from "@/api-shared/errors";
 import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
 import { CreateGanttCurriculumPayload } from "@/api-shared/types/gantt/create-payloads";
@@ -62,18 +63,12 @@ async function getFullCurriculum(
                     syllabus: {
                         with: {
                             s2m: {
-                                orderBy: [
-                                    asc(ganttSyllabus2ModulesSchema.sortOrder),
-                                ],
+                                orderBy: S2M_ORDER,
                                 with: {
                                     module: {
                                         with: {
                                             m2e: {
-                                                orderBy: [
-                                                    asc(
-                                                        ganttModule2EventsSchema.sortOrder,
-                                                    ),
-                                                ],
+                                                orderBy: M2E_ORDER,
                                                 with: {
                                                     event: {
                                                         with: {
@@ -156,7 +151,9 @@ async function seedMealBreaksSyllabus(
             .insert(ganttSyllabus2ModulesSchema)
             .values({ syllabusId, moduleId, sortOrder: 0 });
 
-        for (const [settingKey, title] of Object.entries(MEAL_EVENT_TITLES)) {
+        for (const [sortOrder, [settingKey, title]] of Object.entries(
+            MEAL_EVENT_TITLES,
+        ).entries()) {
             const eventId = `e_${crypto.randomUUID()}`;
             await tx.insert(ganttEventsSchema).values({
                 id: eventId,
@@ -172,7 +169,7 @@ async function seedMealBreaksSyllabus(
             });
             await tx
                 .insert(ganttModule2EventsSchema)
-                .values({ moduleId, eventId, sortOrder: 0 });
+                .values({ moduleId, eventId, sortOrder });
         }
     });
 }
