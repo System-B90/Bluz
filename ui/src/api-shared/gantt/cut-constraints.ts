@@ -189,7 +189,10 @@ export function solveConstraints(
         target: ConstraintDayInfo,
         reason: string,
     ) => {
-        days[placement.dayId].loadMinutes -= placement.durationMinutes;
+        // An undeclared day is unbounded and left out of `days`, but its
+        // events still come through here: there is no load to give back.
+        const source = days[placement.dayId] as ConstraintDayInfo | undefined;
+        if (source) source.loadMinutes -= placement.durationMinutes;
         target.loadMinutes += placement.durationMinutes;
         proposals.push({
             eventId: placement.eventId,
