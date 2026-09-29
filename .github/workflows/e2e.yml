@@ -256,6 +256,9 @@ jobs:
               uses: System-B90/.github/actions/shared-hive-acquire@main
               with:
                   max-minutes: "60"
+                  # Lets the action bootstrap the shared Hive on a fresh host
+                  # (read access to pyhive).
+                  stack-token: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
 
             - name: Verify Hive admin login
               run: |
