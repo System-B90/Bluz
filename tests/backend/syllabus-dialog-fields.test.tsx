@@ -32,6 +32,9 @@ vi.mock("@/components/gantt/syllabus-card/ModulesTable", () => ({
 vi.mock("@/components/gantt/syllabus-dialog/ShufflesSection", () => ({
     ShufflesSection: () => null,
 }));
+vi.mock("@/components/gantt/syllabus-dialog/SyllabusImportExportButton", () => ({
+    SyllabusImportExportButton: () => null,
+}));
 vi.mock("@/components/gantt/syllabus-dialog/SyllabusLinksSection", () => ({
     SyllabusLinksSection: () => null,
 }));
