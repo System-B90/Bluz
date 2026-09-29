@@ -252,6 +252,7 @@ export function EventDialog({
                         onClick={ () =>
                             "id" in event ? onDelete(event.id as string) : {}
                         }
+                        sx={ { marginInlineEnd: "auto" } }
                     >
                         מחיקה
                     </Button>

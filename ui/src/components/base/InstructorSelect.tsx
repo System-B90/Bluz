@@ -4,6 +4,7 @@ import Select, { SelectProps } from "@mui/material/Select";
 import { useMemo, useState } from "react";
 
 import { CourseUser } from "@/api-shared/types/hive";
+import { useOptionalAuth } from "@/components/auth/AuthProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { useOutsiders } from "@/components/base/OutsidersProvider";
 import {
@@ -85,6 +86,7 @@ export function InstructorSelect<T = unknown>({
     const { outsiders } = useOutsiders();
     const { getInstructor } = useHiveUsers();
 
+    const auth = useOptionalAuth();
     const [searchQuery, setSearchQuery] = useState("");
 
     const { courseGroups, unassigned } = useGroupedInstructors({
@@ -110,6 +112,19 @@ export function InstructorSelect<T = unknown>({
             .sort((a, b) => sortHe(a.display_name, b.display_name));
     }, [pinnedIds, getInstructor, searchQuery]);
 
+    // The signed-in user is listed first so people picking themselves don't
+    // have to scroll through every course group (#763).
+    const self = useMemo(() => {
+        const selfId = Number(auth?.userData.id);
+        const inst = Number.isFinite(selfId) ? getInstructor(selfId) : undefined;
+        const query = searchQuery.trim().toLowerCase();
+        return inst &&
+            !(excludeTeachers && inst.teacher) &&
+            ("אני".includes(query) || inst.display_name.toLowerCase().includes(query))
+            ? inst
+            : undefined;
+    }, [auth?.userData.id, getInstructor, searchQuery, excludeTeachers]);
+
     return (
         <Select<T>
             {...props}
@@ -122,6 +137,21 @@ export function InstructorSelect<T = unknown>({
             />
 
             {children}
+
+            {self
+                ? [
+                    <ListSubheader
+                        disableSticky
+                        key="group-self"
+                        sx={styles.subheaderPinned}
+                    >
+                        אני
+                    </ListSubheader>,
+                    <MenuItem key={`self-${self.id}`} value={self.id}>
+                        {self.display_name} (אני)
+                    </MenuItem>,
+                ]
+                : null}
 
             {pinned.length > 0
                 ? [

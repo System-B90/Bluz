@@ -208,3 +208,10 @@ when the stack is down: it skips the wizard and updates `BLUZ_VERSION` from the
 new `VERSION` file, but it does not back up or roll services one at a time.
 
 Backups: see `docs/backup-and-restore.md` in the repository.
+
+## API and CLI documentation
+
+The full documentation, including the API reference, is published with every
+release at <https://system-b90.github.io/.github/bluz/> (the `docs.yml` build,
+hosted from the org's `.github` Pages site). On an air-gapped host, the bundled
+CLI documents itself: `bluz --help` and `bluz <command> --help`.

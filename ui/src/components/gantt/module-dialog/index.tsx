@@ -541,6 +541,7 @@ function ModuleDialogInner({
                     color="error"
                     disabled={isActionLoading}
                     onClick={() => void handleDelete()}
+                    sx={{ marginInlineEnd: "auto" }}
                 >
                     מחיקה
                 </Button>

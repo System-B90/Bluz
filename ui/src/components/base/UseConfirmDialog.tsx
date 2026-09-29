@@ -68,11 +68,10 @@ export function useConfirmDialog()
                 </DialogContentText>
             </DialogContent>
             <DialogActions>
-                <Button color="inherit" onClick={ () => handleClose(false) }>
+                <Button autoFocus color="inherit" onClick={ () => handleClose(false) }>
                     { state?.options.cancelLabel ?? "ביטול" }
                 </Button>
                 <Button
-                    autoFocus
                     color="error"
                     onClick={ () => handleClose(true) }
                     variant="contained"
