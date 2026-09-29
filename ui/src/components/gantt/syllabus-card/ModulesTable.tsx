@@ -22,7 +22,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
 import {
@@ -32,6 +32,8 @@ import {
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
+import { useScrollToNewRow } from "@/components/base/use-scroll-to-new-row";
+import { MODULE_ANCHOR_PREFIX } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
 import { useCurriculumProviderActions } from "@/components/gantt/state/context";
 import { CreateModuleButton } from "@/components/gantt/syllabus-card/CreateModuleButton";
 import { ModuleRow } from "@/components/gantt/syllabus-card/ModuleRow";
@@ -44,6 +46,9 @@ export type ModulesTableProps = {
     maxHeight?: number | string;
 };
 
+const moduleAnchorId = (moduleId: GanttModuleId) =>
+    `${MODULE_ANCHOR_PREFIX}${moduleId}`;
+
 export function ModulesTable({
     syllabusId,
     syllabusModules,
@@ -52,6 +57,8 @@ export function ModulesTable({
 }: ModulesTableProps) {
     const { enqueueSnackbar } = useSnackbar();
     const { dispatch } = useCurriculumProviderActions();
+    const containerRef = useRef<HTMLDivElement>(null);
+    useScrollToNewRow(syllabusModules, containerRef, moduleAnchorId);
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -82,6 +89,7 @@ export function ModulesTable({
 
     return (
         <Box
+            ref={containerRef}
             sx={{
                 overflowY: "auto",
                 flexGrow: 1,
