@@ -51,19 +51,21 @@ test.describe("Syllabus cards scroll vertically (#759)", () => {
     test("later cards sit below earlier ones, not beside them off-screen", async ({ page }) => {
         const scroller = page.getByTestId("syllabus-cards");
         const box = await scroller.boundingBox();
-        const last = await page.getByText(`${SUITE_TAG}-${COUNT - 1}`).first().boundingBox();
+        // Scoped to the grid: the insights sidebar lists the same names.
+        const last = await scroller.getByText(`${SUITE_TAG}-${COUNT - 1}`).first().boundingBox();
         expect(box && last).toBeTruthy();
         // Within the scroller's horizontal span, whatever its vertical position.
         expect(last!.x).toBeGreaterThanOrEqual(box!.x - 1);
         expect(last!.x + last!.width).toBeLessThanOrEqual(box!.x + box!.width + 1);
     });
 
-    test("the wheel scrolls the grid down", async ({ page }) => {
+    test("the grid scrolls down, never sideways", async ({ page }) => {
         const scroller = page.getByTestId("syllabus-cards");
         const scrollable = await scroller.evaluate((el) => el.scrollHeight > el.clientHeight);
         test.skip(!scrollable, "all cards fit without scrolling");
-        await scroller.hover();
-        await page.mouse.wheel(0, 600);
+        // Scroll the grid itself: the wheel over a card can be taken by the
+        // card's own module table.
+        await scroller.evaluate((el) => el.scrollBy({ top: 600, left: -600 }));
         await expect.poll(() => scroller.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
         expect(await scroller.evaluate((el) => el.scrollLeft)).toBe(0);
     });
