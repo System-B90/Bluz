@@ -16,6 +16,7 @@ export const SYLLABUS_ANCHOR_PREFIX = "gantt-syllabus-";
 
 /** DOM id prefix used to anchor an event row inside the module dialog. */
 export const EVENT_ANCHOR_PREFIX = "gantt-event-";
+export const MODULE_ANCHOR_PREFIX = "gantt-module-";
 
 /** How long a navigated-to item stays visually highlighted. */
 export const HIGHLIGHT_DURATION_MS = 2600;

@@ -17,6 +17,7 @@ import {
     GanttModuleId,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
+import { MODULE_ANCHOR_PREFIX } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
 import {
     useCurriculumProviderActions,
     useCurriculumState,
@@ -77,6 +78,7 @@ export function ModuleRow({
     return (
         <TableRow
             hover
+            id={`${MODULE_ANCHOR_PREFIX}${moduleId}`}
             onDoubleClick={editClickHandler}
             ref={setNodeRef}
             style={{

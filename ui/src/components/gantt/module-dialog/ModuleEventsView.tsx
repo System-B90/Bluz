@@ -28,6 +28,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ganttApi } from "@/api-client/gantt";
 import { GanttEventId, GanttModuleId } from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
+import { useScrollToNewRow } from "@/components/base/use-scroll-to-new-row";
 import {
     EVENT_ANCHOR_PREFIX,
     HIGHLIGHT_DURATION_MS,
@@ -39,6 +40,9 @@ import {
     useCurriculumState,
 } from "@/components/gantt/state/context";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
+
+const eventAnchorId = (eventId: GanttEventId) =>
+    `${EVENT_ANCHOR_PREFIX}${eventId}`;
 
 function CreateModuleEventButton({ moduleId }: { moduleId: GanttModuleId }) {
     const { enqueueSnackbar } = useSnackbar();
@@ -89,6 +93,8 @@ export function ModuleEventsView({
     const [highlightedEventId, setHighlightedEventId] =
         useState<GanttEventId | null>(null);
     const clearTimerRef = useRef<null | number>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    useScrollToNewRow(eventIds, containerRef, eventAnchorId);
     const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
         new Set(),
     );
@@ -200,6 +206,7 @@ export function ModuleEventsView({
             gap={2}
             maxHeight={400}
             overflow={"auto"}
+            ref={containerRef}
             sx={{ "&::-webkit-scrollbar": { width: 4 }, "&::-webkit-scrollbar-thumb": { bgcolor: "action.selected", borderRadius: 2 } }}
         >
             <DndContext
