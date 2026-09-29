@@ -51,6 +51,7 @@ import {
 import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
+import { useSyllabusTitle } from "@/components/gantt/state/hooks/UseSyllabusTitles";
 
 export type ModuleDialogProps = {
     setOpen: Dispatch<SetStateAction<boolean>>;
@@ -324,6 +325,7 @@ function ModuleDialogInner({
     const moduleDoc = useModule(moduleId ?? "");
     const state = useCurriculumState();
     const syllabus = syllabusId ? state.syllabuses[syllabusId] : null;
+    const syllabusTitle = useSyllabusTitle(syllabusId);
     const siblingModules = useMemo(() => syllabus ? syllabus.modules.map((mId) => state.modules[mId]) : [], [syllabus, state.modules]);
     const handleNavigate = useCallback((mId: string) => {
         if (!syllabusId) return;
@@ -464,7 +466,7 @@ function ModuleDialogInner({
             <ModuleDialogHeader
                 moduleTitle={moduleDoc?.title}
                 onSyllabusClick={syllabus ? handleSyllabusClick : undefined}
-                syllabusTitle={syllabus?.title}
+                syllabusTitle={syllabusTitle}
             />
 
             <DialogContent sx={{ pt: 1, mt: -1 }}>

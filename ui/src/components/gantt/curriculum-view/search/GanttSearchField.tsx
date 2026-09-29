@@ -12,7 +12,6 @@ import Typography from "@mui/material/Typography";
 import { useCallback, useState } from "react";
 
 import { fuzzyScore } from "@/components/gantt/curriculum-view/search/fuzzy";
-import { useGanttSearchNav } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
 import
 {
     GanttSearchItem,
@@ -33,8 +32,8 @@ const ITEM_VISUALS: Record<
 export function GanttSearchField()
 {
     const items = useGanttSearchItems();
-    const { goToSyllabus } = useGanttSearchNav();
-    const { openModuleDialog, openEventDialog } = useCurriculumProviderActions();
+    const { openSyllabusDialog, openModuleDialog, openEventDialog } =
+        useCurriculumProviderActions();
 
     const [ inputValue, setInputValue ] = useState("");
     const [ focused, setFocused ] = useState(false);
@@ -65,7 +64,7 @@ export function GanttSearchField()
 
             if (value.type === "syllabus")
             {
-                goToSyllabus(value.syllabusId);
+                openSyllabusDialog(value.syllabusId);
             } else if (value.type === "module" && value.moduleId)
             {
                 openModuleDialog(value.syllabusId, value.moduleId);
@@ -74,7 +73,7 @@ export function GanttSearchField()
                 openEventDialog(value.syllabusId, value.moduleId, value.eventId);
             }
         },
-        [ goToSyllabus, openModuleDialog, openEventDialog ],
+        [ openSyllabusDialog, openModuleDialog, openEventDialog ],
     );
 
     return (

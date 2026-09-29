@@ -12,6 +12,7 @@ import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
 import { ModuleItem } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/syllabus-modules/ModuleItem";
 import { hashSyllabusToColor } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/utils";
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
+import { useSyllabusTitle } from "@/components/gantt/state/hooks/UseSyllabusTitles";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 
 export type SyllabusSectionProps = {
@@ -27,6 +28,7 @@ export function SyllabusSection({
         state: { mappings },
     } = useGanttMappings();
     const syllabus = useSyllabus(syllabusId);
+    const syllabusTitle = useSyllabusTitle(syllabusId);
     const color = useMemo(
         () => hashSyllabusToColor(syllabusId, theme.palette.primary.main, 0.2),
         [syllabusId, theme.palette.primary.main],
@@ -54,7 +56,7 @@ export function SyllabusSection({
                     fontWeight={700}
                     variant="overline"
                 >
-                    {syllabus?.title ?? "Unnamed Syllabus"}
+                    {syllabusTitle ?? "Unnamed Syllabus"}
                 </Typography>
             </Box>
 
