@@ -39,11 +39,9 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
         violations,
         isModuleExpanded,
         toggleModule,
-        searchActive,
         isEventVisible,
     } = useGanttContext();
-    // While searching, force the module open so matching events show (#323).
-    const isExpanded = searchActive || isModuleExpanded(moduleId);
+    const isExpanded = isModuleExpanded(moduleId);
     const { state: exceptionsState } = useGanttRecurrenceExceptions();
     const { state: mappingState } = useGanttMappings();
 

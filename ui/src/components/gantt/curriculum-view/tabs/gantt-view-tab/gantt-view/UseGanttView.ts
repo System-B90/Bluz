@@ -88,24 +88,6 @@ export const useGanttView = (curriculumId: string) =>
     const [ showUnallocated, setShowUnallocated ] = useState(false);
 
     const {
-        allCollapsed,
-        collapseAllSyllabuses,
-        expandAllSyllabuses,
-        expandModuleFor,
-        exposeSyllabusFor,
-        isModuleExpanded,
-        isSyllabusExpanded,
-        toggleModule,
-        toggleSyllabus,
-    } = useGanttExpansion(curriculum?.syllabuses ?? []);
-
-    const { revealItem } = useGanttReveal({
-        exposeSyllabusFor,
-        expandModuleFor,
-        registerRevealHandler,
-    });
-
-    const {
         isEventVisible,
         isModuleVisible,
         isSyllabusVisible,
@@ -117,6 +99,24 @@ export const useGanttView = (curriculumId: string) =>
         events: state.events,
         modules: state.modules,
         syllabuses: state.syllabuses,
+    });
+
+    const {
+        allCollapsed,
+        collapseAllSyllabuses,
+        expandAllSyllabuses,
+        expandModuleFor,
+        exposeSyllabusFor,
+        isModuleExpanded,
+        isSyllabusExpanded,
+        toggleModule,
+        toggleSyllabus,
+    } = useGanttExpansion(curriculum?.syllabuses ?? [], searchActive);
+
+    const { revealItem } = useGanttReveal({
+        exposeSyllabusFor,
+        expandModuleFor,
+        registerRevealHandler,
     });
 
     const { curriculumMappings, eventMappings, moduleMappings } = useGanttMappingsMerge(

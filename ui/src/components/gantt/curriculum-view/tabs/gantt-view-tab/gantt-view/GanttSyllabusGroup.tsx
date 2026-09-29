@@ -100,12 +100,10 @@ const GanttSyllabusGroupComponent: React.FC<GanttSyllabusGroupProps> = ({
         dayCellWidth,
         isSyllabusExpanded,
         toggleSyllabus,
-        searchActive,
         isSyllabusVisible,
         isModuleVisible,
     } = useGanttContext();
-    // While searching, force the group open so matching descendants show (#323).
-    const isExpanded = searchActive || isSyllabusExpanded(syllabusId);
+    const isExpanded = isSyllabusExpanded(syllabusId);
 
     const syllabus = state.syllabuses[syllabusId];
 
