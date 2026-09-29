@@ -263,7 +263,8 @@ test.describe("Google Calendar — shared calendar and purge", () => {
             const option = page.getByRole("option", { name: new RegExp(SHARED_CALENDAR_NAME) });
             await expect(option).toBeVisible();
             // Flagged as shared — it is somebody else's calendar.
-            await expect(option.getByText("משותף")).toBeVisible();
+            // exact: the calendar's own name also contains "משותף".
+            await expect(option.getByText("משותף", { exact: true })).toBeVisible();
             await option.click();
             await expect(
                 page.getByText(`היומן "${SHARED_CALENDAR_NAME}" חובר.`, { exact: false }),

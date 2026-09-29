@@ -51,6 +51,12 @@ test.describe("Room reservations", () => {
         await expect(dialog.getByText(roomName)).toBeVisible({
             timeout: 10_000,
         });
+        // The row first renders under a temporary key and remounts when the
+        // server's copy lands, dropping any dialog opened in between. Wait for
+        // the create to finish before clicking into the row.
+        await expect(
+            page.getByText(`יצירת חדר ${roomName} הסתיימה בהצלחה.`),
+        ).toBeVisible({ timeout: 10_000 });
 
         try {
             const roomRow = dialog.locator("li").filter({ hasText: roomName });
