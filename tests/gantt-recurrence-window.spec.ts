@@ -67,7 +67,7 @@ async function createModuleWithEvents(page: Page): Promise<string> {
     await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
     await page.keyboard.press("Escape");
     await expect(page.getByRole("dialog")).toHaveCount(0, { timeout: 10_000 });
-    await expect(page.locator(".MuiBackdrop-root")).toHaveCount(0, { timeout: 10_000 });
+    await expectNoOpenModal(page, 10_000);
 
     const createModuleButton = page
         .locator(

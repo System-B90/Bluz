@@ -1,6 +1,6 @@
 import { Page } from "@playwright/test";
 
-import { expect, test, waitForAppLoad } from "./fixtures";
+import { expect, expectNoOpenModal, test, waitForAppLoad } from "./fixtures";
 import { createCurriculum } from "./gantt-api";
 
 /**
@@ -58,7 +58,7 @@ test.describe("New syllabus opens its dialog (#758)", () => {
         await expect(syllabusDialog(page)).toBeVisible({ timeout: 10_000 });
         await page.keyboard.press("Escape");
         await expect(syllabusDialog(page)).toHaveCount(0);
-        await expect(page.locator(".MuiBackdrop-root")).toHaveCount(0);
+        await expectNoOpenModal(page);
         await expect(page.getByText("סילבוס חדש").nth(1)).toBeVisible();
     });
 
