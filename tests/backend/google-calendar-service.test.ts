@@ -473,6 +473,48 @@ describe("pushEventToGoogle", () => {
         );
     });
 
+    describe("iteration tag", () => {
+        const tagOf = () =>
+            gapi.api.events.update.mock.calls[0][0].requestBody.extendedProperties
+                .private.bluzIterationId;
+
+        it("tags a write with no iteration with the current iteration", async () => {
+            dbIterations.currentOrNull.mockResolvedValueOnce({ id: "current-it", label: "x" });
+            await service.pushEventToGoogle("u1", eventFixture(), "upsert");
+            expect(tagOf()).toBe("current-it");
+        });
+
+        it("keeps an explicit iteration over the current one", async () => {
+            dbIterations.currentOrNull.mockResolvedValue({ id: "current-it", label: "x" });
+            await service.pushEventToGoogle("u1", eventFixture(), "upsert", "2026a" as never);
+            expect(tagOf()).toBe("2026a");
+        });
+
+        it("does not look up the current iteration when one is given", async () => {
+            dbIterations.currentOrNull.mockClear();
+            await service.pushEventToGoogle("u1", eventFixture(), "upsert", "2026a" as never);
+            expect(dbIterations.currentOrNull).not.toHaveBeenCalled();
+        });
+
+        it("omits the tag when there is no current iteration", async () => {
+            dbIterations.currentOrNull.mockResolvedValue(null);
+            await service.pushEventToGoogle("u1", eventFixture(), "upsert");
+            expect(tagOf()).toBeUndefined();
+        });
+
+        it("still pushes, untagged, when the iteration lookup fails", async () => {
+            dbIterations.currentOrNull.mockRejectedValue(new Error("mongo"));
+            await expect(service.pushEventToGoogle("u1", eventFixture(), "upsert")).resolves.toBe(true);
+            expect(tagOf()).toBeUndefined();
+        });
+
+        it("does not look up the iteration for a delete", async () => {
+            dbIterations.currentOrNull.mockClear();
+            await service.pushEventToGoogle("u1", eventFixture(), "delete");
+            expect(dbIterations.currentOrNull).not.toHaveBeenCalled();
+        });
+    });
+
     it("falls back to the event type when the name is empty", async () => {
         await service.pushEventToGoogle(
             "u1",

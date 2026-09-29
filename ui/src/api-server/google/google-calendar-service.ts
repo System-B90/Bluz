@@ -636,7 +636,13 @@ export async function pushEventToGoogle(
             return true;
         }
 
-        const requestBody = toGoogleEvent(event, iterationId);
+        // A write with no explicit iteration went to the current one; tag it
+        // with that id, or the copy carries no iteration at all and a later
+        // pull has to guess from the link (#538 item 6).
+        const requestBody = toGoogleEvent(
+            event,
+            iterationId ?? (await resolveCurrentIteration()).id,
+        );
         const update = () =>
             withBackoff(() =>
                 calendarApi.events.update({ calendarId, eventId, requestBody }),
