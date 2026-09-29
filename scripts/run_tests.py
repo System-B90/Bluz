@@ -37,11 +37,55 @@ def get_worktree_slug() -> str:
     return f"{dir_name}-{path_hash}".lower()
 
 
-def find_free_port(ip: str = "127.0.0.3") -> int:
-    """Finds a free port on the specified IP address."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind((ip, 0))
-        return s.getsockname()[1]
+def parse_excluded_port_ranges(netsh_output: str) -> list[tuple[int, int]]:
+    """Parses `netsh int ipv4 show excludedportrange` into (start, end) pairs."""
+    ranges: list[tuple[int, int]] = []
+    for line in netsh_output.splitlines():
+        parts = line.split()
+        if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
+            ranges.append((int(parts[0]), int(parts[1])))
+    return ranges
+
+
+def windows_excluded_port_ranges() -> list[tuple[int, int]]:
+    """TCP ranges Windows reserves (Hyper-V/WinNAT), when running under WSL.
+
+    Docker Desktop publishes every container port on the Windows side too, and
+    a port inside one of these ranges fails there with "ports are not
+    available ... /forwards/expose returned unexpected status: 500" even though
+    it was free inside WSL. Empty off Windows, or when netsh is unreachable.
+    """
+    try:
+        result = subprocess.run(
+            ["netsh.exe", "int", "ipv4", "show", "excludedportrange", "protocol=tcp"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return []
+    return parse_excluded_port_ranges(result.stdout)
+
+
+def find_free_port(
+    ip: str = "127.0.0.3",
+    excluded: list[tuple[int, int]] | None = None,
+    taken: set[int] | None = None,
+    attempts: int = 200,
+) -> int:
+    """Finds a free port on `ip` outside `excluded` ranges and not in `taken`."""
+    excluded = excluded or []
+    taken = taken if taken is not None else set()
+    for _ in range(attempts):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind((ip, 0))
+            port = s.getsockname()[1]
+        if port in taken or any(start <= port <= end for start, end in excluded):
+            continue
+        taken.add(port)
+        return port
+    raise RuntimeError(f"No usable free port on {ip} after {attempts} attempts.")
 
 
 def get_running_port(project_name: str, service: str, internal_port: int) -> int:
@@ -293,11 +337,10 @@ def main(
         )
 
         typer.secho("Allocating free host ports...", fg=typer.colors.CYAN)
-        ports["postgres"] = find_free_port()
-        ports["mongo"] = find_free_port()
-        ports["http"] = find_free_port()
-        ports["https"] = find_free_port()
-        ports["google_stub"] = find_free_port()
+        excluded = windows_excluded_port_ranges()
+        taken: set[int] = set()
+        for service in ("postgres", "mongo", "http", "https", "google_stub"):
+            ports[service] = find_free_port(excluded=excluded, taken=taken)
 
         typer.echo(
             f"Assigned ports: Postgres={ports['postgres']}, Mongo={ports['mongo']}, HTTP={ports['http']}, HTTPS={ports['https']}, GoogleStub={ports['google_stub']}"
