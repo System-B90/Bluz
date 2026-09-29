@@ -10,6 +10,7 @@ import {
 import { COMMAND_GROUPS } from "@/components/app-commands/labels";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { ImportExportMenuButton } from "@/components/base/ImportExportMenuButton";
+import { readJsonFile } from "@/components/base/read-json-file";
 import { GanttCreationDeletionCallbackProps } from "@/components/gantt/curriculum-fab/CurriculumActionItems";
 import { useCurriculumList } from "@/components/gantt/state/curriculum-list";
 
@@ -67,25 +68,21 @@ export function CurriculmImportExportButton({
             const file = e.target.files?.[ 0 ];
             if (!file) return;
 
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                try {
-                    const json = JSON.parse(event.target?.result as string);
+            readJsonFile(file)
+                .then(async (json) => {
                     onProcessingChange(true);
                     const newCurriculum = await apiImportCurriculum(json);
                     handleCreate(newCurriculum);
                     enqueueSnackbar("הגאנט יובא בהצלחה!", { variant: "success" });
-                } catch (err) {
+                })
+                .catch((err) =>
                     enqueueApiErrorSnackbar(
                         enqueueSnackbar,
                         "ייבוא הגאנט נכשל!",
                         err,
-                    );
-                } finally {
-                    onProcessingChange(false);
-                }
-            };
-            reader.readAsText(file);
+                    ),
+                )
+                .finally(() => onProcessingChange(false));
         },
         [ handleCreate, enqueueSnackbar, onProcessingChange ],
     );

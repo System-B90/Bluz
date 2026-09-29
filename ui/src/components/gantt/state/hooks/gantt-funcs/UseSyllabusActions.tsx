@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
 import { normalizeApiSyllabus } from "@/api-client/gantt/drizzle-normalize";
+import { apiImportSyllabus } from "@/api-client/gantt/syllabus";
 import { ApiSyllabus } from "@/api-shared/types/gantt/api-layer";
 import { CreateGanttSyllabusPayload } from "@/api-shared/types/gantt/create-payloads";
 import {
@@ -107,8 +108,24 @@ export function useSyllabusActions() {
         [dispatch],
     );
 
+    // Same subtree merge as linking: the import answers with the whole tree.
+    const importSyllabus = useCallback(
+        (curriculumId: GanttCurriculumId, document: unknown) =>
+            withGantErrorHandling(async () => {
+                const imported = await apiImportSyllabus(curriculumId, document);
+                const subtree = normalizeApiSyllabus(imported, curriculumId);
+                dispatch({
+                    type: "MERGE_SYLLABUS",
+                    payload: { curriculumId, ...subtree },
+                });
+                return imported;
+            }, `Failed to import a syllabus into curriculum (ID: ${curriculumId}):`),
+        [dispatch],
+    );
+
     return {
         createSyllabus,
+        importSyllabus,
         updateSyllabus: actions.update,
         deleteSyllabus: actions.remove,
         linkSyllabusToCurriculum,

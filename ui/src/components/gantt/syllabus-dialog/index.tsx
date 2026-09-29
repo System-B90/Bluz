@@ -24,6 +24,7 @@ import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/U
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 import { ModulesTable } from "@/components/gantt/syllabus-card/ModulesTable";
 import { ShufflesSection } from "@/components/gantt/syllabus-dialog/ShufflesSection";
+import { SyllabusImportExportButton } from "@/components/gantt/syllabus-dialog/SyllabusImportExportButton";
 import { SyllabusLinksSection } from "@/components/gantt/syllabus-dialog/SyllabusLinksSection";
 
 export type SyllabusDialogProps = {
@@ -133,7 +134,15 @@ export function SyllabusDialog({
 
     return (
         <Dialog fullWidth maxWidth="lg" onClose={closeHandler} open={open}>
-            <DialogTitle sx={{ pb: 1 }}>
+            <DialogTitle
+                sx={{
+                    alignItems: "flex-start",
+                    display: "flex",
+                    gap: 1,
+                    justifyContent: "space-between",
+                    pb: 1,
+                }}
+            >
                 <Stack spacing={0.5}>
                     <Typography
                         component="span"
@@ -152,6 +161,11 @@ export function SyllabusDialog({
                         } שאפלים`}
                     </Typography>
                 </Stack>
+                <SyllabusImportExportButton
+                    curriculumId={curriculumId}
+                    syllabusId={syllabusId}
+                    title={syllabus?.title}
+                />
             </DialogTitle>
 
             <DialogContent>
