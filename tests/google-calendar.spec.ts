@@ -247,7 +247,10 @@ test.describe("Google Calendar — shared calendar and purge", () => {
             await connectViaApi(request);
             previousSettings = await setGoogleSettings(request, true, true);
 
-            await page.reload();
+            // Load the app only now, so it reads the Google settings set above.
+            // This describe has no beforeEach navigation: reload() only
+            // reloaded about:blank and the gear never appeared (#743).
+            await gotoAppHome(page);
             await openSettingsDialog(page);
             await navigateToSettingsTab(page, "אישי");
             const dialog = page.locator(SELECTORS.settingsDialog).first();
