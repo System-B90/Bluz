@@ -6,6 +6,8 @@ import
     DragEndEvent,
     DragOverlay,
     DragStartEvent,
+    MeasuringConfiguration,
+    MeasuringStrategy,
     pointerWithin,
     rectIntersection,
     useDroppable,
@@ -119,6 +121,16 @@ const pointerFirstCollision: CollisionDetection = (args) =>
 {
     const hits = pointerWithin(args);
     return hits.length > 0 ? hits : rectIntersection(args);
+};
+
+/**
+ * Re-measure drop targets throughout the drag. The layout shifts after a drag
+ * starts, and with the default (measure once at drag start) the root drop
+ * zone's stored rect no longer matched where it was drawn: releasing on the
+ * zone hit nothing and un-nesting silently failed (#771).
+ */
+export const COURSE_DND_MEASURING: MeasuringConfiguration = {
+    droppable: { strategy: MeasuringStrategy.Always },
 };
 
 function RootDropZone()
@@ -321,6 +333,7 @@ export function CourseSettings()
     return (
         <DndContext
             collisionDetection={ pointerFirstCollision }
+            measuring={ COURSE_DND_MEASURING }
             onDragCancel={ handleDragCancel }
             onDragEnd={ handleDragEnd }
             onDragStart={ handleDragStart }
