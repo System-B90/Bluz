@@ -24,7 +24,8 @@
         ]
     },
     "post_install": [
-        "See INSTALL.md and TROUBLESHOOTING.md in this directory."
+        "See INSTALL.md and TROUBLESHOOTING.md in this directory.",
+        "The REST API reference is API.md in this directory."
     ],
     "bundle": {
         "dir": "bluz",
@@ -37,7 +38,8 @@
             "backup/bluz-backup.ps1": "deploy/backup/bluz-backup.ps1",
             "backup/bluz-restore.ps1": "deploy/backup/bluz-restore.ps1",
             "INSTALL.md": "docs/deployment/INSTALL.md",
-            "TROUBLESHOOTING.md": "docs/deployment/TROUBLESHOOTING.md"
+            "TROUBLESHOOTING.md": "docs/deployment/TROUBLESHOOTING.md",
+            "API.md": "docs/rest-api.md"
         },
         "local_wheels": ["cli/dist/*.whl"]
     }

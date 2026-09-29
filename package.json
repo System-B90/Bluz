@@ -28,6 +28,7 @@
         "test:e2e:ui": "npx playwright test --config tests/playwright.config.ts --ui",
         "session:start": "cd session-server && npm install && npm start",
         "docs:build": "pwsh -Command \"$env:NO_MKDOCS_2_WARNING='true'; python -m mkdocs build\"",
+        "docs:rest": "node scripts/rest-docs.mjs",
         "docs:serve": "pwsh -Command \"$env:NO_MKDOCS_2_WARNING='true'; python -m mkdocs serve\"",
         "build:vendor:exceljs": "node ui/vendor/exceljs/build.mjs"
     },
