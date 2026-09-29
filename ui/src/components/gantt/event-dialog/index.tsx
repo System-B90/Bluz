@@ -27,6 +27,7 @@ import { GanttConstraintProvider } from "@/components/gantt/state/constraints/Pr
 import { useCurriculumProviderActions, useCurriculumState } from "@/components/gantt/state/context";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import { useEvent } from "@/components/gantt/state/hooks/UseEvent";
+import { useSyllabusTitle } from "@/components/gantt/state/hooks/UseSyllabusTitles";
 
 export type EventDialogProps = {
     setOpen: Dispatch<SetStateAction<boolean>>;
@@ -54,6 +55,7 @@ function EventDialogInner({
     const state = useCurriculumState();
     const ganttModule = moduleId ? state.modules[ moduleId ] : null;
     const syllabus = syllabusId ? state.syllabuses[ syllabusId ] : null;
+    const syllabusTitle = useSyllabusTitle(syllabusId);
 
     const [ , startTransition ] = useTransition();
     const [ isActionLoading, setIsActionLoading ] = useState(false);
@@ -118,7 +120,7 @@ function EventDialogInner({
                 moduleTitle={ ganttModule?.title }
                 onModuleClick={ ganttModule ? handleModuleClick : undefined }
                 onSyllabusClick={ syllabus ? handleSyllabusClick : undefined }
-                syllabusTitle={ syllabus?.title }
+                syllabusTitle={ syllabusTitle }
             />
 
             <EventDialogContent curriculumId={ syllabus?.curriculumId ?? null } event={ event } eventId={ eventId } isContentReady={ isContentReady } moduleId={ moduleId } syllabus={ syllabus } />

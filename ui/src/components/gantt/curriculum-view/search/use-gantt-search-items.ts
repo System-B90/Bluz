@@ -7,6 +7,7 @@ import {
 } from "@/api-shared/types/gantt/models";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { useCurriculumState } from "@/components/gantt/state/context";
+import { useSyllabusTitles } from "@/components/gantt/state/hooks/UseSyllabusTitles";
 
 export type GanttSearchItemType = "event" | "module" | "syllabus";
 
@@ -34,16 +35,18 @@ export type GanttSearchItem = {
 export function useGanttSearchItems(): Array<GanttSearchItem> {
     const state = useCurriculumState();
     const { getInstructor } = useHiveUsers();
+    const syllabusTitles = useSyllabusTitles();
 
     return useMemo(() => {
         const items: Array<GanttSearchItem> = [];
 
         for (const syllabus of Object.values(state.syllabuses)) {
+            const syllabusTitle = syllabusTitles[syllabus.id] ?? syllabus.title;
             items.push({
                 id: syllabus.id,
                 type: "syllabus",
-                title: syllabus.title,
-                path: syllabus.title,
+                title: syllabusTitle,
+                path: syllabusTitle,
                 syllabusId: syllabus.id,
             });
 
@@ -55,7 +58,7 @@ export function useGanttSearchItems(): Array<GanttSearchItem> {
                     id: ganttModule.id,
                     type: "module",
                     title: ganttModule.title,
-                    path: `${syllabus.title} / ${ganttModule.title}`,
+                    path: `${syllabusTitle} / ${ganttModule.title}`,
                     syllabusId: syllabus.id,
                     moduleId: ganttModule.id,
                 });
@@ -73,7 +76,7 @@ export function useGanttSearchItems(): Array<GanttSearchItem> {
                         id: event.id,
                         type: "event",
                         title: event.title,
-                        path: `${syllabus.title} / ${ganttModule.title} / ${event.title}`,
+                        path: `${syllabusTitle} / ${ganttModule.title} / ${event.title}`,
                         syllabusId: syllabus.id,
                         moduleId: ganttModule.id,
                         eventId: event.id,
@@ -84,5 +87,5 @@ export function useGanttSearchItems(): Array<GanttSearchItem> {
         }
 
         return items;
-    }, [state, getInstructor]);
+    }, [state, getInstructor, syllabusTitles]);
 }

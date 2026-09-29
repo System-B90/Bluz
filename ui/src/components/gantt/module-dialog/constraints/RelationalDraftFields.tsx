@@ -22,6 +22,7 @@ import {
     RelationalDraft,
     TargetOption,
 } from "@/components/gantt/module-dialog/constraints/types";
+import { useSyllabusTitles } from "@/components/gantt/state/hooks/UseSyllabusTitles";
 
 export function RelationalDraftFields({
     draft,
@@ -34,6 +35,7 @@ export function RelationalDraftFields({
     targetOptions: Record<string, Array<TargetOption>>;
     curriculumState: NormalizedStore;
 }) {
+    const syllabusTitles = useSyllabusTitles();
     const minVal = draft.minDelay ? Number(draft.minDelay) : NaN;
     const maxVal = draft.maxDelay ? Number(draft.maxDelay) : NaN;
     const isInvalid = !isNaN(minVal) && !isNaN(maxVal) && minVal > maxVal;
@@ -130,7 +132,7 @@ export function RelationalDraftFields({
                                     disableSticky
                                     key={`header-${syllabusId}`}
                                 >
-                                    {syllabus.title}
+                                    {syllabusTitles[syllabusId] ?? syllabus.title}
                                 </ListSubheader>,
                                 ...options.map((option) => {
                                     const isModule = option.type === "module";

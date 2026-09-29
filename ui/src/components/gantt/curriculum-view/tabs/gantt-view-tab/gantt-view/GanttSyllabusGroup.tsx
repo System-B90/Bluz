@@ -12,6 +12,7 @@ import {
     SpanVariant,
 } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { useCurriculumState } from "@/components/gantt/state/context";
+import { useSyllabusTitle } from "@/components/gantt/state/hooks/UseSyllabusTitles";
 
 function getSpanBorderRadius(spanVariant: SpanVariant) {
     switch (spanVariant) {
@@ -108,6 +109,7 @@ const GanttSyllabusGroupComponent: React.FC<GanttSyllabusGroupProps> = ({
     const isExpanded = searchActive || isSyllabusExpanded(syllabusId);
 
     const syllabus = state.syllabuses[syllabusId];
+    const syllabusTitle = useSyllabusTitle(syllabusId);
 
     // Every day id any module or event of this syllabus is mapped to.
     const mappedDays = useMemo(() => {
@@ -215,7 +217,7 @@ const GanttSyllabusGroupComponent: React.FC<GanttSyllabusGroupProps> = ({
                         >
                             {isExpanded ? "▼" : "▶"}
                         </Box>
-                        {syllabus.title}
+                        {syllabusTitle ?? syllabus.title}
                     </Typography>
                 </TableCell>
 

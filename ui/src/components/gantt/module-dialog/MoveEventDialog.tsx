@@ -15,6 +15,7 @@ import { GanttEventId, GanttModuleId } from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useCurriculumState } from "@/components/gantt/state/context";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
+import { useSyllabusTitles } from "@/components/gantt/state/hooks/UseSyllabusTitles";
 
 export function MoveEventDialog({
     open,
@@ -31,6 +32,7 @@ export function MoveEventDialog({
     const { enqueueSnackbar } = useSnackbar();
     const { moveEvent } = useModuleEventActions();
     const state = useCurriculumState();
+    const syllabusTitles = useSyllabusTitles();
     const [destModuleId, setDestModuleId] = useState<"" | GanttModuleId>("");
 
     const syllabuses = Object.values(state.syllabuses);
@@ -72,7 +74,7 @@ export function MoveEventDialog({
 
                             return [
                                 <ListSubheader key={`s-${syllabus.id}`}>
-                                    {syllabus.title}
+                                    {syllabusTitles[syllabus.id] ?? syllabus.title}
                                 </ListSubheader>,
                                 ...modules.map((m) => (
                                     <MenuItem key={m.id} value={m.id}>
