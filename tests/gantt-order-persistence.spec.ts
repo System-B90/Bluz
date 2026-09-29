@@ -1,5 +1,14 @@
-import { APIRequestContext } from "@playwright/test";
-
+import {
+    createCurriculum,
+    createEvent,
+    createModule,
+    createSyllabus,
+    curriculumOrders,
+    eventOrder,
+    moduleOrder,
+    reorderEvents,
+    reorderModules,
+} from "./gantt-api";
 import { expect, test } from "./fixtures";
 
 /**
@@ -13,128 +22,6 @@ import { expect, test } from "./fixtures";
 
 const SUITE_TAG = "e2e-order";
 
-type Json = Record<string, unknown>;
-
-async function apiJson<T = Json>(
-    response: Awaited<ReturnType<APIRequestContext["get"]>>,
-): Promise<T> {
-    const body = await response.json();
-    expect(body.status, `API error: ${JSON.stringify(body.error ?? body)}`).toBe(0);
-    return body.data as T;
-}
-
-function upcomingSunday(): string {
-    const date = new Date();
-    date.setDate(date.getDate() + 14 + ((7 - date.getDay()) % 7));
-    return date.toISOString().slice(0, 10);
-}
-
-async function createCurriculum(request: APIRequestContext): Promise<string> {
-    const { id } = await apiJson<{ id: string }>(
-        await request.post("/api/gantt/curriculums", {
-            data: {
-                description: SUITE_TAG,
-                isArchived: false,
-                isDraft: true,
-                startDate: upcomingSunday(),
-                title: `${SUITE_TAG}-${Date.now()}`,
-            },
-        }),
-    );
-    return id;
-}
-
-async function createSyllabus(request: APIRequestContext, curriculumId: string): Promise<string> {
-    const { id } = await apiJson<{ id: string }>(
-        await request.post("/api/gantt/syllabuses", {
-            data: { curriculumId, hiveIds: [], title: `${SUITE_TAG}-syllabus` },
-        }),
-    );
-    return id;
-}
-
-async function createModule(request: APIRequestContext, syllabusId: string, title: string): Promise<string> {
-    const { id } = await apiJson<{ id: string }>(
-        await request.post("/api/gantt/modules", {
-            data: { description: "", hiveIds: [], syllabusId, title },
-        }),
-    );
-    return id;
-}
-
-async function createEvent(request: APIRequestContext, moduleId: string, title: string): Promise<string> {
-    const { id } = await apiJson<{ id: string }>(
-        await request.post("/api/gantt/events", {
-            data: {
-                allocatedDuration: 60,
-                comment: null,
-                hiveLessonId: null,
-                hiveModuleId: null,
-                hiveSubjectId: null,
-                isCritical: false,
-                isPaWindow: false,
-                minimumDuration: 60,
-                moduleId,
-                orchestratorId: null,
-                recommendedLecturerIds: [],
-                recurrence: "none",
-                roomRequirement: "בחוץ",
-                splitAcrossBreaks: false,
-                systemRequirements: [],
-                title,
-                type: "הרצאה",
-            },
-        }),
-    );
-    return id;
-}
-
-type RawModule = { m2e: Array<{ eventId: string }> };
-type RawSyllabus = { s2m: Array<{ moduleId: string; module: RawModule }> };
-
-async function moduleOrder(request: APIRequestContext, syllabusId: string): Promise<Array<string>> {
-    const syllabus = await apiJson<RawSyllabus>(await request.get(`/api/gantt/syllabuses/${syllabusId}`));
-    return syllabus.s2m.map((row) => row.moduleId);
-}
-
-async function eventOrder(request: APIRequestContext, moduleId: string): Promise<Array<string>> {
-    const module = await apiJson<RawModule>(await request.get(`/api/gantt/modules/${moduleId}`));
-    return module.m2e.map((row) => row.eventId);
-}
-
-async function curriculumOrders(
-    request: APIRequestContext,
-    curriculumId: string,
-    syllabusId: string,
-    moduleId: string,
-): Promise<{ modules: Array<string>; events: Array<string> }> {
-    const curriculum = await apiJson<{ c2s: Array<{ syllabusId: string; syllabus: RawSyllabus }> }>(
-        await request.get(`/api/gantt/curriculums/${curriculumId}`),
-    );
-    const syllabus = curriculum.c2s.find((row) => row.syllabusId === syllabusId)?.syllabus;
-    const s2m = syllabus?.s2m ?? [];
-    return {
-        events: s2m.find((row) => row.moduleId === moduleId)?.module.m2e.map((row) => row.eventId) ?? [],
-        modules: s2m.map((row) => row.moduleId),
-    };
-}
-
-async function reorderModules(request: APIRequestContext, syllabusId: string, moduleIds: Array<string>) {
-    await apiJson(
-        await request.post(`/api/gantt/syllabuses/${syllabusId}/reorder-modules`, {
-            data: { moduleIds },
-        }),
-    );
-}
-
-async function reorderEvents(request: APIRequestContext, moduleId: string, eventIds: Array<string>) {
-    await apiJson(
-        await request.post(`/api/gantt/modules/${moduleId}/reorder-events`, {
-            data: { eventIds },
-        }),
-    );
-}
-
 test.describe("Gantt order persistence (#761)", () => {
     test.describe.configure({ timeout: 90_000 });
 
@@ -142,7 +29,7 @@ test.describe("Gantt order persistence (#761)", () => {
     let syllabusId: string;
 
     test.beforeEach(async ({ request }) => {
-        curriculumId = await createCurriculum(request);
+        curriculumId = await createCurriculum(request, SUITE_TAG);
         syllabusId = await createSyllabus(request, curriculumId);
     });
 
