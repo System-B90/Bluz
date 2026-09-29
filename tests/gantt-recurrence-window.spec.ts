@@ -63,7 +63,11 @@ async function addWeeks(page: Page, count: number): Promise<void> {
 async function createModuleWithEvents(page: Page): Promise<string> {
     await page.getByRole("tab", { name: "סילבוסים" }).click();
     await page.getByRole("button", { name: "סילבוס חדש" }).click();
-    await page.waitForTimeout(300);
+    // The new syllabus opens in its dialog (#758); close it to reach the card.
+    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toHaveCount(0, { timeout: 10_000 });
+    await expect(page.locator(".MuiBackdrop-root")).toHaveCount(0, { timeout: 10_000 });
 
     const createModuleButton = page
         .locator(
