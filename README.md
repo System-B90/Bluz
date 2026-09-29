@@ -50,7 +50,8 @@ mkdir bluz && tar -xvf bluz-offline-vX.Y.Z.tar.gz -C bluz --strip-components=1 &
 
 Any Python 3.10+ works — Ubuntu 22.04's stock `python3` included, without
 `python3-venv`. See `INSTALL.md` in the bundle for upgrades (`./update.sh`)
-and co-located Hive (`./link-hive.sh`).
+and co-located Hive (`./link-hive.sh`), and `API.md` for the REST API
+([`docs/rest-api.md`](docs/rest-api.md) here).
 
 <details>
 <summary>Fresh Ubuntu/Debian server? Install the prerequisites first</summary>
@@ -112,6 +113,8 @@ whether you are a person or an agent.
 
 - Stack, architecture and the four API layers → [AGENTS.md](AGENTS.md)
 - Full command list → [AGENTS.md §5](AGENTS.md#5-commands-youll-actually-use)
+- REST API endpoints → [docs/rest-api.md](docs/rest-api.md) (`API.md` in the release bundle;
+  regenerate with `npm run docs:rest`)
 - Contributing and PR conventions → [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md)
 - Deployment, troubleshooting, backup/restore → [`docs/`](docs/) and the
   [published docs site](https://system-b90.github.io/.github/bluz/)

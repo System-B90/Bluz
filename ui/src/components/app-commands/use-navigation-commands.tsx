@@ -1,5 +1,6 @@
 "use client";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
 import ViewTimelineIcon from "@mui/icons-material/ViewTimeline";
 import { useCommands } from "@system-b90/command-palette";
 import { usePathname, useRouter } from "next/navigation";
@@ -32,6 +33,9 @@ const DESTINATIONS: Array<Destination> = [
     },
 ];
 
+/** Served by the app itself, so it opens on offline installs too (#760). */
+export const API_DOCS_HREF = "/api/docs";
+
 /** Top-level page navigation. Registered app-wide. */
 export function useNavigationCommands(): void
 {
@@ -39,8 +43,8 @@ export function useNavigationCommands(): void
     const pathname = usePathname();
 
     const commands = useMemo(
-        () =>
-            DESTINATIONS.map((destination) => ({
+        () => [
+            ...DESTINATIONS.map((destination) => ({
                 id: destination.id,
                 title: `מעבר אל ${destination.title}`,
                 subtitle: destination.href,
@@ -52,6 +56,20 @@ export function useNavigationCommands(): void
                 enabled: pathname !== destination.href,
                 run: () => router.push(destination.href),
             })),
+            {
+                id: "goto.api-docs",
+                title: "תיעוד API",
+                subtitle: API_DOCS_HREF,
+                group: COMMAND_GROUPS.navigation,
+                kind: "goto" as const,
+                icon: <MenuBookIcon />,
+                keywords: [ "api", "docs", "rest", "reference", "תיעוד" ],
+                run: () =>
+                {
+                    window.open(API_DOCS_HREF, "_blank", "noopener");
+                },
+            },
+        ],
         [ router, pathname ],
     );
 
