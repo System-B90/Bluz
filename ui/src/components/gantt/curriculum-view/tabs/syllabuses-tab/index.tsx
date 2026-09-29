@@ -166,16 +166,19 @@ export const SyllabusesTab = memo(function SyllabusesTab({
                     onToggleAllExpanded={ toggleAllExpanded }
                     visibleSyllabusCount={ visibleSyllabusCount }
                 />
+                { /* Rows that wrap and scroll down, not columns that scroll sideways (#759). */ }
                 <Box
                     alignContent={ "flex-start" }
+                    alignItems={ "flex-start" }
+                    data-testid="syllabus-cards"
                     display={ "flex" }
-                    flexDirection={ "column" }
+                    flexDirection={ "row" }
                     flexWrap={ "wrap" }
                     gap={ 2 }
                     height={ "100%" }
                     paddingInlineEnd={ 1 }
                     pt={ 1 }
-                    sx={ { overflowX: "scroll" } }
+                    sx={ { overflowX: "hidden", overflowY: "auto" } }
                 >
                     { allSyllabuses.length === 0 ? (
                         <EmptyState
