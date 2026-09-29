@@ -1,3 +1,5 @@
+import { Page } from "@playwright/test";
+
 import { expect, test, waitForAppLoad } from "./fixtures";
 import { createCurriculum, createSyllabus } from "./gantt-api";
 
@@ -9,7 +11,21 @@ import { createCurriculum, createSyllabus } from "./gantt-api";
  */
 
 const SUITE_TAG = "e2e-syllabus-layout";
-const COUNT = 6;
+
+/**
+ * Where the card titled `title` sits. Titles are editable inputs, so this
+ * matches the input's value; getByText only finds the insights sidebar's
+ * copy of the name, not the card.
+ */
+function cardRect(page: Page, title: string) {
+    return page.getByTestId("syllabus-cards").evaluate((grid, wanted) => {
+        const input = [...grid.querySelectorAll("input")].find((el) => el.value === wanted);
+        if (!input) return null;
+        const r = input.getBoundingClientRect();
+        return { x: r.x, y: r.y, width: r.width, height: r.height };
+    }, title);
+}
+const COUNT = 12;
 
 test.describe("Syllabus cards scroll vertically (#759)", () => {
     test.describe.configure({ timeout: 120_000 });
@@ -25,7 +41,7 @@ test.describe("Syllabus cards scroll vertically (#759)", () => {
         await page.goto(`/gantt?gc=${curriculumId}`, { waitUntil: "commit", timeout: 60_000 });
         await waitForAppLoad(page);
         await page.getByRole("tab", { name: "סילבוסים" }).click();
-        await expect(page.getByText(`${SUITE_TAG}-${COUNT - 1}`)).toBeAttached({ timeout: 30_000 });
+        await expect.poll(() => cardRect(page, `${SUITE_TAG}-${COUNT - 1}`), { timeout: 30_000 }).not.toBeNull();
     });
 
     test.afterEach(async ({ request }) => {
@@ -51,8 +67,8 @@ test.describe("Syllabus cards scroll vertically (#759)", () => {
     test("later cards sit below earlier ones, not beside them off-screen", async ({ page }) => {
         const scroller = page.getByTestId("syllabus-cards");
         const box = await scroller.boundingBox();
-        // Scoped to the grid: the insights sidebar lists the same names.
-        const last = await scroller.getByText(`${SUITE_TAG}-${COUNT - 1}`).first().boundingBox();
+        await scroller.evaluate((el) => el.scrollTo({ top: el.scrollHeight }));
+        const last = await cardRect(page, `${SUITE_TAG}-${COUNT - 1}`);
         expect(box && last).toBeTruthy();
         // Within the scroller's horizontal span, whatever its vertical position.
         expect(last!.x).toBeGreaterThanOrEqual(box!.x - 1);
@@ -61,8 +77,9 @@ test.describe("Syllabus cards scroll vertically (#759)", () => {
 
     test("the grid scrolls down, never sideways", async ({ page }) => {
         const scroller = page.getByTestId("syllabus-cards");
-        const scrollable = await scroller.evaluate((el) => el.scrollHeight > el.clientHeight);
-        test.skip(!scrollable, "all cards fit without scrolling");
+        // Twelve cards at this viewport always overflow; a 1px rounding
+        // difference is not a scroll range.
+        expect(await scroller.evaluate((el) => el.scrollHeight - el.clientHeight)).toBeGreaterThan(2);
         // Scroll the grid itself: the wheel over a card can be taken by the
         // card's own module table.
         await scroller.evaluate((el) => el.scrollBy({ top: 600, left: -600 }));
