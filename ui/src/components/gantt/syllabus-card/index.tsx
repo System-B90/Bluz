@@ -151,11 +151,11 @@ export function SyllabusCard({
                         syllabusModules={ syllabus?.modules ?? [] }
                     />
                 </CardContent>
-                <SyllabusCardActions
-                    sx={ { width: '100%', gap: 0 } }
-                    syllabusId={ syllabusId }
-                />
             </Collapse>
+            <SyllabusCardActions
+                sx={ { width: '100%', gap: 0 } }
+                syllabusId={ syllabusId }
+            />
         </Card>
     );
 }
