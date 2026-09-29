@@ -61,6 +61,14 @@ export function formatMinutesAsTimeInput(minutes: number): string {
         .padStart(2, "0")}`;
 }
 
+export function formatMinutesAsDuration(minutes: number): string {
+    const total = Number.isFinite(minutes) ? Math.max(0, Math.round(minutes)) : 0;
+    const hours = Math.floor(total / 60);
+    const remainderMinutes = total % 60;
+
+    return `${hours}:${remainderMinutes.toString().padStart(2, "0")}`;
+}
+
 export function parseTimeInputToMinutes(value: string): null | number {
     const trimmed = value.trim();
     if (!trimmed) return 0;

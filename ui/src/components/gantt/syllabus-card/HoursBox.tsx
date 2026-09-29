@@ -9,7 +9,7 @@ import { useMemo } from "react";
 
 import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
 import {
-    formatHoursLabel,
+    formatMinutesAsDuration,
     getTentativeMinutesForModuleIds,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useCurriculumState } from "@/components/gantt/state/context";
@@ -42,7 +42,7 @@ function ShuffleTimeBadge({
             </Typography>
             {Object.entries(totals).map(([name, minutes]) => (
                 <Typography key={name} variant="caption">
-                    {name}: {formatHoursLabel(minutes)}
+                    {name}: {formatMinutesAsDuration(minutes)}
                 </Typography>
             ))}
         </Stack>
@@ -190,7 +190,7 @@ export function HoursBox({ syllabusId, ...props }: HoursBoxProps) {
                             fontWeight="bold"
                             variant="body2"
                         >
-                            {scheduledHours}
+                            {formatMinutesAsDuration(scheduledHours)}
                         </Typography>
                     </Box>
                     <Box
@@ -211,7 +211,7 @@ export function HoursBox({ syllabusId, ...props }: HoursBoxProps) {
                             fontWeight="bold"
                             variant="body2"
                         >
-                            {minimumRequiredHours}
+                            {formatMinutesAsDuration(minimumRequiredHours)}
                         </Typography>
                     </Box>
                     <Box
@@ -232,7 +232,7 @@ export function HoursBox({ syllabusId, ...props }: HoursBoxProps) {
                             fontWeight="bold"
                             variant="body2"
                         >
-                            {tentativeHours}
+                            {formatMinutesAsDuration(tentativeHours)}
                         </Typography>
                     </Box>
                     {shuffleTotals ? <Box pt={0.5}>
