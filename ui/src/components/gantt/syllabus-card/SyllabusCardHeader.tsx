@@ -15,7 +15,7 @@ function InternalHeader({ syllabusId }: { syllabusId: GanttSyllabusId }) {
 
     return (
         <Box
-            alignItems={"center"}
+            alignItems={"flex-start"}
             display={"flex"}
             flexDirection={"row"}
             flexWrap={"nowrap"}
