@@ -1047,19 +1047,23 @@ export async function dragDndKit(
     // past the root drop zone's ~40px height and the drop silently did nothing.
     const clamp = (value: number, min: number, max: number) =>
         Math.min(Math.max(value, min), max);
-    const endX = clamp(
-        targetBox.x + targetBox.width / 2 + offsetX,
-        targetBox.x + 2,
-        targetBox.x + targetBox.width - 2,
-    );
-    const endY = clamp(
-        targetBox.y + targetBox.height / 2 + offsetY,
-        targetBox.y + 2,
-        targetBox.y + targetBox.height - 2,
-    );
+    const pointInside = (box: { x: number; y: number; width: number; height: number }) => ({
+        x: clamp(box.x + box.width / 2 + offsetX, box.x + 2, box.x + box.width - 2),
+        y: clamp(box.y + box.height / 2 + offsetY, box.y + 2, box.y + box.height - 2),
+    });
 
-    await page.mouse.move(endX, endY, { steps: 20 });
-    await page.mouse.move(endX + 1, endY + 1, { steps: 2 });
+    const first = pointInside(targetBox);
+    await page.mouse.move(first.x, first.y, { steps: 20 });
+    await page.waitForTimeout(150);
+
+    // Leaving the source can reflow the page (its hover controls collapse),
+    // so the target measured above may have moved by now: the course
+    // builder's root drop zone moved ~56px and the release missed it (#771).
+    // Re-measure and correct before letting go.
+    const settledBox = (await target.boundingBox()) ?? targetBox;
+    const end = pointInside(settledBox);
+    await page.mouse.move(end.x, end.y, { steps: 5 });
+    await page.mouse.move(end.x + 1, end.y + 1, { steps: 2 });
     await page.waitForTimeout(150);
     await page.mouse.up();
 }
