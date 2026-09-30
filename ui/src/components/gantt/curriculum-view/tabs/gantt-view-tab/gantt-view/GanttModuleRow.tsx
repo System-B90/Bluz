@@ -6,8 +6,6 @@ import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 import React, { memo, useMemo } from "react";
 
-import { getRecurrenceOccurrenceDayIds } from "@/api-shared/gantt/recurrence";
-import { EventRecurrence, getAllowedDayIndices } from "@/api-shared/types/gantt/models";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { calculateStudentModuleMinutes } from "@/components/gantt/curriculum-view/student-load";
@@ -17,6 +15,7 @@ import { GanttBlock } from "@/components/gantt/curriculum-view/tabs/gantt-view-t
 import { GanttCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttCell";
 import { GanttEventRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttEventRow";
 import { GanttHoursLabel } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttHoursLabel";
+import { getModuleSpanDayIds } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/module-span";
 import { GanttModuleRowProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { useCurriculumState } from "@/components/gantt/state/context";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
@@ -39,6 +38,7 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
         weekIndexByDayId,
         moduleMappings,
         eventMappings,
+        eventSpans,
         violations,
         isModuleExpanded,
         toggleModule,
@@ -68,51 +68,30 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
         [moduleId, violations],
     );
 
-    // Every day the module's block should visually cover: explicit mappings
-    // plus, for recurring events, every surviving echoed occurrence day — so
-    // the block spans the full recurrence, not just its start.
-    const allDayIds = useMemo(() => {
-        const dayIds = new Set<string>();
-        mappedDays.forEach((d) => dayIds.add(d));
-
-        if (hasEvents) {
-            (ganttModule?.events ?? []).forEach((eId) => {
-                const startDayId = eventMappings[eId];
-                if (!startDayId) return;
-                dayIds.add(startDayId);
-
-                const recurrence = state.events[eId]?.recurrence ?? EventRecurrence.None;
-                if (recurrence === EventRecurrence.None) return;
-
-                const excludedDayIds = new Set<string>();
-                Object.values(exceptionsState.exceptions).forEach((ex) => {
-                    if (ex.eventId === eId) excludedDayIds.add(ex.dayId);
-                });
-
-                getRecurrenceOccurrenceDayIds({
-                    recurrence,
-                    startDayId,
-                    linearDays,
-                    dayIndexOf: (d) => state.days[d]?.dayIndex,
-                    excludedDayIds,
-                    allowedDayIndices: getAllowedDayIndices(
-                        state.events[eId]?.constraints,
-                    ),
-                }).forEach((d) => dayIds.add(d));
-            });
-        }
-
-        return dayIds;
-    }, [
-        hasEvents,
-        ganttModule?.events,
-        eventMappings,
-        mappedDays,
-        linearDays,
-        state.events,
-        state.days,
-        exceptionsState.exceptions,
-    ]);
+    // Days the module's block covers — only days its allocated events occupy.
+    const allDayIds = useMemo(
+        () =>
+            getModuleSpanDayIds({
+                eventIds: ganttModule?.events ?? [],
+                moduleDayIds: mappedDays,
+                eventMappings,
+                eventSpans,
+                exceptions: exceptionsState.exceptions,
+                linearDays,
+                events: state.events,
+                days: state.days,
+            }),
+        [
+            ganttModule?.events,
+            eventMappings,
+            eventSpans,
+            mappedDays,
+            linearDays,
+            state.events,
+            state.days,
+            exceptionsState.exceptions,
+        ],
+    );
 
     // Day-level span (used in daily mode)
     const spanIndices = useMemo(() => {
@@ -196,10 +175,10 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
                 const naturalWidth =
                     weekSpan * 100 + (endFrac - startFrac) * 100;
 
-                // A module block always fills at least one full column: when it
-                // would render narrower than a single week, snap it to the whole
-                // starting column instead of a thin intra-week sliver.
-                if (naturalWidth < 100) {
+                // A single-week module fills its whole column instead of a thin
+                // intra-week sliver. A cross-week span keeps its true edges —
+                // snapping it would cover event-less days and drop its tail.
+                if (weekSpan === 0) {
                     blockLeftPercent = 0;
                     blockWidthPercent = 100;
                 } else {

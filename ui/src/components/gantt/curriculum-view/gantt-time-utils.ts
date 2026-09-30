@@ -206,26 +206,17 @@ function groupDaysByWeek(
     return weeks;
 }
 
-/**
- * What an event may still use of a day, given everything already placed on
- * it. Without one, an event sees the day's whole working capacity.
- */
+/** Per-day load tracker fed by each event placement. */
 export type DayHeadroom = {
-    /** Minutes `eventId` can still add on `dayId` without overfilling it. */
-    headroom: (dayId: GanttDayId, eventId: string, capacity: number) => number;
     /** Records that `eventId` uses `minutes` of `dayId`. */
     consume: (dayId: GanttDayId, eventId: string, minutes: number) => void;
 };
 
 /**
- * Computes, per mapped event, the days it actually occupies. An event whose
- * required minutes exceed its start day's working capacity dynamically
- * overflows the excess onto subsequent days. The database still stores only
- * the start-day mapping — this is a pure frontend layout computation.
- *
- * With `load`, capacity is what is left for the event's own students rather
- * than the whole day, and events are laid out in timeline order so earlier
- * placements fill a day first.
+ * Computes, per mapped event, the days it actually occupies: its mapped day
+ * only, or one day per week for a human-defined week split. Events never
+ * overflow onto later days here — an over-full day shows as over capacity;
+ * spreading hours is the cut's job. With `load`, each placement is recorded.
  */
 export function computeEventDaySpans({
     mappings,
@@ -288,47 +279,13 @@ export function computeEventDaySpans({
             continue;
         }
 
-        const dayIds: Array<GanttDayId> = [];
-        const minutesPerDay: Array<number> = [];
-        let remaining = event.minimumDuration ?? 0;
-        let idx = startIdx;
-
-        while (idx < linearDays.length) {
-            const dayId = linearDays[idx];
-            const dayCapacity = state.days[dayId]?.totalWorkingMinutes ?? 0;
-            const capacity = load
-                ? Math.max(0, load.headroom(dayId, mapping.eventId, dayCapacity))
-                : dayCapacity;
-            const isStartDay = dayIds.length === 0;
-
-            // Days with no room left can't host hours; skip them mid-span. The
-            // start day always hosts (a 0-capacity start absorbs everything,
-            // matching the pre-spillover behavior; a start day that is merely
-            // full keeps its place and spills everything onward).
-            if (capacity > 0 || isStartDay) {
-                const consumed =
-                    capacity > 0 || dayCapacity > 0
-                        ? Math.min(remaining, capacity)
-                        : remaining;
-                dayIds.push(dayId);
-                minutesPerDay.push(consumed);
-                remaining -= consumed;
-            }
-            if (remaining <= 0) break;
-            idx += 1;
-        }
-
-        if (remaining > 0 && minutesPerDay.length > 0) {
-            // Timeline ended mid-overflow: park the leftover on the last day.
-            minutesPerDay[minutesPerDay.length - 1] += remaining;
-        }
-        if (dayIds.length > 0) {
-            record(mapping.eventId, {
-                dayIds,
-                minutesPerDay,
-                spillover: dayIds.length > 1,
-            });
-        }
+        // Never spills: the whole event sits on its mapped day, and an
+        // over-full day surfaces as over capacity. Only the cut spreads hours.
+        record(mapping.eventId, {
+            dayIds: [ mapping.dayId ],
+            minutesPerDay: [ event.minimumDuration ?? 0 ],
+            spillover: false,
+        });
     }
 
     return spans;

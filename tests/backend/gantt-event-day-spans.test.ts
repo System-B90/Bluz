@@ -56,7 +56,6 @@ describe("computeEventDaySpans week split (#768)", () => {
             state: store({ minimumDuration: 600, splitAcrossWeeks: true }),
             linearDays: LINEAR_DAYS,
             load: {
-                headroom: (_dayId, _eventId, capacity) => capacity,
                 consume: (dayId, _eventId, minutes) => {
                     byDay[ dayId ] = (byDay[ dayId ] ?? 0) + minutes;
                 },
@@ -77,7 +76,7 @@ describe("computeEventDaySpans week split (#768)", () => {
         expect(spans.e1.minutesPerDay).toEqual([ 360 ]);
     });
 
-    it("regression: an unflagged event ignores a stored split and spills over days", () => {
+    it("regression: an unflagged event ignores a stored split and stays whole on its day", () => {
         const spans = computeEventDaySpans({
             mappings: mapping("a1", [ 300, 300 ]),
             state: store({ minimumDuration: 600, splitAcrossWeeks: false }),
@@ -85,10 +84,28 @@ describe("computeEventDaySpans week split (#768)", () => {
         });
 
         expect(spans.e1).toEqual({
-            dayIds: [ "a1", "a2" ],
-            minutesPerDay: [ 480, 120 ],
-            spillover: true,
+            dayIds: [ "a1" ],
+            minutesPerDay: [ 600 ],
+            spillover: false,
         });
+    });
+
+    it("never spreads an event past its day's capacity onto the next day", () => {
+        const byDay: Record<string, number> = {};
+        const spans = computeEventDaySpans({
+            mappings: mapping("a1"),
+            state: store({ minimumDuration: 1000, splitAcrossWeeks: false }),
+            linearDays: LINEAR_DAYS,
+            load: {
+                consume: (dayId, _eventId, minutes) => {
+                    byDay[ dayId ] = (byDay[ dayId ] ?? 0) + minutes;
+                },
+            },
+        });
+
+        expect(spans.e1.dayIds).toEqual([ "a1" ]);
+        // Over the 480-minute day: surfaces as overload, not as spillover.
+        expect(byDay).toEqual({ a1: 1000 });
     });
 
     it("regression: an incomplete split runs the event whole", () => {
