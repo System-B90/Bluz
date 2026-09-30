@@ -25,6 +25,11 @@ services:
                 - action: rebuild
                   path: package-lock.json
 
+        # Dev uses the remote Hive (NEXT_PUBLIC_HIVE_URL), not a local hive-stack,
+        # so don't join its external network.
+        networks: !override
+            - bluz_net
+
     proxy:
         ports: !override
             - "127.0.0.3:80:80"
@@ -39,3 +44,6 @@ services:
     mongodb:
         ports:
             - "127.0.0.3:27018:27017"
+
+networks:
+    hive_net: !reset {}
