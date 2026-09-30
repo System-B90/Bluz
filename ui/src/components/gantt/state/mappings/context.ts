@@ -39,12 +39,26 @@ export type RemoveMapping = ({
     dayId: GanttDayId;
 }) => Promise<void>;
 
+/** Sets the minutes-per-week split of an event mapping (#768). */
+export type SetWeekSplit = ({
+    moduleId,
+    eventId,
+    dayId,
+    weekSplitMinutes,
+}: {
+    moduleId: GanttModuleId;
+    eventId: GanttEventId;
+    dayId: GanttDayId;
+    weekSplitMinutes: Array<number>;
+}) => Promise<void>;
+
 export type GanttMappingContextType = {
     state: GanttMappingState;
     refreshMappings: RefreshMappings;
     createMapping: CreateMapping;
     moveMapping: MoveMapping;
     removeMapping: RemoveMapping;
+    setWeekSplit: SetWeekSplit;
 };
 
 export const GanttMappingContext = createContext<
