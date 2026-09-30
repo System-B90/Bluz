@@ -65,7 +65,8 @@ export type GanttContextType = {
     isSyllabusVisible: (syllabusId: string) => boolean;
     isModuleVisible: (moduleId: string) => boolean;
     isEventVisible: (eventId: string) => boolean;
-    onMapModule: (moduleId: string, dayId: string) => Promise<void>;
+    /** Resolves to the event ids it mapped (null for a module-level mapping). */
+    onMapModule: (moduleId: string, dayId: string) => Promise<Array<null | string>>;
     onMapEvent: (
         moduleId: string,
         eventId: string,
@@ -82,7 +83,8 @@ export type GanttContextType = {
         sourceDayId: string,
         targetDayId: string,
     ) => Promise<void>;
-    onShiftModule: (moduleId: string, deltaDays: number) => Promise<void>;
+    /** Resolves false when nothing moved (the shift would leave the timeline). */
+    onShiftModule: (moduleId: string, deltaDays: number) => Promise<boolean>;
 };
 
 export type GanttViewProps = {
