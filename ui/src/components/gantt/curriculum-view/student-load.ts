@@ -445,13 +445,13 @@ export function getStudentMinutesByDay(
 }
 
 /**
- * The time a single student spends in the given syllabuses' events: per
+ * The time each kind of student spends in the given syllabuses' events: per
  * path, each syllabus at its longest shuffle plus the course-limited events
- * on that path; the busiest path wins. Recurring events count per occurrence
- * when `occurrenceCtx` is given. `include` narrows the events counted (a
- * module, the placed events…) without changing who the students are.
+ * on that path. Recurring events count per occurrence when `occurrenceCtx` is
+ * given. `include` narrows the events counted (a module, the placed
+ * events…) without changing who the students are.
  */
-export function calculateStudentMinutes({
+export function calculateStudentMinutesByPath({
     courses,
     include,
     occurrenceCtx,
@@ -463,7 +463,7 @@ export function calculateStudentMinutes({
     occurrenceCtx?: RecurrenceOccurrenceContext;
     state: NormalizedStore;
     syllabusIds: Array<GanttSyllabusId>;
-}): number {
+}): Array<{ path: StudentPath; minutes: number }> {
     const tree = courses.filter((course) => !isShuffleCourse(course));
     const assigned = assignedCourseIds(state, syllabusIds, new Set(tree.map((course) => course.id)));
     const paths = buildStudentPaths(tree, assigned.ids, assigned.includeRoots);
@@ -481,7 +481,15 @@ export function calculateStudentMinutes({
             }
         }
     }
-    return tracker.summarize(state, paths)[ALL]?.minutes ?? 0;
+    const loads = tracker.summarize(state, paths)[ALL]?.paths ?? [];
+    return paths.map((path, idx) => ({ path, minutes: loads[idx]?.minutes ?? 0 }));
+}
+
+/** `calculateStudentMinutesByPath`'s busiest path — one student's time. */
+export function calculateStudentMinutes(
+    args: Parameters<typeof calculateStudentMinutesByPath>[0],
+): number {
+    return Math.max(0, ...calculateStudentMinutesByPath(args).map((entry) => entry.minutes));
 }
 
 /** One student's minimum time in a module, recurring events per occurrence. */
