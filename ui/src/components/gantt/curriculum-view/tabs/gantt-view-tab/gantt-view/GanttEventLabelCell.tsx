@@ -1,4 +1,6 @@
+import CallSplitIcon from "@mui/icons-material/CallSplit";
 import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
 import { alpha, useTheme } from "@mui/material/styles";
 import TableCell from "@mui/material/TableCell";
 import Tooltip from "@mui/material/Tooltip";
@@ -18,6 +20,10 @@ type GanttEventLabelCellProps = {
     /** Required minutes shown in the hours column (#766). */
     minutes: number;
     moduleId: string;
+    /** Opens the week-split editor; absent when the event cannot split (#768). */
+    onSplitClick?: () => void;
+    /** Whether the event currently runs split across weeks (#768). */
+    isWeekSplit?: boolean;
     onTitleClick: () => void;
     setRemoveNodeRef: (node: HTMLElement | null) => void;
     violations: Array<string>;
@@ -31,6 +37,8 @@ export const GanttEventLabelCell: React.FC<GanttEventLabelCellProps> = ({
     isUnmapped,
     minutes,
     moduleId,
+    onSplitClick,
+    isWeekSplit,
     onTitleClick,
     setRemoveNodeRef,
     violations,
@@ -111,6 +119,20 @@ export const GanttEventLabelCell: React.FC<GanttEventLabelCellProps> = ({
                         violations={ violations }
                     />
                 </Box>
+            ) : null }
+
+            { onSplitClick ? (
+                <Tooltip title={ isWeekSplit ? "עריכת פיצול בין שבועות" : "פיצול בין שבועות" }>
+                    <IconButton
+                        aria-label="פיצול בין שבועות"
+                        color={ isWeekSplit ? "primary" : "default" }
+                        onClick={ onSplitClick }
+                        size="small"
+                        sx={ { flexShrink: 0, p: 0.25, marginInlineStart: 0.5 } }
+                    >
+                        <CallSplitIcon sx={ { fontSize: 16 } } />
+                    </IconButton>
+                </Tooltip>
             ) : null }
 
             <GanttHoursLabel minutes={ minutes } />

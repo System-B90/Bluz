@@ -1,7 +1,7 @@
 import { useDroppable } from "@dnd-kit/core";
 import { useTheme } from "@mui/material/styles";
 import TableRow from "@mui/material/TableRow";
-import React, { memo, useCallback, useMemo } from "react";
+import React, { memo, useCallback, useMemo, useState } from "react";
 
 import
 {
@@ -21,12 +21,15 @@ import
 } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttEventCells";
 import { GanttEventLabelCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttEventLabelCell";
 import { GanttEventRowProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
+import { WeekSplitDialog } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/WeekSplitDialog";
 import
 {
     useCurriculumProviderActions,
     useCurriculumState,
 } from "@/components/gantt/state/context";
 import { useGanttExecution } from "@/components/gantt/state/execution/hooks";
+import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
+import { getGanttMappingKey } from "@/components/gantt/state/mappings/types";
 import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
 
 const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
@@ -66,6 +69,14 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
 
     const currentDayId = eventMappings[ eventId ] || null;
     const isEventUnmapped = !currentDayId;
+
+    // Week-split editor (#768): only for a mapped event that may split.
+    const { state: mappingState, setWeekSplit } = useGanttMappings();
+    const [ splitOpen, setSplitOpen ] = useState(false);
+    const splitMapping = currentDayId
+        ? mappingState.mappings[ getGanttMappingKey({ dayId: currentDayId, moduleId, eventId }) ]
+        : undefined;
+    const canSplit = Boolean(event?.splitAcrossWeeks && splitMapping);
 
     // Occurrence days this event no longer echoes onto — deleted or
     // materialized into their own standalone event.
@@ -330,8 +341,10 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
                 isUnmapped={
                     isEventUnmapped ? !isRecurring : null
                 }
+                isWeekSplit={ Boolean(eventSpans[ eventId ]?.weekSplit) }
                 minutes={ event.minimumDuration ?? 0 }
                 moduleId={ moduleId }
+                onSplitClick={ canSplit ? () => setSplitOpen(true) : undefined }
                 onTitleClick={ () =>
                 {
                     const syllabusId = state.modules[ moduleId ]?.syllabusId;
@@ -345,6 +358,26 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
             />
 
             { cells }
+
+            { splitOpen && currentDayId ? (
+                <WeekSplitDialog
+                    eventTitle={ event.title }
+                    initialParts={ splitMapping?.weekSplitMinutes }
+                    onClose={ () => setSplitOpen(false) }
+                    onSave={ (parts) =>
+                    {
+                        setSplitOpen(false);
+                        void setWeekSplit({
+                            moduleId,
+                            eventId,
+                            dayId: currentDayId,
+                            weekSplitMinutes: parts,
+                        });
+                    } }
+                    open
+                    totalMinutes={ event.minimumDuration ?? 0 }
+                />
+            ) : null }
         </TableRow>
     );
 };
