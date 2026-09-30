@@ -87,8 +87,9 @@ export function describeGroupChange(
  * (#699).
  *
  * The copies are separate rows on purpose — each keeps its own placement, cut
- * and Hive linkage — and the group only changes how they are counted: a
- * module's required time takes the longest member, not the sum of all of them.
+ * and Hive linkage — and the group only changes how they are counted: the
+ * shuffles run in parallel, so time is never the sum of all members. Shuffles
+ * may differ within a module; only the syllabus total must match.
  */
 export function EventShuffleGroupField({
     event,
@@ -164,9 +165,9 @@ export function EventShuffleGroupField({
     return (
         <Stack spacing={1.5}>
             <Alert severity="info">
-                כל שאפל שנבחר מקבל מופע משלו באותו שם. הזמנים והשיבוץ נפרדים לכל
-                מופע, והזמן הנדרש של המערך נספר לפי השאפל הארוך ביותר — לא כסכום
-                של כולם.
+                כל שאפל שנבחר מקבל מופע משלו באותו שם, עם זמן ושיבוץ משלו. הזמן
+                במערך יכול להיות שונה בין השאפלים, אבל סך הזמן במקצוע חייב להיות
+                שווה לכל השאפלים, ובכל יום השאפלים לומדים את המקצוע באותו בלוק.
             </Alert>
 
             <Stack>

@@ -28,6 +28,7 @@ import { InstructorSelect } from "@/components/base/InstructorSelect";
 import { NumberSpinner } from "@/components/base/NumberSpinner";
 import { useConfirmDialog } from "@/components/base/UseConfirmDialog";
 import { EVENT_ANCHOR_PREFIX } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
+import { CourseChips } from "@/components/gantt/CourseChips";
 import { ShuffleChip } from "@/components/gantt/ShuffleChip";
 import { useCurriculumProviderActions, useCurriculumState } from "@/components/gantt/state/context";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
@@ -193,6 +194,7 @@ export function ModuleEventView({
                         hiveGroups={ parentSyllabusId ? state.syllabuses[ parentSyllabusId ]?.shuffleHiveGroups : undefined }
                         shuffles={ moduleEvent?.shuffles }
                     />
+                    <CourseChips courseIds={ moduleEvent?.courseIds } />
                 </Stack>
             </TableCell>
             <TableCell>
