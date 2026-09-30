@@ -15,6 +15,7 @@ import { GanttBlock } from "@/components/gantt/curriculum-view/tabs/gantt-view-t
 import { GanttCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttCell";
 import { GanttEventRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttEventRow";
 import { GanttHoursLabel } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttHoursLabel";
+import { canDragModule } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/module-drag";
 import { getModuleSpanDayIds } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/module-span";
 import { GanttModuleRowProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { useCurriculumState } from "@/components/gantt/state/context";
@@ -117,6 +118,15 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
         return { min: Math.min(...arr), max: Math.max(...arr) };
     }, [weeklyView, allDayIds, weekIndexByDayId]);
 
+    const isDraggable = useMemo(
+        () =>
+            canDragModule(
+                { eventIds: ganttModule?.events ?? [], eventMappings },
+                linearDays,
+            ),
+        [ganttModule?.events, eventMappings, linearDays],
+    );
+
     const isUnmapped = weeklyView
         ? weekSpanIndices === null
         : spanIndices === null;
@@ -204,6 +214,7 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
                         blockTitle={ganttModule?.title}
                         blockWidthPercent={isSpanStart ? blockWidthPercent : undefined}
                         dayId={firstDayId}
+                        disableDrag={!isDraggable}
                         dropId={`drop-module-${moduleId}-${firstDayId}`}
                         elementId={
                             isSpanStart ? `block-module-${moduleId}` : undefined
@@ -241,7 +252,7 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
                         blockTimeLabel={isSpanStart ? timeLabel : undefined}
                         blockTitle={ganttModule?.title}
                         dayId={dayId}
-                        disableDrag={singleWeekDayZoom}
+                        disableDrag={singleWeekDayZoom || !isDraggable}
                         dropId={`drop-module-${moduleId}-${dayId}`}
                         elementId={
                             isSpanStart ? `block-module-${moduleId}` : undefined
@@ -272,6 +283,7 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
         myViolations,
         timeLabel,
         singleWeekDayZoom,
+        isDraggable,
     ]);
 
     return (
@@ -323,6 +335,7 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
                     <Box sx={{ flexGrow: 1, position: "relative" }}>
                         {isUnmapped ? (
                             <GanttBlock
+                                disableDrag={!isDraggable}
                                 elementId={`block-module-${moduleId}`}
                                 id={`drag-module-unmapped-${moduleId}`}
                                 isAbsolute={false}
