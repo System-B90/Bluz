@@ -49,3 +49,21 @@ export function useHiveStudentGroups(): HiveStudentGroups | null {
 
     return groups;
 }
+
+/**
+ * The Hive group a shuffle syncs against: its explicitly linked group when
+ * the syllabus sets one (#774), else the same-named group.
+ */
+export function findShuffleHiveGroup(
+    groups: HiveStudentGroups | null,
+    name: string,
+    linkedGroupId?: number,
+): Class | undefined {
+    if (!groups) return undefined;
+    if (linkedGroupId) {
+        return [...groups.values()].find(
+            (group) => Number(group.id) === linkedGroupId,
+        );
+    }
+    return groups.get(normalizeShuffleName(name));
+}

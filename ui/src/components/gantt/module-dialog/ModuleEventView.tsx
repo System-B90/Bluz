@@ -15,7 +15,7 @@ import TextField from "@mui/material/TextField";
 import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
 
-import { ShuffleDescriptions } from "@/api-shared/gantt/shuffle-names";
+import { ShuffleDescriptions, ShuffleHiveGroups } from "@/api-shared/gantt/shuffle-names";
 import
 {
     GanttEvent,
@@ -61,13 +61,20 @@ const EMPTY_LEADS: Array<number> = [];
 export function ShuffleChips({
     shuffles,
     descriptions,
+    hiveGroups,
 }: {
     shuffles: Array<string> | null | undefined;
     descriptions?: ShuffleDescriptions;
+    hiveGroups?: ShuffleHiveGroups;
 })
 {
     return (shuffles ?? []).map((shuffle) => (
-        <ShuffleChip description={ descriptions?.[ shuffle ] } key={ shuffle } name={ shuffle } />
+        <ShuffleChip
+            description={ descriptions?.[ shuffle ] }
+            hiveGroupId={ hiveGroups?.[ shuffle ] }
+            key={ shuffle }
+            name={ shuffle }
+        />
     ));
 }
 
@@ -183,6 +190,7 @@ export function ModuleEventView({
                     />
                     <ShuffleChips
                         descriptions={ parentSyllabusId ? state.syllabuses[ parentSyllabusId ]?.shuffleDescriptions : undefined }
+                        hiveGroups={ parentSyllabusId ? state.syllabuses[ parentSyllabusId ]?.shuffleHiveGroups : undefined }
                         shuffles={ moduleEvent?.shuffles }
                     />
                 </Stack>

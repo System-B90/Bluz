@@ -114,6 +114,11 @@ export function ModuleEventGroupRow({
                         <Chip label={`×${members.length}`} size="small" variant="outlined" />
                         <ShuffleChips
                             descriptions={shuffleDescriptions}
+                            hiveGroups={
+                                syllabusId
+                                    ? state.syllabuses[syllabusId]?.shuffleHiveGroups
+                                    : undefined
+                            }
                             shuffles={members.flatMap((event) => event?.shuffles ?? [])}
                         />
                     </Stack>
