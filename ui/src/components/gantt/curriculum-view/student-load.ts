@@ -251,24 +251,6 @@ class StudentLoadTracker implements DayHeadroom {
         return total;
     }
 
-    headroom(dayId: GanttDayId, eventId: string, capacity: number): number {
-        const audience = this.audiences.get(eventId);
-        if (!audience || audience.pathIdxs.length === 0) return capacity;
-        let room = Infinity;
-        for (const pathIdx of audience.pathIdxs) {
-            let free = capacity - this.pathMinutes(dayId, pathIdx);
-            // A shuffle's minutes only lengthen the day once they pass the
-            // syllabus' longest shuffle.
-            if (audience.shuffles) {
-                const slot = slotOf(this.pathSlots(dayId, pathIdx), audience.syllabusId);
-                const own = Math.max(0, ...audience.shuffles.map((name) => slot.byShuffle.get(name) ?? 0));
-                free += slotMax(slot) - own;
-            }
-            room = Math.min(room, free);
-        }
-        return room;
-    }
-
     consume(dayId: GanttDayId, eventId: string, minutes: number): void {
         const audience = this.audiences.get(eventId);
         if (!audience || minutes <= 0) return;

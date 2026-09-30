@@ -166,16 +166,15 @@ describe("computeStudentSchedule", () => {
         expect(result.byDay.d1.issues).toEqual([]);
     });
 
-    it("spills by what the event's own students have left, not the whole day", () => {
+    it("never spills an over-full day onto the next — it shows as overloaded", () => {
         const result = schedule(store({
             math: ALIGNED_MATH,
             phys: { phys: { minutes: 120 } },
             chem: { chem: { minutes: 240 }, chemMore: { minutes: 120 } },
         }));
 
-        // Sphinx has 60 minutes left on d1; Apollo's free time doesn't help it.
-        expect(result.spans.chemMore).toMatchObject({ dayIds: [ "d1", "d2" ], minutesPerDay: [ 60, 60 ] });
-        expect(result.spans.phys).toMatchObject({ dayIds: [ "d1" ], spillover: false });
+        expect(result.spans.chemMore).toEqual({ dayIds: [ "d1" ], minutesPerDay: [ 120 ], spillover: false });
+        expect(result.byDay.d2).toBeUndefined();
     });
 
     it("lets parallel shuffles share the day without spilling", () => {
