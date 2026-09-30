@@ -69,7 +69,11 @@ async function apiUpdateModuleDayMapping(
     moduleId: GanttModuleId,
     eventId: GanttEventId | null,
     oldMapping: { dayId: GanttDayId },
-    newValues: { dayId?: GanttDayId; sortOrder?: number },
+    newValues: {
+        dayId?: GanttDayId;
+        sortOrder?: number;
+        weekSplitMinutes?: Array<number>;
+    },
     options?: ClientApiProps,
 ): Promise<GanttCurriculumModuleDayMapping> {
     const rawData = await safeApiFetcher<RawBaseDocument>(

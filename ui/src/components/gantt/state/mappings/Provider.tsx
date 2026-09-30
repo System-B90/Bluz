@@ -170,6 +170,49 @@ export function GanttMappingProvider({
         [ curriculumId, dispatch, enqueueSnackbar ],
     );
 
+    const setWeekSplit = useCallback(
+        async ({
+            moduleId,
+            eventId,
+            dayId,
+            weekSplitMinutes,
+        }: {
+            moduleId: GanttModuleId;
+            eventId: GanttEventId;
+            dayId: GanttDayId;
+            weekSplitMinutes: Array<number>;
+        }) =>
+        {
+            const key = getGanttMappingKey({ dayId, moduleId, eventId });
+            const originalMapping = mappingsRef.current[ key ];
+            if (!originalMapping) return;
+
+            dispatch({
+                type: "UPSERT_MAPPING",
+                payload: { ...originalMapping, weekSplitMinutes },
+            });
+            try
+            {
+                await ganttApi.mappings.apiUpdate(
+                    curriculumId,
+                    moduleId,
+                    eventId,
+                    { dayId },
+                    { weekSplitMinutes },
+                );
+            } catch (e)
+            {
+                dispatch({ type: "UPSERT_MAPPING", payload: originalMapping });
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "עדכון פיצול השבועות נכשל!",
+                    e,
+                );
+            }
+        },
+        [ curriculumId, dispatch, enqueueSnackbar ],
+    );
+
     const removeMapping = useCallback(
         async ({
             moduleId,
@@ -244,8 +287,9 @@ export function GanttMappingProvider({
             moveMapping,
             removeMapping,
             createMapping,
+            setWeekSplit,
         }),
-        [ state, refreshMappings, moveMapping, removeMapping, createMapping ],
+        [ state, refreshMappings, moveMapping, removeMapping, createMapping, setWeekSplit ],
     );
 
     return (
