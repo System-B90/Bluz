@@ -104,4 +104,14 @@ describe("computeEventDaySpans week split (#768)", () => {
             spillover: false,
         });
     });
+
+    it("skips a week whose part is 0 hours", () => {
+        const spans = computeEventDaySpans({
+            mappings: mapping("a1", [ 300, 0, 300 ]),
+            state: store({ minimumDuration: 600, splitAcrossWeeks: true }),
+            linearDays: LINEAR_DAYS,
+        });
+
+        expect(spans.e1).toMatchObject({ dayIds: [ "a1", "c1" ], minutesPerDay: [ 300, 300 ] });
+    });
 });

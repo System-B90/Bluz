@@ -12,13 +12,16 @@
 export type WeekSplitWeek = { days: Array<string> };
 
 /**
- * True when `parts` is a usable split: at least two positive whole-minute
- * parts. The sum is not checked here — see `isWeekSplitComplete`.
+ * True when `parts` is a usable split: whole, non-negative minutes, starting
+ * with a positive part in the mapped week. A 0 part skips that week; an empty
+ * list clears the split. The sum is not checked here — see
+ * `isWeekSplitComplete`.
  */
 export function isWeekSplitMinutes(parts: unknown): parts is Array<number> {
     return (
         Array.isArray(parts) &&
-        parts.every((part) => Number.isInteger(part) && part > 0)
+        parts.every((part) => Number.isInteger(part) && part >= 0) &&
+        (parts.length === 0 || parts[0] > 0)
     );
 }
 

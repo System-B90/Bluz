@@ -53,6 +53,8 @@ type WeeklyCellsParams = {
      * Rendered as faded, inert blocks labelled with their hours.
      */
     splitPartMinutesByDay?: Map<string, number>;
+    /** Double-clicking a later split part reopens the split editor. */
+    onSplitPartDoubleClick?: () => void;
 };
 
 export function buildWeeklyEventCells(
@@ -79,6 +81,7 @@ export function buildWeeklyEventCells(
         isDayInWindow,
         weekIndexByDayId,
         splitPartMinutesByDay,
+        onSplitPartDoubleClick,
     } = params;
 
     const startDow = currentDayId ? dayIndexOf(currentDayId) : undefined;
@@ -245,6 +248,7 @@ export function buildWeeklyEventCells(
                 isSkipped={ isSkippedWeek }
                 isSpillover={ Boolean(isExplicitlyMappedHere && spanInfo) }
                 key={ `week-${week.id}-${eventId}` }
+                onDoubleClick={ isSplitPart ? onSplitPartDoubleClick : undefined }
                 payloadData={ {
                     targetType: "event",
                     eventId,
@@ -282,6 +286,8 @@ type DailyCellsParams = {
      * Rendered as faded, inert blocks labelled with their hours.
      */
     splitPartMinutesByDay?: Map<string, number>;
+    /** Double-clicking a later split part reopens the split editor. */
+    onSplitPartDoubleClick?: () => void;
 };
 
 export function buildDailyEventCells(
@@ -303,6 +309,7 @@ export function buildDailyEventCells(
         skippedRecurrenceDayIds,
         firstDayId,
         splitPartMinutesByDay,
+        onSplitPartDoubleClick,
     } = params;
 
     return timelineWeeks.flatMap((week) =>
@@ -406,6 +413,7 @@ export function buildDailyEventCells(
                     isSkipped={ isSkippedOccurrence }
                     isSpillover={ Boolean(isExplicitlyMappedHere && spanInfo) }
                     key={ `${dayId}-${eventId}` }
+                    onDoubleClick={ isSplitPart ? onSplitPartDoubleClick : undefined }
                     payloadData={ { targetType: "event", eventId, dayId } }
                     spanLength={
                         isExplicitlyMappedHere && spanInfo

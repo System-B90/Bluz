@@ -77,6 +77,18 @@ describe("planCut week split (#768)", () => {
         expect(occs.every((o) => o.ganttEventId === "e1")).toBe(true);
     });
 
+    it("cuts nothing in a week whose part is 0 hours", () => {
+        const plan = planCut(input(event(), [ 300, 0, 300 ]));
+        expect(plan.ok).toBe(true);
+        if (!plan.ok) return;
+
+        const occs = [ ...plan.occurrences ].sort((a, b) =>
+            a.occurrenceDate.localeCompare(b.occurrenceDate),
+        );
+        expect(occs.map((o) => o.occurrenceDate)).toEqual([ "2024-01-08", "2024-01-22" ]);
+        expect(occs.map(minutes)).toEqual([ 300, 300 ]);
+    });
+
     it("folds parts past the timeline's end into its last week", () => {
         const plan = planCut(input(event({ minimumDuration: 360, allocatedDuration: 360 }), [ 120, 120, 120 ], 2));
         expect(plan.ok).toBe(true);

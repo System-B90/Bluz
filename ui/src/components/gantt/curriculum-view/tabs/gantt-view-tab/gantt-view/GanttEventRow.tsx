@@ -77,6 +77,10 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
         ? mappingState.mappings[ getGanttMappingKey({ dayId: currentDayId, moduleId, eventId }) ]
         : undefined;
     const canSplit = Boolean(event?.splitAcrossWeeks && splitMapping);
+    const openSplit = useMemo(
+        () => (canSplit ? () => setSplitOpen(true) : undefined),
+        [ canSplit ],
+    );
 
     // Occurrence days this event no longer echoes onto — deleted or
     // materialized into their own standalone event.
@@ -283,6 +287,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
                 isDayInWindow,
                 weekIndexByDayId,
                 splitPartMinutesByDay,
+                onSplitPartDoubleClick: openSplit,
             })
             : buildDailyEventCells({
                 timelineWeeks,
@@ -300,9 +305,11 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
                 skippedRecurrenceDayIds,
                 firstDayId,
                 splitPartMinutesByDay,
+                onSplitPartDoubleClick: openSplit,
             });
     }, [
         splitPartMinutesByDay,
+        openSplit,
         event,
         weeklyView,
         relativeDaySizing,
@@ -354,7 +361,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
                 isWeekSplit={ Boolean(eventSpans[ eventId ]?.weekSplit) }
                 minutes={ event.minimumDuration ?? 0 }
                 moduleId={ moduleId }
-                onSplitClick={ canSplit ? () => setSplitOpen(true) : undefined }
+                onSplitClick={ openSplit }
                 onTitleClick={ () =>
                 {
                     const syllabusId = state.modules[ moduleId ]?.syllabusId;

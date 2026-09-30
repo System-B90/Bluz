@@ -37,6 +37,7 @@ const GanttCellComponent: React.FC<GanttCellProps> = ({
     isRecurrence,
     isSkipped,
     disableDrag,
+    onDoubleClick,
 }) => {
     const theme = useTheme();
     const { dayCellWidth } = useGanttContext();
@@ -78,6 +79,7 @@ const GanttCellComponent: React.FC<GanttCellProps> = ({
                         isRecurrence={isRecurrence}
                         isSkipped={isSkipped}
                         isSpillover={isSpillover}
+                        onDoubleClick={onDoubleClick}
                         payload={blockPayload}
                         spanLength={spanLength}
                         timeLabel={blockTimeLabel}

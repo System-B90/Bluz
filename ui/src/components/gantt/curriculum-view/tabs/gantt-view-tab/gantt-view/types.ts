@@ -149,6 +149,8 @@ export type GanttBlockProps = {
     isSkipped?: boolean;
     /** Zoomed single-week day view: module blocks are pinned, not draggable (#640). */
     disableDrag?: boolean;
+    /** Replaces the block's default double-click (e.g. a split part reopens its split). */
+    onDoubleClick?: () => void;
 };
 
 export type GanttCellProps = {
@@ -177,6 +179,8 @@ export type GanttCellProps = {
     isSkipped?: boolean;
     /** Zoomed single-week day view: module blocks are pinned, not draggable (#640). */
     disableDrag?: boolean;
+    /** Replaces the block's default double-click (e.g. a split part reopens its split). */
+    onDoubleClick?: () => void;
 };
 
 export type GanttModuleRowProps = {
