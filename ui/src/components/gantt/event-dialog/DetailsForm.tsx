@@ -12,6 +12,7 @@ import { useId } from "react";
 import
 {
     defaultModuleEventSplitAcrossBreaks,
+    defaultModuleEventSplitAcrossWeeks,
     GanttEvent,
     ModuleEventType,
 } from "@/api-shared/types/gantt/models";
@@ -62,6 +63,7 @@ export function EventDetailsForm({
                             commit({
                                 type,
                                 splitAcrossBreaks: defaultModuleEventSplitAcrossBreaks(type),
+                                splitAcrossWeeks: defaultModuleEventSplitAcrossWeeks(type),
                             });
                         } }
                         value={ event.type }
@@ -128,6 +130,18 @@ export function EventDetailsForm({
                             />
                         }
                         label="פיצול סביב הפסקות"
+                    />
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={ event.splitAcrossWeeks }
+                                onChange={ (e) =>
+                                    commit({ splitAcrossWeeks: e.target.checked })
+                                }
+                                size="small"
+                            />
+                        }
+                        label="פיצול בין שבועות"
                     />
                 </Stack>
             </Box>

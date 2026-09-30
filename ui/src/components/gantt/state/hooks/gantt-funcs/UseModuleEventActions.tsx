@@ -4,6 +4,7 @@ import { ganttApi } from "@/api-client/gantt";
 import { CreateGanttEventPayload } from "@/api-shared/types/gantt/create-payloads";
 import {
     defaultModuleEventSplitAcrossBreaks,
+    defaultModuleEventSplitAcrossWeeks,
     EventRecurrence,
     GanttEvent,
     GanttEventId,
@@ -154,6 +155,8 @@ export function useModuleEventActions() {
                         isPaWindow: false,
                         splitAcrossBreaks:
                             defaultModuleEventSplitAcrossBreaks(type),
+                        splitAcrossWeeks:
+                            defaultModuleEventSplitAcrossWeeks(type),
                         comment: null,
                         groupId: null,
                         hiveSubjectId,
@@ -178,6 +181,8 @@ export function useModuleEventActions() {
                         isPaWindow: false,
                         splitAcrossBreaks:
                             defaultModuleEventSplitAcrossBreaks(type),
+                        splitAcrossWeeks:
+                            defaultModuleEventSplitAcrossWeeks(type),
                         comment: null,
                         constraints: [],
                         groupId: null,
