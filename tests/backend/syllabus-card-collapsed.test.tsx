@@ -12,6 +12,7 @@ vi.mock("@/components/gantt/state/hooks/UseSyllabus", () => ({
 }));
 vi.mock("@/components/gantt/state/context", () => ({
     useCurriculumProviderActions: () => ({ openSyllabusDialog: vi.fn() }),
+    useCurriculumState: () => ({ modules: {}, events: {} }),
 }));
 vi.mock("@/components/base/CoursesProvider", () => ({
     useCourses: () => ({ getCourse: () => undefined }),
