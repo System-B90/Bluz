@@ -186,7 +186,7 @@ const GanttSyllabusGroupComponent: React.FC<GanttSyllabusGroupProps> = ({
                 <SyllabusSpanCell
                     key={week.id}
                     spanVariant={computeSpanVariant(weekIdx, weekSpanIndices)}
-                    width={80}
+                    width={dayCellWidth}
                 />
             ));
         }
