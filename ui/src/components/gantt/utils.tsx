@@ -103,6 +103,9 @@ function calculateSumValueForModuleByField(
         if (shuffle !== undefined && !appliesToShuffle(event.shuffles, shuffle)) {
             continue;
         }
+        // Shuffles don't apply to an event limited to some courses: it runs
+        // for its courses only and is compared between courses instead.
+        if (shuffle !== undefined && (event.courseIds ?? []).length > 0) continue;
 
         const occurrences = countEventOccurrences(
             event,

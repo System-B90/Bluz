@@ -6,13 +6,18 @@ import CardActions, { CardActionsProps } from "@mui/material/CardActions";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 
 import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
-import { useCurriculumProviderActions } from "@/components/gantt/state/context";
+import { formatMinutesAsDuration } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import {
+    useCurriculumProviderActions,
+    useCurriculumState,
+} from "@/components/gantt/state/context";
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
+import { doShuffleTotalsDiffer, getSyllabusShuffleTotals } from "@/components/gantt/utils";
 
 export type SyllabusCardActionsProps = {
     syllabusId: GanttSyllabusId;
@@ -30,6 +35,17 @@ export function SyllabusCardActions({
     const syllabus = useSyllabus(syllabusId);
     const shuffles = syllabus?.shuffles ?? [];
     const shuffleCount = shuffles.length;
+    const state = useCurriculumState();
+    // Every shuffle must get the same time in the syllabus; its modules may
+    // split it differently. Course-limited events are outside the comparison.
+    const shuffleTotals = useMemo(
+        () =>
+            syllabus
+                ? getSyllabusShuffleTotals(syllabus, "minimumDuration", state)
+                : null,
+        [syllabus, state],
+    );
+    const shufflesDiffer = doShuffleTotalsDiffer(shuffleTotals);
     const courseCount = (syllabus?.courseIds ?? []).length;
     const linkCount = courseCount + (syllabus?.leadInstructorIds ?? []).length;
     const { getCourse } = useCourses();
@@ -70,14 +86,24 @@ export function SyllabusCardActions({
                     title={
                         shuffles.length > 0 ? (
                             <>
+                                {shuffleTotals ? (
+                                    <div>
+                                        {shufflesDiffer
+                                            ? "לשאפלים זמן נדרש שונה:"
+                                            : "לכל השאפלים זמן נדרש זהה:"}
+                                    </div>
+                                ) : null}
                                 {shuffles.map((name) => {
                                     const description =
                                         syllabus?.shuffleDescriptions?.[name];
+                                    const minutes = shuffleTotals?.[name];
                                     return (
                                         <div key={name}>
-                                            {description
-                                                ? `${name} — ${description}`
-                                                : name}
+                                            {name}
+                                            {minutes !== undefined
+                                                ? ` · ${formatMinutesAsDuration(minutes)}`
+                                                : ""}
+                                            {description ? ` — ${description}` : ""}
                                         </div>
                                     );
                                 })}
@@ -88,6 +114,8 @@ export function SyllabusCardActions({
                     }
                 >
                     <Chip
+                        color={shufflesDiffer ? "warning" : "default"}
+                        data-testid="syllabus-shuffles-chip"
                         icon={<GroupsIcon fontSize="small" />}
                         label={shuffleCount}
                         size="small"

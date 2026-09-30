@@ -125,3 +125,19 @@ describe("syllabus time with shuffle groups", () => {
         expect(calculateStudentSyllabusMinutes("s1", store, COURSES)).toBe(90);
     });
 });
+
+describe("shuffle totals with course-limited events", () => {
+    it("leaves course-limited events out of every shuffle's total", () => {
+        const store = storeOf([
+            event("e1", 60, { groupId: "g1", shuffles: [ "ניצה" ] }),
+            event("e2", 60, { groupId: "g1", shuffles: [ "לחם" ] }),
+            event("e3", 180, { courseIds: [ "apollo" ] }),
+        ]);
+        const syllabus = store.syllabuses.s1 as unknown as GanttSyllabus;
+
+        expect(getSyllabusShuffleTotals(syllabus, "minimumDuration", store)).toEqual({
+            ניצה: 60,
+            לחם: 60,
+        });
+    });
+});
