@@ -139,6 +139,11 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
             ? formatHoursLabel(firstPartMinutes ?? event.minimumDuration ?? 0)
             : undefined;
 
+    // Weekly columns are wide enough to always carry the required time.
+    const weeklyTimeLabel = event
+        ? formatHoursLabel(firstPartMinutes ?? event.minimumDuration ?? 0)
+        : undefined;
+
     const recurrence = event?.recurrence ?? EventRecurrence.None;
     const isRecurring = recurrence !== EventRecurrence.None;
     // Optional recurrence window: null bounds mean "unbounded" (#468).
@@ -266,6 +271,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
                 isEventUnmapped,
                 violations: myViolations,
                 spanInfo,
+                timeLabel: weeklyTimeLabel,
                 relativeDaySizing,
                 isRecurring,
                 recurrence,
@@ -308,6 +314,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
         myViolations,
         spanInfo,
         timeLabel,
+        weeklyTimeLabel,
         isRecurring,
         recurrence,
         recurrenceSatisfied,

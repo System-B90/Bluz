@@ -101,29 +101,83 @@ function PathRow({
     );
 }
 
-function IssueLine({
+/** One shuffle's or path's time on the day, against the longest one. */
+function ComparisonRow({ label, max, minutes }: { label: string; max: number; minutes: number })
+{
+    const short = max - minutes;
+    return (
+        <Box sx={{ display: "grid", gridTemplateColumns: "minmax(64px, auto) 1fr auto", alignItems: "center", columnGap: 1 }}>
+            <Typography noWrap variant="body2">{label}</Typography>
+            <Box sx={{ height: 6, borderRadius: 3, overflow: "hidden", bgcolor: "action.hover" }}>
+                <Box
+                    sx={{
+                        width: `${max > 0 ? (minutes / max) * 100 : 0}%`,
+                        height: "100%",
+                        bgcolor: short > 0 ? "warning.main" : "text.secondary",
+                    }}
+                />
+            </Box>
+            <Typography sx={{ fontVariantNumeric: "tabular-nums", textAlign: "end" }} variant="body2">
+                {formatHoursLabel(minutes)}
+                {short > 0 ? (
+                    <Box color="warning.main" component="span" fontWeight={700}>
+                        {` (−${formatHours(short)})`}
+                    </Box>
+                ) : null}
+            </Typography>
+        </Box>
+    );
+}
+
+/** A problem on the day, as its own block: what, why, and each side's time. */
+function IssueCard({
     issue,
     load,
+    paths,
     syllabusTitle,
 }: {
     issue: StudentLoadIssue;
     load: DayStudentLoad;
+    paths: Array<StudentPath>;
     syllabusTitle: (syllabusId: string) => string;
 })
 {
-    const text = issue.kind === "shuffles-misaligned"
-        ? `${syllabusTitle(issue.syllabusId)}: השאפלים לא באותו בלוק — ${Object.entries(issue.minutesByShuffle)
-            .map(([name, minutes]) => `${name} ${formatHours(minutes)}`)
-            .join(", ")}`
-        : (() => {
-            const minutes = load.paths.map((path) => path.minutes);
-            return `זמן היום לא שווה בין המסלולים (פער ${formatHoursLabel(Math.max(...minutes) - Math.min(...minutes))})`;
-        })();
+    const labelById = new Map(paths.map((path) => [path.id, path.label]));
+    const rows = issue.kind === "shuffles-misaligned"
+        ? Object.entries(issue.minutesByShuffle).map(([label, minutes]) => ({ label, minutes }))
+        : load.paths.map((path) => ({ label: labelById.get(path.pathId) ?? "", minutes: path.minutes }));
+    const max = Math.max(0, ...rows.map((row) => row.minutes));
+    const title = issue.kind === "shuffles-misaligned"
+        ? syllabusTitle(issue.syllabusId)
+        : "זמן היום שונה בין המסלולים";
+    const explanation = issue.kind === "shuffles-misaligned"
+        ? "לשאפלים זמן שונה במקצוע ביום הזה — הם צריכים ללמוד אותו באותו בלוק."
+        : "כל חניך צריך יום באותו אורך, בלי קשר למסלול.";
+
     return (
-        <Stack alignItems="flex-start" direction="row" gap={0.75}>
-            <WarningAmberIcon color="warning" sx={{ fontSize: 16, mt: "2px" }} />
-            <Typography variant="body2">{text}</Typography>
-        </Stack>
+        <Box
+            data-testid="student-load-issue"
+            sx={{
+                p: 1,
+                borderRadius: 1.5,
+                border: 1,
+                borderColor: "warning.main",
+                bgcolor: (theme) => `rgba(${theme.vars.palette.warning.mainChannel} / 0.08)`,
+            }}
+        >
+            <Stack alignItems="center" direction="row" gap={0.75}>
+                <WarningAmberIcon color="warning" sx={{ fontSize: 18 }} />
+                <Typography fontWeight={700} variant="subtitle2">{title}</Typography>
+            </Stack>
+            <Typography color="text.secondary" sx={{ display: "block", mt: 0.25, mb: 1 }} variant="caption">
+                {explanation}
+            </Typography>
+            <Stack spacing={0.75}>
+                {rows.map((row) => (
+                    <ComparisonRow key={row.label} label={row.label} max={max} minutes={row.minutes} />
+                ))}
+            </Stack>
+        </Box>
     );
 }
 
@@ -150,7 +204,7 @@ export function StudentLoadCard({
     const status = getCapacityStatus(capacity, minutes);
 
     return (
-        <Stack data-testid="student-load-card" spacing={1.25} sx={{ minWidth: 240, maxWidth: 360 }}>
+        <Stack data-testid="student-load-card" spacing={1.25} sx={{ minWidth: 280, maxWidth: 400 }}>
             <Box>
                 <Typography fontWeight={700} variant="subtitle2">{title}</Typography>
                 <Typography color="text.secondary" variant="caption">
@@ -160,6 +214,22 @@ export function StudentLoadCard({
                     {` מתוך ${formatHoursLabel(capacity)} לחניך`}
                 </Typography>
             </Box>
+            {load && load.issues.length > 0 ? (
+                <>
+                    <Divider />
+                    <Section title={`בעיות (${load.issues.length})`}>
+                        {load.issues.map((issue) => (
+                            <IssueCard
+                                issue={issue}
+                                key={issue.kind === "shuffles-misaligned" ? issue.syllabusId : issue.kind}
+                                load={load}
+                                paths={paths}
+                                syllabusTitle={syllabusTitle}
+                            />
+                        ))}
+                    </Section>
+                </>
+            ) : null}
             {groups.length > 0 ? (
                 <>
                     <Divider />
@@ -170,21 +240,6 @@ export function StudentLoadCard({
                                 group={group}
                                 key={group.labels.join("|")}
                                 showLabel={groups.length > 1}
-                                syllabusTitle={syllabusTitle}
-                            />
-                        ))}
-                    </Section>
-                </>
-            ) : null}
-            {load && load.issues.length > 0 ? (
-                <>
-                    <Divider />
-                    <Section title="בעיות">
-                        {load.issues.map((issue) => (
-                            <IssueLine
-                                issue={issue}
-                                key={issue.kind === "shuffles-misaligned" ? issue.syllabusId : issue.kind}
-                                load={load}
                                 syllabusTitle={syllabusTitle}
                             />
                         ))}
