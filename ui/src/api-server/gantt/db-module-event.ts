@@ -196,6 +196,7 @@ function groupSiblingFields(origin: GanttEvent) {
         isCritical: origin.isCritical,
         isPaWindow: origin.isPaWindow,
         splitAcrossBreaks: origin.splitAcrossBreaks,
+        splitAcrossWeeks: origin.splitAcrossWeeks,
         comment: origin.comment,
         hiveSubjectId: origin.hiveSubjectId,
         hiveModuleId: origin.hiveModuleId,

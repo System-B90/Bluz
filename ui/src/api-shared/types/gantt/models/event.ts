@@ -59,6 +59,11 @@ export type GanttEvent = {
      * break's start, then resumes after it ends.
      */
     splitAcrossBreaks: boolean;
+    /**
+     * When true the event's hours may be split over consecutive weeks, as
+     * defined per curriculum on its mapping in the timeline view (#768).
+     */
+    splitAcrossWeeks: boolean;
     comment: null | string;
     constraints: Array<GanttConstraint>;
     /**
@@ -91,6 +96,18 @@ export type GanttEvent = {
  * @returns The default `splitAcrossBreaks` value for that type.
  */
 export function defaultModuleEventSplitAcrossBreaks(type: ModuleEventType): boolean
+{
+    return type === ModuleEventType.Exercise;
+}
+
+/**
+ * Default value for `splitAcrossWeeks` when an event's type is picked/changed:
+ * opt-out for exercises, opt-in for everything else (lectures included), the
+ * same defaults as `splitAcrossBreaks` (#768).
+ * @param type The ModuleEventType to check.
+ * @returns The default `splitAcrossWeeks` value for that type.
+ */
+export function defaultModuleEventSplitAcrossWeeks(type: ModuleEventType): boolean
 {
     return type === ModuleEventType.Exercise;
 }

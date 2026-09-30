@@ -15,4 +15,9 @@ export type GanttCurriculumEventDayMapping = {
     dayId: GanttDayId;
     curriculumId: GanttCurriculumId;
     sortOrder: number;
+    /**
+     * Minutes per consecutive week, from the mapped day's week on, for an
+     * event flagged `splitAcrossWeeks` (#768). Empty/absent ⇒ runs whole.
+     */
+    weekSplitMinutes?: Array<number>;
 };

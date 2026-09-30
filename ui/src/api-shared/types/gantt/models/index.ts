@@ -19,6 +19,7 @@ export type { GanttDay, GanttDayId, DayOfWeekConfig } from "@/api-shared/types/g
 
 export {
     defaultModuleEventSplitAcrossBreaks,
+    defaultModuleEventSplitAcrossWeeks,
     EventRecurrence,
     ModuleEventType,
     RoomRequirement,

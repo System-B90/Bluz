@@ -20,6 +20,7 @@ import {
 } from "@/api-server/gantt/db-mappings";
 import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
+import { isWeekSplitMinutes } from "@/api-shared/gantt/week-split";
 import { CreateGanttCurriculumEventDayMapping } from "@/api-shared/types/gantt/create-payloads";
 import {
     GanttDayId,
@@ -96,11 +97,23 @@ export const PATCH = withApi(
             moduleId: GanttModuleId;
             eventId?: GanttEventId | null;
             oldMapping: { dayId: GanttDayId };
-            newValues: { dayId?: GanttDayId; sortOrder?: number };
+            newValues: {
+                dayId?: GanttDayId;
+                sortOrder?: number;
+                weekSplitMinutes?: Array<number>;
+            };
         };
         if (!moduleId || !oldMapping || !oldMapping.dayId) {
             throw new ClientApiError(
                 "Missing oldMapping or eventId identifiers to locate the record.",
+            );
+        }
+        if (
+            newValues?.weekSplitMinutes !== undefined &&
+            !isWeekSplitMinutes(newValues.weekSplitMinutes)
+        ) {
+            throw new ClientApiError(
+                "weekSplitMinutes must be positive whole minutes.",
             );
         }
 
