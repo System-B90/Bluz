@@ -186,11 +186,16 @@ describe("planLessonRules", () => {
     });
 });
 
+/** Course id → name map, as the sync reads it from Mongo. */
+function coursesByName(entries: Array<[string, string]>) {
+    return new Map(entries.map(([id, name]) => [id, { name }]));
+}
+
 describe("resolveDesiredRules", () => {
     it("maps shuffles to Hive student groups by name", () => {
         const desired = resolveDesiredRules(
             makeEvent(),
-            new Map([["c-nitza", "ניצה"], ["c-lechem", "לחם"]]),
+            coursesByName([["c-nitza", "ניצה"], ["c-lechem", "לחם"]]),
             HIVE_CLASSES,
         );
 
@@ -203,7 +208,7 @@ describe("resolveDesiredRules", () => {
                 courses: ["c-nitza", "c-ghost"],
                 hiveQueues: { "c-ghost": 300, "c-nitza": 100 },
             }),
-            new Map([["c-nitza", "ניצה"], ["c-ghost", "אין-בהייב"]]),
+            coursesByName([["c-nitza", "ניצה"], ["c-ghost", "אין-בהייב"]]),
             HIVE_CLASSES,
         );
 
@@ -216,11 +221,24 @@ describe("resolveDesiredRules", () => {
                 courses: ["c-nitza"],
                 hiveQueues: { "c-lechem": 200, "c-nitza": 100 },
             }),
-            new Map([["c-nitza", "ניצה"], ["c-lechem", "לחם"]]),
+            coursesByName([["c-nitza", "ניצה"], ["c-lechem", "לחם"]]),
             HIVE_CLASSES,
         );
 
         expect([...desired]).toEqual([[11, 100]]);
+    });
+
+    it("prefers a course's explicitly linked Hive group over its name (#774)", () => {
+        const desired = resolveDesiredRules(
+            makeEvent({
+                courses: ["c-nitza"],
+                hiveQueues: { "c-nitza": 100 },
+            }),
+            new Map([["c-nitza", { hiveClassId: 22, name: "שם-חדש" }]]),
+            HIVE_CLASSES,
+        );
+
+        expect([...desired]).toEqual([[22, 100]]);
     });
 });
 

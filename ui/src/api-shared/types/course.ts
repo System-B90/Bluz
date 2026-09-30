@@ -9,6 +9,11 @@ export type Course = {
     instructorIds?: Array<number>;
     /** Optional free-text description (e.g. provenance of auto-created courses). */
     description?: string;
+    /**
+     * Hive student group this course (a shuffle) is explicitly linked to
+     * (#774). Unset ⇒ matched to the Hive group with the same name.
+     */
+    hiveClassId?: null | number;
 };
 
 export type ApiCourseCreatePayload = Course;

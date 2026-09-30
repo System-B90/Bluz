@@ -18,6 +18,7 @@ import Typography from "@mui/material/Typography";
 import { useEffect, useId, useMemo, useState } from "react";
 
 import { apiGetClasses, apiGetQueues } from "@/api-client/hive";
+import { findCourseHiveGroup } from "@/api-shared/hive-groups";
 import { hiveClassUrl, hiveModuleUrl } from "@/api-shared/hive-links";
 import { CourseId } from "@/api-shared/types/course";
 import { Class, Queue } from "@/api-shared/types/hive";
@@ -56,11 +57,6 @@ export function HiveQueueMapping({ event, onUpdate }: HiveQueueMappingProps) {
     const applies =
         Boolean(event.type && eventHasSubject(event.type)) && !event.fake;
     const courseIds = useMemo(() => event.courses ?? [], [event.courses]);
-    // Declared above the `applies` early return: hooks cannot be conditional.
-    const classIdByName = useMemo(
-        () => new Map(hiveClasses.map((c) => [c.name, c.id])),
-        [hiveClasses],
-    );
 
     useEffect(() => {
         if (!applies || !moduleId) return;
@@ -214,7 +210,9 @@ export function HiveQueueMapping({ event, onUpdate }: HiveQueueMappingProps) {
                     {courseIds.map((courseId) => {
                         const course = getCourse(courseId);
                         const name = course?.name ?? courseId;
-                        const hiveClassId = classIdByName.get(name);
+                        const hiveClassId = course
+                            ? findCourseHiveGroup(course, hiveClasses)?.id
+                            : undefined;
                         const classLink = hiveClassUrl(hiveClassId, hiveUrl);
 
                         return (

@@ -144,12 +144,12 @@ export async function runLessonActivationTick(
             db.courses.find({}).toArray(),
             hive.getClasses(),
         ]);
-        const courseNameById = new Map(courses.map((c) => [c.id, c.name]));
+        const courseById = new Map(courses.map((c) => [c.id, c]));
 
         for (const event of live) {
             const desired = resolveDesiredRules(
                 event,
-                courseNameById,
+                courseById,
                 hiveClasses,
             );
             const occurrenceStart = new Date(event.startTime).toISOString();
