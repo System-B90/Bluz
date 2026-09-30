@@ -9,13 +9,14 @@ import Typography from "@mui/material/Typography";
 import { useMemo } from "react";
 
 import { GanttDayId, GanttModuleId, GanttSyllabusId } from "@/api-shared/types/gantt/models";
+import { useCourses } from "@/components/base/CoursesProvider";
+import { calculateStudentModuleMinutes } from "@/components/gantt/curriculum-view/student-load";
 import { DndDragEventActiveData } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/dnd-types";
 import { hashSyllabusToColor } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/utils";
 import { WorkTimeChip } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeekPanel";
 import { useCurriculumState } from "@/components/gantt/state/context";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
 import { useSyllabusNames } from "@/components/gantt/state/providers/SyllabusNamesProvider";
-import { calculateMinimumRequiredTimeForModule } from "@/components/gantt/utils";
 
 /**
  * Properties for the {@link ModuleItem} component.
@@ -43,6 +44,7 @@ function useModuleItemPresentation(
     const state = useCurriculumState();
     const { syllabusNames } = useSyllabusNames();
     const moduleDoc = useModule(moduleId);
+    const { courses } = useCourses();
 
     const color = useMemo(
         () =>
@@ -58,9 +60,9 @@ function useModuleItemPresentation(
     const totalHours = useMemo(
         () =>
             moduleDoc
-                ? calculateMinimumRequiredTimeForModule(moduleDoc, state) / 60
+                ? calculateStudentModuleMinutes(moduleId, state, courses) / 60
                 : 0,
-        [moduleDoc, state],
+        [moduleDoc, moduleId, state, courses],
     );
 
     return { moduleDoc, color, syllabusTitle, totalHours };

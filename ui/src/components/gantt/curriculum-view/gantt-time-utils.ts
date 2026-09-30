@@ -12,44 +12,11 @@ import {
     GanttDay,
     GanttDayId,
     GanttDayIndex,
-    GanttModuleId,
     GanttWeek,
     GanttWeekId,
 } from "@/api-shared/types/gantt/models";
-import { calculateMinimumRequiredTimeForModule } from "@/components/gantt/utils";
 
 export type CapacityStatus = "empty" | "error" | "ok" | "warning";
-
-// Tentative time: every module with at least one mapping (whole-module or
-// event-level) contributes its full required time, regardless of how many
-// of its events are actually allocated. Each module is counted once even if
-// mapped across multiple days.
-export function getTentativeMinutesForModuleIds({
-    mappings,
-    moduleIds,
-    state,
-}: {
-    mappings: Record<string, GanttCurriculumModuleDayMapping>;
-    moduleIds: Iterable<GanttModuleId>;
-    state: NormalizedStore;
-}): number {
-    const moduleIdsSet = new Set(moduleIds);
-    const seen = new Set<GanttModuleId>();
-    let total = 0;
-
-    for (const mapping of Object.values(mappings)) {
-        if (!moduleIdsSet.has(mapping.moduleId)) continue;
-        if (seen.has(mapping.moduleId)) continue;
-        seen.add(mapping.moduleId);
-
-        const moduleDoc = state.modules[mapping.moduleId];
-        if (moduleDoc) {
-            total += calculateMinimumRequiredTimeForModule(moduleDoc, state);
-        }
-    }
-
-    return total;
-}
 
 export function clampWorkingMinutes(minutes: number): number {
     if (!Number.isFinite(minutes)) return 0;

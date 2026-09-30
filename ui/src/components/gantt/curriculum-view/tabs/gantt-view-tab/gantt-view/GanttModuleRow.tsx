@@ -8,7 +8,9 @@ import React, { memo, useMemo } from "react";
 
 import { getRecurrenceOccurrenceDayIds } from "@/api-shared/gantt/recurrence";
 import { EventRecurrence, getAllowedDayIndices } from "@/api-shared/types/gantt/models";
+import { useCourses } from "@/components/base/CoursesProvider";
 import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { calculateStudentModuleMinutes } from "@/components/gantt/curriculum-view/student-load";
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
 import { getFlashRowSx } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/flash";
 import { GanttBlock } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttBlock";
@@ -20,7 +22,6 @@ import { useCurriculumState } from "@/components/gantt/state/context";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
-import { calculateMinimumRequiredTimeForModule } from "@/components/gantt/utils";
 
 const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
     moduleId,
@@ -28,6 +29,7 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
     const theme = useTheme();
     const state = useCurriculumState();
     const ganttModule = useModule(moduleId);
+    const { courses } = useCourses();
     const {
         weeklyView,
         singleWeekDayZoom,
@@ -150,13 +152,13 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
     const requiredMinutes = useMemo(
         () =>
             ganttModule
-                ? calculateMinimumRequiredTimeForModule(ganttModule, state, {
+                ? calculateStudentModuleMinutes(moduleId, state, courses, {
                     mappings: mappingState.mappings,
                     exceptions: exceptionsState.exceptions,
                     linearDays,
                 })
                 : 0,
-        [ganttModule, state, mappingState.mappings, exceptionsState.exceptions, linearDays],
+        [ganttModule, moduleId, state, courses, mappingState.mappings, exceptionsState.exceptions, linearDays],
     );
     // Zoomed single-week day view: label the module block with its required time.
     const timeLabel = singleWeekDayZoom && ganttModule

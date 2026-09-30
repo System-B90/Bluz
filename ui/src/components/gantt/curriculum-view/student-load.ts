@@ -445,17 +445,21 @@ export function getStudentMinutesByDay(
 }
 
 /**
- * The minimum time a single student needs for the whole curriculum: per path,
- * each syllabus' longest shuffle plus the course-limited events on that path,
- * with recurring events counted per occurrence. The busiest path wins.
+ * The time a single student spends in the given syllabuses' events: per
+ * path, each syllabus at its longest shuffle plus the course-limited events
+ * on that path; the busiest path wins. Recurring events count per occurrence
+ * when `occurrenceCtx` is given. `include` narrows the events counted (a
+ * module, the placed events…) without changing who the students are.
  */
-export function calculateStudentRequiredMinutes({
+export function calculateStudentMinutes({
     courses,
+    include,
     occurrenceCtx,
     state,
     syllabusIds,
 }: {
     courses: Array<Course>;
+    include?: (eventId: string, moduleId: string) => boolean;
     occurrenceCtx?: RecurrenceOccurrenceContext;
     state: NormalizedStore;
     syllabusIds: Array<GanttSyllabusId>;
@@ -464,18 +468,77 @@ export function calculateStudentRequiredMinutes({
     const assigned = assignedCourseIds(state, syllabusIds, new Set(tree.map((course) => course.id)));
     const paths = buildStudentPaths(tree, assigned.ids, assigned.includeRoots);
     const tracker = new StudentLoadTracker(resolveAudiences(state, syllabusIds, paths));
-    // The whole curriculum as one "day": the tracker's per-path sums are
-    // exactly the per-student totals.
+    // Everything as one "day": the tracker's per-path sums are exactly the
+    // per-student totals.
     const ALL = "all";
     for (const syllabusId of syllabusIds) {
         for (const moduleId of state.syllabuses[syllabusId]?.modules ?? []) {
             for (const eventId of state.modules[moduleId]?.events ?? []) {
                 const event = state.events[eventId];
-                if (!event) continue;
+                if (!event || (include && !include(eventId, moduleId))) continue;
                 const occurrences = countEventOccurrences(event, eventId, state, occurrenceCtx);
                 tracker.consume(ALL, eventId, (event.minimumDuration ?? 0) * occurrences);
             }
         }
     }
     return tracker.summarize(state, paths)[ALL]?.minutes ?? 0;
+}
+
+/** One student's minimum time in a module, recurring events per occurrence. */
+export function calculateStudentModuleMinutes(
+    moduleId: string,
+    state: NormalizedStore,
+    courses: Array<Course>,
+    occurrenceCtx?: RecurrenceOccurrenceContext,
+): number {
+    const syllabusId = state.modules[moduleId]?.syllabusId;
+    if (!syllabusId) return 0;
+    return calculateStudentMinutes({
+        courses,
+        include: (_eventId, eventModuleId) => eventModuleId === moduleId,
+        occurrenceCtx,
+        state,
+        syllabusIds: [syllabusId],
+    });
+}
+
+/** One student's minimum time in a syllabus, recurring events per occurrence. */
+export function calculateStudentSyllabusMinutes(
+    syllabusId: GanttSyllabusId,
+    state: NormalizedStore,
+    courses: Array<Course>,
+    occurrenceCtx?: RecurrenceOccurrenceContext,
+): number {
+    return calculateStudentMinutes({ courses, occurrenceCtx, state, syllabusIds: [syllabusId] });
+}
+
+/**
+ * One student's time in the modules placed whole (tentatively) on the
+ * timeline, each module counted once however many days it is mapped to.
+ */
+export function calculateStudentTentativeMinutes({
+    courses,
+    mappings,
+    moduleIds,
+    state,
+}: {
+    courses: Array<Course>;
+    mappings: Record<string, GanttCurriculumModuleDayMapping>;
+    moduleIds: Iterable<string>;
+    state: NormalizedStore;
+}): number {
+    const wanted = new Set(moduleIds);
+    const placed = new Set<string>();
+    for (const mapping of Object.values(mappings)) {
+        if (wanted.has(mapping.moduleId)) placed.add(mapping.moduleId);
+    }
+    const syllabusIds = [...new Set(
+        [...placed].flatMap((moduleId) => state.modules[moduleId]?.syllabusId ?? []),
+    )];
+    return calculateStudentMinutes({
+        courses,
+        include: (_eventId, moduleId) => placed.has(moduleId),
+        state,
+        syllabusIds,
+    });
 }

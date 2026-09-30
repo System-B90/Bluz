@@ -5,6 +5,8 @@ import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 import React, { memo, useMemo } from "react";
 
+import { useCourses } from "@/components/base/CoursesProvider";
+import { calculateStudentSyllabusMinutes } from "@/components/gantt/curriculum-view/student-load";
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
 import { GanttHoursLabel } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttHoursLabel";
 import { GanttModuleRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttModuleRow";
@@ -16,7 +18,6 @@ import { useCurriculumState } from "@/components/gantt/state/context";
 import { useSyllabusTitle } from "@/components/gantt/state/hooks/UseSyllabusTitles";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
-import { calculateMinimumRequiredTimeForSyllabus } from "@/components/gantt/utils";
 
 function getSpanBorderRadius(spanVariant: SpanVariant) {
     switch (spanVariant) {
@@ -95,6 +96,7 @@ const GanttSyllabusGroupComponent: React.FC<GanttSyllabusGroupProps> = ({
 }) => {
     const theme = useTheme();
     const state = useCurriculumState();
+    const { courses } = useCourses();
     const {
         weeklyView,
         timelineWeeks,
@@ -119,13 +121,13 @@ const GanttSyllabusGroupComponent: React.FC<GanttSyllabusGroupProps> = ({
     const requiredMinutes = useMemo(
         () =>
             syllabus
-                ? calculateMinimumRequiredTimeForSyllabus(syllabus, state, {
+                ? calculateStudentSyllabusMinutes(syllabusId, state, courses, {
                     mappings: mappingState.mappings,
                     exceptions: exceptionsState.exceptions,
                     linearDays,
                 })
                 : 0,
-        [syllabus, state, mappingState.mappings, exceptionsState.exceptions, linearDays],
+        [syllabus, syllabusId, state, courses, mappingState.mappings, exceptionsState.exceptions, linearDays],
     );
 
     // Every day id any module or event of this syllabus is mapped to.
