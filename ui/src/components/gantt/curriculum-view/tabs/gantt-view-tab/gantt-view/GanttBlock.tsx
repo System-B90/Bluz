@@ -30,6 +30,7 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
     isRecurrence = false,
     isSkipped = false,
     disableDrag = false,
+    onDoubleClick,
 }) => {
     const theme = useTheme();
     const state = useCurriculumState();
@@ -66,6 +67,11 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
 
         e.stopPropagation();
         e.preventDefault();
+
+        if (onDoubleClick) {
+            onDoubleClick();
+            return;
+        }
 
         if (isSkippedOccurrence) {
             await restoreOccurrence({

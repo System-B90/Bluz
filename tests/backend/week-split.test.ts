@@ -19,8 +19,12 @@ describe("isWeekSplitMinutes (#768)", () => {
         expect(isWeekSplitMinutes([])).toBe(true);
     });
 
-    it("rejects non-arrays, zero, negatives and fractions", () => {
-        for (const bad of [ "180", null, [ 0 ], [ -60 ], [ 1.5 ], [ "60" ] ]) {
+    it("accepts a skipped (0-hour) later week", () => {
+        expect(isWeekSplitMinutes([ 180, 0, 240 ])).toBe(true);
+    });
+
+    it("rejects non-arrays, an empty first week, negatives and fractions", () => {
+        for (const bad of [ "180", null, [ 0 ], [ 0, 60 ], [ -60 ], [ 1.5 ], [ "60" ] ]) {
             expect(isWeekSplitMinutes(bad)).toBe(false);
         }
     });

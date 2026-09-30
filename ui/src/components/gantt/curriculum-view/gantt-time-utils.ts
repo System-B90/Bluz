@@ -275,9 +275,13 @@ export function computeEventDaySpans({
             minutesPerDay[minutesPerDay.length - 1] += split
                 .slice(splitDayIds.length)
                 .reduce((sum, part) => sum + part, 0);
+            // A 0-hour part skips its week: no block and no time there.
+            const kept = splitDayIds
+                .map((dayId, i) => ({ dayId, minutes: minutesPerDay[i] }))
+                .filter((part, i) => i === 0 || part.minutes > 0);
             record(mapping.eventId, {
-                dayIds: splitDayIds,
-                minutesPerDay,
+                dayIds: kept.map((part) => part.dayId),
+                minutesPerDay: kept.map((part) => part.minutes),
                 spillover: false,
                 weekSplit: true,
             });

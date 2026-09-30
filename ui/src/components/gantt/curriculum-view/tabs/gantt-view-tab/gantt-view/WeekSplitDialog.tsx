@@ -11,7 +11,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import React, { useState } from "react";
 
-import { isWeekSplitComplete } from "@/api-shared/gantt/week-split";
+import { isWeekSplitComplete, isWeekSplitMinutes } from "@/api-shared/gantt/week-split";
 import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
 
 /** Hours typed in a part field → whole minutes (NaN for blank/garbage). */
@@ -34,8 +34,9 @@ export function initialWeekSplitHours(
 
 /**
  * Edits how an event's hours spread over consecutive weeks (#768): one field
- * per week, starting at the mapped week. Saving needs the parts to add up to
- * the event's whole duration; clearing runs it whole again.
+ * per week, starting at the mapped week. A later week may get 0 hours to skip
+ * it. Saving needs the parts to add up to the event's whole duration; clearing
+ * runs it whole again.
  */
 export const WeekSplitDialog: React.FC<{
     eventTitle: string;
@@ -50,9 +51,7 @@ export const WeekSplitDialog: React.FC<{
         initialWeekSplitHours(initialParts, totalMinutes),
     );
     const parts = hours.map(hoursToMinutes);
-    const valid =
-        parts.every((part) => Number.isInteger(part) && part > 0) &&
-        isWeekSplitComplete(parts, totalMinutes);
+    const valid = isWeekSplitMinutes(parts) && isWeekSplitComplete(parts, totalMinutes);
     const assigned = parts.reduce(
         (sum, part) => sum + (Number.isFinite(part) ? part : 0),
         0,
@@ -67,6 +66,13 @@ export const WeekSplitDialog: React.FC<{
                         <Stack alignItems="center" direction="row" gap={ 1 } key={ index }>
                             <TextField
                                 fullWidth
+                                helperText={
+                                    hoursToMinutes(value) === 0
+                                        ? index === 0
+                                            ? "השבוע הראשון לא יכול להיות ריק"
+                                            : "השבוע ידולג"
+                                        : undefined
+                                }
                                 label={ `שבוע ${index + 1} (שעות)` }
                                 onChange={ (e) =>
                                     setHours((prev) =>
@@ -108,7 +114,7 @@ export const WeekSplitDialog: React.FC<{
                 </Stack>
             </DialogContent>
             <DialogActions>
-                <Button color="error" onClick={ () => onSave([]) }>
+                <Button color="error" onClick={ () => onSave([]) } sx={ { marginInlineEnd: "auto" } }>
                     ביטול הפיצול
                 </Button>
                 <Button onClick={ onClose }>סגירה</Button>

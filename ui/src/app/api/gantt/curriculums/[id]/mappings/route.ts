@@ -113,7 +113,7 @@ export const PATCH = withApi(
             !isWeekSplitMinutes(newValues.weekSplitMinutes)
         ) {
             throw new ClientApiError(
-                "weekSplitMinutes must be positive whole minutes.",
+                "weekSplitMinutes must be whole minutes, 0 or more, with the first week above 0.",
             );
         }
 

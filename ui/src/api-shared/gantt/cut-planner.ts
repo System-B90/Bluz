@@ -493,6 +493,8 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
                     i === dayIds.length - 1
                         ? split.slice(i).reduce((sum, part) => sum + part, 0)
                         : split[ i ];
+                // A 0-hour part skips its week.
+                if (durationMinutes <= 0) return;
                 pushSlot(dayId, {
                     eventId: mapping.eventId,
                     isRecurrenceEcho: false,
