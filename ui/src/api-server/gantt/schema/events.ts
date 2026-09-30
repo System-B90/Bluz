@@ -52,6 +52,9 @@ export const ganttEventsSchema = pgTable("e", {
     comment: text("comment"),
     // Shuffle names this event applies to. Empty ⇒ all shuffles.
     shuffles: text("shuffles").array().notNull().default([]),
+    // Course ids this event is limited to - a subset of its syllabus' courses.
+    // Non-empty ⇒ the event is for those courses only and shuffles don't apply.
+    courseIds: text("course_ids").array().notNull().default([]),
     // Shuffle group: sibling events sharing this id are the same lesson given
     // to different shuffles at different times. Null ⇒ ungrouped (#699).
     groupId: text("group_id"),

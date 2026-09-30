@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
-import {
-    computeEventDaySpans,
-    getSpilloverMinutesByDay,
-} from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { computeEventDaySpans } from "@/components/gantt/curriculum-view/gantt-time-utils";
 
 const LINEAR_DAYS = [ "a1", "a2", "b1", "b2", "c1", "c2" ];
 
@@ -53,13 +50,18 @@ describe("computeEventDaySpans week split (#768)", () => {
     });
 
     it("counts each part toward its own week's scheduled minutes", () => {
-        const byDay = getSpilloverMinutesByDay(
-            computeEventDaySpans({
-                mappings: mapping("a1", [ 300, 300 ]),
-                state: store({ minimumDuration: 600, splitAcrossWeeks: true }),
-                linearDays: LINEAR_DAYS,
-            }),
-        );
+        const byDay: Record<string, number> = {};
+        computeEventDaySpans({
+            mappings: mapping("a1", [ 300, 300 ]),
+            state: store({ minimumDuration: 600, splitAcrossWeeks: true }),
+            linearDays: LINEAR_DAYS,
+            load: {
+                headroom: (_dayId, _eventId, capacity) => capacity,
+                consume: (dayId, _eventId, minutes) => {
+                    byDay[ dayId ] = (byDay[ dayId ] ?? 0) + minutes;
+                },
+            },
+        });
 
         expect(byDay).toEqual({ a1: 300, b1: 300 });
     });

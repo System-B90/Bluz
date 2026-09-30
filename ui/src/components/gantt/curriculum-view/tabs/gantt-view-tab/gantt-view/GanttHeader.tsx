@@ -9,6 +9,7 @@ import Typography from "@mui/material/Typography";
 import React from "react";
 
 import { getDayNameDisplay } from "@/api-shared/types/gantt/models";
+import { StudentLoadTooltip } from "@/components/gantt/curriculum-view/components/StudentLoadTooltip";
 import {
     CapacityStatus,
     formatHoursLabel,
@@ -19,6 +20,7 @@ import {
     getWeekDateRange,
     getWeekOverAllocationSeverity,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { sumStudentMinutes } from "@/components/gantt/curriculum-view/student-load";
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
 import { useCurriculumState } from "@/components/gantt/state/context";
 
@@ -42,6 +44,8 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
         setZoomedWeekId,
         singleWeekDayZoom,
         startDate,
+        studentLoadByDay,
+        studentPaths,
         timelineWeeks,
         weeklyView,
         weekIndexOffset,
@@ -108,10 +112,10 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                         (total, day) => total + day.totalWorkingMinutes,
                         0,
                     );
-                    const weekScheduledMinutes = weekDays.reduce(
-                        (total, day) =>
-                            total + (scheduledMinutesByDay[day.id] ?? 0),
-                        0,
+                    // A student's week is the sum of their own days.
+                    const weekScheduledMinutes = sumStudentMinutes(
+                        studentLoadByDay,
+                        week.days,
                     );
                     const weekSeverity = getWeekOverAllocationSeverity(
                         constraintDays.map((day) => ({
@@ -233,6 +237,8 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                             );
                             const isOverAllocated =
                                 showConstraints && capacityStatus === "error";
+                            const hasLoadIssues =
+                                (studentLoadByDay[dayId]?.issues.length ?? 0) > 0;
                             return (
                                 <TableCell
                                     align="center"
@@ -266,20 +272,43 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                                         </Typography>
                                     ) : null}
                                     {singleWeekDayZoom ? (
-                                        <Typography
-                                            color={getCapacityColor(
-                                                capacityStatus,
-                                            )}
-                                            display="block"
-                                            fontWeight={700}
-                                            variant="caption"
+                                        <StudentLoadTooltip
+                                            capacity={day.totalWorkingMinutes}
+                                            load={studentLoadByDay[dayId]}
+                                            paths={studentPaths}
+                                            title={dayDate
+                                                ? `${getDayNameDisplay(day.dayIndex)} ${formatShortDate(dayDate)}`
+                                                : getDayNameDisplay(day.dayIndex)}
                                         >
-                                            {`${formatHoursLabel(
-                                                scheduledMinutes,
-                                            )} / ${formatHoursLabel(
-                                                day.totalWorkingMinutes,
-                                            )}`}
-                                        </Typography>
+                                            <Box
+                                                alignItems="center"
+                                                data-testid="gantt-day-hours"
+                                                display="flex"
+                                                gap={0.25}
+                                                justifyContent="center"
+                                            >
+                                                {hasLoadIssues ? (
+                                                    <WarningAmberIcon
+                                                        color="warning"
+                                                        data-testid="gantt-day-load-issue"
+                                                        sx={{ fontSize: 14 }}
+                                                    />
+                                                ) : null}
+                                                <Typography
+                                                    color={getCapacityColor(
+                                                        capacityStatus,
+                                                    )}
+                                                    fontWeight={700}
+                                                    variant="caption"
+                                                >
+                                                    {`${formatHoursLabel(
+                                                        scheduledMinutes,
+                                                    )} / ${formatHoursLabel(
+                                                        day.totalWorkingMinutes,
+                                                    )}`}
+                                                </Typography>
+                                            </Box>
+                                        </StudentLoadTooltip>
                                     ) : null}
                                 </TableCell>
                             );

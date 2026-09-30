@@ -1,3 +1,4 @@
+import { CourseId } from "@/api-shared/types/course";
 import { GanttConstraint } from "@/api-shared/types/gantt/models/constraint";
 import { BaseGantItem } from "@/api-shared/types/gantt/models/shared";
 import { HiveLessonId } from "@/api-shared/types/hive";
@@ -71,6 +72,13 @@ export type GanttEvent = {
      * Empty/undefined ⇒ applies to all shuffles.
      */
     shuffles?: Array<string>;
+    /**
+     * Courses (a subset of the syllabus' courses and their sub-courses) this
+     * event is limited to. Non-empty ⇒ only students of those courses attend,
+     * and shuffles are irrelevant: `shuffles` is empty and `groupId` null.
+     * Empty/undefined ⇒ the event is for the whole syllabus.
+     */
+    courseIds?: Array<CourseId>;
     /**
      * Shuffle group this event belongs to, or null when it stands alone.
      *

@@ -1,0 +1,1 @@
+ALTER TABLE "e" ADD COLUMN "course_ids" text[] DEFAULT '{}' NOT NULL;

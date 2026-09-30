@@ -28,16 +28,32 @@ import { GanttHoursLabel } from "@/components/gantt/curriculum-view/tabs/gantt-v
 
 afterEach(cleanup);
 
-function renderHeader(showConstraints: boolean, scheduled: Record<string, number>) {
+/** One all-students path per day, carrying `scheduled` minutes. */
+function loadOf(scheduled: Record<string, number>, issues: Array<unknown> = []) {
+    return Object.fromEntries(
+        Object.entries(scheduled).map(([ dayId, minutes ]) => [
+            dayId,
+            { minutes, paths: [ { pathId: "all", minutes, bySyllabus: [] } ], issues },
+        ]),
+    );
+}
+
+function renderHeader(
+    showConstraints: boolean,
+    scheduled: Record<string, number>,
+    { dayZoom = false, issues = [] as Array<unknown> } = {},
+) {
     const ctx = {
         dayCellWidth: 40,
         scheduledMinutesByDay: scheduled,
+        studentLoadByDay: loadOf(scheduled, issues),
+        studentPaths: [ { id: "all", courseIds: [], label: "כל החניכים" } ],
         setWeeklyView: vi.fn(),
         setZoomedWeekId: vi.fn(),
-        singleWeekDayZoom: false,
+        singleWeekDayZoom: dayZoom,
         startDate: null,
         timelineWeeks: [ { id: "w1", title: "שבוע 1", days: [ "d1", "d2" ] } ],
-        weeklyView: true,
+        weeklyView: !dayZoom,
         weekIndexOffset: 0,
         zoomedWeekId: null,
     };
@@ -71,5 +87,19 @@ describe("GanttHeader week hours (#766)", () => {
         renderHeader(false, { d1: 60 });
 
         expect(screen.getByTestId("gantt-week-hours").textContent).toBe("1 ש׳ / 18 ש׳");
+    });
+});
+
+describe("GanttHeader day hours in a zoomed week", () => {
+    it("shows one student's day time out of the day's capacity", () => {
+        renderHeader(true, { d1: 300 }, { dayZoom: true });
+
+        expect(screen.getAllByTestId("gantt-day-hours")[ 0 ].textContent).toBe("5 ש׳ / 8 ש׳");
+    });
+
+    it("flags a day whose shuffles or paths don't line up", () => {
+        renderHeader(true, { d1: 300 }, { dayZoom: true, issues: [ { kind: "paths-unequal" } ] });
+
+        expect(screen.getAllByTestId("gantt-day-load-issue")).toHaveLength(1);
     });
 });

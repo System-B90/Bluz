@@ -86,6 +86,7 @@ export async function materializeRecurrenceOccurrence(data: {
             splitAcrossWeeks: sourceEvent.splitAcrossWeeks,
             comment: sourceEvent.comment,
             shuffles: sourceEvent.shuffles,
+            courseIds: sourceEvent.courseIds,
             // Materializing one occurrence detaches it from the recurrence,
             // not from its shuffle group: the standalone copy belongs to the
             // same shuffle's timeline as the event it came from (#699).

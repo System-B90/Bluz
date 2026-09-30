@@ -318,14 +318,14 @@ async function applyShuffleGroup(
             if (wanted.length === 1) {
                 await tx
                     .update(ganttEventsSchema)
-                    .set({ shuffles: wanted, updatedAt: new Date() })
+                    .set({ shuffles: wanted, courseIds: [], updatedAt: new Date() })
                     .where(eq(ganttEventsSchema.id, eventId));
             }
             const refreshed = existing.map((member) => ({
                 ...member,
                 groupId: null,
                 ...(wanted.length === 1 && member.id === eventId
-                    ? { shuffles: wanted }
+                    ? { shuffles: wanted, courseIds: [] }
                     : {}),
             }));
             return { members: refreshed, removedIds: [] };
@@ -351,6 +351,9 @@ async function applyShuffleGroup(
                         title: origin.title,
                         groupId,
                         shuffles: [name],
+                        // Shuffles and a course subset are exclusive: a
+                        // shuffle member is for the whole syllabus' courses.
+                        courseIds: [],
                         updatedAt: new Date(),
                     })
                     .where(eq(ganttEventsSchema.id, member.id))

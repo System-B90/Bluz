@@ -8,14 +8,10 @@ import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 import { useMemo } from "react";
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
-import {
-    getCurriculumScheduledMinutes,
-    getTentativeMinutesForModuleIds,
-} from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { getTentativeMinutesForModuleIds } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { useCurriculumStudentSchedule } from "@/components/gantt/curriculum-view/use-student-schedule";
 import { useCurriculumState } from "@/components/gantt/state/context";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
-import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
-import { calculateMinimumRequiredTimeForCurriculum } from "@/components/gantt/utils";
 
 export function HoursCard({
     curriculum,
@@ -27,7 +23,6 @@ export function HoursCard({
     const state = useCurriculumState();
     const { state: mappingState } = useGanttMappings();
     const mappings = mappingState.mappings;
-    const { state: exceptionState } = useGanttRecurrenceExceptions();
 
     const totalWorkingHours = useMemo(() =>
     {
@@ -46,30 +41,10 @@ export function HoursCard({
         }, 0);
     }, [ curriculum?.weeks, state.weeks, state.days ]);
 
-    const minimumHoursRequired = useMemo(
-        () =>
-            curriculum
-                ? calculateMinimumRequiredTimeForCurriculum(curriculum, state, {
-                    mappings,
-                    exceptions: exceptionState.exceptions,
-                    linearDays: curriculum.weeks.flatMap(
-                        (weekId) => state.weeks[ weekId ]?.days ?? [],
-                    ),
-                }) / 60
-                : 0,
-        [ curriculum, state, mappings, exceptionState.exceptions ],
-    );
-    const usedWorkingHours = useMemo(
-        () =>
-            curriculum
-                ? getCurriculumScheduledMinutes({
-                    curriculum,
-                    mappings,
-                    state,
-                }) / 60
-                : 0,
-        [ curriculum, mappings, state ],
-    );
+    // One student's time: parallel shuffles and course paths count once.
+    const schedule = useCurriculumStudentSchedule(curriculum, state);
+    const minimumHoursRequired = schedule.requiredMinutes / 60;
+    const usedWorkingHours = schedule.scheduledMinutes / 60;
     const tentativeWorkingHours = useMemo(
         () =>
             curriculum

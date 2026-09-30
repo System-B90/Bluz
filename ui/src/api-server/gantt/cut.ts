@@ -261,14 +261,24 @@ export function indexCurriculumEvents(curriculum: ApiCurriculum): {
                 moduleHiveIdsByEvent.set(event.id, ganttModule.hiveIds ?? []);
                 moduleIdByEvent.set(event.id, ganttModule.id);
                 syllabusIdByEvent.set(event.id, syllabus.id);
-                syllabusCourseIdsByEvent.set(event.id, syllabus.courseIds ?? []);
+                // An event limited to some courses is for those courses only;
+                // shuffles don't apply to it.
+                const eventCourseIds = event.courseIds ?? [];
+                syllabusCourseIdsByEvent.set(
+                    event.id,
+                    eventCourseIds.length > 0
+                        ? eventCourseIds
+                        : syllabus.courseIds ?? [],
+                );
                 shufflesByEvent.set(
                     event.id,
-                    firstNonEmpty(
-                        event.shuffles,
-                        ganttModule.shuffles,
-                        syllabus.shuffles,
-                    ),
+                    eventCourseIds.length > 0
+                        ? []
+                        : firstNonEmpty(
+                            event.shuffles,
+                            ganttModule.shuffles,
+                            syllabus.shuffles,
+                        ),
                 );
                 eventIdsByModule.set(ganttModule.id, [
                     ...(eventIdsByModule.get(ganttModule.id) ?? []),

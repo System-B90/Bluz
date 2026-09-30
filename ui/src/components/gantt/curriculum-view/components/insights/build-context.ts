@@ -16,13 +16,10 @@ import {
     InsightEvent,
     InsightWeek,
 } from "@/components/gantt/curriculum-view/components/insights/types";
+import { getDayDate } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { sumStudentMinutes } from "@/components/gantt/curriculum-view/student-load";
+import { CurriculumStudentSchedule } from "@/components/gantt/curriculum-view/use-student-schedule";
 import {
-    computeEventDaySpans,
-    getDayDate,
-    getSpilloverMinutesByDay,
-} from "@/components/gantt/curriculum-view/gantt-time-utils";
-import {
-    calculateMinimumRequiredTimeForCurriculum,
     countEventOccurrences,
     RecurrenceOccurrenceContext,
 } from "@/components/gantt/utils";
@@ -38,12 +35,14 @@ export type BuildInsightContextInput = {
     instructorName: InsightContext["instructorName"];
     outsiderName: InsightContext["outsiderName"];
     execution: InsightContext["execution"];
+    /** One student's schedule — see `useCurriculumStudentSchedule`. */
+    schedule: Pick<CurriculumStudentSchedule, "byDay" | "requiredMinutes" | "spans">;
 };
 
 function buildWeeks(
     curriculum: GanttCurriculumDocument,
     state: NormalizedStore,
-    scheduledByDay: Record<string, number>,
+    byDay: CurriculumStudentSchedule["byDay"],
 ): Array<InsightWeek> {
     const weeks: Array<InsightWeek> = [];
     curriculum.weeks.forEach((weekId, weekOrdinal) => {
@@ -57,7 +56,7 @@ function buildWeeks(
                 dayIndex: day.dayIndex,
                 weekNumber: week.number,
                 capacityMinutes: day.totalWorkingMinutes ?? 0,
-                scheduledMinutes: scheduledByDay[dayId] ?? 0,
+                scheduledMinutes: byDay[dayId]?.minutes ?? 0,
                 date: getDayDate(curriculum.startDate, weekOrdinal, day.dayIndex),
             } ];
         });
@@ -67,7 +66,8 @@ function buildWeeks(
             weekendDuty: week.weekendDuty,
             days,
             capacityMinutes: days.reduce((sum, d) => sum + d.capacityMinutes, 0),
-            scheduledMinutes: days.reduce((sum, d) => sum + d.scheduledMinutes, 0),
+            // A student's week is the sum of their own days.
+            scheduledMinutes: sumStudentMinutes(byDay, week.days),
         });
     });
     return weeks;
@@ -121,10 +121,10 @@ export function buildInsightContext({
     instructorName,
     outsiderName,
     execution,
+    schedule,
 }: BuildInsightContextInput): InsightContext {
     const linearDays = curriculum.weeks.flatMap((weekId) => state.weeks[weekId]?.days ?? []);
-    const spans = computeEventDaySpans({ mappings, state, linearDays });
-    const weeks = buildWeeks(curriculum, state, getSpilloverMinutesByDay(spans));
+    const weeks = buildWeeks(curriculum, state, schedule.byDay);
 
     const placedModuleIds = new Set<string>();
     for (const mapping of Object.values(mappings)) {
@@ -135,7 +135,7 @@ export function buildInsightContext({
         curriculum,
         state,
         occurrenceCtx,
-        new Set(Object.keys(spans)),
+        new Set(Object.keys(schedule.spans)),
         placedModuleIds,
     );
 
@@ -147,8 +147,8 @@ export function buildInsightContext({
         events,
         workEvents: events.filter((e) => !e.isBreak),
         capacityMinutes: weeks.reduce((sum, w) => sum + w.capacityMinutes, 0),
-        scheduledMinutes: weeks.reduce((sum, w) => sum + w.scheduledMinutes, 0),
-        requiredMinutes: calculateMinimumRequiredTimeForCurriculum(curriculum, state, occurrenceCtx),
+        scheduledMinutes: sumStudentMinutes(schedule.byDay, linearDays),
+        requiredMinutes: schedule.requiredMinutes,
         now,
         instructorName,
         outsiderName,

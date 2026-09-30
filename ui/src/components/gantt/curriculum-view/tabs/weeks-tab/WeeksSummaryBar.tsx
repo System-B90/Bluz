@@ -10,12 +10,9 @@ import { GanttCurriculum } from "@/api-shared/types/gantt/models";
 import {
     formatHours,
     formatHoursLabel,
-    getCurriculumScheduledMinutes,
     getCurriculumTotalWorkingMinutes,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
-import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
-import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
-import { calculateMinimumRequiredTimeForCurriculum } from "@/components/gantt/utils";
+import { useCurriculumStudentSchedule } from "@/components/gantt/curriculum-view/use-student-schedule";
 
 export type WeeksSummaryBarProps = {
     curriculum: GanttCurriculum;
@@ -64,9 +61,8 @@ function SummaryMetric({
 }
 
 export function WeeksSummaryBar({ curriculum, state }: WeeksSummaryBarProps) {
-    const { state: mappingState } = useGanttMappings();
-    const mappings = mappingState.mappings;
-    const { state: exceptionState } = useGanttRecurrenceExceptions();
+    // One student's time: parallel shuffles and course paths count once.
+    const schedule = useCurriculumStudentSchedule(curriculum, state);
 
     const {
         scheduledMinutes,
@@ -76,29 +72,17 @@ export function WeeksSummaryBar({ curriculum, state }: WeeksSummaryBarProps) {
         utilization,
     } = useMemo(() => {
         const total = getCurriculumTotalWorkingMinutes(curriculum, state);
-        const linearDays = curriculum.weeks.flatMap(
-            (weekId) => state.weeks[weekId]?.days ?? [],
-        );
-        const minimum = calculateMinimumRequiredTimeForCurriculum(
-            curriculum,
-            state,
-            { mappings, exceptions: exceptionState.exceptions, linearDays },
-        );
-        const scheduled = getCurriculumScheduledMinutes({
-            curriculum,
-            mappings,
-            state,
-        });
+        const scheduled = schedule.scheduledMinutes;
 
         return {
             totalWorkingMinutes: total,
-            minimumMinutes: minimum,
+            minimumMinutes: schedule.requiredMinutes,
             scheduledMinutes: scheduled,
             remainingMinutes: total - scheduled,
             utilization:
                 total > 0 ? Math.min((scheduled / total) * 100, 100) : 0,
         };
-    }, [curriculum, state, mappings, exceptionState.exceptions]);
+    }, [curriculum, state, schedule]);
 
     const remainingTone = remainingMinutes < 0 ? "error" : "primary";
 

@@ -48,7 +48,7 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
     const [isCompact, setIsCompact] = useState(false);
     const [isSummaryCollapsed, setIsSummaryCollapsed] = useState(false);
     const {
-        state: { isLoading, mappings },
+        state: { isLoading },
     } = useGanttMappings();
 
     const { enqueueSnackbar } = useSnackbar();
@@ -413,7 +413,6 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
             <WeeksCapacityGrid
                 curriculum={curriculum}
                 isCompact={isCompact}
-                mappings={mappings}
                 state={state}
             />
         </Box>

@@ -177,46 +177,6 @@ export function getCourseEndDate(
     return startDay.add(weekCount * 7 - 1, "day");
 }
 
-// Allocated time only comes from allocated events, never from a whole-module
-// mapping. A module's allocated total is the sum of its own allocated events -
-// 0 if none are allocated, partial if only some are. An event mapped across N
-// days produces N mapping rows sharing the same eventId; count it once.
-function sumUniqueMappedMinutes({
-    dayIds,
-    mappings,
-    state,
-}: {
-    dayIds: Set<GanttDayId>;
-    mappings: Record<string, GanttCurriculumModuleDayMapping>;
-    state: NormalizedStore;
-}): number {
-    const seen = new Set<string>();
-    let total = 0;
-
-    for (const mapping of Object.values(mappings)) {
-        if (!dayIds.has(mapping.dayId)) continue;
-        if (!mapping.eventId) continue;
-        if (seen.has(mapping.eventId)) continue;
-        seen.add(mapping.eventId);
-
-        total += state.events[mapping.eventId]?.minimumDuration ?? 0;
-    }
-
-    return total;
-}
-
-export function getScheduledMinutesForDay({
-    dayId,
-    mappings,
-    state,
-}: {
-    dayId: GanttDayId;
-    mappings: Record<string, GanttCurriculumModuleDayMapping>;
-    state: NormalizedStore;
-}): number {
-    return sumUniqueMappedMinutes({ dayIds: new Set([dayId]), mappings, state });
-}
-
 // ---------------------------------------------------------------------------
 // O(1) day/week index lookups (issue #159)
 // ---------------------------------------------------------------------------
@@ -280,24 +240,53 @@ function groupDaysByWeek(
 }
 
 /**
+ * What an event may still use of a day, given everything already placed on
+ * it. Without one, an event sees the day's whole working capacity.
+ */
+export type DayHeadroom = {
+    /** Minutes `eventId` can still add on `dayId` without overfilling it. */
+    headroom: (dayId: GanttDayId, eventId: string, capacity: number) => number;
+    /** Records that `eventId` uses `minutes` of `dayId`. */
+    consume: (dayId: GanttDayId, eventId: string, minutes: number) => void;
+};
+
+/**
  * Computes, per mapped event, the days it actually occupies. An event whose
  * required minutes exceed its start day's working capacity dynamically
  * overflows the excess onto subsequent days. The database still stores only
  * the start-day mapping — this is a pure frontend layout computation.
+ *
+ * With `load`, capacity is what is left for the event's own students rather
+ * than the whole day, and events are laid out in timeline order so earlier
+ * placements fill a day first.
  */
 export function computeEventDaySpans({
     mappings,
     state,
     linearDays,
+    load,
 }: {
     mappings: Record<string, GanttCurriculumModuleDayMapping>;
     state: NormalizedStore;
     linearDays: Array<GanttDayId>;
+    load?: DayHeadroom;
 }): Record<string, EventDaySpan> {
     const spans: Record<string, EventDaySpan> = {};
     let weeks: Array<WeekSplitWeek> | undefined;
+    const dayOrder = buildDayIndexMap(linearDays);
+    const ordered = Object.values(mappings).sort(
+        (a, b) =>
+            (dayOrder.get(a.dayId) ?? 0) - (dayOrder.get(b.dayId) ?? 0) ||
+            a.sortOrder - b.sortOrder,
+    );
+    const record = (eventId: string, span: EventDaySpan) => {
+        spans[eventId] = span;
+        span.dayIds.forEach((dayId, i) =>
+            load?.consume(dayId, eventId, span.minutesPerDay[i]),
+        );
+    };
 
-    for (const mapping of Object.values(mappings)) {
+    for (const mapping of ordered) {
         if (!mapping.eventId || spans[mapping.eventId]) continue;
         const event = state.events[mapping.eventId];
         if (!event) continue;
@@ -319,12 +308,12 @@ export function computeEventDaySpans({
             minutesPerDay[minutesPerDay.length - 1] += split
                 .slice(splitDayIds.length)
                 .reduce((sum, part) => sum + part, 0);
-            spans[mapping.eventId] = {
+            record(mapping.eventId, {
                 dayIds: splitDayIds,
                 minutesPerDay,
                 spillover: false,
                 weekSplit: true,
-            };
+            });
             continue;
         }
 
@@ -335,15 +324,21 @@ export function computeEventDaySpans({
 
         while (idx < linearDays.length) {
             const dayId = linearDays[idx];
-            const capacity = state.days[dayId]?.totalWorkingMinutes ?? 0;
+            const dayCapacity = state.days[dayId]?.totalWorkingMinutes ?? 0;
+            const capacity = load
+                ? Math.max(0, load.headroom(dayId, mapping.eventId, dayCapacity))
+                : dayCapacity;
             const isStartDay = dayIds.length === 0;
 
-            // Zero-capacity days can't host hours; skip them mid-span. The
+            // Days with no room left can't host hours; skip them mid-span. The
             // start day always hosts (a 0-capacity start absorbs everything,
-            // matching the pre-spillover behavior).
+            // matching the pre-spillover behavior; a start day that is merely
+            // full keeps its place and spills everything onward).
             if (capacity > 0 || isStartDay) {
                 const consumed =
-                    capacity > 0 ? Math.min(remaining, capacity) : remaining;
+                    capacity > 0 || dayCapacity > 0
+                        ? Math.min(remaining, capacity)
+                        : remaining;
                 dayIds.push(dayId);
                 minutesPerDay.push(consumed);
                 remaining -= consumed;
@@ -357,69 +352,15 @@ export function computeEventDaySpans({
             minutesPerDay[minutesPerDay.length - 1] += remaining;
         }
         if (dayIds.length > 0) {
-            spans[mapping.eventId] = {
+            record(mapping.eventId, {
                 dayIds,
                 minutesPerDay,
                 spillover: dayIds.length > 1,
-            };
+            });
         }
     }
 
     return spans;
-}
-
-/**
- * Per-day scheduled minutes with multi-day spillover applied: each event
- * contributes only the minutes it consumes on that specific day, so hours
- * spilled onto subsequent days are subtracted from the start day and added
- * to the days they land on.
- */
-export function getSpilloverMinutesByDay(
-    spans: Record<string, EventDaySpan>,
-): Record<GanttDayId, number> {
-    const byDay: Record<GanttDayId, number> = {};
-    for (const span of Object.values(spans)) {
-        span.dayIds.forEach((dayId, i) => {
-            byDay[dayId] = (byDay[dayId] ?? 0) + span.minutesPerDay[i];
-        });
-    }
-    return byDay;
-}
-
-export function getWeekScheduledMinutes({
-    week,
-    mappings,
-    state,
-}: {
-    mappings: Record<string, GanttCurriculumModuleDayMapping>;
-    state: NormalizedStore;
-    week: GanttWeek | undefined;
-}): number {
-    return sumUniqueMappedMinutes({
-        dayIds: new Set(week?.days ?? []),
-        mappings,
-        state,
-    });
-}
-
-export function getCurriculumScheduledMinutes({
-    curriculum,
-    mappings,
-    state,
-}: {
-    curriculum: GanttCurriculum | undefined;
-    mappings: Record<string, GanttCurriculumModuleDayMapping>;
-    state: NormalizedStore;
-}): number {
-    if (!curriculum) return 0;
-    const dayIds = new Set<GanttDayId>();
-    for (const weekId of curriculum.weeks ?? []) {
-        for (const dayId of state.weeks[weekId]?.days ?? []) {
-            dayIds.add(dayId);
-        }
-    }
-
-    return sumUniqueMappedMinutes({ dayIds, mappings, state });
 }
 
 export function getCapacityStatus(

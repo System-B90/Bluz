@@ -54,6 +54,7 @@ export const POST = withApi(
             splitAcrossWeeks: originalEvent.splitAcrossWeeks,
             comment: originalEvent.comment,
             shuffles: originalEvent.shuffles,
+            courseIds: originalEvent.courseIds,
             // A duplicate is a new lesson, not another shuffle's copy of the
             // original one, so it starts outside the group (#699).
             groupId: null,
