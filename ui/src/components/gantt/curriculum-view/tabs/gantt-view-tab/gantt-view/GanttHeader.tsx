@@ -162,9 +162,10 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                                 cursor: canZoom ? "pointer" : "default",
                                 userSelect: "none",
                                 ...(canZoom && {
+                                    // action.hover is translucent; tint over the
+                                    // opaque paper so scrolled content can't bleed through.
                                     "&:hover": {
-                                        backgroundColor:
-                                            theme.vars.palette.action.hover,
+                                        backgroundImage: `linear-gradient(${theme.vars.palette.action.hover}, ${theme.vars.palette.action.hover})`,
                                     },
                                 }),
                             }}
