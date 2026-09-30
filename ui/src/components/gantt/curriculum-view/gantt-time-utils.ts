@@ -2,6 +2,11 @@ import dayjs, { Dayjs } from "dayjs";
 
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
 import {
+    getEffectiveWeekSplit,
+    getWeekSplitDayIds,
+    WeekSplitWeek,
+} from "@/api-shared/gantt/week-split";
+import {
     GanttCurriculum,
     GanttCurriculumModuleDayMapping,
     GanttDay,
@@ -247,7 +252,32 @@ export type EventDaySpan = {
     minutesPerDay: Array<number>;
     /** True when the event overflows its start day onto subsequent day(s). */
     spillover: boolean;
+    /**
+     * True when the event's hours are split over consecutive weeks (#768):
+     * `dayIds` are then one day per week, not a contiguous run.
+     */
+    weekSplit?: boolean;
 };
+
+/** Groups the ordered timeline days back into their weeks. */
+function groupDaysByWeek(
+    linearDays: Array<GanttDayId>,
+    state: NormalizedStore,
+): Array<WeekSplitWeek> {
+    const weekIdByDay = new Map<GanttDayId, string>();
+    for (const week of Object.values(state.weeks)) {
+        for (const dayId of week.days) weekIdByDay.set(dayId, week.id);
+    }
+    const weeks: Array<WeekSplitWeek> = [];
+    let lastWeekId: string | undefined;
+    for (const dayId of linearDays) {
+        const weekId = weekIdByDay.get(dayId);
+        if (weeks.length === 0 || weekId !== lastWeekId) weeks.push({ days: [] });
+        weeks[weeks.length - 1].days.push(dayId);
+        lastWeekId = weekId;
+    }
+    return weeks;
+}
 
 /**
  * Computes, per mapped event, the days it actually occupies. An event whose
@@ -265,6 +295,7 @@ export function computeEventDaySpans({
     linearDays: Array<GanttDayId>;
 }): Record<string, EventDaySpan> {
     const spans: Record<string, EventDaySpan> = {};
+    let weeks: Array<WeekSplitWeek> | undefined;
 
     for (const mapping of Object.values(mappings)) {
         if (!mapping.eventId || spans[mapping.eventId]) continue;
@@ -272,6 +303,30 @@ export function computeEventDaySpans({
         if (!event) continue;
         const startIdx = linearDays.indexOf(mapping.dayId);
         if (startIdx === -1) continue;
+
+        // Human-defined split over consecutive weeks (#768): one part per
+        // week, no day-capacity overflow.
+        const split = getEffectiveWeekSplit(
+            event.splitAcrossWeeks,
+            mapping.weekSplitMinutes,
+            event.minimumDuration ?? 0,
+        );
+        if (split) {
+            weeks ??= groupDaysByWeek(linearDays, state);
+            const splitDayIds = getWeekSplitDayIds(mapping.dayId, split.length, weeks);
+            const minutesPerDay = split.slice(0, splitDayIds.length);
+            // Parts past the timeline's end are parked on its last week.
+            minutesPerDay[minutesPerDay.length - 1] += split
+                .slice(splitDayIds.length)
+                .reduce((sum, part) => sum + part, 0);
+            spans[mapping.eventId] = {
+                dayIds: splitDayIds,
+                minutesPerDay,
+                spillover: false,
+                weekSplit: true,
+            };
+            continue;
+        }
 
         const dayIds: Array<GanttDayId> = [];
         const minutesPerDay: Array<number> = [];
