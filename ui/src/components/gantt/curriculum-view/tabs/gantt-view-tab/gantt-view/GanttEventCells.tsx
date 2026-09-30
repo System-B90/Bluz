@@ -27,6 +27,8 @@ type WeeklyCellsParams = {
     isEventUnmapped: boolean;
     violations: Array<string>;
     spanInfo?: EventSpanInfo | null;
+    /** Required-time label shown on the mapped block. */
+    timeLabel?: string;
     relativeDaySizing: boolean;
     /** Recurring event (daily/weekly). Drives repeat blocks + first-column staging (#111). */
     isRecurring: boolean;
@@ -65,6 +67,7 @@ export function buildWeeklyEventCells(
         isEventUnmapped,
         violations,
         spanInfo,
+        timeLabel,
         relativeDaySizing,
         isRecurring,
         recurrence,
@@ -222,7 +225,9 @@ export function buildWeeklyEventCells(
                 blockTimeLabel={
                     isSplitPart
                         ? formatHoursLabel(splitPartMinutesByDay!.get(splitPartDayId)!)
-                        : undefined
+                        : isExplicitlyMappedHere
+                            ? timeLabel
+                            : undefined
                 }
                 blockTitle={ eventTitle }
                 blockWidthPercent={
