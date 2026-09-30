@@ -381,6 +381,13 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
                     eventTitle={ event.title }
                     initialParts={ splitMapping?.weekSplitMinutes }
                     onClose={ () => setSplitOpen(false) }
+                    onOpenEvent={ () =>
+                    {
+                        const syllabusId = state.modules[ moduleId ]?.syllabusId;
+                        if (!syllabusId) return;
+                        setSplitOpen(false);
+                        openEventDialog(syllabusId, moduleId, eventId);
+                    } }
                     onSave={ (parts) =>
                     {
                         setSplitOpen(false);
