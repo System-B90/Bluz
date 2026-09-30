@@ -6,6 +6,7 @@ import {
     GanttDayIndex,
     GanttWeek,
 } from "@/api-shared/types/gantt/models";
+import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { GanttCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttCell";
 import { GanttBlockPayload } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 
@@ -45,6 +46,11 @@ type WeeklyCellsParams = {
     isDayInWindow: (dayId: string) => boolean;
     /** O(1) lookup of a dayId's owning week index within timelineWeeks (#159). */
     weekIndexByDayId: Map<string, number>;
+    /**
+     * Later parts of an event split across weeks (#768): day id → minutes.
+     * Rendered as faded, inert blocks labelled with their hours.
+     */
+    splitPartMinutesByDay?: Map<string, number>;
 };
 
 export function buildWeeklyEventCells(
@@ -69,6 +75,7 @@ export function buildWeeklyEventCells(
         skippedDayIds,
         isDayInWindow,
         weekIndexByDayId,
+        splitPartMinutesByDay,
     } = params;
 
     const startDow = currentDayId ? dayIndexOf(currentDayId) : undefined;
@@ -126,36 +133,47 @@ export function buildWeeklyEventCells(
         const isOpaqueBlock = reminderIsStaged || reminderIsMarker;
         const ownsAnchor = isExplicitlyMappedHere || reminderIsStaged;
 
+        // A later part of a split-across-weeks event (#768).
+        const splitPartDayId = isExplicitlyMappedHere
+            ? undefined
+            : week.days.find((dayId) => splitPartMinutesByDay?.has(dayId));
+        const isSplitPart = splitPartDayId !== undefined;
+
         const hasBlock =
             isExplicitlyMappedHere ||
             isRecurrenceWeek ||
             isSkippedWeek ||
-            isRecurrenceReminder;
+            isRecurrenceReminder ||
+            isSplitPart;
 
-        const blockPayload: GanttBlockPayload = isExplicitlyMappedHere
-            ? { type: "event-move", moduleId, eventId, sourceDayId: currentDayId! }
-            : isRecurrenceWeek
-                ? { type: "event-occurrence", moduleId, eventId, dayId: weekOccurrenceDayId! }
-                : isSkippedWeek
-                    ? {
-                        type: "event-skipped-occurrence",
-                        moduleId,
-                        eventId,
-                        dayId: weekOccurrenceDayId!,
-                    }
-                    : reminderIsMarker
-                        ? { moduleId, eventId }
-                        : { type: "event-map", moduleId, eventId };
+        const blockPayload: GanttBlockPayload = isSplitPart
+            ? { moduleId, eventId }
+            : isExplicitlyMappedHere
+                ? { type: "event-move", moduleId, eventId, sourceDayId: currentDayId! }
+                : isRecurrenceWeek
+                    ? { type: "event-occurrence", moduleId, eventId, dayId: weekOccurrenceDayId! }
+                    : isSkippedWeek
+                        ? {
+                            type: "event-skipped-occurrence",
+                            moduleId,
+                            eventId,
+                            dayId: weekOccurrenceDayId!,
+                        }
+                        : reminderIsMarker
+                            ? { moduleId, eventId }
+                            : { type: "event-map", moduleId, eventId };
 
-        const blockId = isExplicitlyMappedHere
-            ? `drag-event-${eventId}-${currentDayId}`
-            : isRecurrenceWeek
-                ? `recur-event-${eventId}-${week.id}`
-                : isSkippedWeek
-                    ? `recur-skipped-${eventId}-${week.id}`
-                    : reminderIsMarker
-                        ? `recur-staged-${eventId}-${week.id}`
-                        : `drag-event-staged-${eventId}`;
+        const blockId = isSplitPart
+            ? `split-event-${eventId}-${week.id}`
+            : isExplicitlyMappedHere
+                ? `drag-event-${eventId}-${currentDayId}`
+                : isRecurrenceWeek
+                    ? `recur-event-${eventId}-${week.id}`
+                    : isSkippedWeek
+                        ? `recur-skipped-${eventId}-${week.id}`
+                        : reminderIsMarker
+                            ? `recur-staged-${eventId}-${week.id}`
+                            : `drag-event-staged-${eventId}`;
 
         // Positioned as percentages of the anchor cell's own width — week
         // columns render wider than their nominal size (the table stretches
@@ -201,6 +219,11 @@ export function buildWeeklyEventCells(
                 blockId={ blockId }
                 blockLeftPercent={ isExplicitlyMappedHere ? blockLeftPercent : undefined }
                 blockPayload={ blockPayload }
+                blockTimeLabel={
+                    isSplitPart
+                        ? formatHoursLabel(splitPartMinutesByDay!.get(splitPartDayId)!)
+                        : undefined
+                }
                 blockTitle={ eventTitle }
                 blockWidthPercent={
                     isExplicitlyMappedHere ? blockWidthPercent : undefined
@@ -213,7 +236,7 @@ export function buildWeeklyEventCells(
                 hasBlock={ hasBlock }
                 isAbsoluteBlock={ true }
                 isOpaque={ isOpaqueBlock }
-                isRecurrence={ isRecurrenceWeek || reminderIsMarker }
+                isRecurrence={ isRecurrenceWeek || reminderIsMarker || isSplitPart }
                 isSkipped={ isSkippedWeek }
                 isSpillover={ Boolean(isExplicitlyMappedHere && spanInfo) }
                 key={ `week-${week.id}-${eventId}` }
@@ -249,6 +272,11 @@ type DailyCellsParams = {
     skippedRecurrenceDayIds: Set<string>;
     /** First day of the timeline — where an unallocated recurring event is staged (#111). */
     firstDayId: null | string;
+    /**
+     * Later parts of an event split across weeks (#768): day id → minutes.
+     * Rendered as faded, inert blocks labelled with their hours.
+     */
+    splitPartMinutesByDay?: Map<string, number>;
 };
 
 export function buildDailyEventCells(
@@ -269,6 +297,7 @@ export function buildDailyEventCells(
         recurrenceDayIds,
         skippedRecurrenceDayIds,
         firstDayId,
+        splitPartMinutesByDay,
     } = params;
 
     return timelineWeeks.flatMap((week) =>
@@ -304,43 +333,58 @@ export function buildDailyEventCells(
             const isOpaqueBlock = reminderIsStaged || reminderIsMarker;
             const ownsAnchor = isExplicitlyMappedHere || reminderIsStaged;
 
+            // A later part of a split-across-weeks event (#768).
+            const splitMinutes = isExplicitlyMappedHere
+                ? undefined
+                : splitPartMinutesByDay?.get(dayId);
+            const isSplitPart = splitMinutes !== undefined;
+
             const hasBlock =
                 isExplicitlyMappedHere ||
                 isRecurrenceOccurrence ||
                 isSkippedOccurrence ||
-                isRecurrenceReminder;
+                isRecurrenceReminder ||
+                isSplitPart;
 
-            const blockPayload: GanttBlockPayload = isExplicitlyMappedHere
-                ? { type: "event-move", moduleId, eventId, sourceDayId: dayId }
-                : isRecurrenceOccurrence
-                    ? { type: "event-occurrence", moduleId, eventId, dayId }
-                    : isSkippedOccurrence
-                        ? {
-                            type: "event-skipped-occurrence",
-                            moduleId,
-                            eventId,
-                            dayId,
-                        }
-                        : reminderIsMarker
-                            ? { moduleId, eventId }
-                            : { type: "event-map", moduleId, eventId };
+            const blockPayload: GanttBlockPayload = isSplitPart
+                ? { moduleId, eventId }
+                : isExplicitlyMappedHere
+                    ? { type: "event-move", moduleId, eventId, sourceDayId: dayId }
+                    : isRecurrenceOccurrence
+                        ? { type: "event-occurrence", moduleId, eventId, dayId }
+                        : isSkippedOccurrence
+                            ? {
+                                type: "event-skipped-occurrence",
+                                moduleId,
+                                eventId,
+                                dayId,
+                            }
+                            : reminderIsMarker
+                                ? { moduleId, eventId }
+                                : { type: "event-map", moduleId, eventId };
 
-            const blockId = isExplicitlyMappedHere
-                ? `drag-event-${eventId}-${dayId}`
-                : isRecurrenceOccurrence
-                    ? `recur-event-${eventId}-${dayId}`
-                    : isSkippedOccurrence
-                        ? `recur-skipped-${eventId}-${dayId}`
-                        : reminderIsMarker
-                            ? `recur-staged-${eventId}-${dayId}`
-                            : `drag-event-staged-${eventId}`;
+            const blockId = isSplitPart
+                ? `split-event-${eventId}-${dayId}`
+                : isExplicitlyMappedHere
+                    ? `drag-event-${eventId}-${dayId}`
+                    : isRecurrenceOccurrence
+                        ? `recur-event-${eventId}-${dayId}`
+                        : isSkippedOccurrence
+                            ? `recur-skipped-${eventId}-${dayId}`
+                            : reminderIsMarker
+                                ? `recur-staged-${eventId}-${dayId}`
+                                : `drag-event-staged-${eventId}`;
 
             return (
                 <GanttCell
                     blockId={ blockId }
                     blockPayload={ blockPayload }
                     blockTimeLabel={
-                        isExplicitlyMappedHere ? timeLabel : undefined
+                        isSplitPart
+                            ? formatHoursLabel(splitMinutes)
+                            : isExplicitlyMappedHere
+                                ? timeLabel
+                                : undefined
                     }
                     blockTitle={ eventTitle }
                     dayId={ dayId }
@@ -351,7 +395,9 @@ export function buildDailyEventCells(
                     hasBlock={ hasBlock }
                     isAbsoluteBlock={ true }
                     isOpaque={ isOpaqueBlock }
-                    isRecurrence={ isRecurrenceOccurrence || reminderIsMarker }
+                    isRecurrence={
+                        isRecurrenceOccurrence || reminderIsMarker || isSplitPart
+                    }
                     isSkipped={ isSkippedOccurrence }
                     isSpillover={ Boolean(isExplicitlyMappedHere && spanInfo) }
                     key={ `${dayId}-${eventId}` }

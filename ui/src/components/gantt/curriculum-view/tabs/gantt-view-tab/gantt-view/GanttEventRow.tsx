@@ -104,10 +104,25 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
         [ eventId, violations ],
     );
 
+    // Split across weeks (#768): later parts by day, and the first part's
+    // minutes, which the mapped block shows instead of the whole duration.
+    const { splitPartMinutesByDay, firstPartMinutes } = useMemo(() =>
+    {
+        const span = eventSpans[ eventId ];
+        if (!span?.weekSplit) return { splitPartMinutesByDay: undefined, firstPartMinutes: undefined };
+        return {
+            splitPartMinutesByDay: new Map(
+                span.dayIds.slice(1).map((dayId, i) => [ dayId, span.minutesPerDay[ i + 1 ] ]),
+            ),
+            firstPartMinutes: span.minutesPerDay[ 0 ],
+        };
+    }, [ eventSpans, eventId ]);
+
     // Zoomed single-week day view: label the block with its required time.
+    // A split event's block always carries its part's hours (#768).
     const timeLabel =
-        singleWeekDayZoom && event
-            ? formatHoursLabel(event.minimumDuration ?? 0)
+        event && (singleWeekDayZoom || firstPartMinutes !== undefined)
+            ? formatHoursLabel(firstPartMinutes ?? event.minimumDuration ?? 0)
             : undefined;
 
     const recurrence = event?.recurrence ?? EventRecurrence.None;
@@ -247,6 +262,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
                 skippedDayIds,
                 isDayInWindow,
                 weekIndexByDayId,
+                splitPartMinutesByDay,
             })
             : buildDailyEventCells({
                 timelineWeeks,
@@ -263,8 +279,10 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
                 recurrenceDayIds,
                 skippedRecurrenceDayIds,
                 firstDayId,
+                splitPartMinutesByDay,
             });
     }, [
+        splitPartMinutesByDay,
         event,
         weeklyView,
         relativeDaySizing,
