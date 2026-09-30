@@ -253,7 +253,7 @@ describe("buildCutPlanInput", () => {
 
         expect(input.weeks.map((w) => w.id)).toEqual(["w0", "w1"]);
         expect(input.weeks[0].dayIds).toEqual(["w0d0", "w0d1", "w0d2", "w0d3", "w0d4", "w0d5", "w0d6"]);
-        expect(input.mappings).toEqual([{ eventId: "e1", dayId: "w0d0", sortOrder: 3 }]);
+        expect(input.mappings).toEqual([{ eventId: "e1", dayId: "w0d0", sortOrder: 3, weekSplitMinutes: [] }]);
         expect(input.events[0].allocatedDuration).toBe(90);
         expect(input.recurrenceExceptions).toEqual([{ eventId: "e1", dayId: "w1d1" }]);
         expect(input.dayStartTime).toBe("09:30");

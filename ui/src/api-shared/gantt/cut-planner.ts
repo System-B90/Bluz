@@ -29,6 +29,7 @@ import {
     getRecurrenceOccurrenceDayIds,
     isRecurrenceSatisfied,
 } from "@/api-shared/gantt/recurrence";
+import { getEffectiveWeekSplit, getWeekSplitDayIds } from "@/api-shared/gantt/week-split";
 import { layoutAroundWindows, layoutEnd } from "@/api-shared/interval-layout";
 import {
     EventRecurrence,
@@ -84,6 +85,8 @@ export type CutPlanEventInput = {
      * after it ends (end time pushed out by the window's length).
      */
     splitAcrossBreaks: boolean;
+    /** May run over consecutive weeks per its mapping's split (#768). */
+    splitAcrossWeeks?: boolean;
     /** Drives the break rules (long ע"ע runs, post-lecture, prayer avoidance). */
     type?: ModuleEventType;
     /** Owning gantt module — drives module cohesion during spillover. */
@@ -105,6 +108,8 @@ export type CutPlanMappingInput = {
     eventId: string;
     dayId: string;
     sortOrder: number;
+    /** Minutes per consecutive week for a split-across-weeks event (#768). */
+    weekSplitMinutes?: Array<number>;
 };
 
 export type CutPlanRecurrenceExceptionInput = {
@@ -451,7 +456,12 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
         return isHomeWeekendSunday ? weekendHomeStart : defaultStart;
     };
 
-    type Slot = { eventId: string; isRecurrenceEcho: boolean };
+    type Slot = {
+        eventId: string;
+        isRecurrenceEcho: boolean;
+        /** A week-split part's own length, replacing the event's (#768). */
+        durationMinutes?: number;
+    };
     const slotsByDay = new Map<string, Array<Slot>>();
     const pushSlot = (dayId: string, slot: Slot) => {
         const arr = slotsByDay.get(dayId) ?? [];
@@ -463,7 +473,34 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
     const ownMappingsSorted = [ ...input.mappings ]
         .filter((m) => linearDayIds.includes(m.dayId))
         .sort((a, b) => a.sortOrder - b.sortOrder);
+    const splitWeeks = input.weeks.map((w) => ({ days: w.dayIds }));
+    const eventInputById = new Map(input.events.map((e) => [ e.id, e ]));
     for (const mapping of ownMappingsSorted) {
+        // Split across weeks (#768): one slot per part, each in its own week.
+        const event = eventInputById.get(mapping.eventId);
+        const split = event
+            ? getEffectiveWeekSplit(
+                event.splitAcrossWeeks,
+                mapping.weekSplitMinutes,
+                event.minimumDuration,
+            )
+            : null;
+        if (split) {
+            const dayIds = getWeekSplitDayIds(mapping.dayId, split.length, splitWeeks);
+            dayIds.forEach((dayId, i) => {
+                // Parts past the timeline's end fold into its last week.
+                const durationMinutes =
+                    i === dayIds.length - 1
+                        ? split.slice(i).reduce((sum, part) => sum + part, 0)
+                        : split[ i ];
+                pushSlot(dayId, {
+                    eventId: mapping.eventId,
+                    isRecurrenceEcho: false,
+                    durationMinutes,
+                });
+            });
+            continue;
+        }
         pushSlot(mapping.dayId, { eventId: mapping.eventId, isRecurrenceEcho: false });
     }
 
@@ -569,15 +606,21 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
     const groupSiblingsByLeadKey = new Map<string, Array<BalancerSlot>>();
     const groupBlockDurationByLeadKey = new Map<string, number>();
     const originalDayIdBySlotKey = new Map<string, string>();
+    // Week-split parts run their own length, not the event's (#768).
+    const durationOverrideBySlotKey = new Map<string, number>();
     for (const [ dayId, daySlots ] of slotsByDay) {
         const built = daySlots.map((slot, ordinal) => {
             const event = eventsById.get(slot.eventId);
             const key = `${slot.eventId}@${dayId}#${ordinal}`;
             originalDayIdBySlotKey.set(key, dayId);
+            if (slot.durationMinutes !== undefined) {
+                durationOverrideBySlotKey.set(key, slot.durationMinutes);
+            }
             return {
                 key,
                 eventId: slot.eventId,
-                durationMinutes: event ? eventDuration(event) : 0,
+                durationMinutes:
+                    slot.durationMinutes ?? (event ? eventDuration(event) : 0),
                 moduleId: event?.moduleId ?? null,
                 isRecurrenceEcho: slot.isRecurrenceEcho,
                 isDailyRecurrence: event?.recurrence === EventRecurrence.Daily,
@@ -655,7 +698,12 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
                 if (!siblings) return [ slot ];
                 const lead = eventsById.get(slot.eventId);
                 return [
-                    { ...slot, durationMinutes: lead ? eventDuration(lead) : 0 },
+                    {
+                        ...slot,
+                        durationMinutes:
+                            durationOverrideBySlotKey.get(slot.key) ??
+                            (lead ? eventDuration(lead) : 0),
+                    },
                     ...siblings.map((sibling) => ({
                         ...sibling,
                         sortOrder: slot.sortOrder,
@@ -830,7 +878,8 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
             const event = eventsById.get(slot.eventId);
             if (!event) continue;
 
-            const duration = eventDuration(event);
+            const duration =
+                durationOverrideBySlotKey.get(slot.key) ?? eventDuration(event);
             const fixedStartMinutes = fixedTimeMinutesByEventId.get(event.id);
 
             const groupLead = event.groupId
