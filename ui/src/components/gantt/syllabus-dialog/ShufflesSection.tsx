@@ -1,6 +1,7 @@
 import AddIcon from "@mui/icons-material/Add";
 import CloudDownloadOutlinedIcon from "@mui/icons-material/CloudDownloadOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import Alert from "@mui/material/Alert";
 import Autocomplete from "@mui/material/Autocomplete";
 import Button from "@mui/material/Button";
@@ -20,6 +21,8 @@ import { ganttApi } from "@/api-client/gantt";
 import {
     normalizeShuffleDescriptions,
     normalizeShuffleName,
+    renameShuffleKeys,
+    retagShuffles,
     SHUFFLE_DESCRIPTION_MAX_LENGTH,
     ShuffleDescriptions,
 } from "@/api-shared/gantt/shuffle-names";
@@ -166,6 +169,50 @@ function ShuffleDescriptionField({
 }
 
 /**
+ * Inline editor for a shuffle's name (#774). Enter or blur commits, Escape
+ * cancels; an unchanged or blank name just closes it.
+ */
+function ShuffleRenameField({
+    name,
+    onCancel,
+    onCommit,
+}: {
+    name: string;
+    onCancel: () => void;
+    onCommit: (next: string) => void;
+}) {
+    const [draft, setDraft] = useState(name);
+    const submit = () => {
+        const next = normalizeShuffleName(draft);
+        if (!next || next === name) onCancel();
+        else onCommit(next);
+    };
+
+    return (
+        <TextField
+            autoFocus
+            onBlur={submit}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    submit();
+                } else if (e.key === "Escape") {
+                    e.stopPropagation();
+                    onCancel();
+                }
+            }}
+            size="small"
+            slotProps={{
+                htmlInput: { "aria-label": `שם חדש לשאפל ${name}` },
+            }}
+            value={draft}
+            variant="standard"
+        />
+    );
+}
+
+/**
  * The syllabus' shuffles (student groups), a section of the syllabus dialog
  * (#699, folded into the single dialog in #7xx).
  *
@@ -194,6 +241,7 @@ export function ShufflesSection({ syllabusId }: ShufflesSectionProps) {
     // The shuffle whose usages are being fetched: a second click on its delete
     // button would otherwise open the confirmation twice.
     const [checking, setChecking] = useState<null | string>(null);
+    const [renaming, setRenaming] = useState<null | string>(null);
 
     const shuffles = useMemo(
         () => syllabus?.shuffles ?? [],
@@ -365,6 +413,70 @@ export function ShufflesSection({ syllabusId }: ShufflesSectionProps) {
             );
     }, [pending, syllabusId, descriptions, dispatch, enqueueSnackbar]);
 
+    const renameHandler = useCallback(
+        (from: string, to: string) => {
+            setRenaming(null);
+            if (!syllabusId) return;
+            if (shuffles.includes(to)) {
+                enqueueSnackbar("שאפל בשם הזה כבר קיים במקצוע.", {
+                    variant: "warning",
+                });
+                return;
+            }
+            const renames = { [from]: to };
+            const next = shuffles.map((name) => (name === from ? to : name));
+
+            ganttApi
+                .applyShuffles(syllabusId, next, undefined, renames)
+                .then((usages) => {
+                    // Mirror the server's retag locally, as deletion does.
+                    for (const usedModule of usages.modules) {
+                        dispatch({
+                            type: "UPDATE_MODULE",
+                            payload: {
+                                id: usedModule.id,
+                                updates: {
+                                    shuffles: retagShuffles(usedModule.shuffles, [], renames),
+                                },
+                            },
+                        });
+                    }
+                    for (const event of usages.events) {
+                        dispatch({
+                            type: "UPDATE_EVENT",
+                            payload: {
+                                id: event.id,
+                                updates: {
+                                    shuffles: retagShuffles(event.shuffles, [], renames),
+                                },
+                            },
+                        });
+                    }
+                    dispatch({
+                        type: "UPDATE_SYLLABUS",
+                        payload: {
+                            id: syllabusId,
+                            updates: {
+                                shuffles: next,
+                                shuffleDescriptions: renameShuffleKeys(
+                                    descriptions,
+                                    renames,
+                                ),
+                            },
+                        },
+                    });
+                })
+                .catch((error) =>
+                    enqueueApiErrorSnackbar(
+                        enqueueSnackbar,
+                        "שינוי שם השאפל נכשל!",
+                        error,
+                    ),
+                );
+        },
+        [syllabusId, shuffles, descriptions, dispatch, enqueueSnackbar],
+    );
+
     return (
         <Stack gap={1.5}>
             <Alert severity="info">
@@ -480,9 +592,28 @@ export function ShufflesSection({ syllabusId }: ShufflesSectionProps) {
                                     direction="row"
                                     gap={1}
                                 >
-                                    <Typography variant="body2">
-                                        {name}
-                                    </Typography>
+                                    {renaming === name ? (
+                                        <ShuffleRenameField
+                                            name={name}
+                                            onCancel={() => setRenaming(null)}
+                                            onCommit={(to) =>
+                                                renameHandler(name, to)
+                                            }
+                                        />
+                                    ) : (
+                                        <Typography variant="body2">
+                                            {name}
+                                        </Typography>
+                                    )}
+                                    <Tooltip title="שינוי שם">
+                                        <IconButton
+                                            aria-label={`שינוי שם השאפל ${name}`}
+                                            onClick={() => setRenaming(name)}
+                                            size="small"
+                                        >
+                                            <EditOutlinedIcon fontSize="small" />
+                                        </IconButton>
+                                    </Tooltip>
                                     {hiveGroups !== null && (
                                         <HiveLinkChip
                                             group={hiveGroups.get(name)}
