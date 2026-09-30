@@ -7,6 +7,9 @@ import
     buildWeekIndexByDayId,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 
+// Weekly view columns hold whole-week blocks, so keep them relatively long.
+const WEEK_MIN_WIDTH = 160;
+
 type UseGanttZoomArgs = {
     curriculum: GanttCurriculum | undefined;
     weeksById: Record<string, GanttWeek>;
@@ -69,7 +72,8 @@ export const useGanttZoom = ({ curriculum, weeksById }: UseGanttZoomArgs) =>
     {
         const DEFAULT_WIDTH = 80;
         const LABEL_COL_WIDTH = 250;
-        if (weeklyView || !zoomedWeekId) return DEFAULT_WIDTH;
+        if (weeklyView) return WEEK_MIN_WIDTH;
+        if ( !zoomedWeekId) return DEFAULT_WIDTH;
         const dayCount = timelineWeeks[ 0 ]?.days.length ?? 0;
         const available = containerWidth - LABEL_COL_WIDTH;
         if (dayCount <= 0 || available <= 0) return DEFAULT_WIDTH;
