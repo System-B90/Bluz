@@ -136,6 +136,7 @@ describe("DbSyllabus.reorderModules", () => {
 function shuffleTx(options: {
     current: Array<string>;
     descriptions?: Record<string, string>;
+    hiveGroups?: Record<string, number>;
     moduleIds?: Array<string>;
     modules?: Array<{ id: string; shuffles: Array<string>; title: string }>;
     events?: Array<{ id: string; shuffles: Array<string>; title: string }>;
@@ -152,6 +153,7 @@ function shuffleTx(options: {
                 const read = chain([
                     {
                         descriptions: options.descriptions ?? {},
+                        hiveGroups: options.hiveGroups ?? {},
                         names: options.current,
                     },
                 ]);
@@ -301,6 +303,39 @@ describe("DbSyllabus.applyShuffles renames (#774)", () => {
         expect(updates.at(-1)?.shuffleDescriptions).toEqual({ ג: "תיאור" });
     });
 
+    it("moves the renamed shuffle's Hive link to its new name", async () => {
+        const { updates } = shuffleTx({
+            current: [ "א", "ב" ],
+            hiveGroups: { א: 11, ב: 22 },
+        });
+
+        await DbSyllabus.applyShuffles(SID, [ "ג", "ב" ], undefined, { א: "ג" });
+
+        expect(updates.at(-1)?.shuffleHiveGroups).toEqual({ ג: 11, ב: 22 });
+    });
+
+    it("regression: deleting a shuffle drops its Hive link", async () => {
+        const { updates } = shuffleTx({
+            current: [ "א", "ב" ],
+            hiveGroups: { א: 11, ב: 22 },
+        });
+
+        await DbSyllabus.applyShuffles(SID, [ "ב" ]);
+
+        expect(updates.at(-1)?.shuffleHiveGroups).toEqual({ ב: 22 });
+    });
+
+    it("regression: a plain list edit without renames still strips removed tags", async () => {
+        const { updates } = shuffleTx({
+            current: [ "א", "ב" ],
+            modules: [ { id: "m1", shuffles: [ "א", "ב" ], title: "מודול" } ],
+        });
+
+        await DbSyllabus.applyShuffles(SID, [ "ב" ], undefined, {});
+
+        expect(updates[ 0 ].shuffles).toEqual([ "ב" ]);
+    });
+
     it("rejects a rename whose new name is missing from the list", async () => {
         shuffleTx({ current: [ "א" ] });
 
@@ -353,6 +388,26 @@ describe("DbSyllabus.updateItem", () => {
 
         expect(postgresDb.transaction).toHaveBeenCalledTimes(1);
         expect(updates.at(-1)?.shuffleDescriptions).toEqual({ א: "תיאור" });
+    });
+
+    it("prunes a Hive-link patch against the current names (#774)", async () => {
+        const { updates } = shuffleTx({ current: [ "א" ] });
+        vi.mocked(postgresDb.update).mockReturnValue(chain([ { id: SID } ]));
+
+        await DbSyllabus.updateItem(SID, {
+            shuffleHiveGroups: { א: 11, יתום: 22 },
+        }).catch(() => undefined);
+
+        expect(postgresDb.transaction).toHaveBeenCalledTimes(1);
+        expect(updates.at(-1)?.shuffleHiveGroups).toEqual({ א: 11 });
+    });
+
+    it("rejects Hive links that are not a name → id map (#774)", async () => {
+        await expect(
+            DbSyllabus.updateItem(SID, {
+                shuffleHiveGroups: { א: "11" } as never,
+            }),
+        ).rejects.toBeInstanceOf(ClientApiError);
     });
 
     it("rejects descriptions that are not a name → text map", async () => {
