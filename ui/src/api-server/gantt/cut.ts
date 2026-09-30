@@ -224,6 +224,8 @@ export function indexCurriculumEvents(curriculum: ApiCurriculum): {
      * syllabus's. Empty when none is set anywhere up the chain.
      */
     shufflesByEvent: Map<string, Array<string>>;
+    /** Shuffle name → the Hive student group its syllabus links it to (#774). */
+    hiveGroupByShuffle: Map<string, number>;
 } {
     const eventsById = new Map<string, ApiModuleEvent>();
     const syllabusTitleByEvent = new Map<string, string>();
@@ -234,11 +236,19 @@ export function indexCurriculumEvents(curriculum: ApiCurriculum): {
     const moduleTitleById = new Map<string, string>();
     const syllabusCourseIdsByEvent = new Map<string, Array<string>>();
     const shufflesByEvent = new Map<string, Array<string>>();
+    const hiveGroupByShuffle = new Map<string, number>();
     const firstNonEmpty = (...lists: Array<Array<string> | null | undefined>) =>
         lists.find((list) => list && list.length > 0) ?? [];
 
     for (const cLink of curriculum.c2s ?? []) {
         const syllabus = cLink.syllabus;
+        for (const [name, groupId] of Object.entries(
+            syllabus.shuffleHiveGroups ?? {},
+        )) {
+            if (!hiveGroupByShuffle.has(name)) {
+                hiveGroupByShuffle.set(name, groupId);
+            }
+        }
         for (const sLink of syllabus.s2m ?? []) {
             const ganttModule = sLink.module;
             moduleTitleById.set(ganttModule.id, ganttModule.title);
@@ -276,6 +286,7 @@ export function indexCurriculumEvents(curriculum: ApiCurriculum): {
         moduleTitleById,
         syllabusCourseIdsByEvent,
         shufflesByEvent,
+        hiveGroupByShuffle,
     };
 }
 
@@ -920,6 +931,7 @@ export async function materializeCurriculumEvents(
         moduleHiveIdsByEvent,
         syllabusCourseIdsByEvent,
         shufflesByEvent,
+        hiveGroupByShuffle,
     } = indexCurriculumEvents(curriculum);
     const hiveModules = await buildHiveModuleSubjectMap(iteration.hiveUrl);
     const hiveModuleSubjectById = hiveModules.byModuleId;
@@ -968,14 +980,23 @@ export async function materializeCurriculumEvents(
     }
 
     const existingCourses = await DbCourses.get(undefined, controller);
-    const courseIdByName = new Map(
-        existingCourses.map((c) => [c.name, c.id]),
-    );
+    const courseByName = new Map(existingCourses.map((c) => [c.name, c]));
     const createdCourses: Array<{ id: string; name: string }> = [];
     const shuffleCourseId = new Map<string, string>();
 
     for (const name of shuffleNames) {
-        let id = courseIdByName.get(name);
+        const hiveClassId = hiveGroupByShuffle.get(name) ?? null;
+        const existing = courseByName.get(name);
+        let id = existing?.id;
+        // The syllabus' Hive link is the source of truth: carry it onto an
+        // existing course so the lesson sync follows it (#774).
+        if (
+            existing &&
+            createMissingCourses &&
+            (existing.hiveClassId ?? null) !== hiveClassId
+        ) {
+            await DbCourses.set({ ...existing, hiveClassId }, undefined, controller);
+        }
         if (!id) {
             // Dry runs must not write: an unknown shuffle simply contributes no
             // course id, which is what the diff would show anyway.
@@ -989,10 +1010,11 @@ export async function materializeCurriculumEvents(
                     existingCourses,
                 ),
                 description: `${SHUFFLE_COURSE_DESCRIPTION_PREFIX} "${syllabusTitleForShuffle.get(name) ?? ""}"`,
+                hiveClassId,
             };
             await DbCourses.create(course, controller);
             id = course.id;
-            courseIdByName.set(name, id);
+            courseByName.set(name, course);
             createdCourses.push({ id, name });
         }
         shuffleCourseId.set(name, id);
