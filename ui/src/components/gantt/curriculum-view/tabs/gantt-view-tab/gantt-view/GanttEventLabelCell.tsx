@@ -6,6 +6,7 @@ import Typography from "@mui/material/Typography";
 import React from "react";
 
 import { GanttBlock } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttBlock";
+import { GanttHoursLabel } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttHoursLabel";
 
 type GanttEventLabelCellProps = {
     /** Execution drift (#121): the cut schedule diverged from the plan. */
@@ -14,6 +15,8 @@ type GanttEventLabelCellProps = {
     eventTitle: string;
     isRemoveOver: boolean;
     isUnmapped: boolean | null;
+    /** Required minutes shown in the hours column (#766). */
+    minutes: number;
     moduleId: string;
     onTitleClick: () => void;
     setRemoveNodeRef: (node: HTMLElement | null) => void;
@@ -26,6 +29,7 @@ export const GanttEventLabelCell: React.FC<GanttEventLabelCellProps> = ({
     eventTitle,
     isRemoveOver,
     isUnmapped,
+    minutes,
     moduleId,
     onTitleClick,
     setRemoveNodeRef,
@@ -108,6 +112,8 @@ export const GanttEventLabelCell: React.FC<GanttEventLabelCellProps> = ({
                     />
                 </Box>
             ) : null }
+
+            <GanttHoursLabel minutes={ minutes } />
         </TableCell>
     );
 };
