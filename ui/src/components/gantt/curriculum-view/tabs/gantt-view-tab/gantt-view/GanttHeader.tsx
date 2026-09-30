@@ -83,13 +83,14 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                         ),
                     );
 
-                    const weekDays = showConstraints
-                        ? week.days
-                            .map((dayId) => state.days[dayId])
-                            .filter((day) => !!day)
-                        : [];
+                    // Always resolved: the week's allocated / available hours
+                    // are shown regardless of the constraints toggle (#766).
+                    const weekDays = week.days
+                        .map((dayId) => state.days[dayId])
+                        .filter((day) => !!day);
+                    const constraintDays = showConstraints ? weekDays : [];
 
-                    const overAllocatedDayNames = weekDays
+                    const overAllocatedDayNames = constraintDays
                         .filter(
                             (day) =>
                                 getCapacityStatus(
@@ -113,7 +114,7 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                         0,
                     );
                     const weekSeverity = getWeekOverAllocationSeverity(
-                        weekDays.map((day) => ({
+                        constraintDays.map((day) => ({
                             availableMinutes: day.totalWorkingMinutes,
                             scheduledMinutes: scheduledMinutesByDay[day.id] ?? 0,
                         })),
@@ -195,6 +196,20 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                                     {dateRangeLabel}
                                 </Typography>
                             ) : null}
+                            <Typography
+                                color={getCapacityColor(
+                                    getCapacityStatus(
+                                        weekAvailableMinutes,
+                                        weekScheduledMinutes,
+                                    ),
+                                )}
+                                data-testid="gantt-week-hours"
+                                display="block"
+                                fontWeight={700}
+                                variant="caption"
+                            >
+                                {`${formatHoursLabel(weekScheduledMinutes)} / ${formatHoursLabel(weekAvailableMinutes)}`}
+                            </Typography>
                         </TableCell>
                     );
                 })}
