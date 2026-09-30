@@ -17,13 +17,14 @@ import {
     GanttModuleId,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
+import { useCourses } from "@/components/base/CoursesProvider";
 import { MODULE_ANCHOR_PREFIX } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
+import { calculateStudentModuleMinutes } from "@/components/gantt/curriculum-view/student-load";
 import {
     useCurriculumProviderActions,
     useCurriculumState,
 } from "@/components/gantt/state/context";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
-import { calculateMinimumRequiredTimeForModule } from "@/components/gantt/utils";
 
 export function ModuleRow({
     moduleId,
@@ -37,12 +38,13 @@ export function ModuleRow({
     const state = useCurriculumState();
     const { openModuleDialog } = useCurriculumProviderActions();
     const moduleDoc = useModule(moduleId);
+    const { courses } = useCourses();
     const minimumRequiredTime = useMemo(
         () =>
             moduleDoc
-                ? calculateMinimumRequiredTimeForModule(moduleDoc, state)
+                ? calculateStudentModuleMinutes(moduleId, state, courses)
                 : 0,
-        [moduleDoc, state],
+        [moduleDoc, moduleId, state, courses],
     );
 
     const {

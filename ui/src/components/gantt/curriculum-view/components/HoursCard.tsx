@@ -8,7 +8,8 @@ import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 import { useMemo } from "react";
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
-import { getTentativeMinutesForModuleIds } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { useCourses } from "@/components/base/CoursesProvider";
+import { calculateStudentTentativeMinutes } from "@/components/gantt/curriculum-view/student-load";
 import { useCurriculumStudentSchedule } from "@/components/gantt/curriculum-view/use-student-schedule";
 import { useCurriculumState } from "@/components/gantt/state/context";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
@@ -23,6 +24,7 @@ export function HoursCard({
     const state = useCurriculumState();
     const { state: mappingState } = useGanttMappings();
     const mappings = mappingState.mappings;
+    const { courses } = useCourses();
 
     const totalWorkingHours = useMemo(() =>
     {
@@ -48,7 +50,8 @@ export function HoursCard({
     const tentativeWorkingHours = useMemo(
         () =>
             curriculum
-                ? getTentativeMinutesForModuleIds({
+                ? calculateStudentTentativeMinutes({
+                    courses,
                     mappings,
                     moduleIds: curriculum.syllabuses.flatMap(
                         (syllabusId) => state.syllabuses[ syllabusId ]?.modules ?? [],
@@ -56,7 +59,7 @@ export function HoursCard({
                     state,
                 }) / 60
                 : 0,
-        [ curriculum, mappings, state ],
+        [ curriculum, mappings, state, courses ],
     );
 
     if (!curriculum)

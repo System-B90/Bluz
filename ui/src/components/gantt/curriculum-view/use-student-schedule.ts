@@ -5,7 +5,7 @@ import { GanttCurriculum, GanttCurriculumModuleDayMapping } from "@/api-shared/t
 import { useCourses } from "@/components/base/CoursesProvider";
 import { getDayDate } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import {
-    calculateStudentRequiredMinutes,
+    calculateStudentMinutes,
     computeStudentSchedule,
     StudentSchedule,
     sumStudentMinutes,
@@ -70,7 +70,7 @@ export function useCurriculumStudentSchedule(
         return {
             ...schedule,
             scheduledMinutes: sumStudentMinutes(schedule.byDay, linearDays),
-            requiredMinutes: calculateStudentRequiredMinutes({
+            requiredMinutes: calculateStudentMinutes({
                 courses,
                 occurrenceCtx: { mappings: curriculumMappings, exceptions, linearDays },
                 state,

@@ -6,7 +6,7 @@ import { Course } from "@/api-shared/types/course";
 import { EventRecurrence } from "@/api-shared/types/gantt/models";
 import {
     buildStudentPaths,
-    calculateStudentRequiredMinutes,
+    calculateStudentMinutes,
     computeStudentSchedule,
     sumStudentMinutes,
 } from "@/components/gantt/curriculum-view/student-load";
@@ -193,7 +193,7 @@ describe("computeStudentSchedule", () => {
     });
 });
 
-describe("calculateStudentRequiredMinutes", () => {
+describe("calculateStudentMinutes", () => {
     it("takes the busiest path, each syllabus at its longest shuffle", () => {
         const state = store({
             math: ALIGNED_MATH,
@@ -201,7 +201,7 @@ describe("calculateStudentRequiredMinutes", () => {
             chem: { chem: { minutes: 240 } },
         });
 
-        expect(calculateStudentRequiredMinutes({
+        expect(calculateStudentMinutes({
             courses: COURSES,
             state,
             syllabusIds: [ "math", "phys", "chem" ],

@@ -8,19 +8,20 @@ import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 import { useMemo } from "react";
 
 import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
+import { useCourses } from "@/components/base/CoursesProvider";
+import { formatMinutesAsDuration } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import {
-    formatMinutesAsDuration,
-    getTentativeMinutesForModuleIds,
-} from "@/components/gantt/curriculum-view/gantt-time-utils";
+    calculateStudentMinutes,
+    calculateStudentSyllabusMinutes,
+    calculateStudentTentativeMinutes,
+} from "@/components/gantt/curriculum-view/student-load";
 import { useCurriculumState } from "@/components/gantt/state/context";
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
 import {
-    calculateMinimumRequiredTimeForSyllabus,
     doShuffleTotalsDiffer,
     getSyllabusShuffleTotals,
-    sumCollapsingShuffleGroups,
 } from "@/components/gantt/utils";
 
 /**
@@ -71,6 +72,7 @@ export function HoursBox({ syllabusId, ...props }: HoursBoxProps) {
     const { state: mappingState } = useGanttMappings();
     const mappings = mappingState.mappings;
     const { state: exceptionState } = useGanttRecurrenceExceptions();
+    const { courses } = useCourses();
 
     const minimumRequiredHours = useMemo(() => {
         if (!syllabus) return 0;
@@ -82,12 +84,12 @@ export function HoursBox({ syllabusId, ...props }: HoursBoxProps) {
             curriculum?.weeks.flatMap(
                 (weekId) => state.weeks[weekId]?.days ?? [],
             ) ?? [];
-        return calculateMinimumRequiredTimeForSyllabus(syllabus, state, {
+        return calculateStudentSyllabusMinutes(syllabus.id, state, courses, {
             mappings,
             exceptions: exceptionState.exceptions,
             linearDays,
         });
-    }, [syllabus, syllabusId, state, mappings, exceptionState.exceptions]);
+    }, [syllabus, syllabusId, state, courses, mappings, exceptionState.exceptions]);
 
     const shuffleTotals = useMemo(
         () =>
@@ -99,37 +101,33 @@ export function HoursBox({ syllabusId, ...props }: HoursBoxProps) {
 
     const tentativeHours = useMemo(() => {
         if (!syllabus || !mappings) return 0;
-        return getTentativeMinutesForModuleIds({
+        return calculateStudentTentativeMinutes({
+            courses,
             mappings,
             moduleIds: syllabus.modules,
             state,
         });
-    }, [syllabus, mappings, state]);
+    }, [syllabus, mappings, state, courses]);
 
     const scheduledHours = useMemo(() => {
         if (!syllabus || !mappings) return 0;
         const moduleIdsSet = new Set(syllabus.modules);
         // Allocated time only comes from allocated events, never a whole
-        // module. A module's total is the sum of its own allocated events -
-        // 0 if none allocated, partial if only some are. An event mapped
-        // across multiple days produces one mapping row per day; count once.
-        const seen = new Set<string>();
-        const entries: Array<{ eventId: string; minutes: number }> = [];
+        // module, and counts one student's time: parallel shuffles and
+        // exclusive courses once (#699).
+        const placed = new Set<string>();
         for (const mapping of Object.values(mappings)) {
-            if (!moduleIdsSet.has(mapping.moduleId)) continue;
-            if (!mapping.eventId) continue;
-            if (seen.has(mapping.eventId)) continue;
-            seen.add(mapping.eventId);
-
-            entries.push({
-                eventId: mapping.eventId,
-                minutes: state.events[mapping.eventId]?.minimumDuration ?? 0,
-            });
+            if (moduleIdsSet.has(mapping.moduleId) && mapping.eventId) {
+                placed.add(mapping.eventId);
+            }
         }
-        // Collapsed the same way the minimum below it is, so a lesson split
-        // across shuffles cannot push the gauge past 100% (#699).
-        return sumCollapsingShuffleGroups(entries, state);
-    }, [syllabus, mappings, state]);
+        return calculateStudentMinutes({
+            courses,
+            include: (eventId) => placed.has(eventId),
+            state,
+            syllabusIds: [syllabus.id],
+        });
+    }, [syllabus, mappings, state, courses]);
 
     const progressPercentage =
         minimumRequiredHours > 0
