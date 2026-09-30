@@ -4,10 +4,12 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { MouseEvent } from "react";
 
-import { normalizeShuffleName } from "@/api-shared/gantt/shuffle-names";
 import { hiveClassUrl } from "@/api-shared/hive-links";
 import { useActiveIterationHiveUrl } from "@/components/base/IterationProvider";
-import { useHiveStudentGroups } from "@/components/gantt/use-hive-student-groups";
+import {
+    findShuffleHiveGroup,
+    useHiveStudentGroups,
+} from "@/components/gantt/use-hive-student-groups";
 
 const styles = {
     chip: {
@@ -20,20 +22,24 @@ const styles = {
 } as const;
 
 /**
- * A shuffle tag. Links to the same-named Hive student group when one exists;
+ * A shuffle tag. Links to its Hive student group (the explicitly linked one,
+ * else the same-named one, #774) when one exists;
  * the tooltip always carries the shuffle's description and says so when the
  * group is missing from Hive.
  */
 export function ShuffleChip({
     name,
     description,
+    hiveGroupId,
 }: {
     name: string;
     description?: string;
+    /** The syllabus' explicit Hive link for this shuffle, if any. */
+    hiveGroupId?: number;
 }) {
     const hiveUrl = useActiveIterationHiveUrl();
     const groups = useHiveStudentGroups();
-    const group = groups?.get(normalizeShuffleName(name));
+    const group = findShuffleHiveGroup(groups, name, hiveGroupId);
     const href = group ? hiveClassUrl(Number(group.id), hiveUrl) : null;
     const missingFromHive = groups !== null && !group;
 

@@ -20,11 +20,13 @@ import { useCallback, useMemo, useState } from "react";
 import { ganttApi } from "@/api-client/gantt";
 import {
     normalizeShuffleDescriptions,
+    normalizeShuffleHiveGroups,
     normalizeShuffleName,
     renameShuffleKeys,
     retagShuffles,
     SHUFFLE_DESCRIPTION_MAX_LENGTH,
     ShuffleDescriptions,
+    ShuffleHiveGroups,
 } from "@/api-shared/gantt/shuffle-names";
 import { hiveClassUrl } from "@/api-shared/hive-links";
 import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
@@ -39,10 +41,14 @@ import {
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 import { ShuffleDeleteDialog } from "@/components/gantt/syllabus-dialog/ShuffleDeleteDialog";
-import { useHiveStudentGroups } from "@/components/gantt/use-hive-student-groups";
+import {
+    findShuffleHiveGroup,
+    useHiveStudentGroups,
+} from "@/components/gantt/use-hive-student-groups";
 
 const NO_USAGES: ShuffleUsages = { events: [], modules: [] };
 const NO_DESCRIPTIONS: ShuffleDescriptions = {};
+const NO_HIVE_GROUPS: ShuffleHiveGroups = {};
 // Shared input name: the browser keys its saved autocomplete entries on it,
 // so every description field offers what was typed in any dialog before.
 const SHUFFLE_DESCRIPTION_AUTOCOMPLETE = "shuffle-description";
@@ -96,7 +102,7 @@ function useShuffleTagCounts(syllabusId: GanttSyllabusId | null) {
     }, [syllabusId, state]);
 }
 
-/** Whether a shuffle has a same-named Hive student group to sync against. */
+/** Whether a shuffle has a Hive student group (linked or same-named) to sync against. */
 function HiveLinkChip({ group }: { group: Class | undefined }) {
     const hiveUrl = useActiveIterationHiveUrl();
     if (group) {
@@ -118,7 +124,7 @@ function HiveLinkChip({ group }: { group: Class | undefined }) {
         );
     }
     return (
-        <Tooltip title="אין קבוצת תלמידים ב-Hive בשם הזה, ולכן השאפל לא יסונכרן לשיעורים">
+        <Tooltip title="אין קבוצת תלמידים ב-Hive בשם הזה ולא קושרה קבוצה, ולכן השאפל לא יסונכרן לשיעורים">
             <Chip
                 color="warning"
                 label="לא ב-Hive"
@@ -164,6 +170,58 @@ function ShuffleDescriptionField({
             }}
             value={draft}
             variant="standard"
+        />
+    );
+}
+
+/**
+ * Picks the Hive student group a shuffle syncs against (#774), for when the
+ * names differ. Clearing it falls back to matching by name.
+ */
+function ShuffleHiveGroupSelect({
+    groups,
+    linkedId,
+    name,
+    onChange,
+}: {
+    groups: Array<Class>;
+    linkedId: number | undefined;
+    name: string;
+    onChange: (groupId: number | undefined) => void;
+}) {
+    const value = groups.find((group) => Number(group.id) === linkedId) ?? null;
+
+    return (
+        <Autocomplete
+            getOptionLabel={(option) => option.name}
+            isOptionEqualToValue={(option, selected) => option.id === selected.id}
+            onChange={(_, option) =>
+                onChange(option ? Number(option.id) : undefined)
+            }
+            options={groups}
+            renderInput={(params) => (
+                <TextField
+                    {...params}
+                    placeholder="קישור לקבוצת Hive (ברירת מחדל: לפי שם)"
+                    slotProps={{
+                        htmlInput: {
+                            ...params.inputProps,
+                            "aria-label": `קבוצת Hive של השאפל ${name}`,
+                        },
+                    }}
+                    variant="standard"
+                />
+            )}
+            renderOption={({ key, ...props }, option) => (
+                <li key={key} {...props}>
+                    <ListItemText
+                        primary={option.name}
+                        secondary={option.description || option.program__name}
+                    />
+                </li>
+            )}
+            size="small"
+            value={value}
         />
     );
 }
@@ -248,6 +306,15 @@ export function ShufflesSection({ syllabusId }: ShufflesSectionProps) {
         [syllabus?.shuffles],
     );
     const descriptions = syllabus?.shuffleDescriptions ?? NO_DESCRIPTIONS;
+    const hiveLinks = syllabus?.shuffleHiveGroups ?? NO_HIVE_GROUPS;
+    const groupOf = useCallback(
+        (name: string) => findShuffleHiveGroup(hiveGroups, name, hiveLinks[name]),
+        [hiveGroups, hiveLinks],
+    );
+    const allHiveGroups = useMemo(
+        () => [...(hiveGroups?.values() ?? [])],
+        [hiveGroups],
+    );
 
     const hiveOptions = useMemo(
         () =>
@@ -261,10 +328,10 @@ export function ShufflesSection({ syllabusId }: ShufflesSectionProps) {
     const importable = useMemo(
         () =>
             shuffles.filter((name) => {
-                const fromHive = hiveDescription(hiveGroups?.get(name));
+                const fromHive = hiveDescription(groupOf(name));
                 return fromHive !== "" && fromHive !== (descriptions[name] ?? "");
             }),
-        [shuffles, hiveGroups, descriptions],
+        [shuffles, groupOf, descriptions],
     );
 
     const commit = useCallback(
@@ -323,10 +390,29 @@ export function ShufflesSection({ syllabusId }: ShufflesSectionProps) {
     const importDescriptionsHandler = useCallback(() => {
         const next = { ...descriptions };
         for (const name of importable) {
-            next[name] = hiveDescription(hiveGroups?.get(name));
+            next[name] = hiveDescription(groupOf(name));
         }
         commit(shuffles, next);
-    }, [importable, descriptions, hiveGroups, shuffles, commit]);
+    }, [importable, descriptions, groupOf, shuffles, commit]);
+
+    const linkHandler = useCallback(
+        (name: string, groupId: number | undefined) => {
+            if (!syllabusId) return;
+            const next = { ...hiveLinks };
+            if (groupId) next[name] = groupId;
+            else delete next[name];
+            updateSyllabus(syllabusId, {
+                shuffleHiveGroups: normalizeShuffleHiveGroups(next, shuffles),
+            }).catch((error) =>
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "קישור השאפל ל-Hive נכשל!",
+                    error,
+                ),
+            );
+        },
+        [syllabusId, hiveLinks, shuffles, updateSyllabus, enqueueSnackbar],
+    );
 
     const removeHandler = useCallback(
         (name: string) => {
@@ -462,6 +548,10 @@ export function ShufflesSection({ syllabusId }: ShufflesSectionProps) {
                                     descriptions,
                                     renames,
                                 ),
+                                shuffleHiveGroups: renameShuffleKeys(
+                                    hiveLinks,
+                                    renames,
+                                ),
                             },
                         },
                     });
@@ -474,7 +564,7 @@ export function ShufflesSection({ syllabusId }: ShufflesSectionProps) {
                     ),
                 );
         },
-        [syllabusId, shuffles, descriptions, dispatch, enqueueSnackbar],
+        [syllabusId, shuffles, descriptions, hiveLinks, dispatch, enqueueSnackbar],
     );
 
     return (
@@ -615,9 +705,7 @@ export function ShufflesSection({ syllabusId }: ShufflesSectionProps) {
                                         </IconButton>
                                     </Tooltip>
                                     {hiveGroups !== null && (
-                                        <HiveLinkChip
-                                            group={hiveGroups.get(name)}
-                                        />
+                                        <HiveLinkChip group={groupOf(name)} />
                                     )}
                                     <Chip
                                         label={shuffleUsageLabel(
@@ -627,6 +715,16 @@ export function ShufflesSection({ syllabusId }: ShufflesSectionProps) {
                                         variant="outlined"
                                     />
                                 </Stack>
+                                {hiveGroups !== null && (
+                                    <ShuffleHiveGroupSelect
+                                        groups={allHiveGroups}
+                                        linkedId={hiveLinks[name]}
+                                        name={name}
+                                        onChange={(groupId) =>
+                                            linkHandler(name, groupId)
+                                        }
+                                    />
+                                )}
                                 <ShuffleDescriptionField
                                     key={descriptions[name] ?? ""}
                                     name={name}
