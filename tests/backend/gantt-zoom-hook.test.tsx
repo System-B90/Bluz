@@ -167,10 +167,10 @@ describe("useGanttZoom", () => {
         input.remove();
     });
 
-    it("keeps the default column width until a week is zoomed", () => {
+    it("uses the week width in weekly view and the day floor when zoomed", () => {
         const result = renderZoom();
 
-        expect(result.current.dayCellWidth).toBe(80);
+        expect(result.current.dayCellWidth).toBe(160);
 
         act(() => result.current.handleWeeklyViewChange(false));
         act(() => result.current.setZoomedWeekId("w1"));
