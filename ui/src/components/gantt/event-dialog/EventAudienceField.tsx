@@ -268,7 +268,7 @@ export function EventAudienceField({
                 size="small"
                 value={mode}
             >
-                <ToggleButton value="all">כל המקצוע</ToggleButton>
+                <ToggleButton value="all">כולם</ToggleButton>
                 <ToggleButton value="shuffles">שאפלים</ToggleButton>
                 <ToggleButton value="courses">מסלולים</ToggleButton>
             </ToggleButtonGroup>
