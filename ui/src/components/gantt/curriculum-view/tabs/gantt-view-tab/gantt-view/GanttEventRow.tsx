@@ -312,6 +312,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
                 isUnmapped={
                     isEventUnmapped ? !isRecurring : null
                 }
+                minutes={ event.minimumDuration ?? 0 }
                 moduleId={ moduleId }
                 onTitleClick={ () =>
                 {

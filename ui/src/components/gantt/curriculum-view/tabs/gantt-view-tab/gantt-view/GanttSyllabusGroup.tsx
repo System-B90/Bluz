@@ -6,6 +6,7 @@ import Typography from "@mui/material/Typography";
 import React, { memo, useMemo } from "react";
 
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
+import { GanttHoursLabel } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttHoursLabel";
 import { GanttModuleRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttModuleRow";
 import {
     GanttSyllabusGroupProps,
@@ -13,6 +14,9 @@ import {
 } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { useCurriculumState } from "@/components/gantt/state/context";
 import { useSyllabusTitle } from "@/components/gantt/state/hooks/UseSyllabusTitles";
+import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
+import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
+import { calculateMinimumRequiredTimeForSyllabus } from "@/components/gantt/utils";
 
 function getSpanBorderRadius(spanVariant: SpanVariant) {
     switch (spanVariant) {
@@ -103,11 +107,26 @@ const GanttSyllabusGroupComponent: React.FC<GanttSyllabusGroupProps> = ({
         toggleSyllabus,
         isSyllabusVisible,
         isModuleVisible,
+        linearDays,
     } = useGanttContext();
+    const { state: exceptionsState } = useGanttRecurrenceExceptions();
+    const { state: mappingState } = useGanttMappings();
     const isExpanded = isSyllabusExpanded(syllabusId);
 
     const syllabus = state.syllabuses[syllabusId];
     const syllabusTitle = useSyllabusTitle(syllabusId);
+
+    const requiredMinutes = useMemo(
+        () =>
+            syllabus
+                ? calculateMinimumRequiredTimeForSyllabus(syllabus, state, {
+                    mappings: mappingState.mappings,
+                    exceptions: exceptionsState.exceptions,
+                    linearDays,
+                })
+                : 0,
+        [syllabus, state, mappingState.mappings, exceptionsState.exceptions, linearDays],
+    );
 
     // Every day id any module or event of this syllabus is mapped to.
     const mappedDays = useMemo(() => {
@@ -215,7 +234,10 @@ const GanttSyllabusGroupComponent: React.FC<GanttSyllabusGroupProps> = ({
                         >
                             {isExpanded ? "▼" : "▶"}
                         </Box>
-                        {syllabusTitle ?? syllabus.title}
+                        <Box component="span" sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {syllabusTitle ?? syllabus.title}
+                        </Box>
+                        <GanttHoursLabel minutes={requiredMinutes} />
                     </Typography>
                 </TableCell>
 

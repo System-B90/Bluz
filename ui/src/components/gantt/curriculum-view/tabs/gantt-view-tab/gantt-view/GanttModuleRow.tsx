@@ -14,6 +14,7 @@ import { getFlashRowSx } from "@/components/gantt/curriculum-view/tabs/gantt-vie
 import { GanttBlock } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttBlock";
 import { GanttCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttCell";
 import { GanttEventRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttEventRow";
+import { GanttHoursLabel } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttHoursLabel";
 import { GanttModuleRowProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { useCurriculumState } from "@/components/gantt/state/context";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
@@ -146,20 +147,21 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
             ? spanIndices.max - spanIndices.min + 1
             : 1;
 
-    // Zoomed single-week day view: label the module block with its required time.
-    const timeLabel = useMemo(
+    const requiredMinutes = useMemo(
         () =>
-            singleWeekDayZoom && ganttModule
-                ? formatHoursLabel(
-                    calculateMinimumRequiredTimeForModule(ganttModule, state, {
-                        mappings: mappingState.mappings,
-                        exceptions: exceptionsState.exceptions,
-                        linearDays,
-                    }),
-                )
-                : undefined,
-        [singleWeekDayZoom, ganttModule, state, mappingState.mappings, exceptionsState.exceptions, linearDays],
+            ganttModule
+                ? calculateMinimumRequiredTimeForModule(ganttModule, state, {
+                    mappings: mappingState.mappings,
+                    exceptions: exceptionsState.exceptions,
+                    linearDays,
+                })
+                : 0,
+        [ganttModule, state, mappingState.mappings, exceptionsState.exceptions, linearDays],
     );
+    // Zoomed single-week day view: label the module block with its required time.
+    const timeLabel = singleWeekDayZoom && ganttModule
+        ? formatHoursLabel(requiredMinutes)
+        : undefined;
 
     // Build cells depending on view mode. Memoized so a re-render triggered by the
     // remove-target droppable (during a drag) doesn't rebuild every day cell (#88).
@@ -358,6 +360,7 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
                             </Typography>
                         )}
                     </Box>
+                    <GanttHoursLabel minutes={requiredMinutes} />
                 </TableCell>
 
                 {cells}
