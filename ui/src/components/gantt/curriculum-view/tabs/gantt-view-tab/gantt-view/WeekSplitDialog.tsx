@@ -7,6 +7,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
+import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -43,10 +44,12 @@ export const WeekSplitDialog: React.FC<{
     eventTitle: string;
     initialParts: Array<number> | undefined;
     onClose: () => void;
+    /** Opens the event's own dialog; makes the title a link when given. */
+    onOpenEvent?: () => void;
     onSave: (parts: Array<number>) => void;
     open: boolean;
     totalMinutes: number;
-}> = ({ eventTitle, initialParts, onClose, onSave, open, totalMinutes }) =>
+}> = ({ eventTitle, initialParts, onClose, onOpenEvent, onSave, open, totalMinutes }) =>
 {
     const [ hours, setHours ] = useState(() =>
         initialWeekSplitHours(initialParts, totalMinutes),
@@ -60,7 +63,14 @@ export const WeekSplitDialog: React.FC<{
 
     return (
         <Dialog fullWidth maxWidth="xs" onClose={ onClose } open={ open }>
-            <DialogTitle>{ `פיצול בין שבועות — ${eventTitle}` }</DialogTitle>
+            <DialogTitle>
+                { "פיצול בין שבועות — " }
+                { onOpenEvent ? (
+                    <Link component="button" onClick={ onOpenEvent } title="עריכת המופע" type="button" variant="inherit">
+                        { eventTitle }
+                    </Link>
+                ) : eventTitle }
+            </DialogTitle>
             <DialogContent>
                 <Stack gap={ 1.5 } sx={ { pt: 1 } }>
                     { hours.map((value, index) => (
