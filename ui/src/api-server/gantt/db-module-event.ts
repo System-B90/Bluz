@@ -304,7 +304,9 @@ async function applyShuffleGroup(
             : [origin];
 
         // Fewer than two shuffles is not a group: drop the marker off every
-        // member and leave the events themselves alone.
+        // member and leave the events themselves alone - except that a single
+        // shuffle assigns this event to it, which is the only way to tag an
+        // event for one shuffle from this field.
         if (wanted.length < 2) {
             const ids = existing.map((member) => member.id);
             if (ids.length > 0) {
@@ -313,9 +315,18 @@ async function applyShuffleGroup(
                     .set({ groupId: null, updatedAt: new Date() })
                     .where(inArray(ganttEventsSchema.id, ids));
             }
+            if (wanted.length === 1) {
+                await tx
+                    .update(ganttEventsSchema)
+                    .set({ shuffles: wanted, updatedAt: new Date() })
+                    .where(eq(ganttEventsSchema.id, eventId));
+            }
             const refreshed = existing.map((member) => ({
                 ...member,
                 groupId: null,
+                ...(wanted.length === 1 && member.id === eventId
+                    ? { shuffles: wanted }
+                    : {}),
             }));
             return { members: refreshed, removedIds: [] };
         }
