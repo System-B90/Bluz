@@ -9,17 +9,24 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  * twice while the first one is still in flight.
  */
 
-const { updateSyllabus, getShuffleUsages, enqueueSnackbar, syllabus, apiGetClasses } = vi.hoisted(() => ({
+const { updateSyllabus, getShuffleUsages, applyShuffles, enqueueSnackbar, syllabus, apiGetClasses } = vi.hoisted(() => ({
+    applyShuffles: vi.fn(async () => ({ events: [], modules: [] })),
     apiGetClasses: vi.fn(async () => [] as Array<unknown>),
     updateSyllabus: vi.fn(async () => undefined),
     getShuffleUsages: vi.fn(),
     enqueueSnackbar: vi.fn(),
-    syllabus: { id: "s1", title: "סילבוס", modules: [], shuffles: [ "א", "ב" ] },
+    syllabus: {
+        id: "s1",
+        title: "סילבוס",
+        modules: [],
+        shuffles: [ "א", "ב" ],
+        shuffleHiveGroups: {} as Record<string, number>,
+    },
 }));
 
 vi.mock("notistack", () => ({ useSnackbar: () => ({ enqueueSnackbar }) }));
 vi.mock("@/api-client/gantt", () => ({
-    ganttApi: { getShuffleUsages, applyShuffles: vi.fn() },
+    ganttApi: { getShuffleUsages, applyShuffles },
 }));
 vi.mock("@/api-client/hive", () => ({ apiGetClasses }));
 vi.mock("@/components/gantt/state/hooks/UseSyllabus", () => ({
@@ -44,7 +51,10 @@ import {
 
 const SID = "s1" as GanttSyllabusId;
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+    vi.clearAllMocks();
+    syllabus.shuffleHiveGroups = {};
+});
 afterEach(cleanup);
 
 describe("ShufflesSection", () => {
@@ -125,6 +135,90 @@ describe("ShufflesSection", () => {
             }),
         );
         await waitFor(() => expect((button as HTMLButtonElement).disabled).toBe(false));
+    });
+});
+
+describe("ShufflesSection rename (#774)", () => {
+    const startRename = (name: string) =>
+        fireEvent.click(screen.getByRole("button", { name: `שינוי שם השאפל ${name}` }));
+    const renameField = (name: string) =>
+        screen.getByLabelText(`שם חדש לשאפל ${name}`);
+
+    it("renames a shuffle through the cascade endpoint", async () => {
+        render(<ShufflesSection syllabusId={SID} />);
+
+        startRename("א");
+        fireEvent.change(renameField("א"), { target: { value: " ג " } });
+        fireEvent.keyDown(renameField("א"), { key: "Enter" });
+
+        await waitFor(() =>
+            expect(applyShuffles).toHaveBeenCalledWith(
+                SID,
+                [ "ג", "ב" ],
+                undefined,
+                { א: "ג" },
+            ),
+        );
+    });
+
+    it("refuses to rename onto another existing shuffle", () => {
+        render(<ShufflesSection syllabusId={SID} />);
+
+        startRename("א");
+        fireEvent.change(renameField("א"), { target: { value: "ב" } });
+        fireEvent.keyDown(renameField("א"), { key: "Enter" });
+
+        expect(applyShuffles).not.toHaveBeenCalled();
+        expect(enqueueSnackbar).toHaveBeenCalledWith(
+            expect.stringMatching(/כבר קיים/),
+            expect.anything(),
+        );
+    });
+
+    it("regression: Escape or an unchanged name writes nothing", () => {
+        render(<ShufflesSection syllabusId={SID} />);
+
+        startRename("א");
+        fireEvent.change(renameField("א"), { target: { value: "ג" } });
+        fireEvent.keyDown(renameField("א"), { key: "Escape" });
+        startRename("ב");
+        fireEvent.keyDown(renameField("ב"), { key: "Enter" });
+
+        expect(applyShuffles).not.toHaveBeenCalled();
+        expect(updateSyllabus).not.toHaveBeenCalled();
+    });
+});
+
+describe("ShufflesSection Hive link (#774)", () => {
+    it("counts a shuffle linked to a differently-named group as in Hive", async () => {
+        syllabus.shuffleHiveGroups = { א: 9 };
+        apiGetClasses.mockResolvedValueOnce([
+            { id: 9, name: "שם אחר", description: "", display_name: "שם אחר" },
+        ]);
+        render(<ShufflesSection syllabusId={SID} />);
+
+        expect(await screen.findByText("Hive")).toBeTruthy();
+        expect(screen.getAllByText("לא ב-Hive")).toHaveLength(1);
+    });
+
+    it("regression: a link to a group gone from Hive shows as missing", async () => {
+        syllabus.shuffleHiveGroups = { א: 404 };
+        apiGetClasses.mockResolvedValueOnce([
+            { id: 1, name: "א", description: "", display_name: "א" },
+        ]);
+        render(<ShufflesSection syllabusId={SID} />);
+
+        expect(await screen.findAllByText("לא ב-Hive")).toHaveLength(2);
+    });
+
+    it("offers a Hive group picker per shuffle once Hive loads", async () => {
+        apiGetClasses.mockResolvedValueOnce([
+            { id: 1, name: "א", description: "", display_name: "א" },
+        ]);
+        render(<ShufflesSection syllabusId={SID} />);
+
+        expect(await screen.findByLabelText("קבוצת Hive של השאפל א")).toBeTruthy();
+        expect(screen.getByLabelText("קבוצת Hive של השאפל ב")).toBeTruthy();
     });
 });
 
