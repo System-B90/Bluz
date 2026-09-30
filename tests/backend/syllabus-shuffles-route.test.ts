@@ -110,6 +110,7 @@ describe("POST /api/gantt/syllabuses/[id]/shuffles", () => {
             "s1",
             [ "א" ],
             undefined,
+            undefined,
         );
     });
 
@@ -123,7 +124,7 @@ describe("POST /api/gantt/syllabuses/[id]/shuffles", () => {
             context(),
         );
 
-        expect(DbSyllabus.applyShuffles).toHaveBeenCalledWith("s1", [], undefined);
+        expect(DbSyllabus.applyShuffles).toHaveBeenCalledWith("s1", [], undefined, undefined);
     });
 
     it("forwards shuffle descriptions", async () => {
@@ -140,9 +141,34 @@ describe("POST /api/gantt/syllabuses/[id]/shuffles", () => {
             context(),
         );
 
-        expect(DbSyllabus.applyShuffles).toHaveBeenCalledWith("s1", [ "א" ], {
-            א: "תיאור",
-        });
+        expect(DbSyllabus.applyShuffles).toHaveBeenCalledWith(
+            "s1",
+            [ "א" ],
+            { א: "תיאור" },
+            undefined,
+        );
+    });
+
+    it("forwards shuffle renames (#774)", async () => {
+        vi.mocked(DbSyllabus.applyShuffles).mockResolvedValueOnce(
+            EMPTY as never,
+        );
+
+        await ShufflesRoute.POST(
+            request(
+                "",
+                "POST",
+                JSON.stringify({ renames: { א: "ב" }, shuffles: [ "ב" ] }),
+            ),
+            context(),
+        );
+
+        expect(DbSyllabus.applyShuffles).toHaveBeenCalledWith(
+            "s1",
+            [ "ב" ],
+            undefined,
+            { א: "ב" },
+        );
     });
 
     it("rejects an empty body, a malformed body and a non-string-array shuffles", async () => {
@@ -153,6 +179,7 @@ describe("POST /api/gantt/syllabuses/[id]/shuffles", () => {
             JSON.stringify({ shuffles: [ "א", 7 ] }),
             JSON.stringify({ descriptions: [ "x" ], shuffles: [ "א" ] }),
             JSON.stringify({ descriptions: { א: 7 }, shuffles: [ "א" ] }),
+            JSON.stringify({ renames: [ "x" ], shuffles: [ "א" ] }),
         ];
 
         for (const body of bad) {

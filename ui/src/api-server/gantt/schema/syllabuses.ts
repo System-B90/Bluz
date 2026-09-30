@@ -20,6 +20,12 @@ export const ganttSyllabusesSchema = pgTable("s", {
         .$type<Record<string, string>>()
         .notNull()
         .default({}),
+    // Shuffle name → explicitly linked Hive student-group id (#774). Names
+    // missing here fall back to the same-named Hive group.
+    shuffleHiveGroups: jsonb("shuffle_hive_groups")
+        .$type<Record<string, number>>()
+        .notNull()
+        .default({}),
     // Courses (מסלולים) live in MongoDB, so this is a plain id list rather
     // than a junction table (#702).
     courseIds: text("course_ids").array().notNull().default([]),

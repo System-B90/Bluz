@@ -45,7 +45,8 @@ export const GET = withApi(
 
 /**
  * Applies the new shuffle list, cascading removals onto modules and events.
- * An optional `descriptions` (name → text) replaces the shuffle descriptions.
+ * An optional `descriptions` (name → text) replaces the shuffle descriptions;
+ * an optional `renames` (old → new name) rewrites the tags that use them (#774).
  */
 export const POST = withApi(
     async (request: NextRequest, context: RouteContext) => {
@@ -55,8 +56,9 @@ export const POST = withApi(
         const body = await request.text();
         if (!body) throw new ClientApiError("Payload cannot be empty.");
 
-        const { descriptions, shuffles } = parseJsonBody<{
+        const { descriptions, renames, shuffles } = parseJsonBody<{
             descriptions?: unknown;
+            renames?: unknown;
             shuffles: unknown;
         }>(body);
         if (!isShuffleNameList(shuffles))
@@ -65,9 +67,12 @@ export const POST = withApi(
             throw new ClientApiError(
                 "descriptions must be an object of strings.",
             );
+        // Same name → name string record as descriptions.
+        if (renames !== undefined && !isShuffleDescriptions(renames))
+            throw new ClientApiError("renames must be an object of strings.");
 
         return ApiSuccess(
-            await DbSyllabus.applyShuffles(id, shuffles, descriptions),
+            await DbSyllabus.applyShuffles(id, shuffles, descriptions, renames),
         );
     },
 );

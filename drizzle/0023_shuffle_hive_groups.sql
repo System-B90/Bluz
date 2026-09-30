@@ -1,0 +1,1 @@
+ALTER TABLE "s" ADD COLUMN "shuffle_hive_groups" jsonb DEFAULT '{}'::jsonb NOT NULL;

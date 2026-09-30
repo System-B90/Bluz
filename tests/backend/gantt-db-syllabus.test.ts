@@ -273,6 +273,43 @@ describe("DbSyllabus.applyShuffles", () => {
     });
 });
 
+describe("DbSyllabus.applyShuffles renames (#774)", () => {
+    beforeEach(() => vi.clearAllMocks());
+
+    it("rewrites a renamed shuffle on the modules and events using it", async () => {
+        const { updates } = shuffleTx({
+            current: [ "א", "ב" ],
+            modules: [ { id: "m1", shuffles: [ "א", "ב" ], title: "מודול" } ],
+            events: [ { id: "e1", shuffles: [ "א" ], title: "אירוע" } ],
+        });
+
+        await DbSyllabus.applyShuffles(SID, [ "ג", "ב" ], undefined, { א: "ג" });
+
+        expect(updates[ 0 ].shuffles).toEqual([ "ג", "ב" ]);
+        expect(updates[ 1 ].shuffles).toEqual([ "ג" ]);
+        expect(updates[ 2 ].shuffles).toEqual([ "ג", "ב" ]);
+    });
+
+    it("moves the renamed shuffle's description to its new name", async () => {
+        const { updates } = shuffleTx({
+            current: [ "א" ],
+            descriptions: { א: "תיאור" },
+        });
+
+        await DbSyllabus.applyShuffles(SID, [ "ג" ], undefined, { א: "ג" });
+
+        expect(updates.at(-1)?.shuffleDescriptions).toEqual({ ג: "תיאור" });
+    });
+
+    it("rejects a rename whose new name is missing from the list", async () => {
+        shuffleTx({ current: [ "א" ] });
+
+        await expect(
+            DbSyllabus.applyShuffles(SID, [ "א" ], undefined, { א: "ג" }),
+        ).rejects.toBeInstanceOf(ClientApiError);
+    });
+});
+
 describe("DbSyllabus.updateItem", () => {
     beforeEach(() => vi.clearAllMocks());
 
