@@ -1,3 +1,4 @@
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
@@ -26,6 +27,12 @@ const STATUS_COLOR: Record<CapacityStatus, string> = {
     ok: "primary.main",
     warning: "warning.main",
 };
+
+type IssueSeverity = "info" | "warning";
+
+/** Unequal path time is worth knowing about; misaligned shuffles are a real problem. */
+export const issueSeverity = (issue: StudentLoadIssue): IssueSeverity =>
+    issue.kind === "paths-unequal" ? "info" : "warning";
 
 type PathGroup = { labels: Array<string>; load: PathDayLoad };
 
@@ -102,7 +109,7 @@ function PathRow({
 }
 
 /** One shuffle's or path's time on the day, against the longest one. */
-function ComparisonRow({ label, max, minutes }: { label: string; max: number; minutes: number })
+function ComparisonRow({ label, max, minutes, severity }: { label: string; max: number; minutes: number; severity: IssueSeverity })
 {
     const short = max - minutes;
     return (
@@ -113,14 +120,14 @@ function ComparisonRow({ label, max, minutes }: { label: string; max: number; mi
                     sx={{
                         width: `${max > 0 ? (minutes / max) * 100 : 0}%`,
                         height: "100%",
-                        bgcolor: short > 0 ? "warning.main" : "text.secondary",
+                        bgcolor: short > 0 ? `${severity}.main` : "text.secondary",
                     }}
                 />
             </Box>
             <Typography sx={{ fontVariantNumeric: "tabular-nums", textAlign: "end" }} variant="body2">
                 {formatHoursLabel(minutes)}
                 {short > 0 ? (
-                    <Box color="warning.main" component="span" fontWeight={700}>
+                    <Box color={`${severity}.main`} component="span" fontWeight={700}>
                         {` (−${formatHours(short)})`}
                     </Box>
                 ) : null}
@@ -142,6 +149,8 @@ function IssueCard({
     syllabusTitle: (syllabusId: string) => string;
 })
 {
+    const severity = issueSeverity(issue);
+    const SeverityIcon = severity === "info" ? InfoOutlinedIcon : WarningAmberIcon;
     const labelById = new Map(paths.map((path) => [path.id, path.label]));
     const rows = issue.kind === "shuffles-misaligned"
         ? Object.entries(issue.minutesByShuffle).map(([label, minutes]) => ({ label, minutes }))
@@ -161,12 +170,12 @@ function IssueCard({
                 p: 1,
                 borderRadius: 1.5,
                 border: 1,
-                borderColor: "warning.main",
-                bgcolor: (theme) => `rgba(${theme.vars.palette.warning.mainChannel} / 0.08)`,
+                borderColor: `${severity}.main`,
+                bgcolor: (theme) => `rgba(${theme.vars.palette[severity].mainChannel} / 0.08)`,
             }}
         >
             <Stack alignItems="center" direction="row" gap={0.75}>
-                <WarningAmberIcon color="warning" sx={{ fontSize: 18 }} />
+                <SeverityIcon color={severity} sx={{ fontSize: 18 }} />
                 <Typography fontWeight={700} variant="subtitle2">{title}</Typography>
             </Stack>
             <Typography color="text.secondary" sx={{ display: "block", mt: 0.25, mb: 1 }} variant="caption">
@@ -174,7 +183,7 @@ function IssueCard({
             </Typography>
             <Stack spacing={0.75}>
                 {rows.map((row) => (
-                    <ComparisonRow key={row.label} label={row.label} max={max} minutes={row.minutes} />
+                    <ComparisonRow key={row.label} label={row.label} max={max} minutes={row.minutes} severity={severity} />
                 ))}
             </Stack>
         </Box>
@@ -217,7 +226,7 @@ export function StudentLoadCard({
             {load && load.issues.length > 0 ? (
                 <>
                     <Divider />
-                    <Section title={`בעיות (${load.issues.length})`}>
+                    <Section title={`${load.issues.every((issue) => issueSeverity(issue) === "info") ? "מידע" : "בעיות"} (${load.issues.length})`}>
                         {load.issues.map((issue) => (
                             <IssueCard
                                 issue={issue}
