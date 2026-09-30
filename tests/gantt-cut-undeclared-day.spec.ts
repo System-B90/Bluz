@@ -6,11 +6,12 @@ import { expect, test } from "./fixtures";
  * Regression: cut crashed with "Cannot read properties of undefined (reading
  * 'loadMinutes')".
  *
- * New days have no working window (`totalWorkingMinutes` 0, no end time). A
- * constrained event on such a day, with an allowed day elsewhere in the week,
- * made the constraint solver throw and the cut fail with a 500. The seeded
- * e2e curriculum declares a window on every day, so the suite never hit it;
- * this spec builds the failing shape from scratch.
+ * A day with no working window (`totalWorkingMinutes` 0, no end time) is
+ * Saturday by default, or any day whose hours were cleared. A constrained
+ * event on such a day, with an allowed day elsewhere in the week, made the
+ * constraint solver throw and the cut fail with a 500. The seeded e2e
+ * curriculum never puts a constrained event on one, so the suite never hit
+ * it; this spec builds the failing shape from scratch.
  */
 
 const SUITE_TAG = "e2e-cut-undeclared";
@@ -40,12 +41,17 @@ type Fixture = {
 };
 
 /**
- * A live curriculum with one week. Only the days in `declaredDays` get a
- * working window; one event sits on Sunday and must move to `allowedDay`.
+ * A live curriculum with one week (new weeks give every day but Saturday a
+ * window). The days in `undeclaredDays` have their window cleared; one event
+ * sits on `sourceDay` and must move to `allowedDay`.
  */
 async function buildFixture(
     request: APIRequestContext,
-    { declaredDays, allowedDay }: { declaredDays: Array<number>; allowedDay: number },
+    {
+        undeclaredDays,
+        allowedDay,
+        sourceDay = 0,
+    }: { undeclaredDays: Array<number>; allowedDay: number; sourceDay?: number },
 ): Promise<Fixture> {
     const curriculum = await apiJson<{ id: string }>(
         await request.post("/api/gantt/curriculums", {
@@ -71,10 +77,10 @@ async function buildFixture(
         .sort((a, b) => a.day.dayIndex - b.day.dayIndex)
         .map((link) => link.day.id);
 
-    for (const dayIndex of declaredDays) {
+    for (const dayIndex of undeclaredDays) {
         await apiJson(
             await request.patch(`/api/gantt/days/${dayIds[dayIndex]}`, {
-                data: { dayEndTime: "16:00" },
+                data: { dayEndTime: null, totalWorkingMinutes: 0 },
             }),
         );
     }
@@ -119,7 +125,7 @@ async function buildFixture(
     );
     await apiJson(
         await request.post(`/api/gantt/curriculums/${curriculum.id}/mappings`, {
-            data: { dayId: dayIds[0], eventId: event.id, moduleId: module.id, sortOrder: 0 },
+            data: { dayId: dayIds[sourceDay], eventId: event.id, moduleId: module.id, sortOrder: 0 },
         }),
     );
     await apiJson(
@@ -173,7 +179,7 @@ test.describe("Cut with a constrained event on an undeclared day", () => {
     test.describe.configure({ mode: "serial", timeout: 120_000 });
 
     test("preview does not crash", async ({ request }) => {
-        const fixture = await buildFixture(request, { declaredDays: [1, 2, 3, 4], allowedDay: 2 });
+        const fixture = await buildFixture(request, { undeclaredDays: [0], allowedDay: 2 });
         try {
             const response = await request.get(`/api/gantt/curriculums/${fixture.curriculumId}/cut/preview`);
             expect(response.status()).toBe(200);
@@ -184,7 +190,7 @@ test.describe("Cut with a constrained event on an undeclared day", () => {
     });
 
     test("plan proposes moving the event to the allowed day", async ({ request }) => {
-        const fixture = await buildFixture(request, { declaredDays: [1, 2, 3, 4], allowedDay: 2 });
+        const fixture = await buildFixture(request, { undeclaredDays: [0], allowedDay: 2 });
         try {
             const response = await plan(request, fixture);
             expect(response.status()).toBe(200);
@@ -204,7 +210,7 @@ test.describe("Cut with a constrained event on an undeclared day", () => {
     });
 
     test("plan with the move accepted does not crash", async ({ request }) => {
-        const fixture = await buildFixture(request, { declaredDays: [1, 2, 3, 4], allowedDay: 2 });
+        const fixture = await buildFixture(request, { undeclaredDays: [0], allowedDay: 2 });
         try {
             const response = await plan(request, fixture, { acceptedConstraintMoves: [fixture.eventId] });
             expect(response.status()).toBe(200);
@@ -215,7 +221,7 @@ test.describe("Cut with a constrained event on an undeclared day", () => {
     });
 
     test("the cut commits with the move accepted", async ({ request }) => {
-        const fixture = await buildFixture(request, { declaredDays: [1, 2, 3, 4], allowedDay: 2 });
+        const fixture = await buildFixture(request, { undeclaredDays: [0], allowedDay: 2 });
         try {
             const response = await request.post(`/api/gantt/curriculums/${fixture.curriculumId}/cut`, {
                 data: { acceptedConstraintMoves: [fixture.eventId] },
@@ -228,13 +234,31 @@ test.describe("Cut with a constrained event on an undeclared day", () => {
     });
 
     test("with no declared day at all, plan reports instead of crashing", async ({ request }) => {
-        const fixture = await buildFixture(request, { declaredDays: [], allowedDay: 2 });
+        const fixture = await buildFixture(request, { undeclaredDays: [0, 1, 2, 3, 4, 5, 6], allowedDay: 2 });
         try {
             const response = await plan(request, fixture);
             expect(response.status()).toBe(200);
             const body = (await response.json()) as Envelope<{ ok: boolean; report: PlanReport }>;
             expect(body.data.report.constraintProposals).toEqual([]);
             expect(body.data.report.constraintViolations).toHaveLength(1);
+        } finally {
+            await teardown(request, fixture);
+        }
+    });
+    test("a constrained event on Saturday (no window by default) moves off it", async ({ request }) => {
+        const fixture = await buildFixture(request, { undeclaredDays: [], allowedDay: 2, sourceDay: 6 });
+        try {
+            const response = await plan(request, fixture);
+            expect(response.status()).toBe(200);
+            const body = (await response.json()) as Envelope<{ ok: boolean; report: PlanReport }>;
+            expect(body.status).toBe(0);
+            expect(body.data.report.constraintProposals).toEqual([
+                expect.objectContaining({
+                    eventId: fixture.eventId,
+                    fromDayId: fixture.dayIds[6],
+                    toDayId: fixture.dayIds[2],
+                }),
+            ]);
         } finally {
             await teardown(request, fixture);
         }
