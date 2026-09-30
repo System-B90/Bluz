@@ -22,7 +22,7 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { Command, useCommands } from "@system-b90/command-palette";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 
 import { COMMAND_GROUPS } from "@/components/app-commands/labels";
 
@@ -69,6 +69,17 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({
 }) =>
 {
     const theme = useTheme();
+
+    // Filtering the whole tree per keystroke is heavy: hold the text locally and
+    // apply it on blur/Enter; external changes to the query flow back in.
+    const [ searchDraft, setSearchDraft ] = useState(searchQuery);
+    const [ syncedQuery, setSyncedQuery ] = useState(searchQuery);
+    if (syncedQuery !== searchQuery)
+    {
+        setSyncedQuery(searchQuery);
+        setSearchDraft(searchQuery);
+    }
+    const commitSearch = () => onSearchChange(searchDraft);
 
     // Palette mirrors of the toolbar controls, calling the same setters.
     const commands = useMemo<Array<Command>>(() => [
@@ -167,7 +178,9 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({
                 {/* First-column search: filter syllabus/module/event rows */ }
                 <TextField
                     aria-label="חיפוש בסילבוסים, מודולים ואירועים"
-                    onChange={ (ev) => onSearchChange(ev.target.value) }
+                    onBlur={ commitSearch }
+                    onChange={ (ev) => setSearchDraft(ev.target.value) }
+                    onKeyDown={ (ev) => { if (ev.key === "Enter") commitSearch(); } }
                     placeholder="חיפוש..."
                     size="small"
                     slotProps={ {
@@ -177,12 +190,16 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({
                                     <SearchIcon fontSize="small" />
                                 </InputAdornment>
                             ),
-                            endAdornment: searchQuery ? (
+                            endAdornment: searchDraft ? (
                                 <InputAdornment position="end">
                                     <IconButton
                                         aria-label="ניקוי חיפוש"
                                         edge="end"
-                                        onClick={ () => onSearchChange("") }
+                                        onClick={ () =>
+                                        {
+                                            setSearchDraft("");
+                                            onSearchChange("");
+                                        } }
                                         size="small"
                                     >
                                         <ClearIcon fontSize="small" />
@@ -192,7 +209,7 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({
                         },
                     } }
                     sx={ { minWidth: 200 } }
-                    value={ searchQuery }
+                    value={ searchDraft }
                 />
 
                 {/* View mode: weekly / daily */ }
