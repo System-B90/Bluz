@@ -19,6 +19,7 @@ const COURSE_FIELDS = [
     "parentId",
     "instructorIds",
     "description",
+    "hiveClassId",
 ] as const;
 
 async function getDbCourses(

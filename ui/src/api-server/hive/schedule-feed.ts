@@ -13,6 +13,7 @@ import {
     DatabaseController,
     getDatabaseController,
 } from "@/api-server/mongo-db-controller";
+import { findCourseHiveGroup } from "@/api-shared/hive-groups";
 import { CourseId } from "@/api-shared/types/course";
 import { DbEventDocument, eventTypeToHebrew } from "@/api-shared/types/event";
 import { HiveLessonId } from "@/api-shared/types/hive";
@@ -192,12 +193,13 @@ async function loadHiveLookup(
 
     const subjectNames = new Map(subjects.map((s) => [s.id, s.name]));
     const roomNames = new Map(rooms.map((r) => [r.id, r.name]));
-    // A Bluz course is a shuffle, 1:1 with a Hive student group by name.
-    const emailByGroupName = new Map(
-        groups.filter((g) => g.email).map((g) => [g.name, g.email!]),
-    );
+    // A Bluz course is a shuffle, 1:1 with a Hive student group: its linked
+    // one, else the same-named one (#774).
     const emailByCourse = new Map(
-        courses.map((c) => [c.id, emailByGroupName.get(c.name)]),
+        courses.map((c) => [
+            c.id,
+            findCourseHiveGroup(c, groups)?.email ?? undefined,
+        ]),
     );
     const lessons = new Map(
         lessonsByModule

@@ -4,7 +4,8 @@ import {
     databaseController,
     DatabaseController,
 } from "@/api-server/mongo-db-controller";
-import { CourseId } from "@/api-shared/types/course";
+import { findCourseHiveGroup } from "@/api-shared/hive-groups";
+import { Course, CourseId } from "@/api-shared/types/course";
 import {
     DbEventDocument,
     eventOpensHiveQueue,
@@ -95,26 +96,26 @@ export function planLessonRules(
  * Resolves an event's shuffle→queue mapping into Hive ids.
  *
  * A Bluz course *is* a shuffle and a shuffle is 1:1 with a Hive student group,
- * matched by name — the same rule the curriculum cut uses when it creates
- * courses for shuffles. A course with no matching Hive group contributes
+ * its explicitly linked group, else the same-named one (#774). A course with no matching Hive group contributes
  * nothing rather than failing the whole sync.
  *
  * @param event The event carrying `hiveQueues`.
- * @param courseNameById Bluz course id → course (shuffle) name.
+ * @param courseById Bluz course id → course (shuffle).
  * @param hiveClasses Hive student groups.
  * @returns Hive student-group id → Hive queue id.
  */
 export function resolveDesiredRules(
     event: DbEventDocument,
-    courseNameById: Map<CourseId, string>,
+    courseById: Map<CourseId, Pick<Course, "hiveClassId" | "name">>,
     hiveClasses: Array<Class>,
 ): Map<number, number> {
-    const classIdByName = new Map(hiveClasses.map((c) => [c.name, c.id]));
     const desired = new Map<number, number>();
 
     for (const courseId of eventQueueCourseIds(event)) {
-        const name = courseNameById.get(courseId);
-        const classId = name === undefined ? undefined : classIdByName.get(name);
+        const course = courseById.get(courseId);
+        const classId = course
+            ? findCourseHiveGroup(course, hiveClasses)?.id
+            : undefined;
         const queueId = event.hiveQueues?.[courseId];
         if (classId !== undefined && queueId) desired.set(classId, queueId);
     }
@@ -150,10 +151,10 @@ export async function reconcileEventLesson(
     }
 
     const courses = await controller.courses.find({}).toArray();
-    const courseNameById = new Map(courses.map((c) => [c.id, c.name]));
+    const courseById = new Map(courses.map((c) => [c.id, c]));
     const desired = resolveDesiredRules(
         event,
-        courseNameById,
+        courseById,
         await client.getClasses(),
     );
     if (desired.size === 0) {
