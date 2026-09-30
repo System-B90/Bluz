@@ -111,7 +111,11 @@ export async function updateCurriculumModuleDayMapping(
     moduleId: GanttModuleId,
     eventId: GanttEventId | null,
     oldMapping: { dayId: GanttDayId },
-    newValues: { dayId?: GanttDayId; sortOrder?: number },
+    newValues: {
+        dayId?: GanttDayId;
+        sortOrder?: number;
+        weekSplitMinutes?: Array<number>;
+    },
 ) {
     return await postgresDb
         .update(ganttCurriculumEventDayMappingsSchema)

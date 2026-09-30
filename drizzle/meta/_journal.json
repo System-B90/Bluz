@@ -169,6 +169,13 @@
       "when": 1790776166890,
       "tag": "0023_shuffle_hive_groups",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790777039770,
+      "tag": "0024_split_across_weeks",
+      "breakpoints": true
     }
   ]
 }

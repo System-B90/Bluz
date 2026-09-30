@@ -41,6 +41,12 @@ export const ganttCurriculumEventDayMappingsSchema = pgTable(
             .notNull()
             .references(() => ganttDaysSchema.id, { onDelete: "cascade" }),
         sortOrder: real("s").notNull().default(0),
+        // Minutes per consecutive week, starting at the mapped day's week, for
+        // an event that splits across weeks (#768). Empty ⇒ runs whole.
+        weekSplitMinutes: integer("week_split_minutes")
+            .array()
+            .notNull()
+            .default([]),
         createdAt: timestamp("ca").defaultNow().notNull(),
         updatedAt: timestamp("ua").defaultNow().notNull(),
     },

@@ -83,6 +83,7 @@ export async function materializeRecurrenceOccurrence(data: {
             isCritical: sourceEvent.isCritical,
             isPaWindow: sourceEvent.isPaWindow,
             splitAcrossBreaks: sourceEvent.splitAcrossBreaks,
+            splitAcrossWeeks: sourceEvent.splitAcrossWeeks,
             comment: sourceEvent.comment,
             shuffles: sourceEvent.shuffles,
             // Materializing one occurrence detaches it from the recurrence,

@@ -47,6 +47,8 @@ export const ganttEventsSchema = pgTable("e", {
     isCritical: boolean("is_critical").notNull().default(false),
     isPaWindow: boolean("is_pa_window").notNull().default(false),
     splitAcrossBreaks: boolean("split_across_breaks").notNull().default(false),
+    // May run its hours over consecutive weeks, per its mapping's split (#768).
+    splitAcrossWeeks: boolean("split_across_weeks").notNull().default(false),
     comment: text("comment"),
     // Shuffle names this event applies to. Empty ⇒ all shuffles.
     shuffles: text("shuffles").array().notNull().default([]),

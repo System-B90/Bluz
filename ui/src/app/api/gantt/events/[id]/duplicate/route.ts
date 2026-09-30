@@ -51,6 +51,7 @@ export const POST = withApi(
             isCritical: originalEvent.isCritical,
             isPaWindow: originalEvent.isPaWindow,
             splitAcrossBreaks: originalEvent.splitAcrossBreaks,
+            splitAcrossWeeks: originalEvent.splitAcrossWeeks,
             comment: originalEvent.comment,
             shuffles: originalEvent.shuffles,
             // A duplicate is a new lesson, not another shuffle's copy of the
