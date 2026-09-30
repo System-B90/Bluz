@@ -162,6 +162,13 @@
       "when": 1790340431900,
       "tag": "0022_sticky_reavers",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1790776166890,
+      "tag": "0023_shuffle_hive_groups",
+      "breakpoints": true
     }
   ]
 }

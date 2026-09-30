@@ -71,3 +71,83 @@ export function isShuffleDescriptions(
         Object.values(descriptions).every((value) => typeof value === "string")
     );
 }
+
+/** Old shuffle name → new name, applied to the syllabus and every tag (#774). */
+export type ShuffleRenames = Record<string, string>;
+
+/**
+ * Normalizes a rename map, dropping blank or no-op entries so "renamed to
+ * itself" never cascades a write.
+ */
+export function normalizeShuffleRenames(
+    renames: ShuffleRenames | undefined,
+): ShuffleRenames {
+    const result: ShuffleRenames = {};
+    for (const [rawFrom, rawTo] of Object.entries(renames ?? {})) {
+        const from = normalizeShuffleName(rawFrom);
+        const to = normalizeShuffleName(rawTo);
+        if (from && to && from !== to) result[from] = to;
+    }
+    return result;
+}
+
+/**
+ * A module/event's tags after a shuffle edit: removed names dropped, renamed
+ * ones rewritten. Shared by the server cascade and the client's local mirror.
+ */
+export function retagShuffles(
+    tags: Array<string>,
+    removed: Array<string>,
+    renames: ShuffleRenames,
+): Array<string> {
+    return normalizeShuffleNames(
+        tags
+            .filter((name) => !removed.includes(name))
+            .map((name) => renames[name] ?? name),
+    );
+}
+
+/** Moves each renamed shuffle's entry in a name-keyed record to its new name. */
+export function renameShuffleKeys<T>(
+    record: Record<string, T>,
+    renames: ShuffleRenames,
+): Record<string, T> {
+    const result: Record<string, T> = {};
+    for (const [name, value] of Object.entries(record)) {
+        result[renames[name] ?? name] = value;
+    }
+    return result;
+}
+
+/**
+ * Shuffle name → the Hive student-group id it is explicitly linked to (#774).
+ * A shuffle absent here falls back to the same-named Hive group.
+ */
+export type ShuffleHiveGroups = Record<string, number>;
+
+/** Keeps only links of `names` whose target is a positive integer id. */
+export function normalizeShuffleHiveGroups(
+    links: ShuffleHiveGroups | undefined,
+    names: Array<string>,
+): ShuffleHiveGroups {
+    const result: ShuffleHiveGroups = {};
+    for (const [rawName, groupId] of Object.entries(links ?? {})) {
+        const name = normalizeShuffleName(rawName);
+        if (names.includes(name) && Number.isInteger(groupId) && groupId > 0) {
+            result[name] = groupId;
+        }
+    }
+    return result;
+}
+
+/** True when `links` is a plain string→number record. */
+export function isShuffleHiveGroups(
+    links: unknown,
+): links is ShuffleHiveGroups {
+    return (
+        typeof links === "object" &&
+        links !== null &&
+        !Array.isArray(links) &&
+        Object.values(links).every((value) => typeof value === "number")
+    );
+}

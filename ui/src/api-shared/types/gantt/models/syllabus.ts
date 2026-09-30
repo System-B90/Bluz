@@ -1,4 +1,7 @@
-import { ShuffleDescriptions } from "@/api-shared/gantt/shuffle-names";
+import {
+    ShuffleDescriptions,
+    ShuffleHiveGroups,
+} from "@/api-shared/gantt/shuffle-names";
 import { CourseId } from "@/api-shared/types/course";
 import { GanttModuleId } from "@/api-shared/types/gantt/models/module";
 import { BaseGantItem } from "@/api-shared/types/gantt/models/shared";
@@ -19,6 +22,11 @@ export type GanttSyllabus = {
      * mirrors that group's staff-only description (max 100 chars).
      */
     shuffleDescriptions?: ShuffleDescriptions;
+    /**
+     * Shuffle name → explicitly linked Hive student-group id (#774). A shuffle
+     * without an entry matches the Hive group with its exact name.
+     */
+    shuffleHiveGroups?: ShuffleHiveGroups;
     /** Courses (מסלולים) this syllabus belongs to. */
     courseIds?: Array<CourseId>;
     /** Hive ids of the אחראי מקצוע instructors. */

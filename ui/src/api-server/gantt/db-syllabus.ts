@@ -14,9 +14,15 @@ import { M2E_ORDER, S2M_ORDER } from "@/api-server/gantt/sort-order";
 import { ClientApiError } from "@/api-shared/errors";
 import {
     isShuffleDescriptions,
+    isShuffleHiveGroups,
     normalizeShuffleDescriptions,
+    normalizeShuffleHiveGroups,
     normalizeShuffleNames,
+    normalizeShuffleRenames,
+    renameShuffleKeys,
+    retagShuffles,
     ShuffleDescriptions,
+    ShuffleRenames,
 } from "@/api-shared/gantt/shuffle-names";
 import { ApiSyllabus } from "@/api-shared/types/gantt/api-layer";
 import { CreateGanttSyllabusPayload } from "@/api-shared/types/gantt/create-payloads";
@@ -233,6 +239,7 @@ async function syllabusModuleIds(
 
 type SyllabusShuffles = {
     descriptions: ShuffleDescriptions;
+    hiveGroups: Record<string, number>;
     names: Array<string>;
 };
 
@@ -251,6 +258,7 @@ async function readShuffles(
     const [current] = await executor
         .select({
             descriptions: ganttSyllabusesSchema.shuffleDescriptions,
+            hiveGroups: ganttSyllabusesSchema.shuffleHiveGroups,
             names: ganttSyllabusesSchema.shuffles,
         })
         .from(ganttSyllabusesSchema)
@@ -263,6 +271,7 @@ async function readShuffles(
 
     return {
         descriptions: current.descriptions ?? {},
+        hiveGroups: current.hiveGroups ?? {},
         names: current.names ?? [],
     };
 }
@@ -277,20 +286,32 @@ function removedShuffles(
 
 /**
  * Replaces the syllabus' shuffle list, cascading every removed name off the
- * modules and events that carry it (#485).
+ * modules and events that carry it (#485), and every renamed one onto them
+ * (#774).
  *
  * Without the cascade the child keeps a dangling name and the UI only offers
  * to clear it once the user retypes the deleted shuffle on the syllabus — so
  * the caller confirms first (see `ShufflesSection`) and this applies both
- * sides in one transaction. Descriptions of removed names go with them;
- * `requestedDescriptions`, when given, replaces the rest.
+ * sides in one transaction. Descriptions of removed names go with them and
+ * renamed ones follow their shuffle; `requestedDescriptions`, when given,
+ * replaces the rest.
+ *
+ * @param renames Old name → new name. Each new name must be in `requested`.
+ * @returns Every module and event whose tags were rewritten, as they were.
  */
 async function applyShuffles(
     id: GanttSyllabusId,
     requested: Array<string>,
     requestedDescriptions?: ShuffleDescriptions,
+    requestedRenames?: ShuffleRenames,
 ): Promise<ShuffleUsages> {
     const shuffles = normalizeShuffleNames(requested);
+    const renames = normalizeShuffleRenames(requestedRenames);
+    for (const to of Object.values(renames)) {
+        if (!shuffles.includes(to)) {
+            throw new ClientApiError(`השם החדש "${to}" חסר ברשימת השאפלים.`);
+        }
+    }
 
     // Reading the current shuffles and their usages OUTSIDE the transaction
     // was a TOCTOU window: a concurrent edit between the read and the write
@@ -299,19 +320,33 @@ async function applyShuffles(
     // writes they inform.
     return await postgresDb.transaction(async (tx) => {
         const current = await readShuffles(id, tx);
-        const removed = removedShuffles(current.names, shuffles);
-        const usages = await findShuffleUsages(id, removed, tx);
+        const renamed = Object.keys(renames).filter((name) =>
+            current.names.includes(name),
+        );
+        const removed = removedShuffles(current.names, shuffles).filter(
+            (name) => !renamed.includes(name),
+        );
+        const usages = await findShuffleUsages(
+            id,
+            [...removed, ...renamed],
+            tx,
+        );
         const shuffleDescriptions = normalizeShuffleDescriptions(
-            requestedDescriptions ?? current.descriptions,
+            requestedDescriptions ??
+                renameShuffleKeys(current.descriptions, renames),
             shuffles,
         );
-        const strip = (names: Array<string>) =>
-            names.filter((name) => !removed.includes(name));
+        const shuffleHiveGroups = normalizeShuffleHiveGroups(
+            renameShuffleKeys(current.hiveGroups, renames),
+            shuffles,
+        );
+        const retag = (names: Array<string>) =>
+            retagShuffles(names, removed, renames);
         for (const usedModule of usages.modules) {
             await tx
                 .update(ganttModulesSchema)
                 .set({
-                    shuffles: strip(usedModule.shuffles),
+                    shuffles: retag(usedModule.shuffles),
                     updatedAt: new Date(),
                 })
                 .where(eq(ganttModulesSchema.id, usedModule.id));
@@ -320,13 +355,18 @@ async function applyShuffles(
         for (const event of usages.events) {
             await tx
                 .update(ganttEventsSchema)
-                .set({ shuffles: strip(event.shuffles), updatedAt: new Date() })
+                .set({ shuffles: retag(event.shuffles), updatedAt: new Date() })
                 .where(eq(ganttEventsSchema.id, event.id));
         }
 
         await tx
             .update(ganttSyllabusesSchema)
-            .set({ shuffles, shuffleDescriptions, updatedAt: new Date() })
+            .set({
+                shuffles,
+                shuffleDescriptions,
+                shuffleHiveGroups,
+                updatedAt: new Date(),
+            })
             .where(eq(ganttSyllabusesSchema.id, id));
 
         return usages;
@@ -343,7 +383,8 @@ async function updateSyllabus(
 ): Promise<GanttSyllabus> {
     if (
         updateData.shuffles === undefined &&
-        updateData.shuffleDescriptions === undefined
+        updateData.shuffleDescriptions === undefined &&
+        updateData.shuffleHiveGroups === undefined
     ) {
         return await basicOperations.updateItem(id, updateData);
     }
@@ -352,6 +393,12 @@ async function updateSyllabus(
         !isShuffleDescriptions(updateData.shuffleDescriptions)
     ) {
         throw new ClientApiError("shuffleDescriptions must map names to text.");
+    }
+    if (
+        updateData.shuffleHiveGroups !== undefined &&
+        !isShuffleHiveGroups(updateData.shuffleHiveGroups)
+    ) {
+        throw new ClientApiError("shuffleHiveGroups must map names to ids.");
     }
 
     // The guard reads what the update then depends on, so the read and the
@@ -383,7 +430,15 @@ async function updateSyllabus(
 
         return await basicOperations.updateItem(
             id,
-            { ...updateData, shuffles, shuffleDescriptions },
+            {
+                ...updateData,
+                shuffles,
+                shuffleDescriptions,
+                shuffleHiveGroups: normalizeShuffleHiveGroups(
+                    updateData.shuffleHiveGroups ?? current.hiveGroups,
+                    shuffles,
+                ),
+            },
             tx,
         );
     });
