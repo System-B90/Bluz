@@ -31,7 +31,7 @@ export const useGanttView = (curriculumId: string) =>
         moveMapping,
         removeMapping,
     } = useGanttMappings();
-    const { deleteOccurrence, state: recurrenceExceptionState } = useGanttRecurrenceExceptions();
+    const { deleteOccurrence } = useGanttRecurrenceExceptions();
     const {
         state: { constraints },
     } = useGanttConstraints();
@@ -124,14 +124,7 @@ export const useGanttView = (curriculumId: string) =>
         curriculumId,
     );
 
-    const { eventSpans, scheduledMinutesByDay } = useGanttScheduling({
-        curriculumMappings,
-        dateOfDayId,
-        eventMappings,
-        linearDays,
-        recurrenceExceptionState,
-        state,
-    });
+    const { eventSpans, scheduledMinutesByDay, studentLoadByDay, studentPaths } = useGanttScheduling({ curriculum, state });
 
     const { unallocatedBySyllabus, unallocatedCount } = useGanttUnallocated({
         curriculum,
@@ -188,6 +181,8 @@ export const useGanttView = (curriculumId: string) =>
             curriculumMappings,
             eventSpans,
             scheduledMinutesByDay,
+            studentLoadByDay,
+            studentPaths,
             violations,
             dayCellWidth,
             zoomedWeekId,
@@ -223,6 +218,8 @@ export const useGanttView = (curriculumId: string) =>
             curriculumMappings,
             eventSpans,
             scheduledMinutesByDay,
+            studentLoadByDay,
+            studentPaths,
             violations,
             dayCellWidth,
             zoomedWeekId,

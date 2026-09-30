@@ -14,7 +14,6 @@ import { KeyboardEvent, useCallback, useEffect, useMemo, useState } from "react"
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
 import {
     GanttCurriculum,
-    GanttCurriculumModuleDayMapping,
     GanttDayId,
     GanttDayIndex,
     GanttWeek,
@@ -22,24 +21,22 @@ import {
 } from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import {
-    computeEventDaySpans,
     formatHoursLabel,
     formatWeekDateRange,
     getCapacityStatus,
-    getSpilloverMinutesByDay,
     getWeekDateRange,
-    getWeekScheduledMinutes,
     getWeekTotalMinutes,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { DayStudentLoad, StudentPath, sumStudentMinutes } from "@/components/gantt/curriculum-view/student-load";
 import { BulkDayHoursBar } from "@/components/gantt/curriculum-view/tabs/weeks-tab/BulkDayHoursBar";
 import { DayCapacityCell } from "@/components/gantt/curriculum-view/tabs/weeks-tab/DayCapacityCell";
 import { DaySelectionProvider } from "@/components/gantt/curriculum-view/tabs/weeks-tab/DaySelectionContext";
+import { useCurriculumStudentSchedule } from "@/components/gantt/curriculum-view/use-student-schedule";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 
 export type WeeksCapacityGridProps = {
     curriculum: GanttCurriculum;
     isCompact?: boolean;
-    mappings: Record<string, GanttCurriculumModuleDayMapping>;
     state: NormalizedStore;
 };
 
@@ -63,19 +60,19 @@ function getDayIdByIndex(
 
 function WeekRow({
     isCompact = false,
-    mappings,
-    scheduledMinutesByDay,
     startDate,
     state,
+    studentLoadByDay,
+    studentPaths,
     week,
     weekIndex,
 }: {
     isCompact?: boolean;
-    mappings: Record<string, GanttCurriculumModuleDayMapping>;
-    /** Per-day scheduled minutes with multi-day spillover applied (#105). */
-    scheduledMinutesByDay: Record<GanttDayId, number>;
     startDate: null | string;
     state: NormalizedStore;
+    /** Per-day scheduled time per student path, spillover applied (#105). */
+    studentLoadByDay: Record<GanttDayId, DayStudentLoad>;
+    studentPaths: Array<StudentPath>;
     week: NormalizedStore["weeks"][string];
     weekIndex: number;
 }) {
@@ -100,8 +97,8 @@ function WeekRow({
         [state, week],
     );
     const scheduledMinutes = useMemo(
-        () => getWeekScheduledMinutes({ week, mappings, state }),
-        [mappings, state, week],
+        () => sumStudentMinutes(studentLoadByDay, week.days),
+        [studentLoadByDay, week],
     );
     const weekStatus = getCapacityStatus(weekTotalMinutes, scheduledMinutes);
     const weekDateRange = getWeekDateRange(startDate, weekIndex);
@@ -241,7 +238,8 @@ function WeekRow({
                         isCompact={isCompact}
                         isMuted={isMutedSaturday}
                         key={dayId}
-                        scheduledMinutes={scheduledMinutesByDay[dayId] ?? 0}
+                        load={studentLoadByDay[dayId]}
+                        paths={studentPaths}
                         startDate={startDate}
                         weekIndex={weekIndex}
                     />
@@ -282,7 +280,6 @@ function DayHeaderCell({ dayIndex }: { dayIndex: GanttDayIndex }) {
 export function WeeksCapacityGrid({
     curriculum,
     isCompact = false,
-    mappings,
     state,
 }: WeeksCapacityGridProps) {
     const weeks = useMemo(() => {
@@ -298,14 +295,8 @@ export function WeeksCapacityGrid({
         return nextWeeks;
     }, [curriculum.weeks, state.weeks]);
 
-    // Multi-day spillover: distribute each event's minutes across the days it
-    // actually occupies so capacity bars reflect the dynamic overflow (#105).
-    const scheduledMinutesByDay = useMemo(() => {
-        const linearDays = weeks.flatMap((week) => week.days);
-        return getSpilloverMinutesByDay(
-            computeEventDaySpans({ mappings, state, linearDays }),
-        );
-    }, [weeks, mappings, state]);
+    // One student's time per day and path, spillover applied (#105).
+    const schedule = useCurriculumStudentSchedule(curriculum, state);
 
     // Calendar order of every rendered day — the order a shift-selected range
     // is defined over (#476). Week order comes from the curriculum; within a
@@ -387,10 +378,10 @@ export function WeeksCapacityGrid({
                                 <WeekRow
                                     isCompact={isCompact}
                                     key={week.id}
-                                    mappings={mappings}
-                                    scheduledMinutesByDay={scheduledMinutesByDay}
                                     startDate={curriculum.startDate}
                                     state={state}
+                                    studentLoadByDay={schedule.byDay}
+                                    studentPaths={schedule.paths}
                                     week={week}
                                     weekIndex={weekIndex}
                                 />

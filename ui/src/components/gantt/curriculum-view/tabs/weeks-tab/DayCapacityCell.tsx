@@ -1,6 +1,7 @@
 import AddIcon from "@mui/icons-material/Add";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import RemoveIcon from "@mui/icons-material/Remove";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
@@ -20,6 +21,7 @@ import
     getDayNameDisplay,
 } from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
+import { StudentLoadTooltip } from "@/components/gantt/curriculum-view/components/StudentLoadTooltip";
 import
 {
     CapacityStatus,
@@ -30,6 +32,7 @@ import
     getDayDate,
     parseTimeInputToMinutes,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { DayStudentLoad, StudentPath } from "@/components/gantt/curriculum-view/student-load";
 import { useDaySelection } from "@/components/gantt/curriculum-view/tabs/weeks-tab/DaySelectionContext";
 import { useCurriculumState } from "@/components/gantt/state/context";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
@@ -39,7 +42,9 @@ export type DayCapacityCellProps = {
     dayId: GanttDayId;
     isCompact?: boolean;
     isMuted?: boolean;
-    scheduledMinutes: number;
+    /** One student's time on this day, per path (spillover applied). */
+    load: DayStudentLoad | undefined;
+    paths: Array<StudentPath>;
     startDate: null | string;
     weekIndex: number;
 };
@@ -106,7 +111,8 @@ export function DayCapacityCell({
     dayId,
     isCompact = false,
     isMuted = false,
-    scheduledMinutes,
+    load,
+    paths,
     startDate,
     weekIndex,
 }: DayCapacityCellProps) {
@@ -185,6 +191,9 @@ export function DayCapacityCell({
             setLocalComment(day?.comment ?? "");
         }
     }, [day?.comment, isCommentFocused]);
+
+    const scheduledMinutes = load?.minutes ?? 0;
+    const hasLoadIssues = (load?.issues.length ?? 0) > 0;
 
     const status = useMemo(
         () =>
@@ -481,20 +490,29 @@ export function DayCapacityCell({
                             <AddIcon fontSize="inherit" />
                         </IconButton>
                     </Box>
-                    <Chip
-                        color={getStatusColor(status)}
-                        label={`${formatHoursLabel(scheduledMinutes)} משובץ | ${statusLabel}`}
-                        size="smaller"
-                        sx={{
-                            maxWidth: "100%",
-                            fontWeight: 600,
-                            borderWidth: 1,
-                            bgcolor: "background.paper",
-                            transition: "all 0.2s ease",
-                            "& .MuiChip-label": { px: 1 },
-                        }}
-                        variant="outlined"
-                    />
+                    <StudentLoadTooltip
+                        capacity={day.totalWorkingMinutes}
+                        load={load}
+                        paths={paths}
+                        title={`${dayName}${dateLabel ? ` ${dateLabel}` : ""}`}
+                    >
+                        <Chip
+                            color={getStatusColor(status)}
+                            data-testid="day-capacity-chip"
+                            icon={hasLoadIssues ? <WarningAmberIcon color="warning" /> : undefined}
+                            label={`${formatHoursLabel(scheduledMinutes)} משובץ | ${statusLabel}`}
+                            size="smaller"
+                            sx={{
+                                maxWidth: "100%",
+                                fontWeight: 600,
+                                borderWidth: 1,
+                                bgcolor: "background.paper",
+                                transition: "all 0.2s ease",
+                                "& .MuiChip-label": { px: 1 },
+                            }}
+                            variant="outlined"
+                        />
+                    </StudentLoadTooltip>
                 </Box>
 
                 <Box

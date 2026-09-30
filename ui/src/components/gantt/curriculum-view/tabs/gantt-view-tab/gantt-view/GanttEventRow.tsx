@@ -104,7 +104,10 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
     {
         const span = eventSpans[ eventId ];
         if (!span || !span.spillover || !currentDayId) return null;
-        const endDayId = span.dayIds[ span.dayIds.length - 1 ];
+        // Spans are laid out over the whole timeline; a zoomed week shows
+        // the part that falls inside it.
+        const endDayId = span.dayIds.findLast((dayId) => dayIndexMap.has(dayId));
+        if (!endDayId) return null;
         const startIdx = dayIndexMap.get(currentDayId) ?? -1;
         const endIdx = dayIndexMap.get(endDayId) ?? -1;
         if (startIdx === -1 || endIdx <= startIdx) return null;

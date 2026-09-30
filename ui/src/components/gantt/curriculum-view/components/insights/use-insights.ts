@@ -7,6 +7,7 @@ import { useOutsiders } from "@/components/base/OutsidersProvider";
 import { buildInsightContext } from "@/components/gantt/curriculum-view/components/insights/build-context";
 import { generateInsights } from "@/components/gantt/curriculum-view/components/insights/generators";
 import { Insight } from "@/components/gantt/curriculum-view/components/insights/types";
+import { useCurriculumStudentSchedule } from "@/components/gantt/curriculum-view/use-student-schedule";
 import { useCurriculumState } from "@/components/gantt/state/context";
 import { useGanttExecution } from "@/components/gantt/state/execution/hooks";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
@@ -32,6 +33,7 @@ export function useInsights(curriculum: GanttCurriculumDocument | undefined): Ar
     // Insights are ambient: let edits render first and recompute after.
     const deferredState = useDeferredValue(state);
     const deferredMappings = useDeferredValue(mappingState.mappings);
+    const schedule = useDeferredValue(useCurriculumStudentSchedule(curriculum, state));
 
     return useMemo(() => {
         if (!curriculum) return [];
@@ -44,6 +46,7 @@ export function useInsights(curriculum: GanttCurriculumDocument | undefined): Ar
             instructorName,
             outsiderName,
             execution: executionState.events,
+            schedule,
         }));
-    }, [ curriculum, deferredState, deferredMappings, exceptionState.exceptions, executionState.events, instructorName, outsiderName ]);
+    }, [ curriculum, deferredState, deferredMappings, exceptionState.exceptions, executionState.events, instructorName, outsiderName, schedule ]);
 }

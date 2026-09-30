@@ -1,0 +1,481 @@
+import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
+import { isShuffleCourse } from "@/api-shared/course-tree";
+import { getRecurrenceOccurrenceDayIds } from "@/api-shared/gantt/recurrence";
+import { Course } from "@/api-shared/types/course";
+import {
+    EventRecurrence,
+    GanttCurriculumModuleDayMapping,
+    GanttDayId,
+    GanttEventRecurrenceException,
+    GanttSyllabusId,
+    getAllowedDayIndices,
+} from "@/api-shared/types/gantt/models";
+import {
+    computeEventDaySpans,
+    DayHeadroom,
+    EventDaySpan,
+} from "@/components/gantt/curriculum-view/gantt-time-utils";
+import {
+    countEventOccurrences,
+    RecurrenceOccurrenceContext,
+} from "@/components/gantt/utils";
+
+/*
+ * Scheduled time is the time a single student spends in events. A student
+ * walks one root-to-leaf path of the course tree (Bis90 → Apollo → …) and sits
+ * in exactly one shuffle of every syllabus on that path. So:
+ *
+ * - syllabuses on exclusive branches (Apollo vs Sphinx) run in parallel;
+ * - a syllabus's shuffles run in parallel inside one shared block, so the
+ *   syllabus takes its longest shuffle, and unequal shuffles are an issue;
+ * - an event limited to some courses counts only on those courses' paths;
+ * - a day's scheduled time is its busiest path, and unequal paths are an
+ *   issue — every student's day must be the same length.
+ *
+ * Prayers are not gantt events: they run alongside anything and add nothing.
+ */
+
+/** One kind of student: a root-to-leaf chain through the course tree. */
+export type StudentPath = {
+    id: string;
+    /** Course ids from the root down to the leaf; empty when no courses exist. */
+    courseIds: Array<string>;
+    /** Display name — the chain below the root, e.g. "אפולו › צוות א". */
+    label: string;
+};
+
+export type StudentLoadIssue =
+    | { kind: "paths-unequal" }
+    | {
+        kind: "shuffles-misaligned";
+        syllabusId: GanttSyllabusId;
+        /** Minutes each of the syllabus' shuffles has on the day. */
+        minutesByShuffle: Record<string, number>;
+    };
+
+export type PathDayLoad = {
+    pathId: string;
+    minutes: number;
+    /** Minutes per syllabus on this path, largest first. */
+    bySyllabus: Array<{ syllabusId: GanttSyllabusId; minutes: number }>;
+};
+
+export type DayStudentLoad = {
+    /** The busiest path's minutes — the day's scheduled time. */
+    minutes: number;
+    paths: Array<PathDayLoad>;
+    issues: Array<StudentLoadIssue>;
+};
+
+export type StudentSchedule = {
+    paths: Array<StudentPath>;
+    spans: Record<string, EventDaySpan>;
+    byDay: Record<GanttDayId, DayStudentLoad>;
+};
+
+type Audience = {
+    syllabusId: GanttSyllabusId;
+    pathIdxs: Array<number>;
+    /** Shuffles the event is for; null ⇒ every student of its paths. */
+    shuffles: Array<string> | null;
+};
+/** A syllabus' minutes on one day: shared minutes plus per-shuffle minutes. */
+type Slot = { common: number; byShuffle: Map<string, number> };
+
+const ALL_STUDENTS_LABEL = "כל החניכים";
+
+function slotMax(slot: Slot): number {
+    let max = 0;
+    for (const minutes of slot.byShuffle.values()) max = Math.max(max, minutes);
+    return max;
+}
+
+function slotMinutes(slot: Slot): number {
+    return slot.common + slotMax(slot);
+}
+
+function slotOf<K>(map: Map<K, Slot>, key: K): Slot {
+    let slot = map.get(key);
+    if (!slot) {
+        slot = { common: 0, byShuffle: new Map() };
+        map.set(key, slot);
+    }
+    return slot;
+}
+
+/**
+ * The student paths a curriculum's syllabuses and events distinguish: every
+ * root-to-leaf chain of the course tree, cut at the deepest course anything
+ * is assigned to. A course's students are split between all of its
+ * sub-courses, so once one sub-course matters its siblings are paths too.
+ * Shuffle courses are not paths — shuffles live inside a syllabus. Without
+ * any course, there is a single all-students path.
+ */
+export function buildStudentPaths(
+    courses: Array<Pick<Course, "description" | "id" | "name" | "parentId">>,
+    assignedCourseIds: Iterable<string>,
+    /** Something is assigned to no course, i.e. to the root. */
+    includeRoots: boolean,
+): Array<StudentPath> {
+    const tree = courses.filter((course) => !isShuffleCourse(course));
+    const byId = new Map(tree.map((course) => [course.id, course]));
+    const parentOf = (id: string) => {
+        const parentId = byId.get(id)?.parentId;
+        return parentId && byId.has(parentId) ? parentId : null;
+    };
+
+    const relevant = new Set<string>();
+    for (const id of assignedCourseIds) {
+        for (let cur: null | string = byId.has(id) ? id : null; cur && !relevant.has(cur); cur = parentOf(cur)) {
+            relevant.add(cur);
+        }
+    }
+    if (includeRoots) {
+        for (const course of tree) {
+            if (!parentOf(course.id)) relevant.add(course.id);
+        }
+    }
+    if (relevant.size === 0) {
+        return [{ id: "all", courseIds: [], label: ALL_STUDENTS_LABEL }];
+    }
+
+    const hasRelevantChild = new Set<string>();
+    for (const id of relevant) {
+        const parentId = parentOf(id);
+        if (parentId) hasRelevantChild.add(parentId);
+    }
+    for (const course of tree) {
+        const parentId = parentOf(course.id);
+        if (parentId && hasRelevantChild.has(parentId)) relevant.add(course.id);
+    }
+
+    return tree
+        .filter((course) => relevant.has(course.id) && !hasRelevantChild.has(course.id))
+        .map((leaf) => {
+            const chain: Array<string> = [];
+            for (let cur: null | string = leaf.id; cur && !chain.includes(cur); cur = parentOf(cur)) {
+                chain.unshift(cur);
+            }
+            const named = chain.length > 1 ? chain.slice(1) : chain;
+            return {
+                id: leaf.id,
+                courseIds: chain,
+                label: named.map((id) => byId.get(id)?.name ?? "").join(" › "),
+            };
+        });
+}
+
+/** Which paths and shuffles attend each event of the given syllabuses. */
+function resolveAudiences(
+    state: NormalizedStore,
+    syllabusIds: Array<GanttSyllabusId>,
+    paths: Array<StudentPath>,
+): Map<string, Audience> {
+    const pathIdxsFor = (courseIds: Array<string>) => {
+        const known = courseIds.filter((id) =>
+            paths.some((path) => path.courseIds.includes(id)),
+        );
+        // No (known) course ⇒ the root ⇒ every student.
+        if (known.length === 0) return paths.map((_, idx) => idx);
+        return paths.flatMap((path, idx) =>
+            known.some((id) => path.courseIds.includes(id)) ? [idx] : [],
+        );
+    };
+
+    const audiences = new Map<string, Audience>();
+    for (const syllabusId of syllabusIds) {
+        const syllabus = state.syllabuses[syllabusId];
+        if (!syllabus) continue;
+        const syllabusPaths = pathIdxsFor(syllabus.courseIds ?? []);
+        const syllabusShuffles = syllabus.shuffles ?? [];
+        for (const moduleId of syllabus.modules ?? []) {
+            const moduleDoc = state.modules[moduleId];
+            if (!moduleDoc) continue;
+            for (const eventId of moduleDoc.events ?? []) {
+                const event = state.events[eventId];
+                if (!event) continue;
+                const courseIds = event.courseIds ?? [];
+                if (courseIds.length > 0) {
+                    audiences.set(eventId, {
+                        syllabusId,
+                        pathIdxs: pathIdxsFor(courseIds),
+                        shuffles: null,
+                    });
+                    continue;
+                }
+                const tagged = (event.shuffles?.length ? event.shuffles : moduleDoc.shuffles) ?? [];
+                const shuffles = tagged.filter((name) => syllabusShuffles.includes(name));
+                audiences.set(eventId, {
+                    syllabusId,
+                    pathIdxs: syllabusPaths,
+                    // Tagged for every shuffle (or the syllabus has just one)
+                    // is the same as tagged for none.
+                    shuffles:
+                        syllabusShuffles.length > 1 &&
+                        shuffles.length > 0 &&
+                        shuffles.length < syllabusShuffles.length
+                            ? shuffles
+                            : null,
+                });
+            }
+        }
+    }
+    return audiences;
+}
+
+/** Accumulates per-day, per-path, per-syllabus minutes as events are placed. */
+class StudentLoadTracker implements DayHeadroom {
+    private readonly days = new Map<GanttDayId, Map<number, Map<GanttSyllabusId, Slot>>>();
+    /** Path-independent view of each syllabus' shuffles, for alignment. */
+    private readonly shuffleSlots = new Map<GanttDayId, Map<GanttSyllabusId, Slot>>();
+
+    constructor(private readonly audiences: Map<string, Audience>) {}
+
+    private pathSlots(dayId: GanttDayId, pathIdx: number) {
+        let day = this.days.get(dayId);
+        if (!day) {
+            day = new Map();
+            this.days.set(dayId, day);
+        }
+        let slots = day.get(pathIdx);
+        if (!slots) {
+            slots = new Map();
+            day.set(pathIdx, slots);
+        }
+        return slots;
+    }
+
+    private pathMinutes(dayId: GanttDayId, pathIdx: number): number {
+        let total = 0;
+        for (const slot of this.pathSlots(dayId, pathIdx).values()) total += slotMinutes(slot);
+        return total;
+    }
+
+    headroom(dayId: GanttDayId, eventId: string, capacity: number): number {
+        const audience = this.audiences.get(eventId);
+        if (!audience || audience.pathIdxs.length === 0) return capacity;
+        let room = Infinity;
+        for (const pathIdx of audience.pathIdxs) {
+            let free = capacity - this.pathMinutes(dayId, pathIdx);
+            // A shuffle's minutes only lengthen the day once they pass the
+            // syllabus' longest shuffle.
+            if (audience.shuffles) {
+                const slot = slotOf(this.pathSlots(dayId, pathIdx), audience.syllabusId);
+                const own = Math.max(0, ...audience.shuffles.map((name) => slot.byShuffle.get(name) ?? 0));
+                free += slotMax(slot) - own;
+            }
+            room = Math.min(room, free);
+        }
+        return room;
+    }
+
+    consume(dayId: GanttDayId, eventId: string, minutes: number): void {
+        const audience = this.audiences.get(eventId);
+        if (!audience || minutes <= 0) return;
+        const add = (slot: Slot) => {
+            if (!audience.shuffles) {
+                slot.common += minutes;
+                return;
+            }
+            for (const name of audience.shuffles) {
+                slot.byShuffle.set(name, (slot.byShuffle.get(name) ?? 0) + minutes);
+            }
+        };
+        for (const pathIdx of audience.pathIdxs) {
+            add(slotOf(this.pathSlots(dayId, pathIdx), audience.syllabusId));
+        }
+        if (audience.shuffles) {
+            let bySyllabus = this.shuffleSlots.get(dayId);
+            if (!bySyllabus) {
+                bySyllabus = new Map();
+                this.shuffleSlots.set(dayId, bySyllabus);
+            }
+            add(slotOf(bySyllabus, audience.syllabusId));
+        }
+    }
+
+    summarize(state: NormalizedStore, paths: Array<StudentPath>): Record<GanttDayId, DayStudentLoad> {
+        const byDay: Record<GanttDayId, DayStudentLoad> = {};
+        const dayIds = new Set([...this.days.keys(), ...this.shuffleSlots.keys()]);
+        for (const dayId of dayIds) {
+            const pathLoads: Array<PathDayLoad> = paths.map((path, pathIdx) => {
+                const bySyllabus = [...(this.days.get(dayId)?.get(pathIdx) ?? new Map<GanttSyllabusId, Slot>())]
+                    .map(([syllabusId, slot]) => ({ syllabusId, minutes: slotMinutes(slot) }))
+                    .filter((entry) => entry.minutes > 0)
+                    .sort((a, b) => b.minutes - a.minutes);
+                return {
+                    pathId: path.id,
+                    minutes: bySyllabus.reduce((sum, entry) => sum + entry.minutes, 0),
+                    bySyllabus,
+                };
+            });
+
+            const issues: Array<StudentLoadIssue> = [];
+            for (const [syllabusId, slot] of this.shuffleSlots.get(dayId) ?? []) {
+                const names = state.syllabuses[syllabusId]?.shuffles ?? [];
+                const minutesByShuffle = Object.fromEntries(
+                    names.map((name) => [name, slot.byShuffle.get(name) ?? 0]),
+                );
+                if (new Set(Object.values(minutesByShuffle)).size > 1) {
+                    issues.push({ kind: "shuffles-misaligned", syllabusId, minutesByShuffle });
+                }
+            }
+            if (new Set(pathLoads.map((load) => load.minutes)).size > 1) {
+                issues.push({ kind: "paths-unequal" });
+            }
+
+            byDay[dayId] = {
+                minutes: Math.max(0, ...pathLoads.map((load) => load.minutes)),
+                paths: pathLoads,
+                issues,
+            };
+        }
+        return byDay;
+    }
+}
+
+/**
+ * Every course id a curriculum's syllabuses and their events are assigned to,
+ * and whether some syllabus has none (⇒ it is the root's, i.e. everyone's).
+ */
+function assignedCourseIds(
+    state: NormalizedStore,
+    syllabusIds: Array<GanttSyllabusId>,
+    knownIds: Set<string>,
+): { ids: Set<string>; includeRoots: boolean } {
+    const ids = new Set<string>();
+    let includeRoots = false;
+    for (const syllabusId of syllabusIds) {
+        const syllabus = state.syllabuses[syllabusId];
+        if (!syllabus) continue;
+        const own = (syllabus.courseIds ?? []).filter((id) => knownIds.has(id));
+        if (own.length === 0) includeRoots = true;
+        for (const id of own) ids.add(id);
+        for (const moduleId of syllabus?.modules ?? []) {
+            for (const eventId of state.modules[moduleId]?.events ?? []) {
+                for (const id of state.events[eventId]?.courseIds ?? []) ids.add(id);
+            }
+        }
+    }
+    return { ids, includeRoots };
+}
+
+/**
+ * Lays out every mapped event (spillover by what its own students have left
+ * on a day) and totals each day per student path. Recurring events count as
+ * if materialized on every occurrence, and are placed before anything spills.
+ */
+export function computeStudentSchedule({
+    courses,
+    dateOf,
+    exceptions,
+    linearDays,
+    mappings,
+    state,
+    syllabusIds,
+}: {
+    courses: Array<Course>;
+    /** Calendar date of a day, for recurrence windows (#468). */
+    dateOf?: (dayId: GanttDayId) => string | undefined;
+    exceptions: Record<string, GanttEventRecurrenceException>;
+    linearDays: Array<GanttDayId>;
+    mappings: Record<string, GanttCurriculumModuleDayMapping>;
+    state: NormalizedStore;
+    syllabusIds: Array<GanttSyllabusId>;
+}): StudentSchedule {
+    const tree = courses.filter((course) => !isShuffleCourse(course));
+    const assigned = assignedCourseIds(state, syllabusIds, new Set(tree.map((course) => course.id)));
+    const paths = buildStudentPaths(tree, assigned.ids, assigned.includeRoots);
+    const tracker = new StudentLoadTracker(resolveAudiences(state, syllabusIds, paths));
+
+    const excludedByEvent = new Map<string, Set<string>>();
+    for (const exception of Object.values(exceptions)) {
+        const excluded = excludedByEvent.get(exception.eventId) ?? new Set();
+        excluded.add(exception.dayId);
+        excludedByEvent.set(exception.eventId, excluded);
+    }
+    for (const mapping of Object.values(mappings)) {
+        if (!mapping.eventId) continue;
+        const event = state.events[mapping.eventId];
+        if (!event || event.recurrence === EventRecurrence.None) continue;
+        const occurrenceDayIds = getRecurrenceOccurrenceDayIds({
+            recurrence: event.recurrence,
+            startDayId: mapping.dayId,
+            linearDays,
+            dayIndexOf: (dayId) => state.days[dayId]?.dayIndex,
+            excludedDayIds: excludedByEvent.get(mapping.eventId),
+            recurrenceStartDate: event.recurrenceStartDate,
+            recurrenceEndDate: event.recurrenceEndDate,
+            dateOf,
+            allowedDayIndices: getAllowedDayIndices(event.constraints),
+        });
+        for (const dayId of occurrenceDayIds) {
+            tracker.consume(dayId, mapping.eventId, event.minimumDuration ?? 0);
+        }
+    }
+
+    const spans = computeEventDaySpans({ mappings, state, linearDays, load: tracker });
+    return { paths, spans, byDay: tracker.summarize(state, paths) };
+}
+
+/**
+ * Scheduled minutes over a set of days: each path's total, and the busiest
+ * path's. A student's week is the sum of their days, not of the busiest days.
+ */
+export function sumStudentMinutes(
+    byDay: Record<GanttDayId, DayStudentLoad>,
+    dayIds: Iterable<GanttDayId>,
+): number {
+    const byPath = new Map<string, number>();
+    for (const dayId of dayIds) {
+        for (const load of byDay[dayId]?.paths ?? []) {
+            byPath.set(load.pathId, (byPath.get(load.pathId) ?? 0) + load.minutes);
+        }
+    }
+    return Math.max(0, ...byPath.values());
+}
+
+/** Per-day busiest-path minutes, the shape the capacity views consume. */
+export function getStudentMinutesByDay(
+    byDay: Record<GanttDayId, DayStudentLoad>,
+): Record<GanttDayId, number> {
+    return Object.fromEntries(
+        Object.entries(byDay).map(([dayId, load]) => [dayId, load.minutes]),
+    );
+}
+
+/**
+ * The minimum time a single student needs for the whole curriculum: per path,
+ * each syllabus' longest shuffle plus the course-limited events on that path,
+ * with recurring events counted per occurrence. The busiest path wins.
+ */
+export function calculateStudentRequiredMinutes({
+    courses,
+    occurrenceCtx,
+    state,
+    syllabusIds,
+}: {
+    courses: Array<Course>;
+    occurrenceCtx?: RecurrenceOccurrenceContext;
+    state: NormalizedStore;
+    syllabusIds: Array<GanttSyllabusId>;
+}): number {
+    const tree = courses.filter((course) => !isShuffleCourse(course));
+    const assigned = assignedCourseIds(state, syllabusIds, new Set(tree.map((course) => course.id)));
+    const paths = buildStudentPaths(tree, assigned.ids, assigned.includeRoots);
+    const tracker = new StudentLoadTracker(resolveAudiences(state, syllabusIds, paths));
+    // The whole curriculum as one "day": the tracker's per-path sums are
+    // exactly the per-student totals.
+    const ALL = "all";
+    for (const syllabusId of syllabusIds) {
+        for (const moduleId of state.syllabuses[syllabusId]?.modules ?? []) {
+            for (const eventId of state.modules[moduleId]?.events ?? []) {
+                const event = state.events[eventId];
+                if (!event) continue;
+                const occurrences = countEventOccurrences(event, eventId, state, occurrenceCtx);
+                tracker.consume(ALL, eventId, (event.minimumDuration ?? 0) * occurrences);
+            }
+        }
+    }
+    return tracker.summarize(state, paths)[ALL]?.minutes ?? 0;
+}

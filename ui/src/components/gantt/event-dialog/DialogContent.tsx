@@ -16,14 +16,12 @@ import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { CollapsibleSection } from "@/components/gantt/event-dialog/CollapsibleSection";
 import { EventConstraintsView } from "@/components/gantt/event-dialog/constraints/EventConstraintsView";
 import { EventDetailsForm } from "@/components/gantt/event-dialog/DetailsForm";
+import { EventAudienceField, getEventAudienceMode } from "@/components/gantt/event-dialog/EventAudienceField";
 import { EventHiveLinkageFields } from "@/components/gantt/event-dialog/EventHiveLinkageFields";
 import { EventMappingField } from "@/components/gantt/event-dialog/EventMappingField";
 import { EventRecurrenceField, RECURRENCE_LABELS } from "@/components/gantt/event-dialog/EventRecurrenceField";
 import { EventRoomRequirementsField } from "@/components/gantt/event-dialog/EventRoomRequirementsField";
-import {
-    EventShuffleGroupField,
-    useShuffleGroupMembers,
-} from "@/components/gantt/event-dialog/EventShuffleGroupField";
+import { useShuffleGroupMembers } from "@/components/gantt/event-dialog/EventShuffleGroupField";
 import { ExecutionComparisonSection } from "@/components/gantt/event-dialog/ExecutionComparisonSection";
 import { RecommendedLecturersField } from "@/components/gantt/event-dialog/RecommendedLecturersField";
 import { SystemRequirementsField } from "@/components/gantt/event-dialog/SystemRequirementsField";
@@ -51,6 +49,35 @@ function QuietChip({ label }: { label: string })
             variant="outlined"
         />
     );
+}
+
+/** Summary chip of who the event is for. */
+function AudienceChip({ event, groupSize }: { event: GanttEvent; groupSize: number })
+{
+    const mode = getEventAudienceMode(event);
+    if (mode === "courses")
+    {
+        return (
+            <Chip
+                color="primary"
+                label={ `${event.courseIds?.length ?? 0} מסלולים` }
+                size="small"
+                variant="outlined"
+            />
+        );
+    }
+    if (mode === "shuffles")
+    {
+        return (
+            <Chip
+                color="primary"
+                label={ groupSize > 1 ? `${groupSize} שאפלים` : (event.shuffles ?? []).join(", ") }
+                size="small"
+                variant="outlined"
+            />
+        );
+    }
+    return <QuietChip label="לכל המקצוע" />;
 }
 
 export function EventDialogContent({
@@ -93,28 +120,15 @@ export function EventDialogContent({
 
                     <Stack spacing={ 1.5 }>
                         <CollapsibleSection
-                            chips={
-                                groupMembers.length > 1 ? (
-                                    <Chip
-                                        color="primary"
-                                        label={ `${groupMembers.length} שאפלים` }
-                                        size="small"
-                                        variant="outlined"
-                                    />
-                                ) : (
-                                    <QuietChip label="לא מפוצל" />
-                                )
-                            }
+                            chips={ <AudienceChip event={ event } groupSize={ groupMembers.length } /> }
                             icon={ <GroupsIcon /> }
-                            title="פיצול לשאפלים"
+                            title="שאפלים ומסלולים"
                         >
-                            <EventShuffleGroupField
+                            <EventAudienceField
                                 event={ event }
                                 eventId={ eventId }
                                 moduleId={ moduleId }
-                                shuffleDescriptions={ syllabus?.shuffleDescriptions }
-                                shuffleOptions={ syllabus?.shuffles ?? [] }
-                                syllabusId={ syllabus?.id ?? null }
+                                syllabus={ syllabus }
                             />
                         </CollapsibleSection>
 
