@@ -1,3 +1,4 @@
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import Box from "@mui/material/Box";
 import { alpha, useTheme } from "@mui/material/styles";
@@ -9,7 +10,7 @@ import Typography from "@mui/material/Typography";
 import React from "react";
 
 import { getDayNameDisplay } from "@/api-shared/types/gantt/models";
-import { StudentLoadTooltip } from "@/components/gantt/curriculum-view/components/StudentLoadTooltip";
+import { issueSeverity, StudentLoadTooltip } from "@/components/gantt/curriculum-view/components/StudentLoadTooltip";
 import {
     CapacityStatus,
     formatHoursLabel,
@@ -240,8 +241,16 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                             );
                             const isOverAllocated =
                                 showConstraints && capacityStatus === "error";
-                            const hasLoadIssues =
-                                (studentLoadByDay[dayId]?.issues.length ?? 0) > 0;
+                            const loadIssues = studentLoadByDay[dayId]?.issues ?? [];
+                            const hasLoadIssues = loadIssues.length > 0;
+                            const loadIssueSeverity = loadIssues.some(
+                                (issue) => issueSeverity(issue) === "warning",
+                            )
+                                ? "warning"
+                                : "info";
+                            const LoadIssueIcon = loadIssueSeverity === "info"
+                                ? InfoOutlinedIcon
+                                : WarningAmberIcon;
                             return (
                                 <TableCell
                                     align="center"
@@ -291,8 +300,8 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                                                 justifyContent="center"
                                             >
                                                 {hasLoadIssues ? (
-                                                    <WarningAmberIcon
-                                                        color="warning"
+                                                    <LoadIssueIcon
+                                                        color={loadIssueSeverity}
                                                         data-testid="gantt-day-load-issue"
                                                         sx={{ fontSize: 14 }}
                                                     />
