@@ -124,6 +124,13 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                         })),
                     );
                     const weekOverAllocated = weekSeverity === "error";
+                    // Set on the text children, not the cell, so the native
+                    // tooltip never stacks on the warning icon's tooltip.
+                    const zoomTitle = canZoom
+                        ? zoomedWeekId === week.id
+                            ? "יציאה ממצב מוגדל"
+                            : "התמקדות בשבוע"
+                        : undefined;
 
                     return (
                         <TableCell
@@ -161,13 +168,6 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                                     },
                                 }),
                             }}
-                            title={
-                                canZoom
-                                    ? zoomedWeekId === week.id
-                                        ? "יציאה ממצב מוגדל"
-                                        : "התמקדות בשבוע"
-                                    : undefined
-                            }
                         >
                             <Box
                                 alignItems="center"
@@ -175,7 +175,7 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                                 gap={0.5}
                                 justifyContent="center"
                             >
-                                <Typography fontWeight="bold" variant="subtitle2">
+                                <Typography fontWeight="bold" title={zoomTitle} variant="subtitle2">
                                     {week.title}
                                 </Typography>
                                 {weeklyView && weekSeverity ? <Tooltip
@@ -195,6 +195,7 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                             {dateRangeLabel ? (
                                 <Typography
                                     color="text.secondary"
+                                    title={zoomTitle}
                                     variant="caption"
                                 >
                                     {dateRangeLabel}
@@ -210,6 +211,7 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                                 data-testid="gantt-week-hours"
                                 display="block"
                                 fontWeight={700}
+                                title={zoomTitle}
                                 variant="caption"
                             >
                                 {`${formatHoursLabel(weekScheduledMinutes)} / ${formatHoursLabel(weekAvailableMinutes)}`}
