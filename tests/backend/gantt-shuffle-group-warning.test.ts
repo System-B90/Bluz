@@ -17,6 +17,12 @@ describe("describeGroupChange (#699)", () => {
         expect(change?.text).not.toMatch(/יימחק/);
     });
 
+    it("regression: narrowing to one shuffle says the event is assigned to it", () => {
+        const change = describeGroupChange(set("א", "ב"), set("א"), 2);
+
+        expect(change?.text).toMatch(/ישויך לשאפל/);
+    });
+
     it("warns when narrowing a group deletes a member", () => {
         const change = describeGroupChange(set("א", "ב", "ג"), set("א", "ב"), 3);
 

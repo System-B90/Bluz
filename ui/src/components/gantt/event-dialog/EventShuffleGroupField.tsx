@@ -56,7 +56,10 @@ export function describeGroupChange(
         if (memberCount < 2) return null;
         return {
             destructive: false,
-            text: "הקבוצה תבוטל. המופעים יישארו כמופעים נפרדים, והזמן של כל אחד מהם ייספר בנפרד.",
+            text:
+                selected.size === 1
+                    ? "הקבוצה תבוטל והמופע הנוכחי ישויך לשאפל שנבחר. שאר המופעים יישארו כמופעים נפרדים."
+                    : "הקבוצה תבוטל. המופעים יישארו כמופעים נפרדים, והזמן של כל אחד מהם ייספר בנפרד.",
         };
     }
 
@@ -237,7 +240,11 @@ export function EventShuffleGroupField({
                     onClick={applyHandler}
                     variant="contained"
                 >
-                    {selected.size < 2 ? "ביטול הקבוצה" : "החלת הפיצול"}
+                    {selected.size >= 2
+                        ? "החלת הפיצול"
+                        : selected.size === 1
+                            ? `שיוך לשאפל ${[...selected][0]}`
+                            : "ביטול הקבוצה"}
                 </Button>
                 {isDirty && consequence ? (
                     <Typography
