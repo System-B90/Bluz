@@ -6,6 +6,7 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -65,14 +66,8 @@ export const WeekSplitDialog: React.FC<{
                     { hours.map((value, index) => (
                         <Stack alignItems="center" direction="row" gap={ 1 } key={ index }>
                             <TextField
+                                error={ hoursToMinutes(value) === 0 && index === 0 }
                                 fullWidth
-                                helperText={
-                                    hoursToMinutes(value) === 0
-                                        ? index === 0
-                                            ? "השבוע הראשון לא יכול להיות ריק"
-                                            : "השבוע ידולג"
-                                        : undefined
-                                }
                                 label={ `שבוע ${index + 1} (שעות)` }
                                 onChange={ (e) =>
                                     setHours((prev) =>
@@ -80,7 +75,21 @@ export const WeekSplitDialog: React.FC<{
                                     )
                                 }
                                 size="small"
-                                slotProps={ { htmlInput: { inputMode: "decimal", min: 0, step: 0.5 } } }
+                                slotProps={ {
+                                    htmlInput: { inputMode: "decimal", min: 0, step: 0.5 },
+                                    input: {
+                                        endAdornment: hoursToMinutes(value) === 0 ? (
+                                            <InputAdornment position="end">
+                                                <Typography
+                                                    color={ index === 0 ? "error" : "text.secondary" }
+                                                    variant="caption"
+                                                >
+                                                    { index === 0 ? "השבוע הראשון לא יכול להיות ריק" : "השבוע ידולג" }
+                                                </Typography>
+                                            </InputAdornment>
+                                        ) : undefined,
+                                    },
+                                } }
                                 type="number"
                                 value={ value }
                             />
