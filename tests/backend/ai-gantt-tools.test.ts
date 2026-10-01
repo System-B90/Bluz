@@ -121,7 +121,7 @@ describe("list_curriculums", () => {
 });
 
 describe("get_curriculum", () => {
-    it("loads the full tree and names it in the summary", async () => {
+    it("returns an overview and names it in the summary", async () => {
         dbCurriculum.getItem.mockResolvedValueOnce({ title: "מסלול א׳" });
 
         const result = await getCurriculumTool.execute(
@@ -129,8 +129,41 @@ describe("get_curriculum", () => {
             context,
         );
 
-        expect(result.data).toEqual({ title: "מסלול א׳" });
+        expect(result.data).toEqual({
+            title: "מסלול א׳",
+            syllabuses: [],
+            weekCount: 0,
+        });
         expect(result.summary).toContain("מסלול א׳");
+    });
+
+    it("stays small and untruncated for an oversized curriculum (#784)", async () => {
+        const bulk = "x".repeat(500);
+        dbCurriculum.getItem.mockResolvedValueOnce({
+            id: "c-big",
+            title: "ענק",
+            c2s: Array.from({ length: 40 }, (_, i) => ({
+                syllabus: {
+                    id: `s-${i}`,
+                    title: `סילבוס ${i}`,
+                    s2m: Array.from({ length: 50 }, () => ({ module: { bulk } })),
+                },
+            })),
+            c2w: Array.from({ length: 30 }, (_, i) => ({ week: { id: `w-${i}`, bulk } })),
+        });
+
+        const result = await getCurriculumTool.execute({ curriculumId: "c-big" }, context);
+        const data = result.data as {
+            syllabuses: Array<{ id: string; title: string }>;
+            weekCount: number;
+        };
+
+        expect(data.syllabuses).toHaveLength(40);
+        expect(data.syllabuses[0]).toEqual({ id: "s-0", title: "סילבוס 0" });
+        expect(data.weekCount).toBe(30);
+        expect(JSON.stringify(data).length).toBeLessThan(5_000);
+        expect(data).not.toHaveProperty("c2s");
+        expect(data).not.toHaveProperty("c2w");
     });
 
     it("still names an untitled curriculum by its id", async () => {

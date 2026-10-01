@@ -320,19 +320,12 @@ export const FIXTURE_CURRICULUM_ID = "fx-curriculum";
 export const FIXTURE_CURRICULUM = {
     id: FIXTURE_CURRICULUM_ID,
     title: "גאנט הבדיקה",
-    syllabuses: [
-        {
-            id: "fx-syl-1",
-            title: "יסודות",
-            // Planning roles on purpose: a model answering "who is on duty"
-            // from here names מיכל אברהם, who is on no event this week.
-            leadInstructorIds: [9003],
-            modules: [
-                { id: "fx-mod-1", title: "מתמטיקה בדידה", hours: 12, orchestratorId: 9003 },
-                { id: "fx-mod-2", title: "רשתות", hours: 8, orchestratorId: 9003 },
-            ],
-        },
-    ],
+    // Planning roles on purpose: a model answering "who is on duty" from here
+    // names מיכל אברהם, who is on no event this week.
+    orchestratorId: 9003,
+    // The overview shape the real `get_curriculum` returns (#784).
+    syllabuses: [{ id: "fx-syl-1", title: "יסודות" }],
+    weekCount: 1,
 };
 
 /**
@@ -531,7 +524,8 @@ export const FIXTURE_TOOLS: Array<AiTool<any>> = [
     readTool(
         "get_curriculum",
         "מבנה הגאנט",
-        "מחזיר את עץ הגאנט המלא: סילבוסים, מודולים, שבועות וימים.",
+        "מחזיר סקירה של הגאנט: פרטיו ורשימת הסילבוסים שלו (id ושם), בלי המערכים. " +
+            "למערכים של סילבוס קרא ל-get_syllabus, ולשבועות — list_weeks.",
         FIXTURE_CURRICULUM,
         'נטען הגאנט "גאנט הבדיקה"',
         CURRICULUM_PARAMS,
