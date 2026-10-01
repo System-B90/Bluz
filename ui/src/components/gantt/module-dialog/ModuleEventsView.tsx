@@ -33,7 +33,10 @@ import {
     EVENT_ANCHOR_PREFIX,
     HIGHLIGHT_DURATION_MS,
 } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
-import { groupSortableId, ModuleEventGroupRow } from "@/components/gantt/module-dialog/ModuleEventGroupRow";
+import {
+    groupSortableId,
+    ModuleEventGroupRow,
+} from "@/components/gantt/module-dialog/ModuleEventGroupRow";
 import { ModuleEventView } from "@/components/gantt/module-dialog/ModuleEventView";
 import {
     useCurriculumProviderActions,
@@ -47,8 +50,10 @@ const eventAnchorId = (eventId: GanttEventId) =>
 function CreateModuleEventButton({ moduleId }: { moduleId: GanttModuleId }) {
     const { enqueueSnackbar } = useSnackbar();
     const { createEvent } = useModuleEventActions();
+    const { openEventDialog } = useCurriculumProviderActions();
     const state = useCurriculumState();
     const clickHandler = useCallback(() => {
+        const syllabusId = state.modules[moduleId]?.syllabusId;
         const defaultOrchestratorId =
             state.modules[moduleId]?.defaultOrchestratorId ?? null;
         createEvent(
@@ -61,14 +66,25 @@ function CreateModuleEventButton({ moduleId }: { moduleId: GanttModuleId }) {
             null,
             null,
             defaultOrchestratorId,
-        ).catch((error) =>
-            enqueueApiErrorSnackbar(
-                enqueueSnackbar,
-                "יצירת המופע נכשלה!",
-                error,
-            ),
-        );
-    }, [moduleId, createEvent, enqueueSnackbar, state.modules]);
+        )
+            .then((created) => {
+                if (syllabusId)
+                    openEventDialog(syllabusId, moduleId, created.id);
+            })
+            .catch((error) =>
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "יצירת המופע נכשלה!",
+                    error,
+                ),
+            );
+    }, [
+        moduleId,
+        createEvent,
+        enqueueSnackbar,
+        openEventDialog,
+        state.modules,
+    ]);
 
     return (
         <IconButton onClick={clickHandler} size="small">
@@ -137,23 +153,37 @@ export function ModuleEventsView({
 
         return () => {
             window.cancelAnimationFrame(frameId);
-            if (clearTimerRef.current) window.clearTimeout(clearTimerRef.current);
+            if (clearTimerRef.current)
+                window.clearTimeout(clearTimerRef.current);
         };
     }, [focusEventId, eventIds]);
 
     const sensors = useSensors(
         useSensor(PointerSensor),
-        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        }),
     );
 
     // Top-level rows: a lone event, or a whole group (members in order).
     const blocks = useMemo(() => {
-        const result: Array<{ id: string; groupId?: string; ids: Array<GanttEventId> }> = [];
+        const result: Array<{
+            id: string;
+            groupId?: string;
+            ids: Array<GanttEventId>;
+        }> = [];
         for (const eventId of eventIds) {
             const groupId = state.events[eventId]?.groupId;
-            const existing = groupId ? result.find((b) => b.groupId === groupId) : undefined;
+            const existing = groupId
+                ? result.find((b) => b.groupId === groupId)
+                : undefined;
             if (existing) existing.ids.push(eventId);
-            else if (groupId) result.push({ id: groupSortableId(groupId), groupId, ids: [eventId] });
+            else if (groupId)
+                result.push({
+                    id: groupSortableId(groupId),
+                    groupId,
+                    ids: [eventId],
+                });
             else result.push({ id: eventId, ids: [eventId] });
         }
         return result;
@@ -168,31 +198,39 @@ export function ModuleEventsView({
             const blockTo = blocks.findIndex((b) => b.id === over.id);
             let newOrder: Array<GanttEventId>;
             if (blockFrom !== -1 && blockTo !== -1) {
-                newOrder = arrayMove(blocks, blockFrom, blockTo).flatMap((b) => b.ids);
+                newOrder = arrayMove(blocks, blockFrom, blockTo).flatMap(
+                    (b) => b.ids,
+                );
             } else {
                 // Members only reorder within their own group.
                 const from = eventIds.indexOf(active.id as GanttEventId);
                 const to = eventIds.indexOf(over.id as GanttEventId);
-                const groupId = state.events[active.id as GanttEventId]?.groupId;
+                const groupId =
+                    state.events[active.id as GanttEventId]?.groupId;
                 if (from === -1 || to === -1 || !groupId) return;
-                if (state.events[over.id as GanttEventId]?.groupId !== groupId) return;
+                if (state.events[over.id as GanttEventId]?.groupId !== groupId)
+                    return;
                 newOrder = arrayMove(eventIds, from, to);
             }
 
-            dispatch({ type: "REORDER_EVENTS", payload: { moduleId, eventIds: newOrder } });
+            dispatch({
+                type: "REORDER_EVENTS",
+                payload: { moduleId, eventIds: newOrder },
+            });
 
-            ganttApi
-                .reorderEvents(moduleId, newOrder)
-                .catch((error) =>
-                {
-                    // Put the rows back where the server still has them,
-                    // or the list shows an order that never persisted.
-                    dispatch({
-                        type: "REORDER_EVENTS",
-                        payload: { moduleId, eventIds },
-                    });
-                    enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת סדר המופעים נכשלה!", error);
+            ganttApi.reorderEvents(moduleId, newOrder).catch((error) => {
+                // Put the rows back where the server still has them,
+                // or the list shows an order that never persisted.
+                dispatch({
+                    type: "REORDER_EVENTS",
+                    payload: { moduleId, eventIds },
                 });
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "שמירת סדר המופעים נכשלה!",
+                    error,
+                );
+            });
         },
         [blocks, dispatch, eventIds, moduleId, enqueueSnackbar, state.events],
     );
@@ -207,7 +245,13 @@ export function ModuleEventsView({
             maxHeight={400}
             overflow={"auto"}
             ref={containerRef}
-            sx={{ "&::-webkit-scrollbar": { width: 4 }, "&::-webkit-scrollbar-thumb": { bgcolor: "action.selected", borderRadius: 2 } }}
+            sx={{
+                "&::-webkit-scrollbar": { width: 4 },
+                "&::-webkit-scrollbar-thumb": {
+                    bgcolor: "action.selected",
+                    borderRadius: 2,
+                },
+            }}
         >
             <DndContext
                 collisionDetection={closestCenter}
@@ -256,7 +300,9 @@ export function ModuleEventsView({
                                 ) : (
                                     <ModuleEventView
                                         eventId={ids[0]}
-                                        isHighlighted={ids[0] === highlightedEventId}
+                                        isHighlighted={
+                                            ids[0] === highlightedEventId
+                                        }
                                         key={id}
                                         moduleId={moduleId}
                                     />
