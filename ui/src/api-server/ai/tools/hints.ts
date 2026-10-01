@@ -9,6 +9,7 @@ export const ITERATION_HINTS = [
 ];
 
 export const CURRICULUM_HINTS = [
+    "זו סקירה בלבד. מערכים, שבועות וימים — get_syllabus עם id מהרשימה, ו-list_weeks.",
     'הגאנט הוא תוכנית. לשאלה על מה שקורה בפועל (מי מבזר, מה קורה השבוע) — list_events.',
     "orchestratorId = אחראי, leadInstructorIds = אחראי מקצוע. אלה תכנון, לא נוכחות. שמות — list_people.",
 ];

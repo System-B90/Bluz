@@ -65,8 +65,8 @@ export const getCurriculumTool: AiTool<CurriculumArgs> = {
     title: "מבנה הגאנט",
     danger: AiToolDanger.Safe,
     description:
-        "מחזיר את עץ הגאנט המלא: סילבוסים, מודולים, שבועות וימים. " +
-        "השתמש בזה כדי לענות על שאלות מבניות לפני כל שינוי.",
+        "מחזיר סקירה של הגאנט: פרטיו ורשימת הסילבוסים שלו (id ושם), בלי המערכים. " +
+        "למערכים של סילבוס קרא ל-get_syllabus, ולשבועות — list_weeks.",
     kind: AiToolKind.Read,
     parameters: {
         type: "object",
@@ -76,9 +76,18 @@ export const getCurriculumTool: AiTool<CurriculumArgs> = {
 
     async execute(args, context) {
         const id = requireCurriculumId(args, context);
-        const curriculum = await DbCurriculum.getItem(id);
+        // The full tree outgrows the tool-result cap on any real curriculum
+        // and arrives as broken JSON, so only an overview is returned (#784).
+        const { c2s, c2w, ...curriculum } = await DbCurriculum.getItem(id);
         return {
-            data: curriculum,
+            data: {
+                ...curriculum,
+                syllabuses: (c2s ?? []).map(({ syllabus }) => ({
+                    id: syllabus.id,
+                    title: syllabus.title,
+                })),
+                weekCount: (c2w ?? []).length,
+            },
             summary: `נטען הגאנט "${curriculum.title ?? id}"`,
             hints: CURRICULUM_HINTS,
         };
