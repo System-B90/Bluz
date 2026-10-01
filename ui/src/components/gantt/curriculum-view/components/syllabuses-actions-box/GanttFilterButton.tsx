@@ -25,7 +25,12 @@ import { useGanttFilters } from "@/components/gantt/state/filters/Provider";
 const SELECT_RTL_SX = { "& .MuiSelect-select": { textAlign: "right" } };
 
 /** Popover with the gantt syllabus filters, mirroring the schedule's filter icon. */
-export function GanttFilterButton() {
+export function GanttFilterButton({
+    withCommand = true,
+}: {
+    /** Off when a second button is mounted, so the palette id isn't registered twice. */
+    withCommand?: boolean;
+}) {
     const coursesLabelId = useId();
     const leadsLabelId = useId();
     const { courses, getCourse } = useCourses();
@@ -44,6 +49,7 @@ export function GanttFilterButton() {
         group: COMMAND_GROUPS.gantt,
         icon: <FilterListIcon />,
         keywords: ["filter", "filters", "סינון", "סנן"],
+        enabled: withCommand,
         run: openFilters,
     });
 

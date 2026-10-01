@@ -26,6 +26,7 @@ import { Command, useCommands } from "@system-b90/command-palette";
 import React, { useMemo, useState } from "react";
 
 import { COMMAND_GROUPS } from "@/components/app-commands/labels";
+import { GanttFilterButton } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box/GanttFilterButton";
 
 export type GanttToolbarProps = {
     title: string;
@@ -225,6 +226,8 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({
                     sx={ { minWidth: 200 } }
                     value={ searchDraft }
                 />
+
+                <GanttFilterButton withCommand={ false } />
 
                 {/* View mode: weekly / daily */ }
                 <ToggleButtonGroup
