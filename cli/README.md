@@ -1,20 +1,49 @@
-# Bluz CLI (`bluz`)
+# Bluz (`bluz`)
 
-A Python command-line tool for driving the Bluz scheduling & curriculum API from
-your terminal. Built with [Typer](https://typer.tiangolo.com/) and
-[InquirerPy](https://github.com/kazhala/InquirerPy), it speaks the same `/api/*`
-surface the web UI does and ships with every Bluz version.
+Script and drive the Bluz scheduling & curriculum server from Python. One
+package gives you:
+
+- **A typed Python SDK** — `from bluz import Bluz`. Pydantic models with real
+  `date`/`datetime`/`time` fields, navigable like the data itself (iterate a
+  curriculum for its syllabuses, look children up by title, call
+  `.update()`/`.delete()` on the objects). Ships `py.typed`; passes
+  `mypy --strict`.
+- **The `bluz` CLI** — every `/api/*` route as a command, built on the same SDK.
+
+It ships with every Bluz version.
 
 ## Quick Start
 
 ```bash
-# 1. Install the CLI (from the repo root)
-pip install ./cli
+# 1. Install (from the repo root; [ipython] adds a nicer REPL)
+pip install "./cli[ipython]"
 
 # 2. Point it at your Bluz server and store a session token (interactive)
 bluz login
 
-# 3. Use it
+# 3. Script it
+ipython
+```
+
+```python
+from bluz import Bluz, EventType, today
+from datetime import timedelta
+
+bz = Bluz()                                   # uses `bluz login` / BLUZ_URL + BLUZ_TOKEN
+bz.iterations.current()                       # Iteration(id='2026b', ...)
+
+cur = bz.gantt.curriculums["Bis90 2026"]      # by title or id — one request, whole tree
+for syllabus in cur:                          # Curriculum → Syllabus → Module → GanttEvent
+    for module in syllabus:
+        print(syllabus.title, module.title, sum(e.minimum_duration for e in module))
+cur["Mathematics"]["Algebra"]["Intro"].allocated_duration
+
+week = bz.events.list(today(), today() + timedelta(days=7))
+week.where(type=EventType.LECTURE)            # Collection: list + lookup/filter helpers
+```
+
+```bash
+# 4. Or use the CLI
 bluz iterations list
 bluz rooms list
 bluz gantt curriculums list
@@ -26,6 +55,69 @@ bluz interactive
 ```
 
 Run any command with `--help` for its options, e.g. `bluz gantt modules --help`.
+
+## Python SDK
+
+### Finding your way around
+
+Tab completion on `bz.` is the table of contents — every API area is an
+attribute:
+
+| `bz.`                                            | What it covers                                                                         |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| `iterations`                                     | course runs: `current()`, `["2026a"]`, `register`, `patch`, `usage`                    |
+| `courses`, `rooms`, `outsiders`, `colors`        | directories: `list()`, `get(id)`, `["name"]`, `create`, `update`, `delete`             |
+| `reservations`                                   | room bookings: `list(room=, start=, end=)`, `create`, `cancel`                         |
+| `events`                                         | calendar: `list(start, end)`, `get(*ids)`, `create`, `update`, `history`, `export_ics` |
+| `drafts`, `snapshots`                            | shared drafts; restore points (`snapshot.restore()`)                                   |
+| `gantt.curriculums` … `gantt.days`               | the curriculum engine, plus the cut pipeline on `gantt.curriculums`                    |
+| `settings`, `personal`                           | app settings (`schedule()`, `meal_times()`), the user's own settings                   |
+| `google`, `hive`, `ai`, `student_view`, `system` | integrations, Hive reference data, the assistant, the student board, health            |
+| `http`                                           | the raw client — `bz.http.get("/api/...")` for anything without a method               |
+
+In IPython, `bz.gantt.curriculums?` shows a namespace's docstring and
+examples, `Curriculum??` shows the source, and models print as one line
+(`Curriculum(id='c1', title='Bis90', is_draft=False, children=7)`) rather than
+a field dump. `curriculum.tree()` renders the whole tree.
+
+### Conventions
+
+- **Attributes are snake_case** (`event.start_time`); the wire is camelCase.
+  Fields the server sends that this version does not know are kept, so
+  `model.to_wire()` and every update round-trip losslessly.
+- **Dates are typed**: `datetime` (timezone-aware) for instants, `date` for
+  calendar days, `time` for `"HH:mm"` settings. Pass `date`/`datetime` or ISO
+  strings to any method. `bluz.today()` is today on the Bluz wall clock
+  (Asia/Jerusalem).
+- **Ids or objects**: every argument that names a thing takes its id or the
+  object (`bz.reservations.list(room=bz.rooms["Lab"])`).
+- **Lookups**: `api["title or id"]` and `node["child title"]` raise
+  `NotFoundError`; `collection.find(...)` returns `None` instead.
+- **Iteration scope**: iteration-aware calls default to the current
+  iteration. `bz.scoped("2026a")` (or `iteration.scoped()`) is a session that
+  reads another iteration by default.
+- **Errors**: everything derives from `bluz.BluzError`; server errors are
+  `BluzApiError` with `.error_name`, `.error_message`, `.http_status`.
+- A response that does not fit its model is kept unvalidated with a
+  `ResponseShapeWarning`. Make it fatal in your tests with
+  `warnings.simplefilter("error", bluz.errors.ResponseShapeWarning)`.
+
+### Examples
+
+Runnable scripts live inside the package:
+
+```bash
+python -m bluz.examples                    # list them
+python -m bluz.examples walk_curriculum    # run one against your server
+```
+
+| Example           | Shows                                              |
+| ----------------- | -------------------------------------------------- |
+| `walk_curriculum` | tree navigation, per-syllabus totals               |
+| `weekly_load`     | date-range queries, hours per course               |
+| `cut_dry_run`     | the plan-then-confirm cut flow, read-only          |
+| `safe_bulk_edit`  | snapshot → edit → roll back on failure             |
+| `build_syllabus`  | creating syllabuses/modules/events on a draft copy |
 
 ## Interactive mode
 
@@ -66,34 +158,34 @@ pass `--insecure`.
 
 Each setting resolves in this order (first wins):
 
-| Source | URL | Token | Insecure |
-| --- | --- | --- | --- |
-| CLI flag | `--url` | `--token` | `--insecure` |
+| Source      | URL        | Token        | Insecure        |
+| ----------- | ---------- | ------------ | --------------- |
+| CLI flag    | `--url`    | `--token`    | `--insecure`    |
 | Environment | `BLUZ_URL` | `BLUZ_TOKEN` | `BLUZ_INSECURE` |
-| Config file | `url` | `token` | `insecure` |
+| Config file | `url`      | `token`      | `insecure`      |
 
 A local `.env` is loaded automatically, so `BLUZ_*` vars there are honoured.
 
 ## Command groups
 
-| Group | What it covers |
-| --- | --- |
-| `bluz auth` | `login`, `logout`, `config`, `hive-status`, `ws-ticket` |
-| `bluz iterations` | list / current / get / register / patch / set-current / delete / sync-hive |
-| `bluz rooms` | list / create / update / delete / set-info |
-| `bluz courses` | list / create / update / delete |
-| `bluz reservations` | list / create / cancel |
-| `bluz outsiders` | list / create / update / delete |
-| `bluz events` | list / get / create / update / delete / compare |
-| `bluz calendar` | `drafts` (shared drafts CRUD), `snapshots` (capture / restore / delete), `export-ics` |
-| `bluz settings` | get / set (+ prayerTimes, mealTimes and schedule helpers) |
-| `bluz personal` | get / set — per-user filters and Google Calendar toggles |
-| `bluz colors` | list / get / create / update / delete — custom event colours |
-| `bluz hive` | read-only Hive reference data: users / students / classes / subjects / modules / rooms / lessons / queues / avatar, plus `activate-lessons` |
-| `bluz integrations google` | status / connect / disconnect / sync / calendars / select-calendar / purge |
-| `bluz student-view` | `schedule` (one day of the student board), `report-engagement` |
-| `bluz ai` | `tools` (capabilities + whether AI is configured), `chat` (streaming), `benchmark` |
-| `bluz gantt` | `curriculums`, `syllabuses`, `modules`, `events`, `days`, `weeks` (CRUD + link/allocate/reorder), curriculum export/import/constraints/mappings/duplicate/execution, the cut pipeline (`cut-preview`, `cut-plan`, `cut`, `cut-status`, `pull-back`), `execution` / `recreate-occurrence`, shuffle groups and recurrence exceptions |
+| Group                      | What it covers                                                                                                                                                                                                                                                                                                                     |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bluz auth`                | `login`, `logout`, `config`, `hive-status`, `ws-ticket`                                                                                                                                                                                                                                                                            |
+| `bluz iterations`          | list / current / get / register / patch / set-current / delete / sync-hive                                                                                                                                                                                                                                                         |
+| `bluz rooms`               | list / create / update / delete / set-info                                                                                                                                                                                                                                                                                         |
+| `bluz courses`             | list / create / update / delete                                                                                                                                                                                                                                                                                                    |
+| `bluz reservations`        | list / create / cancel                                                                                                                                                                                                                                                                                                             |
+| `bluz outsiders`           | list / create / update / delete                                                                                                                                                                                                                                                                                                    |
+| `bluz events`              | list / get / create / update / delete / compare                                                                                                                                                                                                                                                                                    |
+| `bluz calendar`            | `drafts` (shared drafts CRUD), `snapshots` (capture / restore / delete), `export-ics`                                                                                                                                                                                                                                              |
+| `bluz settings`            | get / set (+ prayerTimes, mealTimes and schedule helpers)                                                                                                                                                                                                                                                                          |
+| `bluz personal`            | get / set — per-user filters and Google Calendar toggles                                                                                                                                                                                                                                                                           |
+| `bluz colors`              | list / get / create / update / delete — custom event colours                                                                                                                                                                                                                                                                       |
+| `bluz hive`                | read-only Hive reference data: users / students / classes / subjects / modules / rooms / lessons / queues / avatar, plus `activate-lessons`                                                                                                                                                                                        |
+| `bluz integrations google` | status / connect / disconnect / sync / calendars / select-calendar / purge                                                                                                                                                                                                                                                         |
+| `bluz student-view`        | `schedule` (one day of the student board), `report-engagement`                                                                                                                                                                                                                                                                     |
+| `bluz ai`                  | `tools` (capabilities + whether AI is configured), `chat` (streaming), `benchmark`                                                                                                                                                                                                                                                 |
+| `bluz gantt`               | `curriculums`, `syllabuses`, `modules`, `events`, `days`, `weeks` (CRUD + link/allocate/reorder), curriculum export/import/constraints/mappings/duplicate/execution, the cut pipeline (`cut-preview`, `cut-plan`, `cut`, `cut-status`, `pull-back`), `execution` / `recreate-occurrence`, shuffle groups and recurrence exceptions |
 
 ### The cut pipeline
 
@@ -111,7 +203,7 @@ bluz gantt curriculums execution <id>    # תכנון מול ביצוע (plan vs
 Gating failures are coded, and nothing is written when they fire: `draft`,
 `no-iteration`, `already-cut`, `foreign-cut` (HTTP 409) and `invalid-plan`
 (HTTP 400). `foreign-cut` means the linked iteration still holds a live cut of a
-*different* curriculum — pull that one back before cutting this one.
+_different_ curriculum — pull that one back before cutting this one.
 
 ### Parent ids on gantt lists
 
