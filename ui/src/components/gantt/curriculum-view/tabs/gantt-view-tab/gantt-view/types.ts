@@ -20,6 +20,10 @@ export type GanttContextType = {
     startDate: null | string;
     timelineWeeks: Array<GanttWeek>;
     linearDays: Array<string>;
+    /** Every day of the timeline, even while a week is zoomed. */
+    allLinearDays: Array<string>;
+    /** Page toggle: leave break events (meals…) out of every time total. */
+    ignoreBreaks: boolean;
     /** O(1) lookup of a dayId's position within linearDays (#159). */
     dayIndexMap: Map<string, number>;
     /** O(1) lookup of a dayId's owning week index within timelineWeeks (#159). */

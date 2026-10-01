@@ -10,6 +10,7 @@ import {
     GanttSyllabusId,
     getAllowedDayIndices,
 } from "@/api-shared/types/gantt/models";
+import { isBreakEvent } from "@/api-shared/types/settings/meal";
 import {
     computeEventDaySpans,
     DayHeadroom,
@@ -56,6 +57,8 @@ export type StudentLoadIssue =
 export type PathDayLoad = {
     pathId: string;
     minutes: number;
+    /** Of `minutes`, the time in break events (meals…). */
+    breakMinutes: number;
     /** Minutes per syllabus on this path, largest first. */
     bySyllabus: Array<{ syllabusId: GanttSyllabusId; minutes: number }>;
 };
@@ -63,6 +66,8 @@ export type PathDayLoad = {
 export type DayStudentLoad = {
     /** The busiest path's minutes — the day's scheduled time. */
     minutes: number;
+    /** Break time on the day (the busiest path's) — what "ignore breaks" removes. */
+    breakMinutes: number;
     paths: Array<PathDayLoad>;
     issues: Array<StudentLoadIssue>;
 };
@@ -78,6 +83,7 @@ type Audience = {
     pathIdxs: Array<number>;
     /** Shuffles the event is for; null ⇒ every student of its paths. */
     shuffles: Array<string> | null;
+    isBreak: boolean;
 };
 /** A syllabus' minutes on one day: shared minutes plus per-shuffle minutes. */
 type Slot = { common: number; byShuffle: Map<string, number> };
@@ -195,11 +201,13 @@ function resolveAudiences(
                 const event = state.events[eventId];
                 if (!event) continue;
                 const courseIds = event.courseIds ?? [];
+                const isBreak = isBreakEvent(syllabus.title, event.title);
                 if (courseIds.length > 0) {
                     audiences.set(eventId, {
                         syllabusId,
                         pathIdxs: pathIdxsFor(courseIds),
                         shuffles: null,
+                        isBreak,
                     });
                     continue;
                 }
@@ -208,6 +216,7 @@ function resolveAudiences(
                 audiences.set(eventId, {
                     syllabusId,
                     pathIdxs: syllabusPaths,
+                    isBreak,
                     // Tagged for every shuffle (or the syllabus has just one)
                     // is the same as tagged for none.
                     shuffles:
@@ -228,6 +237,8 @@ class StudentLoadTracker implements DayHeadroom {
     private readonly days = new Map<GanttDayId, Map<number, Map<GanttSyllabusId, Slot>>>();
     /** Path-independent view of each syllabus' shuffles, for alignment. */
     private readonly shuffleSlots = new Map<GanttDayId, Map<GanttSyllabusId, Slot>>();
+    /** Break minutes per day, per path index. */
+    private readonly breaks = new Map<GanttDayId, Map<number, number>>();
 
     constructor(private readonly audiences: Map<string, Audience>) {}
 
@@ -265,6 +276,11 @@ class StudentLoadTracker implements DayHeadroom {
         };
         for (const pathIdx of audience.pathIdxs) {
             add(slotOf(this.pathSlots(dayId, pathIdx), audience.syllabusId));
+            if (audience.isBreak) {
+                const day = this.breaks.get(dayId) ?? new Map<number, number>();
+                day.set(pathIdx, (day.get(pathIdx) ?? 0) + minutes);
+                this.breaks.set(dayId, day);
+            }
         }
         if (audience.shuffles) {
             let bySyllabus = this.shuffleSlots.get(dayId);
@@ -288,6 +304,7 @@ class StudentLoadTracker implements DayHeadroom {
                 return {
                     pathId: path.id,
                     minutes: bySyllabus.reduce((sum, entry) => sum + entry.minutes, 0),
+                    breakMinutes: this.breaks.get(dayId)?.get(pathIdx) ?? 0,
                     bySyllabus,
                 };
             });
@@ -308,6 +325,7 @@ class StudentLoadTracker implements DayHeadroom {
 
             byDay[dayId] = {
                 minutes: Math.max(0, ...pathLoads.map((load) => load.minutes)),
+                breakMinutes: Math.max(0, ...pathLoads.map((load) => load.breakMinutes)),
                 paths: pathLoads,
                 issues,
             };
@@ -417,6 +435,22 @@ export function sumStudentMinutes(
     return Math.max(0, ...byPath.values());
 }
 
+/** The loads with break time taken out of every path and day. */
+export function withoutBreaks(
+    byDay: Record<GanttDayId, DayStudentLoad>,
+): Record<GanttDayId, DayStudentLoad> {
+    return Object.fromEntries(
+        Object.entries(byDay).map(([dayId, load]) => {
+            const paths = load.paths.map((path) => ({
+                ...path,
+                minutes: path.minutes - path.breakMinutes,
+                breakMinutes: 0,
+            }));
+            return [dayId, { ...load, paths, minutes: Math.max(0, ...paths.map((path) => path.minutes)) }];
+        }),
+    );
+}
+
 /** Per-day busiest-path minutes, the shape the capacity views consume. */
 export function getStudentMinutesByDay(
     byDay: Record<GanttDayId, DayStudentLoad>,
@@ -480,12 +514,16 @@ export function calculateStudentModuleMinutes(
     state: NormalizedStore,
     courses: Array<Course>,
     occurrenceCtx?: RecurrenceOccurrenceContext,
+    ignoreBreaks = false,
 ): number {
     const syllabusId = state.modules[moduleId]?.syllabusId;
     if (!syllabusId) return 0;
+    const syllabusTitle = state.syllabuses[syllabusId]?.title ?? "";
     return calculateStudentMinutes({
         courses,
-        include: (_eventId, eventModuleId) => eventModuleId === moduleId,
+        include: (eventId, eventModuleId) =>
+            eventModuleId === moduleId
+            && !(ignoreBreaks && isBreakEvent(syllabusTitle, state.events[eventId]?.title ?? "")),
         occurrenceCtx,
         state,
         syllabusIds: [syllabusId],

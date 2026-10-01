@@ -36,6 +36,8 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         handleWeeklyViewChange,
         relativeDaySizing,
         setRelativeDaySizing,
+        ignoreBreaks,
+        setIgnoreBreaks,
         showUnallocated,
         setShowUnallocated,
         zoomedWeekId,
@@ -87,10 +89,12 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                             collapseAllSyllabuses={ collapseAllSyllabuses }
                             description={ curriculum.description }
                             expandAllSyllabuses={ expandAllSyllabuses }
+                            ignoreBreaks={ ignoreBreaks }
                             onSearchChange={ setSearchQuery }
                             onWeeklyViewChange={ handleWeeklyViewChange }
                             relativeDaySizing={ relativeDaySizing }
                             searchQuery={ searchQuery }
+                            setIgnoreBreaks={ setIgnoreBreaks }
                             setRelativeDaySizing={ setRelativeDaySizing }
                             setShowConstraints={ setShowConstraints }
                             setShowUnallocated={ setShowUnallocated }
