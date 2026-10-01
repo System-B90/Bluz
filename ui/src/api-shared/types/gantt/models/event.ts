@@ -82,7 +82,8 @@ export type GanttEvent = {
     /**
      * Shuffle group this event belongs to, or null when it stands alone.
      *
-     * The same lesson given to different shuffles at different times is stored
+     * The same lesson given to different shuffles, in parallel inside the
+     * syllabus' shared block (same start and end for every shuffle), is stored
      * as one event per shuffle - separate rows, so each can be placed, cut and
      * linked to Hive independently - tied together by a shared `groupId`. The
      * group is what lets the UI show them as one row and lets time totals count

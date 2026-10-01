@@ -51,11 +51,9 @@ describe("StudentLoadCard issues", () => {
         expect(block.textContent).toContain("(−0.5)");
     });
 
-    it("lists every path's day when paths differ", () => {
-        renderCard([ { kind: "paths-unequal" } ]);
+    it("raises no issue when paths differ", () => {
+        renderCard([]);
 
-        const block = screen.getByTestId("student-load-issue");
-        expect(block.textContent).toContain("אפולו");
-        expect(block.textContent).toContain("(−2)");
+        expect(screen.queryByTestId("student-load-issue")).toBeNull();
     });
 });

@@ -119,6 +119,7 @@ export function normalizeApiSyllabus(
             shuffleHiveGroups: { ...(apiSyllabus.shuffleHiveGroups ?? {}) },
             courseIds: [...(apiSyllabus.courseIds ?? [])],
             leadInstructorIds: [...(apiSyllabus.leadInstructorIds ?? [])],
+            color: apiSyllabus.color ?? null,
             modules: syllabusModuleIds,
             curriculumId,
         },

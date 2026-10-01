@@ -1,12 +1,12 @@
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import FormControl, { FormControlProps } from "@mui/material/FormControl";
-import FormHelperText from "@mui/material/FormHelperText";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import { SelectChangeEvent } from "@mui/material/Select";
+import Typography from "@mui/material/Typography";
 import { useCallback, useId } from "react";
 
 import { GanttEvent } from "@/api-shared/types/gantt/models/event";
+import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { InstructorSelect } from "@/components/base/InstructorSelect";
 
 export type EventOrchestratorFieldProps = {
@@ -23,6 +23,7 @@ export function EventOrchestratorField({
 }: EventOrchestratorFieldProps)
 {
     const labelId = useId();
+    const { getInstructor } = useHiveUsers();
     const onChange = useCallback(
         (e: SelectChangeEvent<"" | number>) =>
         {
@@ -38,15 +39,24 @@ export function EventOrchestratorField({
 
     return (
         <FormControl size="small" { ...props }>
-            <InputLabel id={ labelId } sx={ isMissing ? { color: "warning.main" } : undefined }>
+            <InputLabel id={ labelId } shrink sx={ isMissing ? { color: "warning.main" } : undefined }>
                 אחראי
             </InputLabel>
             <InstructorSelect<"" | number>
+                displayEmpty
                 excludeTeachers={ true }
                 label="אחראי"
                 labelId={ labelId }
+                notched
                 onChange={ onChange }
                 pinnedIds={ leadInstructorIds }
+                renderValue={ (value) => value === ""
+                    ? (
+                        <Typography color="warning.main" component="span" variant="body2">
+                            מומלץ מאוד להגדיר אחראי מבין המדריכים
+                        </Typography>
+                    )
+                    : (getInstructor(Number(value))?.display_name ?? `#${value}`) }
                 sx={ isMissing
                     ? {
                         "& .MuiOutlinedInput-notchedOutline": {
@@ -60,19 +70,6 @@ export function EventOrchestratorField({
                     <em>ללא אחראי</em>
                 </MenuItem>
             </InstructorSelect>
-            { isMissing ? <FormHelperText
-                component="div"
-                sx={ {
-                    alignItems: "center",
-                    color: "warning.main",
-                    display: "flex",
-                    gap: 0.5,
-                    marginInline: 0,
-                } }
-            >
-                <WarningAmberIcon sx={ { fontSize: 14 } } />
-                    מומלץ מאוד להגדיר אחראי מבין המדריכים
-            </FormHelperText> : null }
         </FormControl>
     );
 }

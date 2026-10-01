@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 
 import { GanttCurriculum, GanttEvent, GanttModule, GanttSyllabus } from "@/api-shared/types/gantt/models";
 import { fuzzyScore } from "@/components/gantt/curriculum-view/search/fuzzy";
+import { useGanttFilters } from "@/components/gantt/state/filters/Provider";
 
 // First-column search: filters the syllabus → module → event row tree by
 // title. Empty string = no filter (#323).
@@ -18,6 +19,7 @@ export const useGanttSearch = ({
 }) =>
 {
     const [ searchQuery, setSearchQuery ] = useState("");
+    const { hasActiveFilters, syllabusMatches } = useGanttFilters();
     const searchActive = searchQuery.trim().length > 0;
 
     // Resolve which rows survive the first-column search. A syllabus/module
@@ -78,8 +80,15 @@ export const useGanttSearch = ({
 
     const isSyllabusVisible = useCallback(
         (syllabusId: string) =>
-            !searchVisibility || searchVisibility.syllabusIds.has(syllabusId),
-        [ searchVisibility ],
+        {
+            if (hasActiveFilters)
+            {
+                const syllabus = syllabuses[ syllabusId ];
+                if (!syllabus || !syllabusMatches(syllabus)) return false;
+            }
+            return !searchVisibility || searchVisibility.syllabusIds.has(syllabusId);
+        },
+        [ hasActiveFilters, syllabusMatches, syllabuses, searchVisibility ],
     );
     const isModuleVisible = useCallback(
         (moduleId: string) =>

@@ -26,6 +26,7 @@ import { ModulesTable } from "@/components/gantt/syllabus-card/ModulesTable";
 import { ShufflesSection } from "@/components/gantt/syllabus-dialog/ShufflesSection";
 import { SyllabusImportExportButton } from "@/components/gantt/syllabus-dialog/SyllabusImportExportButton";
 import { SyllabusLinksSection } from "@/components/gantt/syllabus-dialog/SyllabusLinksSection";
+import { ColorPickerField } from "@/components/schedule/event-dialog/ColorPickerField";
 
 export type SyllabusDialogProps = {
     open: boolean;
@@ -177,29 +178,38 @@ export function SyllabusDialog({
                     mt={1}
                 >
                     <Stack spacing={2.5} width={{ xs: "100%", md: "45%" }}>
-                        <TextField
-                            error={titleMissing}
-                            fullWidth
-                            helperText={
-                                titleMissing
-                                    ? "לסילבוס חייב להיות שם. השם הקודם יישמר."
-                                    : undefined
-                            }
-                            label="שם הסילבוס"
-                            onBlur={() => {
-                                // An empty title leaves the card nameless, so
-                                // the field falls back to the saved one.
-                                if (titleMissing) {
-                                    setLocalTitle(syllabus?.title ?? "");
-                                    return;
+                        <Stack alignItems="stretch" direction="row" gap={1}>
+                            <TextField
+                                error={titleMissing}
+                                fullWidth
+                                helperText={
+                                    titleMissing
+                                        ? "לסילבוס חייב להיות שם. השם הקודם יישמר."
+                                        : undefined
                                 }
-                                commit({ title: localTitle.trim() });
-                            }}
-                            onChange={(e) => setLocalTitle(e.target.value)}
-                            required
-                            size="small"
-                            value={localTitle}
-                        />
+                                label="שם הסילבוס"
+                                onBlur={() => {
+                                    // An empty title leaves the card nameless, so
+                                    // the field falls back to the saved one.
+                                    if (titleMissing) {
+                                        setLocalTitle(syllabus?.title ?? "");
+                                        return;
+                                    }
+                                    commit({ title: localTitle.trim() });
+                                }}
+                                onChange={(e) => setLocalTitle(e.target.value)}
+                                required
+                                size="small"
+                                value={localTitle}
+                            />
+                            <ColorPickerField
+                                event={{ color: syllabus?.color ?? undefined }}
+                                onUpdate={({ color }) =>
+                                    commit({ color: color ?? null })
+                                }
+                                size="small"
+                            />
+                        </Stack>
 
                         <TextField
                             fullWidth

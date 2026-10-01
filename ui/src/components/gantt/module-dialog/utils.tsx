@@ -5,11 +5,12 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useMemo, useState } from "react";
 
-import { getHiveBaseUrl } from "@/api-shared/common";
+import { hiveModuleUrl } from "@/api-shared/hive-links";
 import { useHiveLessons } from "@/components/base/HiveLessonsProvider";
 import { HiveModuleSelect } from "@/components/base/HiveModuleSelect";
 import { useHiveModules } from "@/components/base/HiveModulesProvider";
 import { HiveSubjectSelect } from "@/components/base/HiveSubjectSelect";
+import { useActiveIterationHiveUrl } from "@/components/base/IterationProvider";
 
 export function HiveModulesView({
     hiveModules,
@@ -20,6 +21,7 @@ export function HiveModulesView({
     onRemove?: (id: number) => void;
 }) {
     const { getModule } = useHiveModules();
+    const hiveUrl = useActiveIterationHiveUrl();
 
     if (hiveModules.length === 0) {
         return (
@@ -31,10 +33,7 @@ export function HiveModulesView({
 
     return (
         <Box>
-            <Typography
-                sx={{ mb: 1 }}
-                variant="subtitle2"
-            >
+            <Typography sx={{ mb: 1 }} variant="subtitle2">
                 מערכים מקושרים בהייב
             </Typography>
             <Stack direction="row" flexWrap="wrap" gap={1}>
@@ -44,7 +43,13 @@ export function HiveModulesView({
                         <Chip
                             clickable
                             component="a"
-                            href={`${getHiveBaseUrl()}/course/${mod?.parent_subject}/${id}`}
+                            href={
+                                hiveModuleUrl(
+                                    mod?.parent_subject,
+                                    id,
+                                    hiveUrl,
+                                ) ?? undefined
+                            }
                             key={id}
                             label={mod?.name ?? `#${id}`}
                             onDelete={onRemove ? () => onRemove(id) : undefined}
@@ -123,10 +128,7 @@ export function HiveLessonsView({
 
     return (
         <Box>
-            <Typography
-                sx={{ mb: 1 }}
-                variant="subtitle2"
-            >
+            <Typography sx={{ mb: 1 }} variant="subtitle2">
                 שיעורים מקושרים בהייב
             </Typography>
             <Stack direction="row" flexWrap="wrap" gap={1}>

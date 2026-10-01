@@ -27,6 +27,15 @@ Use `/caveman` mode. Less word do trick.
 - Auto-commit as single command: `pwsh -Command "git add <files> && git commit -m 'Vibe-...'"`.
 - Never pass `-n` / `--no-verify` (org rule). Hook fails → run auto-fixers, commit again: `npx eslint --fix && npx prettier --write`, `ruff format . && ruff check --fix .`.
 
+**Scheduling Domain: Shuffles & Courses**
+- Shuffle = group of students. Per syllabus, each student is in exactly 1 shuffle.
+- Courses form a tree: all in Bis90 → at most one of Apollo / Mivtzar / Sphinx → sub-courses, again one per student.
+- A shuffle MAY relate to one or more courses, depending on the syllabus's courses.
+- All shuffles of a syllabus: every consecutive block (breaks/prayers excluded) has the SAME start and end. Events inside may differ.
+- Daily syllabus time must be identical across its SHUFFLES, NOT across courses. Apollo may have 3h Mathematics Monday, Mivtzar 1h.
+- Event assigned to only SOME courses (not shuffles) need not align with other courses' events.
+- Syllabuses of mutually exclusive courses don't affect each other.
+
 **Output Formatting**
 - READMEs: "Quick Start" section with copy-paste commands.
 - Multiple solutions: "There are N viable solutions for X." then Pros/Cons table.

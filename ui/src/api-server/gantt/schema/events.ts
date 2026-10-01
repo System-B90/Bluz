@@ -56,7 +56,7 @@ export const ganttEventsSchema = pgTable("e", {
     // Non-empty ⇒ the event is for those courses only and shuffles don't apply.
     courseIds: text("course_ids").array().notNull().default([]),
     // Shuffle group: sibling events sharing this id are the same lesson given
-    // to different shuffles at different times. Null ⇒ ungrouped (#699).
+    // to different shuffles in parallel, same start and end. Null ⇒ ungrouped (#699).
     groupId: text("group_id"),
     // Hive linkage copied onto schedule events by the "גזירה ללו"ז" cut; all optional.
     hiveSubjectId: integer("hive_subject_id"),

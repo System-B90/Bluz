@@ -25,7 +25,12 @@ import { useGanttFilters } from "@/components/gantt/state/filters/Provider";
 const SELECT_RTL_SX = { "& .MuiSelect-select": { textAlign: "right" } };
 
 /** Popover with the gantt syllabus filters, mirroring the schedule's filter icon. */
-export function GanttFilterButton() {
+export function GanttFilterButton({
+    withCommand = true,
+}: {
+    /** Off when a second button is mounted, so the palette id isn't registered twice. */
+    withCommand?: boolean;
+}) {
     const coursesLabelId = useId();
     const leadsLabelId = useId();
     const { courses, getCourse } = useCourses();
@@ -38,14 +43,18 @@ export function GanttFilterButton() {
     // Reads the anchor from the ref so the palette mirror can open it too.
     const openFilters = useCallback(() => setAnchorEl(buttonRef.current), []);
 
-    useCommand({
-        id: "gantt.filters.open",
-        title: "סינון סילבוסים",
-        group: COMMAND_GROUPS.gantt,
-        icon: <FilterListIcon />,
-        keywords: ["filter", "filters", "סינון", "סנן"],
-        run: openFilters,
-    });
+    useCommand(
+        withCommand
+            ? {
+                id: "gantt.filters.open",
+                title: "סינון סילבוסים",
+                group: COMMAND_GROUPS.gantt,
+                icon: <FilterListIcon />,
+                keywords: ["filter", "filters", "סינון", "סנן"],
+                run: openFilters,
+            }
+            : null,
+    );
 
     const onCoursesChange = useCallback(
         (event: SelectChangeEvent<Array<CourseId>>) => {

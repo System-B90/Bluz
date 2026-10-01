@@ -97,8 +97,8 @@ describe("GanttHeader day hours in a zoomed week", () => {
         expect(screen.getAllByTestId("gantt-day-hours")[ 0 ].textContent).toBe("5 ש׳ / 8 ש׳");
     });
 
-    it("flags a day whose shuffles or paths don't line up", () => {
-        renderHeader(true, { d1: 300 }, { dayZoom: true, issues: [ { kind: "paths-unequal" } ] });
+    it("flags a day whose shuffles don't line up", () => {
+        renderHeader(true, { d1: 300 }, { dayZoom: true, issues: [ { kind: "shuffles-misaligned" } ] });
 
         expect(screen.getAllByTestId("gantt-day-load-issue")).toHaveLength(1);
     });
