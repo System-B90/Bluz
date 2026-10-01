@@ -36,13 +36,7 @@ export type InsightVisual =
     }
     | {
         kind: "leaderboard";
-        rows: Array<{
-            label: string;
-            value: number;
-            valueLabel: string;
-            /** Outsider the row stands for; shows an edit button when set. */
-            outsiderId?: string;
-        }>;
+        rows: Array<{ label: string; value: number; valueLabel: string }>;
     }
     | {
         kind: "ring";
