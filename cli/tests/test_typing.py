@@ -15,7 +15,15 @@ from pathlib import Path
 import pytest
 
 _PACKAGE = Path(__file__).resolve().parents[1] / "bluz"
-_SDK_FILES = ["sdk.py", "api", "models", "errors.py", "client.py", "config.py"]
+_SDK_FILES = [
+    "sdk.py",
+    "api",
+    "models",
+    "examples",
+    "errors.py",
+    "client.py",
+    "config.py",
+]
 
 
 def test_sdk_layer_passes_mypy_strict() -> None:

@@ -51,11 +51,13 @@ from bluz.models import (
     Syllabus,
     Week,
 )
+from bluz.models._base import APP_TIMEZONE, today
 from bluz.sdk import Bluz, connect
 
 __version__ = "1.3.3"
 
 __all__ = [
+    "APP_TIMEZONE",
     "Bluz",
     "BluzApiError",
     "BluzError",
@@ -78,4 +80,5 @@ __all__ = [
     "Week",
     "__version__",
     "connect",
+    "today",
 ]
