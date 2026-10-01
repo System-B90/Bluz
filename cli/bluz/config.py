@@ -16,7 +16,7 @@ from pathlib import Path
 import typer
 from dotenv import load_dotenv
 
-from bluz_cli.errors import ConfigError
+from bluz.errors import ConfigError
 
 # Bluz authenticates browser requests with a next-auth session cookie. Over HTTPS
 # next-auth uses the "__Secure-" prefixed cookie; over plain HTTP it does not.

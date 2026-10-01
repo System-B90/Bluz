@@ -33,7 +33,7 @@ function startCliLogin(baseURL: string, configHome: string): CliRun {
     const script = [
         "import sys, webbrowser",
         "webbrowser.open = lambda *args, **kwargs: True",
-        "from bluz_cli.main import run",
+        "from bluz.main import run",
         `sys.argv = ["bluz", "auth", "login", "--url", ${JSON.stringify(baseURL)}, "--insecure"]`,
         "run()",
     ].join("\n");
@@ -74,7 +74,7 @@ test.describe("CLI login handshake", () => {
     let configHome = "";
 
     test.beforeEach(() => {
-        configHome = fs.mkdtempSync(path.join(os.tmpdir(), "bluz-cli-auth-"));
+        configHome = fs.mkdtempSync(path.join(os.tmpdir(), "bluz-auth-"));
     });
 
     test.afterEach(() => {

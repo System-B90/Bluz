@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "bluz-cli"
+name = "bluz"
 dynamic = ["version"]
 description = "Bluz command-line tool — drive the Bluz scheduling & curriculum API from your terminal."
 readme = "README.md"
@@ -22,14 +22,14 @@ dependencies = [
 ]
 
 [project.scripts]
-bluz = "bluz_cli.main:run"
+bluz = "bluz.main:run"
 
 [project.urls]
 Homepage = "https://github.com/system-b90/bluz"
 Repository = "https://github.com/system-b90/bluz"
 
 [tool.hatch.build.targets.wheel]
-packages = ["bluz_cli"]
+packages = ["bluz"]
 
 [tool.hatch.version]
-path = "bluz_cli/__init__.py"
+path = "bluz/__init__.py"

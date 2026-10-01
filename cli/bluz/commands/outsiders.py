@@ -12,15 +12,15 @@ import uuid
 
 import typer
 
-from bluz_cli.commands._common import (
+from bluz.commands._common import (
     LIMIT_OPTION,
     OFFSET_OPTION,
     find_by_id,
     merge_fields,
     show,
 )
-from bluz_cli.context import state
-from bluz_cli.output import success
+from bluz.context import state
+from bluz.output import success
 
 app = typer.Typer(help="Outsiders (external visitors).", no_args_is_help=True)
 

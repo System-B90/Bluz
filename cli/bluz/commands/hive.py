@@ -13,9 +13,9 @@ from pathlib import Path
 
 import typer
 
-from bluz_cli.commands._common import LIMIT_OPTION, OFFSET_OPTION, show, write_file
-from bluz_cli.context import state
-from bluz_cli.output import abort, success
+from bluz.commands._common import LIMIT_OPTION, OFFSET_OPTION, show, write_file
+from bluz.context import state
+from bluz.output import abort, success
 
 app = typer.Typer(help="Hive LMS reference data (read-only).", no_args_is_help=True)
 

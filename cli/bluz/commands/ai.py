@@ -15,9 +15,9 @@ from typing import Any
 
 import typer
 
-from bluz_cli.commands._common import parse_json, show
-from bluz_cli.context import state
-from bluz_cli.output import console, success, warn
+from bluz.commands._common import parse_json, show
+from bluz.context import state
+from bluz.output import console, success, warn
 
 app = typer.Typer(help="The Bluz AI assistant.", no_args_is_help=True)
 

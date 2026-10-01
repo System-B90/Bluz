@@ -10,9 +10,9 @@ from __future__ import annotations
 
 import typer
 
-from bluz_cli.commands._common import merge_fields, parse_json, show
-from bluz_cli.context import state
-from bluz_cli.output import success
+from bluz.commands._common import merge_fields, parse_json, show
+from bluz.context import state
+from bluz.output import success
 
 app = typer.Typer(help="Personal (per-user) settings.", no_args_is_help=True)
 

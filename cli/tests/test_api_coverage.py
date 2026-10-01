@@ -16,7 +16,7 @@ import pytest
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _ROUTES_ROOT = _REPO_ROOT / "ui" / "src" / "app" / "api"
-_CLI_ROOT = _REPO_ROOT / "cli" / "bluz_cli"
+_CLI_ROOT = _REPO_ROOT / "cli" / "bluz"
 
 # Routes no command can or should call.
 _NOT_CLI_SURFACE = {

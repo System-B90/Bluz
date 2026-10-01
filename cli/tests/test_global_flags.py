@@ -1,6 +1,6 @@
 """
 Name: test_global_flags.py
-Purpose: Coverage for `_reorder_global_flags` (cli/bluz_cli/main.py), including
+Purpose: Coverage for `_reorder_global_flags` (cli/bluz/main.py), including
          trailing global flags after subcommand-specific options — the blind
          spot in conftest.run_cli, which only ever places globals before the
          subcommand (#526).
@@ -10,7 +10,7 @@ Author: Michael K. Steinberg
 
 from __future__ import annotations
 
-from bluz_cli.main import _reorder_global_flags, app
+from bluz.main import _reorder_global_flags, app
 from typer.testing import CliRunner
 
 
@@ -105,7 +105,7 @@ def test_an_option_value_spelling_a_global_flag_is_left_alone() -> None:
 
 
 def test_the_tree_walk_finds_a_nested_commands_value_option() -> None:
-    from bluz_cli.main import _value_taking_options
+    from bluz.main import _value_taking_options
 
     options = _value_taking_options()
 

@@ -16,10 +16,10 @@ from typing import Any, Protocol
 import typer
 from rich.panel import Panel
 
-from bluz_cli.clicktree import choices_of, is_group, is_option, long_flag
-from bluz_cli.context import state
-from bluz_cli.errors import BluzCliError
-from bluz_cli.output import abort, console, fail, warn
+from bluz.clicktree import choices_of, is_group, is_option, long_flag
+from bluz.context import state
+from bluz.errors import BluzCliError
+from bluz.output import abort, console, fail, warn
 
 
 def _click_exception_types() -> tuple[type[BaseException], ...]:
@@ -341,7 +341,7 @@ def interactive() -> None:
     """Browse and run Bluz commands from a menu, prompting for each argument."""
     import sys
 
-    from bluz_cli.main import app
+    from bluz.main import app
 
     # A menu needs a keyboard. Piped or redirected, InquirerPy would fail on
     # its first prompt with a terminal error that says nothing useful — say

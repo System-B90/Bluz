@@ -415,9 +415,9 @@ jobs:
 
             - name: Copy distributions and regenerate index
               run: |
-                  mkdir -p org-github/pypi/bluz-cli
-                  cp cli/dist/* org-github/pypi/bluz-cli/
-                  python org-github/pypi/generate_index.py bluz-cli
+                  mkdir -p org-github/pypi/bluz
+                  cp cli/dist/* org-github/pypi/bluz/
+                  python org-github/pypi/generate_index.py bluz
 
             - name: Commit and push index update
               working-directory: org-github
@@ -426,5 +426,5 @@ jobs:
                   git config user.email "github-actions[bot]@users.noreply.github.com"
                   git add pypi/
                   git diff --cached --quiet && exit 0
-                  git commit -m "Vibe-Updated pip index for bluz-cli ${{ github.ref_name }}"
+                  git commit -m "Vibe-Updated pip index for bluz ${{ github.ref_name }}"
                   git push

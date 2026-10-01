@@ -12,7 +12,7 @@ from pathlib import Path
 
 import typer
 
-from bluz_cli.commands._common import (
+from bluz.commands._common import (
     ITERATION_OPTION,
     LIMIT_OPTION,
     OFFSET_OPTION,
@@ -22,9 +22,9 @@ from bluz_cli.commands._common import (
     show,
     write_file,
 )
-from bluz_cli.context import state
-from bluz_cli.errors import BluzApiError
-from bluz_cli.output import success
+from bluz.context import state
+from bluz.errors import BluzApiError
+from bluz.output import success
 
 app = typer.Typer(
     help="Shared calendar drafts, snapshots and ICS export.", no_args_is_help=True
