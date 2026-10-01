@@ -59,6 +59,6 @@ are equivalent.
 The following reference is auto-generated from the CLI source code.
 
 ::: mkdocs-typer2
-    :module: bluz_cli.main
+    :module: bluz.main
     :name: bluz
     :pretty: true

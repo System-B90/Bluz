@@ -1,7 +1,7 @@
 ---
 name: schedule-building
 description: Building and editing Bluz schedules via the bluz CLI — curriculum cuts, event placement, and the meal-break rules an agent must not violate.
-tags: [bluz-cli, scheduling, gantt, curriculum]
+tags: [bluz, scheduling, gantt, curriculum]
 ---
 
 ## Meal Breaks Are Fixed — Do Not Move Them

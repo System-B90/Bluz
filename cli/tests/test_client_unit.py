@@ -1,6 +1,6 @@
 """
 Name: test_client_unit.py
-Purpose: Unit tests for the HTTP client core (bluz_cli/client.py) — envelope
+Purpose: Unit tests for the HTTP client core (bluz/client.py) — envelope
          unwrapping, error translation, redirect/401 handling and get_raw().
          Fully offline: every response comes from an httpx.MockTransport, so
          there is no server and no network.
@@ -14,12 +14,12 @@ import json
 from collections.abc import Callable
 from typing import Any
 
-import bluz_cli.client as client_module
+import bluz.client as client_module
 import httpx
 import pytest
-from bluz_cli.client import BluzClient
-from bluz_cli.config import Config
-from bluz_cli.errors import BluzApiError, NotAuthenticatedError
+from bluz.client import BluzClient
+from bluz.config import Config
+from bluz.errors import BluzApiError, NotAuthenticatedError
 
 
 def _client(

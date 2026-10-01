@@ -75,11 +75,11 @@ newgrp docker
 
 ### From a terminal — driving Bluz without a checkout
 
-`bluz-cli` talks to a running Bluz instance's API. It installs from the org
+`bluz` talks to a running Bluz instance's API. It installs from the org
 pip index, which needs no authentication:
 
 ```bash
-pip install bluz-cli --index-url https://system-b90.github.io/.github/pypi/
+pip install bluz --index-url https://system-b90.github.io/.github/pypi/
 bluz login
 bluz --help
 ```

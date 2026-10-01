@@ -15,10 +15,10 @@ from typing import Any
 import click
 import pytest
 import typer
-from bluz_cli import interactive
-from bluz_cli.context import configure
-from bluz_cli.errors import BluzCliError
-from bluz_cli.main import app
+from bluz import interactive
+from bluz.context import configure
+from bluz.errors import BluzCliError
+from bluz.main import app
 
 
 class ScriptedPrompter:

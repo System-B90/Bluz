@@ -13,8 +13,8 @@ from typing import Any, Self
 
 import httpx
 
-from bluz_cli.config import Config
-from bluz_cli.errors import BluzApiError, NotAuthenticatedError
+from bluz.config import Config
+from bluz.errors import BluzApiError, NotAuthenticatedError
 
 # `safeApiFetcher` (ui/src/api-client/common.ts) treats a redirect as "the user is
 # not logged in" — we mirror that here instead of silently following it to an HTML

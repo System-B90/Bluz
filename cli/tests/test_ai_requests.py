@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 
 import pytest
-from bluz_cli.errors import BluzApiError
+from bluz.errors import BluzApiError
 from wire_types import Raw
 
 

@@ -184,6 +184,6 @@ bluz --json iterations list | jq '.[].id'
 
 ## Versioning
 
-The CLI version is single-sourced in `bluz_cli/__init__.py` and tracks the Bluz
+The CLI version is single-sourced in `bluz/__init__.py` and tracks the Bluz
 release version — `python -m sb90_deploy publish` bumps it alongside the `package.json`
 manifests so every Bluz version ships a matching CLI.

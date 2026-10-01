@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import typer
 
-from bluz_cli.commands._common import show
-from bluz_cli.context import state
+from bluz.commands._common import show
+from bluz.context import state
 
 _PATH = "/api/health"
 

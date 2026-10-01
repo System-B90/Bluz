@@ -15,12 +15,12 @@
         "root_windows": "%ProgramData%\\bluz\\backups"
     },
     "state": ["nginx/ssl"],
-    "venv_packages": ["bluz-cli"],
+    "venv_packages": ["bluz"],
     "release": {
         "manifests": [
             "package.json",
             "session-server/package.json",
-            { "path": "cli/bluz_cli/__init__.py", "format": "python" }
+            { "path": "cli/bluz/__init__.py", "format": "python" }
         ]
     },
     "post_install": [

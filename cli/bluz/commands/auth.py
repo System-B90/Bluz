@@ -24,17 +24,17 @@ import tqdm
 import typer
 from InquirerPy import inquirer
 
-from bluz_cli.client import BluzClient
-from bluz_cli.config import (
+from bluz.client import BluzClient
+from bluz.config import (
     ENV_TOKEN,
     Config,
     _load_file,
     config_location,
     load_config,
 )
-from bluz_cli.context import state
-from bluz_cli.errors import BluzApiError
-from bluz_cli.output import success, warn
+from bluz.context import state
+from bluz.errors import BluzApiError
+from bluz.output import success, warn
 
 app = typer.Typer(help="Authentication and CLI configuration.", no_args_is_help=True)
 
@@ -535,7 +535,7 @@ def logout() -> None:
 @app.command("config")
 def show_config() -> None:
     """Show the resolved configuration (token is masked)."""
-    from bluz_cli.commands._common import show
+    from bluz.commands._common import show
 
     config = load_config()
     data = {
@@ -551,7 +551,7 @@ def show_config() -> None:
 @app.command("hive-status")
 def hive_status() -> None:
     """Check whether the server can reach Hive (drives the SSO outage banner)."""
-    from bluz_cli.commands._common import show
+    from bluz.commands._common import show
 
     with state.client() as client:
         show(client.get("/api/auth/hive-status"), title="Hive status")
@@ -566,7 +566,7 @@ def ws_ticket() -> None:
     client cannot widen its own scope. Useful for driving or debugging the
     real-time sync channel outside a browser.
     """
-    from bluz_cli.commands._common import show
+    from bluz.commands._common import show
 
     with state.client() as client:
         # Not client.get: /api/ws-ticket answers a bare { ticket } rather than

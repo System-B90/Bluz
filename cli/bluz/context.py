@@ -11,8 +11,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from bluz_cli.client import BluzClient
-from bluz_cli.config import Config, load_config
+from bluz.client import BluzClient
+from bluz.config import Config, load_config
 
 
 @dataclass

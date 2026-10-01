@@ -117,7 +117,7 @@ def render(data: Any, *, as_json: bool, title: str | None = None) -> None:
 
 
 def _is_quiet() -> bool:
-    from bluz_cli.context import state
+    from bluz.context import state
 
     return state.quiet
 

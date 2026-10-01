@@ -10,9 +10,9 @@ from __future__ import annotations
 
 import typer
 
-from bluz_cli.commands._common import LIMIT_OPTION, OFFSET_OPTION, find_by_id, show
-from bluz_cli.context import state
-from bluz_cli.output import success
+from bluz.commands._common import LIMIT_OPTION, OFFSET_OPTION, find_by_id, show
+from bluz.context import state
+from bluz.output import success
 
 app = typer.Typer(help="Room reservations.", no_args_is_help=True)
 

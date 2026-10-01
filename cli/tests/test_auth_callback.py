@@ -15,8 +15,8 @@ from collections.abc import Callable
 from typing import Any
 
 import pytest
-from bluz_cli.commands import auth
-from bluz_cli.errors import BluzApiError
+from bluz.commands import auth
+from bluz.errors import BluzApiError
 
 
 def _drive(

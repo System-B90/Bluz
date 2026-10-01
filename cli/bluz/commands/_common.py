@@ -14,8 +14,8 @@ from typing import Any
 
 import typer
 
-from bluz_cli.context import state
-from bluz_cli.output import abort, render
+from bluz.context import state
+from bluz.output import abort, render
 
 
 def parse_json(value: str | None, *, what: str = "value") -> Any:

@@ -11,9 +11,9 @@ from __future__ import annotations
 
 import typer
 
-from bluz_cli.commands._common import show
-from bluz_cli.context import state
-from bluz_cli.output import success, warn
+from bluz.commands._common import show
+from bluz.context import state
+from bluz.output import success, warn
 
 app = typer.Typer(help="Third-party integrations.", no_args_is_help=True)
 
