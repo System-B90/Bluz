@@ -3,6 +3,7 @@ import assert from "assert";
 
 import { NextRequest, NextResponse } from "next/server";
 
+import { AiNotConfiguredError } from "@/api-server/ai/provider";
 import { ClientApiError, ForbiddenError, UserNotLoggedInError } from "@/api-shared/errors";
 import { logger } from "@/logging/pino";
 import { CACHE_CONTROL_HTTP_HEADER, IMMUTABLE_CACHE_MAX_TTL } from "@/settings";
@@ -234,6 +235,13 @@ export function catchHandler<T extends NextRequest>(request: T, e: unknown) {
 
     if (e instanceof ClientApiError) {
         return ApiErrorMaker(e, 400);
+    }
+
+    // A deployment without an AI key/URL is a config problem the user can
+    // act on; its message names the missing env var, so it must not collapse
+    // into the opaque 500 below (#782).
+    if (e instanceof AiNotConfiguredError) {
+        return ApiErrorMaker(e, 503);
     }
 
     // `request.json()` on an empty or malformed body rejects with a

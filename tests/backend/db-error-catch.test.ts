@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { catchHandler, isDatabaseError } from "@/api-server/common";
+import { AiNotConfiguredError } from "@/api-server/ai/provider";
 import { ClientApiError } from "@/api-shared/errors";
 
 // Shape of a postgres.js PostgresError (e.g. a NOT NULL violation).
@@ -52,5 +53,15 @@ describe("catchHandler DB error masking (#162)", () => {
         expect(res.status).toBe(400);
         const body = await res.json();
         expect(body.error.message).toBe("Payload must be a JSON object.");
+    });
+
+    it("maps a missing AI key to a 503 naming the env var (#782)", async () => {
+        const res = catchHandler(
+            req,
+            new AiNotConfiguredError("לא הוגדר מפתח API (OPENAI_API_KEY)"),
+        );
+        expect(res.status).toBe(503);
+        const body = await res.json();
+        expect(body.error.message).toContain("OPENAI_API_KEY");
     });
 });
