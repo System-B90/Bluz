@@ -7,18 +7,44 @@ flows, what the model is told, and what stops it.
 ## Quick Start
 
 ```bash
-# Point the deployment at a model backend
-export AI_PROVIDER=openrouter          # the only provider today
+# Point the deployment at a model backend (pick one provider)
+export AI_PROVIDER=openrouter          # default
 export OPENROUTER_API_KEY=sk-or-...    # unset ⇒ the launcher stays hidden
-export AI_MODEL=stealth/ox-alpha       # optional; provider default otherwise
-export AI_BASE_URL=https://...         # optional; for a self-hosted gateway
+export AI_BASE_URL=https://...         # optional; override the OpenRouter URL
+
+# ...or an OpenAI-compatible endpoint (api.openai.com, Open WebUI, ...)
+export AI_PROVIDER=openai
+export OPENAI_BASE_URL=https://host/api  # required; no public default
+export OPENAI_API_KEY=sk-...             # required
+
+export AI_MODEL=stealth/ox-alpha       # optional for openrouter; set it for openai
 
 npm run dev
 # open the app, click the ✨ FAB, ask: מה יש בלו"ז השבוע?
 ```
 
+| Provider | `AI_PROVIDER` | Required env |
+| --- | --- | --- |
+| OpenRouter | `openrouter` (default) | `OPENROUTER_API_KEY` |
+| OpenAI-compatible | `openai` | `OPENAI_BASE_URL`, `OPENAI_API_KEY` |
+
+A user's own token (Settings → אישי → עוזר AI) replaces the key for either
+provider. A missing key or URL answers `503` with a message naming the
+variable.
+
 Verify the configured model is actually usable:
-**Settings → אישי → עוזר AI → בדוק את הסוכן שלי**.
+**Settings → אישי → עוזר AI → בדוק את הסוכן שלי**. It uses your personal token
+when set, else the server key — the same provider chat would use.
+
+### Open WebUI / self-hosted gateway
+
+- `OPENAI_BASE_URL` is `https://<host>/api`. Bluz appends `/chat/completions`.
+- Create the key in Open WebUI under **Settings → Account → API Keys**.
+- Get valid model IDs from `https://<host>/api/models` and set `AI_MODEL`.
+- The Bluz **server** makes the call, not the browser. It needs a network route
+  to the gateway.
+- The model must support tool calling. Wrapped models and pipes may silently
+  drop `tools`; run the self-test to catch that.
 
 ## Anatomy of a turn
 
