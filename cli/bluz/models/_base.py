@@ -24,6 +24,7 @@ from typing import (
     TypeVar,
     overload,
 )
+from zoneinfo import ZoneInfo
 
 from pydantic import (
     BaseModel,
@@ -42,6 +43,7 @@ if TYPE_CHECKING:
     from bluz.sdk import Bluz
 
 __all__ = [
+    "APP_TIMEZONE",
     "ENUM_FIRST",
     "HHMM",
     "BluzModel",
@@ -50,11 +52,21 @@ __all__ = [
     "LenientDate",
     "camel_payload",
     "to_wire",
+    "today",
 ]
 
 # `Annotated[SomeEnum | str, ENUM_FIRST]`: parse into the enum when the value
 # is a known member, keep the raw value when the server sends a newer one.
 ENUM_FIRST = Field(union_mode="left_to_right")
+
+
+APP_TIMEZONE = ZoneInfo("Asia/Jerusalem")
+"""The wall clock the Bluz server schedules in (APP_TIMEZONE in api-shared)."""
+
+
+def today() -> date:
+    """Today's date on the Bluz wall clock (not the machine's)."""
+    return datetime.now(APP_TIMEZONE).date()
 
 
 def _date_part(value: Any) -> Any:
