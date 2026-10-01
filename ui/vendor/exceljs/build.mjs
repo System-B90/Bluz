@@ -32,6 +32,31 @@ if (pkg.version !== PINNED_VERSION) {
     );
 }
 
+/**
+ * Modules that only serve ExcelJS's on-disk file I/O: unzipper's
+ * extract-to-directory (`fstream`), archiver's directory globbing (`glob`,
+ * `readdir-glob`) and the streaming reader's temp files (`tmp`). The export builds an in-memory workbook buffer and
+ * never reaches them, but their dynamic `path.resolve` / `fs` calls make Turbopack trace the
+ * whole project (#777). Stubbed to a near-empty module; anything that
+ * did call them would fail loudly on the missing method.
+ */
+const FS_ONLY_MODULES = /^(fstream|glob|readdir-glob|tmp)$/;
+
+const stubFsOnlyModules = {
+    name: "stub-fs-only-modules",
+    setup(b) {
+        b.onResolve({ filter: FS_ONLY_MODULES }, (args) => ({
+            path: args.path,
+            namespace: "stub-fs-only",
+        }));
+        b.onLoad({ filter: /.*/, namespace: "stub-fs-only" }, () => ({
+            // `tmp` is configured at load time, so it needs this one no-op.
+            contents: "module.exports = { setGracefulCleanup() {} };",
+            loader: "js",
+        }));
+    },
+};
+
 // CJS, not ESM. ExcelJS is CommonJS and reaches for Node builtins through
 // `require`. Bundling it to ESM makes esbuild emit a `require` shim, and
 // Next.js's page-data collection rejects that outright with "dynamic usage of
@@ -47,6 +72,7 @@ await build({
     target: "node20",
     minify: true,
     legalComments: "none",
+    plugins: [stubFsOnlyModules],
     outfile: join(HERE, "dist", "exceljs.bundle.cjs"),
 });
 
