@@ -1,3 +1,4 @@
+import { DragOverlay, useDndContext, useDraggable } from "@dnd-kit/core";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
@@ -15,6 +16,59 @@ export type GanttUnallocatedGroup = {
 export type GanttUnallocatedPanelProps = {
     unallocatedBySyllabus: Array<GanttUnallocatedGroup>;
     onReveal: (syllabusId: string, moduleId: string, eventId?: string) => void;
+};
+
+type UnallocatedChipProps = {
+    id: string;
+    label: string;
+    // dnd payload: the same `module-map` / `event-map` the timeline blocks
+    // carry, so GanttView's drag handler places it with no new branch.
+    payload: { type: "event-map"; moduleId: string; eventId: string }
+        | { type: "module-map"; moduleId: string };
+    color?: "primary";
+    onClick: () => void;
+};
+
+const UnallocatedChip: React.FC<UnallocatedChipProps> = ({
+    id,
+    label,
+    payload,
+    color,
+    onClick,
+}) =>
+{
+    const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+        id,
+        data: { ...payload, unallocatedLabel: label },
+    });
+
+    return (
+        <Chip
+            clickable
+            color={ color }
+            label={ label }
+            onClick={ onClick }
+            ref={ setNodeRef }
+            size="small"
+            sx={ { cursor: "grab", opacity: isDragging ? 0.4 : 1, touchAction: "none" } }
+            variant="outlined"
+            { ...listeners }
+            { ...attributes }
+        />
+    );
+};
+
+// Floats the dragged chip above the panel's scroll container, which would
+// otherwise clip the in-place transform.
+const UnallocatedDragOverlay: React.FC = () =>
+{
+    const { active } = useDndContext();
+    const label = active?.data.current?.unallocatedLabel as string | undefined;
+    return (
+        <DragOverlay dropAnimation={ null }>
+            { label ? <Chip label={ label } size="small" /> : null }
+        </DragOverlay>
+    );
 };
 
 export const GanttUnallocatedPanel: React.FC<GanttUnallocatedPanelProps> = ({
@@ -63,9 +117,9 @@ export const GanttUnallocatedPanel: React.FC<GanttUnallocatedPanelProps> = ({
                                 } }
                             >
                                 { group.modules.map((m) => (
-                                    <Chip
-                                        clickable
+                                    <UnallocatedChip
                                         color="primary"
+                                        id={ `drag-module-unallocated-${m.id}` }
                                         key={ m.id }
                                         label={ m.title }
                                         onClick={ () =>
@@ -74,13 +128,12 @@ export const GanttUnallocatedPanel: React.FC<GanttUnallocatedPanelProps> = ({
                                                 m.id,
                                             )
                                         }
-                                        size="small"
-                                        variant="outlined"
+                                        payload={ { type: "module-map", moduleId: m.id } }
                                     />
                                 )) }
                                 { group.events.map((e) => (
-                                    <Chip
-                                        clickable
+                                    <UnallocatedChip
+                                        id={ `drag-event-unallocated-${e.id}` }
                                         key={ e.id }
                                         label={ e.title }
                                         onClick={ () =>
@@ -90,8 +143,11 @@ export const GanttUnallocatedPanel: React.FC<GanttUnallocatedPanelProps> = ({
                                                 e.id,
                                             )
                                         }
-                                        size="small"
-                                        variant="outlined"
+                                        payload={ {
+                                            type: "event-map",
+                                            moduleId: e.moduleId,
+                                            eventId: e.id,
+                                        } }
                                     />
                                 )) }
                             </Box>
@@ -99,6 +155,7 @@ export const GanttUnallocatedPanel: React.FC<GanttUnallocatedPanelProps> = ({
                     )) }
                 </Stack>
             ) }
+            <UnallocatedDragOverlay />
         </Box>
     );
 };
