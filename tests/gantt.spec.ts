@@ -44,13 +44,7 @@ test.describe("Gantt Page", () => {
         const listItems = page.locator("[role='presentation'] ul li").filter({ has: page.getByRole("button") });
         const count = await listItems.count();
         if (count === 0) {
-            // Create actions are hidden behind a hover-reveal trigger. Hover
-            // (not click) — the trigger's onClick toggles `expanded` off the
-            // previous value, so a real click's `mouseenter` opens it via
-            // hover just before the click handler closes it again.
-            const createTrigger = page.getByRole("button", { name: "גאנט חדש" });
-            await createTrigger.hover();
-
+            // Create actions are always visible (#790): no hover needed.
             const draftButton = page.locator('span[title="דראפט חדש"] button, span[aria-label="דראפט חדש"] button');
             await draftButton.click();
             

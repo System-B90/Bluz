@@ -36,7 +36,12 @@ vi.mock("@/components/gantt/syllabus-dialog/SyllabusImportExportButton", () => (
     SyllabusImportExportButton: () => null,
 }));
 vi.mock("@/components/schedule/event-dialog/ColorPickerField", () => ({
-    ColorPickerField: () => null,
+    ColorPickerField: ({ onUpdate }: { onUpdate: (u: { color?: string }) => void }) => (
+        <>
+            <button onClick={() => onUpdate({ color: "c9" })} type="button">pick</button>
+            <button onClick={() => onUpdate({ color: undefined })} type="button">reset</button>
+        </>
+    ),
 }));
 vi.mock("@/components/gantt/syllabus-dialog/SyllabusLinksSection", () => ({
     SyllabusLinksSection: () => null,
@@ -93,5 +98,20 @@ describe("SyllabusDialog title field", () => {
         fireEvent.blur(titleField());
 
         expect(updateSyllabus).toHaveBeenCalledWith("s1", { title: "חדש" });
+    });
+});
+
+describe("SyllabusDialog default color", () => {
+    it("saves the picked color", () => {
+        render(<SyllabusDialog {...props} open />);
+        fireEvent.click(screen.getByText("pick"));
+        expect(updateSyllabus).toHaveBeenCalledWith("s1", { color: "c9" });
+    });
+
+    it("clears the color back to null", () => {
+        store.syllabus = { ...store.syllabus, color: "c9" } as typeof store.syllabus;
+        render(<SyllabusDialog {...props} open />);
+        fireEvent.click(screen.getByText("reset"));
+        expect(updateSyllabus).toHaveBeenCalledWith("s1", { color: null });
     });
 });
