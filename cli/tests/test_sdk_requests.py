@@ -441,7 +441,7 @@ def test_events_get_joins_ids(stub_bluz, sdk):
 def test_event_save_posts_the_full_wire_event(stub_bluz, sdk):
     stub = stub_bluz()
     stub.envelope("GET", "/api/event", [EVENT])
-    stub.envelope("POST", "/api/event", {"ok": True})
+    stub.envelope("POST", "/api/event", {**EVENT, "notes": "moved"})
     event = sdk(stub).events.get("ev-1")[0]
 
     event.notes = "moved"

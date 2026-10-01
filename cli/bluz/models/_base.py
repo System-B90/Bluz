@@ -20,6 +20,7 @@ from typing import (
     ClassVar,
     Generic,
     Self,
+    SupportsIndex,
     TypeVar,
     overload,
 )
@@ -38,8 +39,6 @@ from pydantic.alias_generators import to_camel
 from bluz.errors import DetachedModelError, ResponseShapeWarning
 
 if TYPE_CHECKING:
-    from IPython.lib.pretty import PrettyPrinter
-
     from bluz.sdk import Bluz
 
 __all__ = [
@@ -179,7 +178,7 @@ class BluzModel(BaseModel):
     def __str__(self) -> str:
         return repr(self)
 
-    def _repr_pretty_(self, printer: PrettyPrinter, cycle: bool) -> None:
+    def _repr_pretty_(self, printer: Any, cycle: bool) -> None:
         """IPython display hook: the short repr, not pydantic's full field dump."""
         printer.text(repr(self))
 
@@ -243,9 +242,9 @@ class Collection(list[T], Generic[T]):
     _match_attrs: ClassVar[tuple[str, ...]] = ("id", "title", "name", "label")
 
     @overload
-    def __getitem__(self, key: int, /) -> T: ...
+    def __getitem__(self, key: SupportsIndex, /) -> T: ...
     @overload
-    def __getitem__(self, key: slice, /) -> list[T]: ...
+    def __getitem__(self, key: slice[Any, Any, Any], /) -> list[T]: ...
     @overload
     def __getitem__(self, key: str, /) -> T: ...
     def __getitem__(self, key: Any, /) -> Any:
@@ -288,7 +287,7 @@ class Collection(list[T], Generic[T]):
         head = ", ".join(repr(item) for item in self[:5])
         return f"Collection([{head}, … {len(self) - 5} more])"
 
-    def _repr_pretty_(self, printer: PrettyPrinter, cycle: bool) -> None:
+    def _repr_pretty_(self, printer: Any, cycle: bool) -> None:
         with printer.group(1, "[", "]"):
             for index, item in enumerate(self):
                 if index:

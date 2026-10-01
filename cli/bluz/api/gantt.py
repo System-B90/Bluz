@@ -12,7 +12,7 @@ Author: Michael K. Steinberg
 from __future__ import annotations
 
 from collections.abc import Iterator, Mapping
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar, cast
 
 from bluz.api._base import Resource, ref, refs
 from bluz.errors import BluzApiError, NotFoundError
@@ -69,6 +69,9 @@ class GanttEntityAPI(Resource, Generic[N]):
     entity: ClassVar[str] = ""
     model: ClassVar[type[GanttNode]] = GanttNode
 
+    def _node(self, data: Any) -> N:
+        return cast("N", self._one(self.model, data))
+
     def list(self, *, with_parents: bool = False) -> Collection[GanttSummary]:
         """`{id, title}` for every item (plus parent ids with `with_parents`)."""
         items = self._http.get(
@@ -92,14 +95,14 @@ class GanttEntityAPI(Resource, Generic[N]):
 
     def get(self, item: N | GanttSummary | str) -> N:
         """One item with its full sub-tree."""
-        return self._one(
-            self.model, self._http.get(f"{_BASE}/{self.entity}/{ref(item)}")
-        )  # type: ignore[return-value]
+        return self._node(self._http.get(f"{_BASE}/{self.entity}/{ref(item)}"))
 
     def get_many(self, *ids: str) -> Collection[N]:
         """Several items by id (flat — children as id lists, not trees)."""
         items = self._http.get(f"{_BASE}/{self.entity}", params={"ids": ",".join(ids)})
-        return self._many(self.model, list((items or {}).values()))  # type: ignore[return-value]
+        return cast(
+            "Collection[N]", self._many(self.model, list((items or {}).values()))
+        )
 
     def __getitem__(self, key: str) -> N:
         found = self.list().find(key)
@@ -114,19 +117,16 @@ class GanttEntityAPI(Resource, Generic[N]):
     def create(self, data: Mapping[str, Any] | None = None, /, **fields: Any) -> N:
         """Create from a wire dict and/or snake_case fields."""
         payload = camel_payload(data, **fields)
-        return self._one(
-            self.model, self._http.post(f"{_BASE}/{self.entity}", json=payload)
-        )  # type: ignore[return-value]
+        return self._node(self._http.post(f"{_BASE}/{self.entity}", json=payload))
 
     def update(
         self, item: N | str, data: Mapping[str, Any] | None = None, /, **fields: Any
     ) -> N:
         """PATCH fields from a wire dict and/or snake_case fields."""
         payload = camel_payload(data, **fields)
-        return self._one(
-            self.model,
+        return self._node(
             self._http.patch(f"{_BASE}/{self.entity}/{ref(item)}", json=payload),
-        )  # type: ignore[return-value]
+        )
 
     def delete(self, item: N | str) -> None:
         self._http.delete(f"{_BASE}/{self.entity}/{ref(item)}")
@@ -190,7 +190,7 @@ class CurriculumsAPI(GanttEntityAPI[Curriculum]):
     entity = "curriculums"
     model = Curriculum
 
-    def create(  # type: ignore[override]
+    def create(
         self,
         data: Mapping[str, Any] | None = None,
         /,
@@ -213,7 +213,10 @@ class CurriculumsAPI(GanttEntityAPI[Curriculum]):
 
     def export(self, curriculum: Curriculum | str) -> dict[str, Any]:
         """Portable JSON export (curriculum + mappings + constraints)."""
-        return self._http.get(f"{_BASE}/curriculums/{ref(curriculum)}/export")
+        data: dict[str, Any] = self._http.get(
+            f"{_BASE}/curriculums/{ref(curriculum)}/export"
+        )
+        return data
 
     def export_excel(self, curriculum: Curriculum | str) -> bytes:
         """The curriculum as an .xlsx workbook."""
