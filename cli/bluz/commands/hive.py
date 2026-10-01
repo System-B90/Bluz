@@ -13,13 +13,16 @@ from pathlib import Path
 
 import typer
 
-from bluz.commands._common import LIMIT_OPTION, OFFSET_OPTION, show, write_file
-from bluz.context import state
+from bluz.commands._common import (
+    LIMIT_OPTION,
+    OFFSET_OPTION,
+    session,
+    show,
+    write_file,
+)
 from bluz.output import abort, success
 
 app = typer.Typer(help="Hive LMS reference data (read-only).", no_args_is_help=True)
-
-_BASE = "/api/hive"
 
 # Endpoints that take no parameters at all — one command each, generated so a new
 # Hive proxy route is a one-line addition.
@@ -36,9 +39,9 @@ _SIMPLE = (
 def _register(name: str, help_text: str) -> None:
     @app.command(name, help=help_text)
     def _list(limit: int = LIMIT_OPTION, offset: int = OFFSET_OPTION) -> None:
-        with state.client() as client:
+        with session() as bz:
             show(
-                client.get(f"{_BASE}/{name}"),
+                getattr(bz.hive, name)(),
                 title=help_text.rstrip("."),
                 limit=limit,
                 offset=offset,
@@ -61,13 +64,9 @@ def lessons(
     offset: int = OFFSET_OPTION,
 ) -> None:
     """Hive lessons, optionally filtered by module or parent program."""
-    params = {
-        "module__id": module_id,
-        "module__parent_subject__parent_program_id__in": program_ids,
-    }
-    with state.client() as client:
+    with session() as bz:
         show(
-            client.get(f"{_BASE}/lessons", params=params),
+            bz.hive.lessons(module_id=module_id, program_ids=program_ids),
             title="Hive lessons",
             limit=limit,
             offset=offset,
@@ -87,9 +86,9 @@ def queues(
     Module-scoped by design: Hive rejects user queues on a lesson rule, so an
     unscoped list would offer choices that cannot be saved.
     """
-    with state.client() as client:
+    with session() as bz:
         show(
-            client.get(f"{_BASE}/queues", params={"module": module_id}),
+            bz.hive.queues(module_id),
             title="Hive queues",
             limit=limit,
             offset=offset,
@@ -105,8 +104,8 @@ def activate_lessons() -> None:
     where they should already be. Writes, so it needs the writable (current)
     iteration.
     """
-    with state.client() as client:
-        result = client.post(f"{_BASE}/lesson-activation")
+    with session() as bz:
+        result = bz.hive.activate_lessons()
     success("Ran a lesson-activation pass")
     show(result, title="Activation tick")
 
@@ -121,9 +120,9 @@ def avatar(
     Users without an uploaded avatar answer 404 — that is a miss, not a
     failure, and it is reported as one.
     """
-    with state.client() as client:
-        data = client.get(f"{_BASE}/users/avatars/{slug}")
-    if not isinstance(data, bytes):
-        abort(f"No avatar image for {slug}: {str(data)[:200]}")
+    with session() as bz:
+        data = bz.hive.avatar(slug)
+    if data is None:
+        abort(f"No avatar image for {slug}.")
     write_file(output, data, what="avatar")
     success(f"Saved avatar for {slug} → {output} ({len(data)} bytes)")

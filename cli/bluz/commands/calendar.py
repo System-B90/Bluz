@@ -1,7 +1,7 @@
 """
 Name: calendar.py
 Purpose: Shared calendar drafts, snapshots (+restore) and ICS export.
-         Mirrors ui/src/api-client/calendar-drafts.ts and calendar-snapshots.ts.
+         Thin Typer layer over `bluz.api.calendar` (DraftsAPI, SnapshotsAPI).
 Created: 2026-07-30
 Author: Michael K. Steinberg
 """
@@ -16,14 +16,12 @@ from bluz.commands._common import (
     ITERATION_OPTION,
     LIMIT_OPTION,
     OFFSET_OPTION,
-    merge_fields,
     parse_json,
     read_json_file,
+    session,
     show,
     write_file,
 )
-from bluz.context import state
-from bluz.errors import BluzApiError
 from bluz.output import success
 
 app = typer.Typer(
@@ -32,9 +30,6 @@ app = typer.Typer(
 
 drafts_app = typer.Typer(help="Shared calendar drafts.", no_args_is_help=True)
 snapshots_app = typer.Typer(help="Calendar snapshots.", no_args_is_help=True)
-
-_DRAFTS = "/api/calendar/drafts"
-_SNAPSHOTS = "/api/calendar/snapshots"
 
 
 def _events_from(data: str | None, file: Path | None) -> list | None:
@@ -67,9 +62,9 @@ def list_drafts(
     offset: int = OFFSET_OPTION,
 ) -> None:
     """List shared draft summaries (newest-updated first)."""
-    with state.client() as client:
+    with session() as bz:
         show(
-            client.get(_DRAFTS, params={"it": iteration}),
+            bz.drafts.list(iteration=iteration),
             title="Calendar drafts",
             limit=limit,
             offset=offset,
@@ -82,8 +77,8 @@ def get_draft(
     iteration: str = ITERATION_OPTION,
 ) -> None:
     """Fetch one draft including its events."""
-    with state.client() as client:
-        show(client.get(_DRAFTS, params={"id": draft_id, "it": iteration}))
+    with session() as bz:
+        show(bz.drafts.get(draft_id, iteration=iteration))
 
 
 @drafts_app.command("create")
@@ -96,9 +91,9 @@ def create_draft(
     iteration: str = ITERATION_OPTION,
 ) -> None:
     """Create a shared draft from a set of events."""
-    body = {"label": label, "events": _events_from(events, events_file) or []}
-    with state.client() as client:
-        result = client.post(_DRAFTS, json=body, params={"it": iteration})
+    events_body = _events_from(events, events_file) or []
+    with session() as bz:
+        result = bz.drafts.create(label, events_body, iteration=iteration)
     success(f"Created draft {label!r}")
     show(result)
 
@@ -114,13 +109,11 @@ def update_draft(
     iteration: str = ITERATION_OPTION,
 ) -> None:
     """Replace a draft's events (and optionally its label)."""
-    body = merge_fields(
-        ("id", draft_id),
-        ("label", label),
-        ("events", _events_from(events, events_file)),
-    )
-    with state.client() as client:
-        result = client.put(_DRAFTS, json=body, params={"it": iteration})
+    events_body = _events_from(events, events_file)
+    with session() as bz:
+        result = bz.drafts.update(
+            draft_id, label=label, events=events_body, iteration=iteration
+        )
     success(f"Updated draft {draft_id}")
     show(result)
 
@@ -134,8 +127,8 @@ def delete_draft(
     """Delete a shared draft."""
     if not yes:
         typer.confirm(f"Delete draft {draft_id}?", abort=True)
-    with state.client() as client:
-        client.delete(_DRAFTS, params={"id": draft_id, "it": iteration})
+    with session() as bz:
+        bz.drafts.delete(draft_id, iteration=iteration)
     success(f"Deleted draft {draft_id}")
 
 
@@ -149,9 +142,9 @@ def list_snapshots(
     offset: int = OFFSET_OPTION,
 ) -> None:
     """List snapshot summaries (newest first)."""
-    with state.client() as client:
+    with session() as bz:
         show(
-            client.get(_SNAPSHOTS, params={"it": iteration}),
+            bz.snapshots.list(iteration=iteration),
             title="Calendar snapshots",
             limit=limit,
             offset=offset,
@@ -164,8 +157,8 @@ def get_snapshot(
     iteration: str = ITERATION_OPTION,
 ) -> None:
     """Fetch one snapshot including its captured events."""
-    with state.client() as client:
-        show(client.get(_SNAPSHOTS, params={"id": snapshot_id, "it": iteration}))
+    with session() as bz:
+        show(bz.snapshots.get(snapshot_id, iteration=iteration))
 
 
 @snapshots_app.command("create")
@@ -178,9 +171,9 @@ def create_snapshot(
     iteration: str = ITERATION_OPTION,
 ) -> None:
     """Capture a snapshot from the supplied events."""
-    body = {"label": label, "events": _events_from(events, events_file) or []}
-    with state.client() as client:
-        result = client.post(_SNAPSHOTS, json=body, params={"it": iteration})
+    events_body = _events_from(events, events_file) or []
+    with session() as bz:
+        result = bz.snapshots.create(label, events_body, iteration=iteration)
     success(f"Created snapshot {label!r}")
     show(result)
 
@@ -194,8 +187,8 @@ def delete_snapshot(
     """Delete a snapshot."""
     if not yes:
         typer.confirm(f"Delete snapshot {snapshot_id}?", abort=True)
-    with state.client() as client:
-        client.delete(_SNAPSHOTS, params={"id": snapshot_id, "it": iteration})
+    with session() as bz:
+        bz.snapshots.delete(snapshot_id, iteration=iteration)
     success(f"Deleted snapshot {snapshot_id}")
 
 
@@ -211,10 +204,8 @@ def restore_snapshot(
             f"Restore snapshot {snapshot_id}? Live events in its date range will be archived.",
             abort=True,
         )
-    with state.client() as client:
-        result = client.post(
-            f"{_SNAPSHOTS}/restore", params={"id": snapshot_id, "it": iteration}
-        )
+    with session() as bz:
+        result = bz.snapshots.restore(snapshot_id, iteration=iteration)
     success(f"Restored snapshot {snapshot_id}")
     show(result)
 
@@ -230,18 +221,8 @@ def export_ics(
     iteration: str = ITERATION_OPTION,
 ) -> None:
     """Export the schedule in a date range as an ICS calendar (max 366 days)."""
-    with state.client() as client:
-        data = client.get(
-            "/api/event/export/ics",
-            params={"sd": start_date, "ed": end_date, "it": iteration},
-        )
-    if isinstance(data, str):
-        data = data.encode("utf-8")
-    if not isinstance(data, bytes):
-        raise BluzApiError(
-            "InvalidResponse",
-            f"Expected an ICS payload, got {type(data).__name__}: {str(data)[:200]}",
-        )
+    with session() as bz:
+        data = bz.events.export_ics(start_date, end_date, iteration=iteration)
     if output is None:
         typer.echo(data.decode("utf-8", errors="replace"))
         return

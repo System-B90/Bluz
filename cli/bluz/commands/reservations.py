@@ -1,7 +1,7 @@
 """
 Name: reservations.py
-Purpose: List, create, and cancel room reservations. Mirrors
-         ui/src/api-client/reservations.ts.
+Purpose: List, create, and cancel room reservations. Thin Typer layer over
+         `bluz.api.directory.ReservationsAPI`.
 Created: 2026-06-27
 Author: Michael K. Steinberg
 """
@@ -10,13 +10,10 @@ from __future__ import annotations
 
 import typer
 
-from bluz.commands._common import LIMIT_OPTION, OFFSET_OPTION, find_by_id, show
-from bluz.context import state
+from bluz.commands._common import LIMIT_OPTION, OFFSET_OPTION, session, show
 from bluz.output import success
 
 app = typer.Typer(help="Room reservations.", no_args_is_help=True)
-
-_BASE = "/api/reservations"
 
 
 @app.command("list")
@@ -32,16 +29,15 @@ def list_reservations(
     offset: int = OFFSET_OPTION,
 ) -> None:
     """List reservations, optionally filtered by room and date range."""
-    params = {
-        "roomId": room_id,
-        "roomSource": room_source,
-        "from": from_,
-        "to": to,
-        "it": iteration,
-    }
-    with state.client() as client:
+    with session() as bz:
         show(
-            client.get(_BASE, params=params),
+            bz.reservations.list(
+                room=room_id,
+                room_source=room_source,
+                start=from_,
+                end=to,
+                iteration=iteration,
+            ),
             title="Reservations",
             limit=limit,
             offset=offset,
@@ -51,9 +47,8 @@ def list_reservations(
 @app.command()
 def get(reservation_id: str = typer.Argument(..., help="Reservation _id.")) -> None:
     """Fetch a single reservation by id (filtered client-side — no per-id route)."""
-    with state.client() as client:
-        items = client.get(_BASE, params={})
-    show(find_by_id(items, reservation_id, id_key="_id"))
+    with session() as bz:
+        show(bz.reservations.get(reservation_id))
 
 
 @app.command()
@@ -72,18 +67,17 @@ def create(
     ),
 ) -> None:
     """Create a reservation."""
-    payload = {
-        "roomId": room_id,
-        "roomSource": room_source,
-        "start": start,
-        "end": end,
-        "reserverType": reserver_type,
-        "reserverId": reserver_id,
-    }
-    if note is not None:
-        payload["note"] = note
-    with state.client() as client:
-        result = client.put(_BASE, json=payload, params={"it": iteration})
+    with session() as bz:
+        result = bz.reservations.create(
+            room_id,
+            start,
+            end,
+            room_source=room_source,
+            reserver_type=reserver_type,
+            reserver_id=reserver_id,
+            note=note,
+            iteration=iteration,
+        )
     success("Created reservation")
     show(result)
 
@@ -99,6 +93,6 @@ def cancel(
     """Cancel (delete) a reservation."""
     if not yes:
         typer.confirm(f"Cancel reservation {reservation_id}?", abort=True)
-    with state.client() as client:
-        client.delete(_BASE, json=reservation_id, params={"it": iteration})
+    with session() as bz:
+        bz.reservations.cancel(reservation_id, iteration=iteration)
     success(f"Cancelled reservation {reservation_id}")

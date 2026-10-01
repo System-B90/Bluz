@@ -1,7 +1,7 @@
 """
 Name: rooms.py
 Purpose: Manage custom rooms — list, create, update, delete, and patch extended
-         info. Mirrors ui/src/api-client/rooms.ts.
+         info. Thin Typer layer over `bluz.api.directory.RoomsAPI`.
 Created: 2026-06-27
 Author: Michael K. Steinberg
 """
@@ -15,21 +15,14 @@ import typer
 from bluz.commands._common import (
     LIMIT_OPTION,
     OFFSET_OPTION,
-    find_by_id,
-    merge_fields,
     parse_json,
+    session,
     show,
 )
-from bluz.context import state
+from bluz.models import RoomSource
 from bluz.output import success
 
 app = typer.Typer(help="Rooms (custom + Hive).", no_args_is_help=True)
-
-_BASE = "/api/rooms"
-
-# RoomSource enum (ui/src/api-shared/types/room.ts): Custom = 0, Hive = 1.
-ROOM_SOURCE_CUSTOM = 0
-ROOM_SOURCE_HIVE = 1
 
 
 @app.command("list")
@@ -38,16 +31,15 @@ def list_rooms(
     offset: int = OFFSET_OPTION,
 ) -> None:
     """List all rooms (custom and Hive-backed)."""
-    with state.client() as client:
-        show(client.get(_BASE), title="Rooms", limit=limit, offset=offset)
+    with session() as bz:
+        show(bz.rooms.list(), title="Rooms", limit=limit, offset=offset)
 
 
 @app.command()
 def get(room_id: str = typer.Argument(..., help="Room id.")) -> None:
     """Fetch a single room by id (filtered client-side — no per-id route)."""
-    with state.client() as client:
-        items = client.get(_BASE)
-    show(find_by_id(items, room_id))
+    with session() as bz:
+        show(bz.rooms.get(room_id))
 
 
 @app.command()
@@ -61,16 +53,10 @@ def create(
     ),
 ) -> None:
     """Create a custom room."""
-    payload = {
-        "id": room_id or str(uuid.uuid4()),
-        "name": name,
-        "source": ROOM_SOURCE_CUSTOM,
-    }
-    if description is not None:
-        payload["description"] = description
-    with state.client() as client:
-        result = client.put(_BASE, json=payload)
-    success(f"Created room {payload['id']}")
+    room_id = room_id or str(uuid.uuid4())
+    with session() as bz:
+        result = bz.rooms.create(name, description=description, room_id=room_id)
+    success(f"Created room {room_id}")
     show(result)
 
 
@@ -81,14 +67,8 @@ def update(
     description: str = typer.Option(None, "--description", help="New description."),
 ) -> None:
     """Update a custom room."""
-    payload = merge_fields(
-        ("id", room_id),
-        ("name", name),
-        ("description", description),
-        ("source", ROOM_SOURCE_CUSTOM),
-    )
-    with state.client() as client:
-        result = client.post(_BASE, json=payload)
+    with session() as bz:
+        result = bz.rooms.update(room_id, name=name, description=description)
     success(f"Updated room {room_id}")
     show(result)
 
@@ -101,15 +81,17 @@ def delete(
     """Delete a custom room."""
     if not yes:
         typer.confirm(f"Delete room {room_id}?", abort=True)
-    with state.client() as client:
-        client.delete(_BASE, json=room_id)
+    with session() as bz:
+        bz.rooms.delete(room_id)
     success(f"Deleted room {room_id}")
 
 
 @app.command("set-info")
 def set_extended_info(
     room_id: str = typer.Argument(..., help="Room id."),
-    source: int = typer.Option(ROOM_SOURCE_HIVE, "--source", help="0=custom, 1=hive."),
+    source: int = typer.Option(
+        int(RoomSource.HIVE), "--source", help="0=custom, 1=hive."
+    ),
     extended_info: str = typer.Option(
         ...,
         "--info",
@@ -117,11 +99,7 @@ def set_extended_info(
     ),
 ) -> None:
     """Patch a room's extended info (seats, workstations, comfort flags)."""
-    payload = {
-        "roomId": room_id,
-        "roomSource": source,
-        "extendedInfo": parse_json(extended_info, what="--info"),
-    }
-    with state.client() as client:
-        client.patch(_BASE, json=payload)
+    info = parse_json(extended_info, what="--info")
+    with session() as bz:
+        bz.rooms.set_extended_info(room_id, info, source=source)
     success(f"Updated extended info for room {room_id}")

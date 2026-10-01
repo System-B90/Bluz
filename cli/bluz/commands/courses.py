@@ -1,7 +1,7 @@
 """
 Name: courses.py
-Purpose: Manage courses — list, create, update, delete. Mirrors
-         ui/src/api-client/courses.ts.
+Purpose: Manage courses — list, create, update, delete. Thin Typer layer over
+         `bluz.api.directory.CoursesAPI`.
 Created: 2026-06-27
 Author: Michael K. Steinberg
 """
@@ -16,21 +16,13 @@ from bluz.commands._common import (
     ITERATION_OPTION,
     LIMIT_OPTION,
     OFFSET_OPTION,
-    find_by_id,
-    merge_fields,
     parse_json,
+    session,
     show,
 )
-from bluz.context import state
 from bluz.output import success
 
 app = typer.Typer(help="Courses.", no_args_is_help=True)
-
-_BASE = "/api/course"
-
-
-def _params(iteration: str | None) -> dict[str, str | None]:
-    return {"it": iteration}
 
 
 @app.command("list")
@@ -40,9 +32,9 @@ def list_courses(
     offset: int = OFFSET_OPTION,
 ) -> None:
     """List all courses."""
-    with state.client() as client:
+    with session() as bz:
         show(
-            client.get(_BASE, params=_params(iteration)),
+            bz.courses.list(iteration=iteration),
             title="Courses",
             limit=limit,
             offset=offset,
@@ -55,9 +47,8 @@ def get(
     iteration: str = ITERATION_OPTION,
 ) -> None:
     """Fetch a single course by id (filtered client-side — no per-id route)."""
-    with state.client() as client:
-        items = client.get(_BASE, params=_params(iteration))
-    show(find_by_id(items, course_id))
+    with session() as bz:
+        show(bz.courses.get(course_id, iteration=iteration))
 
 
 @app.command()
@@ -74,16 +65,17 @@ def create(
     iteration: str = ITERATION_OPTION,
 ) -> None:
     """Create a course."""
-    payload = merge_fields(
-        ("id", course_id or str(uuid.uuid4())),
-        ("name", name),
-        ("color", color),
-        ("parentId", parent_id),
-        ("instructorIds", parse_json(instructor_ids, what="--instructor-ids")),
-    )
-    with state.client() as client:
-        result = client.put(_BASE, json=payload, params=_params(iteration))
-    success(f"Created course {payload['id']}")
+    course_id = course_id or str(uuid.uuid4())
+    with session() as bz:
+        result = bz.courses.create(
+            name,
+            color=color,
+            parent=parent_id,
+            instructor_ids=parse_json(instructor_ids, what="--instructor-ids"),
+            course_id=course_id,
+            iteration=iteration,
+        )
+    success(f"Created course {course_id}")
     show(result)
 
 
@@ -99,15 +91,15 @@ def update(
     iteration: str = ITERATION_OPTION,
 ) -> None:
     """Update a course."""
-    payload = merge_fields(
-        ("id", course_id),
-        ("name", name),
-        ("color", color),
-        ("parentId", parent_id),
-        ("instructorIds", parse_json(instructor_ids, what="--instructor-ids")),
-    )
-    with state.client() as client:
-        result = client.post(_BASE, json=payload, params=_params(iteration))
+    with session() as bz:
+        result = bz.courses.update(
+            course_id,
+            name=name,
+            color=color,
+            parent=parent_id,
+            instructor_ids=parse_json(instructor_ids, what="--instructor-ids"),
+            iteration=iteration,
+        )
     success(f"Updated course {course_id}")
     show(result)
 
@@ -121,6 +113,6 @@ def delete(
     """Delete a course."""
     if not yes:
         typer.confirm(f"Delete course {course_id}?", abort=True)
-    with state.client() as client:
-        client.delete(_BASE, json=course_id, params=_params(iteration))
+    with session() as bz:
+        bz.courses.delete(course_id, iteration=iteration)
     success(f"Deleted course {course_id}")

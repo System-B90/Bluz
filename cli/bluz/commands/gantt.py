@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import typer
 
@@ -20,16 +21,14 @@ from bluz.commands._common import (
     OFFSET_OPTION,
     parse_json,
     read_json_file,
+    session,
     show,
     write_file,
 )
-from bluz.context import state
-from bluz.errors import BluzApiError
 from bluz.output import success
 
 app = typer.Typer(help="Gantt / curriculum engine.", no_args_is_help=True)
 
-_BASE = "/api/gantt"
 
 # Naive de-pluralisation turns "syllabuses" into "syllabuse"; spell out the
 # entity names whose singular is not just the plural minus an "s".
@@ -54,15 +53,14 @@ def _entity_app(
     help_text: str,
     link: bool = False,
     allocate: bool = False,
-    reorder: tuple[str, str] | None = None,
+    reorder: str | None = None,
 ) -> typer.Typer:
     """
     Build a Typer sub-app exposing the standard collection routes for a Gantt
-    entity. `reorder` is an optional (subcommand_name, body_key) pair for the
-    entity's reorder endpoint (e.g. syllabus → ("reorder-modules", "moduleIds")).
+    entity. `reorder` names the entity's reorder subcommand (e.g. syllabus →
+    "reorder-modules"); the SDK knows the matching route and body key.
     """
     sub = typer.Typer(help=help_text, no_args_is_help=True)
-    base = f"{_BASE}/{entity}"
 
     @sub.command("list")
     def list_items(
@@ -75,40 +73,29 @@ def _entity_app(
         offset: int = OFFSET_OPTION,
     ) -> None:
         """List items as an array of {id, title} (server returns an id→title map)."""
-        with state.client() as client:
-            items = client.get(
-                base, params={"withParents": 1 if with_parents else None}
-            )
-        # `?withParents=1` turns the map's values from a bare title into an
-        # object carrying the title plus the entity's parent key.
-        rows = [
-            {"id": item_id, **value}
-            if isinstance(value, dict)
-            else {"id": item_id, "title": value}
-            for item_id, value in items.items()
-        ]
+        with session() as bz:
+            rows = bz.gantt.entity(entity).list(with_parents=with_parents)
         show(rows, title=entity, limit=limit, offset=offset)
 
     @sub.command("get")
     def get_item(item_id: str = typer.Argument(..., help="Item id.")) -> None:
         """Fetch one item (with its sub-tree)."""
-        with state.client() as client:
-            show(client.get(f"{base}/{item_id}"))
+        with session() as bz:
+            show(bz.gantt.entity(entity).get(item_id))
 
     @sub.command("get-many")
     def get_many(ids: str = typer.Argument(..., help="Comma-separated ids.")) -> None:
         """Fetch several items by id, as an array (server returns an id→item map)."""
-        with state.client() as client:
-            items = client.get(base, params={"ids": ids})
-        show(list(items.values()))
+        with session() as bz:
+            show(bz.gantt.entity(entity).get_many(*ids.split(",")))
 
     @sub.command("create")
     def create_item(
         data: str = typer.Option(..., "--data", help="JSON payload."),
     ) -> None:
         """Create an item from a JSON payload."""
-        with state.client() as client:
-            result = client.post(base, json=parse_json(data, what="--data"))
+        with session() as bz:
+            result = bz.gantt.entity(entity).create(parse_json(data, what="--data"))
         success(f"Created {_singular(entity)}")
         show(result)
 
@@ -118,9 +105,9 @@ def _entity_app(
         data: str = typer.Option(..., "--data", help="JSON patch payload."),
     ) -> None:
         """Patch an item from a JSON payload."""
-        with state.client() as client:
-            result = client.patch(
-                f"{base}/{item_id}", json=parse_json(data, what="--data")
+        with session() as bz:
+            result = bz.gantt.entity(entity).update(
+                item_id, parse_json(data, what="--data")
             )
         success(f"Updated {item_id}")
         show(result)
@@ -133,8 +120,8 @@ def _entity_app(
         """Delete an item."""
         if not yes:
             typer.confirm(f"Delete {entity} {item_id}?", abort=True)
-        with state.client() as client:
-            client.delete(f"{base}/{item_id}")
+        with session() as bz:
+            bz.gantt.entity(entity).delete(item_id)
         success(f"Deleted {item_id}")
 
     if link:
@@ -145,10 +132,8 @@ def _entity_app(
             new_parent_id: str = typer.Argument(..., help="New parent id."),
         ) -> None:
             """Link an item under a new parent."""
-            with state.client() as client:
-                result = client.post(
-                    f"{base}/{item_id}/link", json={"newParentId": new_parent_id}
-                )
+            with session() as bz:
+                result = bz.gantt.entity(entity).link(item_id, new_parent_id)
             success(f"Linked {item_id} → {new_parent_id}")
             show(result)
 
@@ -158,10 +143,8 @@ def _entity_app(
             old_parent_id: str = typer.Argument(..., help="Parent id to detach from."),
         ) -> None:
             """Unlink an item from a parent."""
-            with state.client() as client:
-                client.delete(
-                    f"{base}/{item_id}/link", json={"oldParentId": old_parent_id}
-                )
+            with session() as bz:
+                bz.gantt.entity(entity).unlink(item_id, old_parent_id)
             success(f"Unlinked {item_id} from {old_parent_id}")
 
     if allocate:
@@ -172,13 +155,8 @@ def _entity_app(
             container_id: str = typer.Argument(..., help="Container (curriculum) id."),
         ) -> None:
             """Get the item's allocated time within a container."""
-            with state.client() as client:
-                show(
-                    client.get(
-                        f"{base}/{item_id}/allocate-time",
-                        params={"containerId": container_id},
-                    )
-                )
+            with session() as bz:
+                show(bz.gantt.entity(entity).get_time(item_id, container_id))
 
         @sub.command("set-time")
         def set_time(
@@ -187,15 +165,12 @@ def _entity_app(
             duration: int = typer.Argument(..., help="Duration to allocate."),
         ) -> None:
             """Set the item's allocated time within a container."""
-            with state.client() as client:
-                client.post(
-                    f"{base}/{item_id}/allocate-time",
-                    json={"containerId": container_id, "duration": duration},
-                )
+            with session() as bz:
+                bz.gantt.entity(entity).set_time(item_id, container_id, duration)
             success(f"Allocated {duration} to {item_id} in {container_id}")
 
     if reorder is not None:
-        sub_name, body_key = reorder
+        sub_name = reorder
 
         @sub.command(sub_name)
         def reorder_children(
@@ -206,8 +181,8 @@ def _entity_app(
         ) -> None:
             """Reorder an item's children."""
             ordered = [piece for piece in ids.split(",") if piece]
-            with state.client() as client:
-                client.post(f"{base}/{item_id}/{sub_name}", json={body_key: ordered})
+            with session() as bz:
+                bz.gantt.entity(entity).reorder(item_id, ordered)
             success(f"Reordered children of {item_id}")
 
     return sub
@@ -220,14 +195,14 @@ syllabuses_app = _entity_app(
     "syllabuses",
     help_text="Syllabuses.",
     link=True,
-    reorder=("reorder-modules", "moduleIds"),
+    reorder="reorder-modules",
 )
 modules_app = _entity_app(
     "modules",
     help_text="Modules.",
     link=True,
     allocate=True,
-    reorder=("reorder-events", "eventIds"),
+    reorder="reorder-events",
 )
 events_app = _entity_app("events", help_text="Gantt events.", link=True, allocate=True)
 days_app = _entity_app("days", help_text="Curriculum days.", link=False)
@@ -245,8 +220,8 @@ def export_curriculum(
     ),
 ) -> None:
     """Export a curriculum tree (curriculum + mappings + constraints)."""
-    with state.client() as client:
-        data = client.get(f"{_BASE}/curriculums/{curriculum_id}/export")
+    with session() as bz:
+        data = bz.gantt.curriculums.export(curriculum_id)
     if output is not None:
         write_file(
             output,
@@ -264,13 +239,8 @@ def export_curriculum_excel(
     output: Path = typer.Option(..., "--output", "-o", help="Destination .xlsx path."),
 ) -> None:
     """Export a curriculum as an Excel workbook."""
-    with state.client() as client:
-        data = client.get(f"{_BASE}/curriculums/{curriculum_id}/export/excel")
-    if not isinstance(data, bytes):
-        raise BluzApiError(
-            "InvalidResponse",
-            f"Expected an .xlsx byte stream, got {type(data).__name__}: {str(data)[:200]}",
-        )
+    with session() as bz:
+        data = bz.gantt.curriculums.export_excel(curriculum_id)
     write_file(output, data, what="export")
     success(f"Exported curriculum {curriculum_id} → {output} ({len(data)} bytes)")
 
@@ -281,8 +251,8 @@ def import_curriculum(
 ) -> None:
     """Import a curriculum from an export file."""
     payload = read_json_file(file, what="curriculum file")
-    with state.client() as client:
-        result = client.post(f"{_BASE}/curriculums/import", json=payload)
+    with session() as bz:
+        result = bz.gantt.curriculums.import_(payload)
     success("Imported curriculum")
     show(result)
 
@@ -294,11 +264,10 @@ def list_constraints(
     module_id: str = typer.Option(None, "--module-id", help="Scope to a module."),
 ) -> None:
     """List scheduling constraints for a curriculum."""
-    params = {"syllabusId": syllabus_id, "moduleId": module_id}
-    with state.client() as client:
+    with session() as bz:
         show(
-            client.get(
-                f"{_BASE}/curriculums/{curriculum_id}/constraints", params=params
+            bz.gantt.curriculums.constraints(
+                curriculum_id, syllabus=syllabus_id, module=module_id
             ),
             title="Constraints",
         )
@@ -309,9 +278,9 @@ def list_mappings(
     curriculum_id: str = typer.Argument(..., help="Curriculum id."),
 ) -> None:
     """List day/module mappings for a curriculum."""
-    with state.client() as client:
+    with session() as bz:
         show(
-            client.get(f"{_BASE}/curriculums/{curriculum_id}/mappings"),
+            bz.gantt.curriculums.mappings(curriculum_id),
             title="Mappings",
         )
 
@@ -329,14 +298,9 @@ def set_mapping(
     ),
 ) -> None:
     """Create a module/event day mapping (cMDA) for a curriculum."""
-    payload = {"moduleId": module_id, "dayId": day_id}
-    if event_id is not None:
-        payload["eventId"] = event_id
-    if sort_order is not None:
-        payload["sortOrder"] = sort_order
-    with state.client() as client:
-        result = client.post(
-            f"{_BASE}/curriculums/{curriculum_id}/mappings", json=payload
+    with session() as bz:
+        result = bz.gantt.curriculums.set_mapping(
+            curriculum_id, module_id, day_id, event=event_id, sort_order=sort_order
         )
     success(
         f"Placed {'event ' + event_id if event_id else 'module ' + module_id} on day {day_id}"
@@ -362,22 +326,16 @@ def move_mapping(
     ),
 ) -> None:
     """Move or reorder an existing module/event day mapping (cMDA)."""
-    new_values = {}
-    if new_day_id is not None:
-        new_values["dayId"] = new_day_id
-    if sort_order is not None:
-        new_values["sortOrder"] = sort_order
-    if not new_values:
+    if new_day_id is None and sort_order is None:
         raise typer.BadParameter("Provide --new-day-id and/or --sort-order.")
-    payload = {
-        "moduleId": module_id,
-        "eventId": event_id,
-        "oldMapping": {"dayId": old_day_id},
-        "newValues": new_values,
-    }
-    with state.client() as client:
-        result = client.patch(
-            f"{_BASE}/curriculums/{curriculum_id}/mappings", json=payload
+    with session() as bz:
+        result = bz.gantt.curriculums.move_mapping(
+            curriculum_id,
+            module_id,
+            old_day_id,
+            new_day=new_day_id,
+            event=event_id,
+            sort_order=sort_order,
         )
     success(
         f"Moved mapping for {'event ' + event_id if event_id else 'module ' + module_id}"
@@ -397,9 +355,10 @@ def unset_mapping(
     ),
 ) -> None:
     """Delete a module/event day mapping (cMDA) for a curriculum."""
-    payload = {"moduleId": module_id, "eventId": event_id, "dayId": day_id}
-    with state.client() as client:
-        client.delete(f"{_BASE}/curriculums/{curriculum_id}/mappings", json=payload)
+    with session() as bz:
+        bz.gantt.curriculums.unset_mapping(
+            curriculum_id, module_id, day_id, event=event_id
+        )
     success(
         f"Cleared mapping for {'event ' + event_id if event_id else 'module ' + module_id}"
     )
@@ -415,10 +374,9 @@ def duplicate_curriculum(
     ),
 ) -> None:
     """Deep-clone a curriculum (syllabuses, modules, events, mappings)."""
-    with state.client() as client:
-        result = client.post(
-            f"{_BASE}/curriculums/{curriculum_id}/duplicate",
-            json=parse_json(overrides, what="--overrides") or {},
+    with session() as bz:
+        result = bz.gantt.curriculums.duplicate(
+            curriculum_id, parse_json(overrides, what="--overrides")
         )
     success(f"Duplicated curriculum {curriculum_id}")
     show(result)
@@ -429,8 +387,8 @@ def cut_status(
     curriculum_id: str = typer.Argument(..., help="Curriculum id."),
 ) -> None:
     """Show whether the curriculum's linked iteration currently holds cut events."""
-    with state.client() as client:
-        show(client.get(f"{_BASE}/curriculums/{curriculum_id}/cut"), title="Cut status")
+    with session() as bz:
+        show(bz.gantt.curriculums.cut_status(curriculum_id), title="Cut status")
 
 
 def _cut_payload(
@@ -439,8 +397,8 @@ def _cut_payload(
     insert_breaks: bool,
     accepted_constraint_moves: str | None,
     week_overflow_resolutions: str | None,
-) -> dict:
-    """Build the body both /cut and /cut/plan take.
+) -> dict[str, Any]:
+    """Validate the CLI flags into the keyword arguments `cut` / `cut_plan` take.
 
     The route reads five fields. The CLI used to send only `force`, so every
     other decision silently took the server default and the plan-then-confirm
@@ -458,10 +416,10 @@ def _cut_payload(
 
     return {
         "force": force,
-        "autoSpillover": auto_spillover,
-        "insertBreaks": insert_breaks,
-        "acceptedConstraintMoves": moves if moves is not None else [],
-        "weekOverflowResolutions": resolutions if resolutions is not None else {},
+        "auto_spillover": auto_spillover,
+        "insert_breaks": insert_breaks,
+        "accepted_constraint_moves": moves,
+        "week_overflow_resolutions": resolutions,
     }
 
 
@@ -495,8 +453,8 @@ def cut_preview(
     curriculum_id: str = typer.Argument(..., help="Curriculum id."),
 ) -> None:
     """Dry-run the cut: the planner's dated occurrences, with no gating and no writes."""
-    with state.client() as client:
-        show(client.get(f"{_BASE}/curriculums/{curriculum_id}/cut/preview"))
+    with session() as bz:
+        show(bz.gantt.curriculums.cut_preview(curriculum_id))
 
 
 @curriculums_app.command("cut")
@@ -533,8 +491,8 @@ def cut_curriculum(
         accepted_constraint_moves,
         week_overflow_resolutions,
     )
-    with state.client() as client:
-        result = client.post(f"{_BASE}/curriculums/{curriculum_id}/cut", json=payload)
+    with session() as bz:
+        result = bz.gantt.curriculums.cut(curriculum_id, **payload)
     success(f"Cut curriculum {curriculum_id}")
     show(result)
 
@@ -549,8 +507,8 @@ def pull_back_cut(
         typer.confirm(
             f"Pull back the cut schedule for curriculum {curriculum_id}?", abort=True
         )
-    with state.client() as client:
-        result = client.delete(f"{_BASE}/curriculums/{curriculum_id}/cut")
+    with session() as bz:
+        result = bz.gantt.curriculums.pull_back(curriculum_id)
     success(f"Pulled back cut for curriculum {curriculum_id}")
     show(result)
 
@@ -564,8 +522,8 @@ def curriculum_execution(
     A curriculum that has not been cut (or has no linked iteration) answers
     `{"events": {}}` rather than erroring.
     """
-    with state.client() as client:
-        show(client.get(f"{_BASE}/curriculums/{curriculum_id}/execution"))
+    with session() as bz:
+        show(bz.gantt.curriculums.execution(curriculum_id))
 
 
 @curriculums_app.command("recurrence-exceptions")
@@ -575,9 +533,9 @@ def curriculum_recurrence_exceptions(
     offset: int = OFFSET_OPTION,
 ) -> None:
     """List every recurrence exception recorded for a curriculum."""
-    with state.client() as client:
+    with session() as bz:
         show(
-            client.get(f"{_BASE}/curriculums/{curriculum_id}/recurrence-exceptions"),
+            bz.gantt.curriculums.recurrence_exceptions(curriculum_id),
             title="Recurrence exceptions",
             limit=limit,
             offset=offset,
@@ -595,10 +553,8 @@ def duplicate_event(
     ),
 ) -> None:
     """Clone a gantt event into a module (the copy gets the next indexed title)."""
-    with state.client() as client:
-        result = client.post(
-            f"{_BASE}/events/{event_id}/duplicate", json={"moduleId": module_id}
-        )
+    with session() as bz:
+        result = bz.gantt.events.duplicate(event_id, module_id)
     success(f"Duplicated event {event_id}")
     show(result)
 
@@ -610,11 +566,8 @@ def except_occurrence(
     day_id: str = typer.Option(..., "--day-id", help="Day the occurrence falls on."),
 ) -> None:
     """Drop a single occurrence of a recurring event; it keeps recurring elsewhere."""
-    with state.client() as client:
-        result = client.post(
-            f"{_BASE}/events/{event_id}/recurrence-exceptions",
-            json={"curriculumId": curriculum_id, "dayId": day_id},
-        )
+    with session() as bz:
+        result = bz.gantt.events.except_occurrence(event_id, curriculum_id, day_id)
     success(f"Excepted event {event_id} from day {day_id}")
     show(result)
 
@@ -627,15 +580,8 @@ def materialize_occurrence(
     day_id: str = typer.Option(..., "--day-id", help="Day the occurrence falls on."),
 ) -> None:
     """Turn one recurring occurrence into a standalone event and except the source."""
-    with state.client() as client:
-        result = client.post(
-            f"{_BASE}/events/{event_id}/materialize",
-            json={
-                "curriculumId": curriculum_id,
-                "moduleId": module_id,
-                "dayId": day_id,
-            },
-        )
+    with session() as bz:
+        result = bz.gantt.events.materialize(event_id, curriculum_id, module_id, day_id)
     success(f"Materialized event {event_id} onto day {day_id}")
     show(result)
 
@@ -656,10 +602,9 @@ def recreate_occurrence(
     cut produced and someone since deleted; this puts one of them back without
     re-cutting the whole curriculum.
     """
-    with state.client() as client:
-        result = client.post(
-            f"{_BASE}/curriculums/{curriculum_id}/execution/recreate",
-            json={"ganttEventId": gantt_event_id, "occurrenceDate": occurrence_date},
+    with session() as bz:
+        result = bz.gantt.curriculums.recreate_occurrence(
+            curriculum_id, gantt_event_id, occurrence_date
         )
     success(f"Re-created occurrence of {gantt_event_id} on {occurrence_date}")
     show(result)
@@ -684,11 +629,8 @@ def set_shuffle_group(
     names exactly. Passing one name (or none) ungroups the event.
     """
     names = [name.strip() for name in shuffles.split(",") if name.strip()]
-    with state.client() as client:
-        result = client.post(
-            f"{_BASE}/events/{event_id}/shuffle-group",
-            json={"moduleId": module_id, "shuffles": names},
-        )
+    with session() as bz:
+        result = bz.gantt.events.set_shuffle_group(event_id, module_id, names)
     success(
         f"Grouped event {event_id} across {len(names)} shuffle(s)"
         if len(names) > 1
@@ -726,8 +668,8 @@ def cut_plan(
         accepted_constraint_moves,
         week_overflow_resolutions,
     )
-    with state.client() as client:
-        show(client.post(f"{_BASE}/curriculums/{curriculum_id}/cut/plan", json=payload))
+    with session() as bz:
+        show(bz.gantt.curriculums.cut_plan(curriculum_id, **payload))
 
 
 @syllabuses_app.command("shuffles")
@@ -738,11 +680,9 @@ def syllabus_shuffle_usages(
     ),
 ) -> None:
     """Modules and events using these shuffle names — what a deletion would strip."""
-    with state.client() as client:
+    with session() as bz:
         show(
-            client.get(
-                f"{_BASE}/syllabuses/{syllabus_id}/shuffles", params={"names": names}
-            ),
+            bz.gantt.syllabuses.shuffle_usages(syllabus_id, names.split(",")),
             title=f"Shuffle usages for syllabus {syllabus_id}",
         )
 
@@ -765,17 +705,22 @@ def syllabus_set_links(
 
     Omitted options are left untouched; pass an empty string to clear one.
     """
-    payload: dict[str, list[str] | list[int]] = {}
-    if courses is not None:
-        payload["courseIds"] = [c.strip() for c in courses.split(",") if c.strip()]
-    if leads is not None:
-        payload["leadInstructorIds"] = [
-            int(i.strip()) for i in leads.split(",") if i.strip()
-        ]
-    if not payload:
+    if courses is None and leads is None:
         raise typer.BadParameter("Pass --courses and/or --leads.")
-    with state.client() as client:
-        result = client.patch(f"{_BASE}/syllabuses/{syllabus_id}", json=payload)
+    with session() as bz:
+        result = bz.gantt.syllabuses.set_links(
+            syllabus_id,
+            courses=(
+                None
+                if courses is None
+                else [c.strip() for c in courses.split(",") if c.strip()]
+            ),
+            lead_instructor_ids=(
+                None
+                if leads is None
+                else [int(i.strip()) for i in leads.split(",") if i.strip()]
+            ),
+        )
     success(f"Updated links on syllabus {syllabus_id}")
     show(result)
 
@@ -804,9 +749,8 @@ def syllabus_set_shuffles(
     first to see what that would strip.
     """
     names = [name.strip() for name in shuffles.split(",") if name.strip()]
-    payload: dict[str, object] = {"shuffles": names}
+    parsed: dict[str, str] = {}
     if descriptions:
-        parsed: dict[str, str] = {}
         for entry in descriptions:
             name, sep, text = entry.partition("=")
             if not sep or not name.strip():
@@ -814,15 +758,14 @@ def syllabus_set_shuffles(
                     f"Expected NAME=TEXT, got {entry!r}.", param_hint="--description"
                 )
             parsed[name.strip()] = text.strip()
-        payload["descriptions"] = parsed
     if not yes:
         typer.confirm(
             f"Set syllabus {syllabus_id} shuffles to {names or 'none'}? "
             "Modules and events using removed names lose them.",
             abort=True,
         )
-    with state.client() as client:
-        result = client.post(f"{_BASE}/syllabuses/{syllabus_id}/shuffles", json=payload)
+    with session() as bz:
+        result = bz.gantt.syllabuses.set_shuffles(syllabus_id, names, parsed or None)
     success(f"Set {len(names)} shuffle(s) on syllabus {syllabus_id}")
     show(result)
 

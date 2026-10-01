@@ -5,21 +5,32 @@ build-backend = "hatchling.build"
 [project]
 name = "bluz"
 dynamic = ["version"]
-description = "Bluz command-line tool — drive the Bluz scheduling & curriculum API from your terminal."
+description = "Bluz — script the Bluz scheduling & curriculum server from Python (typed SDK) or drive it with the `bluz` CLI."
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{ name = "Michael K. Steinberg", email = "m.kuper.steinberg@gmail.com" }]
 license = { text = "Proprietary" }
-keywords = ["bluz", "cli", "scheduling", "curriculum", "gantt"]
+keywords = ["bluz", "sdk", "cli", "scheduling", "curriculum", "gantt", "typed"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Typing :: Typed",
+    "Framework :: Pydantic :: 2",
+    "Environment :: Console",
+]
 
 dependencies = [
     "typer>=0.20.0",
     "InquirerPy>=0.3.4",
     "httpx>=0.28.0",
+    "pydantic>=2.7",
     "python-dotenv>=1.0.0",
     "rich>=13.0.0",
     "tqdm>=4.65.0",
 ]
+
+[project.optional-dependencies]
+ipython = ["ipython>=8"]
+dev = ["pytest>=8", "mypy>=1.10", "ipython>=8"]
 
 [project.scripts]
 bluz = "bluz.main:run"

@@ -15,13 +15,12 @@ from typing import Any
 
 import typer
 
-from bluz.commands._common import parse_json, show
+from bluz.commands._common import parse_json, session, show
 from bluz.context import state
 from bluz.output import console, success, warn
 
 app = typer.Typer(help="The Bluz AI assistant.", no_args_is_help=True)
 
-_BASE = "/api/ai"
 
 # Frame types of the chat stream, mirroring AiStreamEventType in
 # ui/src/api-shared/types/ai.ts. Spelled out here rather than imported (there
@@ -44,8 +43,8 @@ def list_tools() -> None:
     Reports `enabled: false` on a deployment with no model key rather than
     failing — the same signal the UI uses to hide the launcher.
     """
-    with state.client() as client:
-        show(client.get(f"{_BASE}/tools"), title="Assistant")
+    with session() as bz:
+        show(bz.ai.tools(), title="Assistant")
 
 
 @app.command("benchmark")
@@ -55,8 +54,8 @@ def benchmark() -> None:
     Throttled server-side to once an hour per user (a run costs real tokens),
     which comes back as an `AiRateLimitError`.
     """
-    with state.client() as client:
-        result = client.post(f"{_BASE}/benchmark")
+    with session() as bz:
+        result = bz.ai.benchmark()
     success("Benchmark finished")
     show(result, title="Benchmark")
 
@@ -172,9 +171,9 @@ def chat(
     }
     payload = {key: value for key, value in payload.items() if value not in (None, [])}
 
-    with state.client() as client:
+    with session() as bz:
         done = _render_stream(
-            client.stream_sse(f"{_BASE}/chat", json=payload),
+            bz.ai.stream(payload),
             as_json=state.as_json,
         )
 
@@ -208,6 +207,6 @@ def chat(
                 "approvedToolCallIds": ids,
             }
             done = _render_stream(
-                client.stream_sse(f"{_BASE}/chat", json=payload),
+                bz.ai.stream(payload),
                 as_json=state.as_json,
             )

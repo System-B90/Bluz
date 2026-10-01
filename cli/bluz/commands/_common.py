@@ -9,13 +9,19 @@ Author: Michael K. Steinberg
 from __future__ import annotations
 
 import json
+import warnings
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
 import typer
 
 from bluz.context import state
+from bluz.errors import ResponseShapeWarning
+from bluz.models import to_wire
 from bluz.output import abort, render
+from bluz.sdk import Bluz
 
 
 def parse_json(value: str | None, *, what: str = "value") -> Any:
@@ -53,6 +59,20 @@ def write_file(path: Path, data: str | bytes, *, what: str = "file") -> None:
         abort(f"Could not write {what} {path}: {exc}")
 
 
+@contextmanager
+def session() -> Iterator[Bluz]:
+    """A `Bluz` SDK session over the CLI's configured client, closed on exit.
+
+    Commands go through the SDK rather than raw paths, so the CLI and scripts
+    share one implementation of every request.
+    """
+    # The CLI echoes whatever the server answered, so a response that does
+    # not fit its model is not worth a warning here — it is shown verbatim.
+    with state.client() as client, warnings.catch_warnings():
+        warnings.simplefilter("ignore", ResponseShapeWarning)
+        yield Bluz.from_client(client)
+
+
 def show(
     data: Any,
     *,
@@ -65,6 +85,7 @@ def show(
     `limit`/`offset` slice list results client-side — the underlying
     endpoints return the full collection with no server-side pagination.
     """
+    data = to_wire(data)
     if isinstance(data, list) and (limit is not None or offset is not None):
         start = offset or 0
         end = start + limit if limit is not None else None
@@ -89,20 +110,3 @@ ITERATION_OPTION = typer.Option(
 def merge_fields(*pairs: tuple[str, Any]) -> dict[str, Any]:
     """Build a payload dict from (key, value) pairs, dropping None values."""
     return {key: value for key, value in pairs if value is not None}
-
-
-def find_by_id(
-    items: list[dict[str, Any]], item_id: str, *, id_key: str = "id"
-) -> dict[str, Any]:
-    """
-    Pick one item out of a collection by id.
-
-    Several resources (courses, rooms, outsiders, reservations) have no
-    per-id GET route on the server — only a bulk list. This filters
-    client-side so `<resource> get <id>` works without a new endpoint.
-    """
-    for item in items:
-        if str(item.get(id_key)) == str(item_id):
-            return item
-    abort(f"No item with {id_key}={item_id!r} found.")
-    raise AssertionError("unreachable")  # abort() always raises
