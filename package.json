@@ -24,7 +24,7 @@
         "docker:test:down": "docker compose --env-file .env -f deploy/docker-compose.yml -f deploy/docker-compose.test.yml down -v",
         "docker:test:ps": "docker compose --env-file .env -f deploy/docker-compose.yml -f deploy/docker-compose.test.yml ps",
         "test": "python scripts/run_tests.py",
-        "test:unit": "vitest run --config tests/vitest.config.ts",
+        "test:unit": "vitest run --configLoader runner --config tests/vitest.config.ts",
         "test:e2e": "npx playwright test --config tests/playwright.config.ts",
         "test:e2e:ui": "npx playwright test --config tests/playwright.config.ts --ui",
         "session:start": "cd session-server && npm install && npm start",
