@@ -102,6 +102,20 @@ describe("reads", () => {
         const items = (result.data as { items: Array<{ id: string }> }).items;
         expect(items.map((week) => week.id)).toEqual(["w_1", "w_2"]);
     });
+
+    it("returns the module's own fields and its events (#785)", async () => {
+        mocks.module.getItem.mockResolvedValueOnce({
+            id: "m_1",
+            title: "מערך א",
+            description: "תיאור",
+            m2e: [{ event: { id: "e_1", title: "מופע" } }],
+        });
+        const result = await tool("get_module").execute({ moduleId: "m_1" }, context);
+        const data = result.data as Record<string, unknown>;
+        expect(data).toMatchObject({ id: "m_1", title: "מערך א", description: "תיאור" });
+        expect(data).not.toHaveProperty("exports");
+        expect(data.events).toHaveLength(1);
+    });
 });
 
 describe("authoring the tree end to end", () => {
