@@ -4,26 +4,26 @@ import { defineSharedVitestConfig } from "@system-b90/test-kit/vitest";
 
 export default defineSharedVitestConfig({
     test: {
-        setupFiles: [ path.resolve(__dirname, "backend/setup-session.ts") ],
+        setupFiles: [ path.resolve(import.meta.dirname, "backend/setup-session.ts") ],
         // `.tsx` too: component tests for the gantt dialogs opt into jsdom
         // per file (`// @vitest-environment jsdom`).
         include: [ "tests/backend/**/*.test.ts", "tests/backend/**/*.test.tsx" ],
         alias: {
-            "@": path.resolve(__dirname, "../ui/src"),
-            "@vendor": path.resolve(__dirname, "../ui/vendor"),
+            "@": path.resolve(import.meta.dirname, "../ui/src"),
+            "@vendor": path.resolve(import.meta.dirname, "../ui/vendor"),
             // `ws` is installed twice — once at the root and once under
             // session-server/. The shared core resolves the nested copy while
             // `vi.mock("ws")` in a test file resolves the root one, and vitest
             // keys mocks by resolved path, so the fake transport silently never
             // applied and every case in ws-session-server.test.ts failed (#592).
             // Pinning both to one path makes the mock reach the core again.
-            ws: path.resolve(__dirname, "../node_modules/ws"),
+            ws: path.resolve(import.meta.dirname, "../node_modules/ws"),
             // Same duplicate-install problem, same consequence: session-server.ts
             // resolved the copy under session-server/node_modules while the test
             // file's `vi.mock` resolved the root one, so the wrapper that
             // captures the options passed to startSessionServer never ran.
             "@system-b90/session-ws/server": path.resolve(
-                __dirname,
+                import.meta.dirname,
                 "../node_modules/@system-b90/session-ws/dist/server.js",
             ),
         },
