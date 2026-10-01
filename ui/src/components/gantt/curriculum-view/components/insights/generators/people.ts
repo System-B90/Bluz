@@ -101,7 +101,7 @@ const recommendedLecturers: InsightGenerator = (ctx) => {
         body: `${pluralize(rows.length, "מרצה חיצוני אחד מומלץ", "מרצים חיצוניים מומלצים")} בגאנט.`,
         visual: {
             kind: "leaderboard",
-            rows: rows.slice(0, 5).map(([ id, value ]) => ({ label: nameOf(id), value, valueLabel: `${value}` })),
+            rows: rows.slice(0, 5).map(([ id, value ]) => ({ label: nameOf(id), value, valueLabel: `${value}`, outsiderId: id })),
         },
     };
 };
