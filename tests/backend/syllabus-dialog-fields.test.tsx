@@ -35,6 +35,9 @@ vi.mock("@/components/gantt/syllabus-dialog/ShufflesSection", () => ({
 vi.mock("@/components/gantt/syllabus-dialog/SyllabusImportExportButton", () => ({
     SyllabusImportExportButton: () => null,
 }));
+vi.mock("@/components/schedule/event-dialog/ColorPickerField", () => ({
+    ColorPickerField: () => null,
+}));
 vi.mock("@/components/gantt/syllabus-dialog/SyllabusLinksSection", () => ({
     SyllabusLinksSection: () => null,
 }));
