@@ -1,6 +1,7 @@
 import CalendarViewDayIcon from "@mui/icons-material/CalendarViewDay";
 import CalendarViewWeekIcon from "@mui/icons-material/CalendarViewWeek";
 import ClearIcon from "@mui/icons-material/Clear";
+import FreeBreakfastIcon from "@mui/icons-material/FreeBreakfast";
 import PendingActionsIcon from "@mui/icons-material/PendingActions";
 import RuleIcon from "@mui/icons-material/Rule";
 import SearchIcon from "@mui/icons-material/Search";
@@ -36,6 +37,8 @@ export type GanttToolbarProps = {
     showUnallocated: boolean;
     setShowUnallocated: (value: boolean) => void;
     unallocatedCount: number;
+    ignoreBreaks: boolean;
+    setIgnoreBreaks: (value: boolean) => void;
     relativeDaySizing: boolean;
     setRelativeDaySizing: (value: boolean) => void;
     allCollapsed: boolean;
@@ -57,6 +60,8 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({
     showUnallocated,
     setShowUnallocated,
     unallocatedCount,
+    ignoreBreaks,
+    setIgnoreBreaks,
     relativeDaySizing,
     setRelativeDaySizing,
     allCollapsed,
@@ -108,6 +113,14 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({
             run: () => setShowUnallocated(!showUnallocated),
         },
         {
+            id: "gantt.timeline.breaks.toggle",
+            title: ignoreBreaks ? "הצגת הפסקות בסכומי הזמן" : "התעלמות מהפסקות בסכומי הזמן",
+            group: COMMAND_GROUPS.gantt,
+            icon: <FreeBreakfastIcon />,
+            keywords: [ "breaks", "ignore breaks", "הפסקות" ],
+            run: () => setIgnoreBreaks(!ignoreBreaks),
+        },
+        {
             id: "gantt.timeline.sizing.toggle",
             title: relativeDaySizing ? "בלוקים בתא מלא" : "בלוקים לפי יום",
             group: COMMAND_GROUPS.gantt,
@@ -137,6 +150,7 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({
         weeklyView, onWeeklyViewChange,
         showConstraints, setShowConstraints,
         showUnallocated, setShowUnallocated,
+        ignoreBreaks, setIgnoreBreaks,
         relativeDaySizing, setRelativeDaySizing,
         allCollapsed, expandAllSyllabuses, collapseAllSyllabuses,
         zoomedWeekId, setZoomedWeekId,
@@ -255,6 +269,7 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({
                         setShowUnallocated(
                             values.includes("unallocated"),
                         );
+                        setIgnoreBreaks(values.includes("breaks"));
                     } }
                     size="small"
                     value={ [
@@ -263,6 +278,9 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({
                             : []),
                         ...(showUnallocated
                             ? [ "unallocated" ]
+                            : []),
+                        ...(ignoreBreaks
+                            ? [ "breaks" ]
                             : []),
                     ] }
                 >
@@ -288,6 +306,14 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({
                             <PendingActionsIcon fontSize="small" />
                         </Badge>
                         לא משובצים
+                    </ToggleButton>
+                    <ToggleButton
+                        aria-label="התעלמות מהפסקות בסכומי הזמן"
+                        sx={ { gap: 0.5, px: 1.5 } }
+                        value="breaks"
+                    >
+                        <FreeBreakfastIcon fontSize="small" />
+                        ללא הפסקות
                     </ToggleButton>
                 </ToggleButtonGroup>
 

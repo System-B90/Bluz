@@ -40,6 +40,7 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
     const state = useCurriculumState();
     const {
         dayCellWidth,
+        ignoreBreaks,
         scheduledMinutesByDay,
         setWeeklyView,
         setZoomedWeekId,
@@ -55,6 +56,10 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
     // Clicking a week header always zooms into that week's day view (#445) —
     // including from the compact weekly view, which this used to disallow.
     const canZoom = true;
+    // "Ignore breaks" takes the day's break time out of its available hours too.
+    const availableOf = (day: { id: string; totalWorkingMinutes: number }) =>
+        day.totalWorkingMinutes
+        - (ignoreBreaks ? (studentLoadByDay[day.id]?.breakMinutes ?? 0) : 0);
 
     return (
         <TableHead>
@@ -99,7 +104,7 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                         .filter(
                             (day) =>
                                 getCapacityStatus(
-                                    day.totalWorkingMinutes,
+                                    availableOf(day),
                                     scheduledMinutesByDay[day.id] ?? 0,
                                 ) === "error",
                         )
@@ -110,7 +115,7 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                     // for the week as a whole being over its available hours,
                     // which no reshuffling inside the week can fix (#467).
                     const weekAvailableMinutes = weekDays.reduce(
-                        (total, day) => total + day.totalWorkingMinutes,
+                        (total, day) => total + availableOf(day),
                         0,
                     );
                     // A student's week is the sum of their own days.
@@ -120,7 +125,7 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                     );
                     const weekSeverity = getWeekOverAllocationSeverity(
                         constraintDays.map((day) => ({
-                            availableMinutes: day.totalWorkingMinutes,
+                            availableMinutes: availableOf(day),
                             scheduledMinutes: scheduledMinutesByDay[day.id] ?? 0,
                         })),
                     );
@@ -236,7 +241,7 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                             const scheduledMinutes =
                                 scheduledMinutesByDay[dayId] ?? 0;
                             const capacityStatus = getCapacityStatus(
-                                day.totalWorkingMinutes,
+                                availableOf(day),
                                 scheduledMinutes,
                             );
                             const isOverAllocated =
@@ -285,7 +290,7 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                                     ) : null}
                                     {singleWeekDayZoom ? (
                                         <StudentLoadTooltip
-                                            capacity={day.totalWorkingMinutes}
+                                            capacity={availableOf(day)}
                                             load={studentLoadByDay[dayId]}
                                             paths={studentPaths}
                                             title={dayDate
@@ -316,7 +321,7 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                                                     {`${formatHoursLabel(
                                                         scheduledMinutes,
                                                     )} / ${formatHoursLabel(
-                                                        day.totalWorkingMinutes,
+                                                        availableOf(day),
                                                     )}`}
                                                 </Typography>
                                             </Box>

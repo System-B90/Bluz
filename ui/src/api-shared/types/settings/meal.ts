@@ -23,6 +23,13 @@ export const MEAL_EVENT_TITLES: Record<keyof MealSettings, string> = {
     dinnerTime: "ארוחת ערב",
 };
 
+const MEAL_TITLES = new Set<string>(Object.values(MEAL_EVENT_TITLES));
+
+/** Whether an event is a break: in the breaks syllabus, or a meal event. */
+export function isBreakEvent(syllabusTitle: string, eventTitle: string): boolean {
+    return syllabusTitle === MEAL_BREAKS_SYLLABUS_TITLE || MEAL_TITLES.has(eventTitle);
+}
+
 /** Duration (minutes) of each auto-seeded meal event. */
 export const MEAL_EVENT_DURATIONS_MINUTES: Record<keyof MealSettings, number> = {
     breakfastTime: 35,

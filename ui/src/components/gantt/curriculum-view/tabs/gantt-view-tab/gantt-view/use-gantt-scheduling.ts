@@ -2,7 +2,7 @@ import { useMemo } from "react";
 
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
 import { GanttCurriculum } from "@/api-shared/types/gantt/models";
-import { getStudentMinutesByDay } from "@/components/gantt/curriculum-view/student-load";
+import { getStudentMinutesByDay, withoutBreaks } from "@/components/gantt/curriculum-view/student-load";
 import { useCurriculumStudentSchedule } from "@/components/gantt/curriculum-view/use-student-schedule";
 
 // Multi-day spillover layout (which days each mapped event actually
@@ -12,23 +12,31 @@ import { useCurriculumStudentSchedule } from "@/components/gantt/curriculum-view
 // day shows the same load as the unzoomed one.
 export const useGanttScheduling = ({
     curriculum,
+    ignoreBreaks,
     state,
 }: {
     curriculum: GanttCurriculum | undefined;
+    /** Leave break events out of the per-day loads. */
+    ignoreBreaks: boolean;
     state: NormalizedStore;
 }) =>
 {
     const schedule = useCurriculumStudentSchedule(curriculum, state);
 
+    const studentLoadByDay = useMemo(
+        () => (ignoreBreaks ? withoutBreaks(schedule.byDay) : schedule.byDay),
+        [ ignoreBreaks, schedule.byDay ],
+    );
+
     const scheduledMinutesByDay = useMemo(
-        () => getStudentMinutesByDay(schedule.byDay),
-        [ schedule.byDay ],
+        () => getStudentMinutesByDay(studentLoadByDay),
+        [ studentLoadByDay ],
     );
 
     return {
         eventSpans: schedule.spans,
         scheduledMinutesByDay,
-        studentLoadByDay: schedule.byDay,
+        studentLoadByDay,
         studentPaths: schedule.paths,
     };
 };

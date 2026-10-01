@@ -43,6 +43,11 @@ export const useGanttZoom = ({ curriculum, weeksById }: UseGanttZoomArgs) =>
         return allTimelineWeeks;
     }, [ allTimelineWeeks, weeklyView, zoomedWeekId ]);
 
+    const allLinearDays = useMemo(
+        () => allTimelineWeeks.flatMap((w) => w.days),
+        [ allTimelineWeeks ],
+    );
+
     const linearDays = useMemo(() =>
     {
         return timelineWeeks.flatMap((w) => w.days);
@@ -164,6 +169,7 @@ export const useGanttZoom = ({ curriculum, weeksById }: UseGanttZoomArgs) =>
         allTimelineWeeks,
         timelineWeeks,
         linearDays,
+        allLinearDays,
         dayIndexMap,
         weekIndexByDayId,
         weekIndexOffset,
