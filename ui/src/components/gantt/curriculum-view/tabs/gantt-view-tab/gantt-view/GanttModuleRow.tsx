@@ -35,6 +35,8 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
         singleWeekDayZoom,
         timelineWeeks,
         linearDays,
+        allLinearDays,
+        ignoreBreaks,
         dayIndexMap,
         weekIndexByDayId,
         moduleMappings,
@@ -144,14 +146,27 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
                 ? calculateStudentModuleMinutes(moduleId, state, courses, {
                     mappings: mappingState.mappings,
                     exceptions: exceptionsState.exceptions,
-                    linearDays,
-                })
+                    linearDays: allLinearDays,
+                }, ignoreBreaks)
                 : 0,
-        [ganttModule, moduleId, state, courses, mappingState.mappings, exceptionsState.exceptions, linearDays],
+        [ganttModule, moduleId, state, courses, mappingState.mappings, exceptionsState.exceptions, allLinearDays, ignoreBreaks],
     );
-    // Zoomed single-week day view: label the module block with its required time.
+    // Time the module has in the zoomed week (#799).
+    const weekMinutes = useMemo(
+        () =>
+            singleWeekDayZoom && ganttModule
+                ? calculateStudentModuleMinutes(moduleId, state, courses, {
+                    mappings: mappingState.mappings,
+                    exceptions: exceptionsState.exceptions,
+                    linearDays: allLinearDays,
+                    onlyDayIds: new Set(linearDays),
+                }, ignoreBreaks)
+                : 0,
+        [singleWeekDayZoom, ganttModule, moduleId, state, courses, mappingState.mappings, exceptionsState.exceptions, allLinearDays, linearDays, ignoreBreaks],
+    );
+    // Zoomed single-week day view: label the module block with this week's time out of its total.
     const timeLabel = singleWeekDayZoom && ganttModule
-        ? formatHoursLabel(requiredMinutes)
+        ? `${formatHoursLabel(weekMinutes)} / ${formatHoursLabel(requiredMinutes)}`
         : undefined;
 
     // Build cells depending on view mode. Memoized so a re-render triggered by the

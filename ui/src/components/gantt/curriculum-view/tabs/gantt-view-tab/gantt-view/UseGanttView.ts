@@ -46,6 +46,7 @@ export const useGanttView = (curriculumId: string) =>
         setZoomedWeekId,
         timelineWeeks,
         linearDays,
+        allLinearDays,
         dayIndexMap,
         weekIndexByDayId,
         weekIndexOffset,
@@ -86,6 +87,7 @@ export const useGanttView = (curriculumId: string) =>
     const [ showConstraints, setShowConstraints ] = useState(true);
     const [ relativeDaySizing, setRelativeDaySizing ] = useState(false);
     const [ showUnallocated, setShowUnallocated ] = useState(false);
+    const [ ignoreBreaks, setIgnoreBreaks ] = useState(false);
 
     const {
         isEventVisible,
@@ -124,7 +126,11 @@ export const useGanttView = (curriculumId: string) =>
         curriculumId,
     );
 
-    const { eventSpans, scheduledMinutesByDay, studentLoadByDay, studentPaths } = useGanttScheduling({ curriculum, state });
+    const { eventSpans, scheduledMinutesByDay, studentLoadByDay, studentPaths } = useGanttScheduling({
+        curriculum,
+        ignoreBreaks,
+        state,
+    });
 
     const { unallocatedBySyllabus, unallocatedCount } = useGanttUnallocated({
         curriculum,
@@ -173,6 +179,8 @@ export const useGanttView = (curriculumId: string) =>
             startDate: curriculum?.startDate ?? null,
             timelineWeeks,
             linearDays,
+            allLinearDays,
+            ignoreBreaks,
             dayIndexMap,
             weekIndexByDayId,
             dateOfDayId,
@@ -210,6 +218,8 @@ export const useGanttView = (curriculumId: string) =>
             curriculum?.startDate,
             timelineWeeks,
             linearDays,
+            allLinearDays,
+            ignoreBreaks,
             dayIndexMap,
             weekIndexByDayId,
             dateOfDayId,
@@ -253,6 +263,8 @@ export const useGanttView = (curriculumId: string) =>
         handleWeeklyViewChange,
         relativeDaySizing,
         setRelativeDaySizing,
+        ignoreBreaks,
+        setIgnoreBreaks,
         showUnallocated,
         setShowUnallocated,
         zoomedWeekId,

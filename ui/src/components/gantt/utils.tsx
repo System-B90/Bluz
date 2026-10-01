@@ -40,6 +40,8 @@ export type RecurrenceOccurrenceContext = {
     exceptions: Record<string, GanttEventRecurrenceException>;
     /** Timeline day ids in chronological order. */
     linearDays: Array<string>;
+    /** Count only occurrences on these days (e.g. one week); unplaced events count 0. */
+    onlyDayIds?: ReadonlySet<string>;
 };
 
 /**
@@ -53,7 +55,7 @@ export function countEventOccurrences(
     state: NormalizedStore,
     ctx?: RecurrenceOccurrenceContext,
 ): number {
-    if (event.recurrence === EventRecurrence.None || !ctx) return 1;
+    if (!ctx || (event.recurrence === EventRecurrence.None && !ctx.onlyDayIds)) return 1;
 
     let startDayId: string | undefined;
     for (const mapping of Object.values(ctx.mappings)) {
@@ -62,7 +64,8 @@ export function countEventOccurrences(
             break;
         }
     }
-    if (!startDayId) return 1;
+    if (!startDayId) return ctx.onlyDayIds ? 0 : 1;
+    if (event.recurrence === EventRecurrence.None) return ctx.onlyDayIds?.has(startDayId) ? 1 : 0;
 
     const excludedDayIds = new Set<string>();
     for (const exception of Object.values(ctx.exceptions)) {
@@ -80,7 +83,10 @@ export function countEventOccurrences(
         allowedDayIndices: getAllowedDayIndices(event.constraints),
     });
 
-    return (excludedDayIds.has(startDayId) ? 0 : 1) + echoDayIds.size;
+    const { onlyDayIds } = ctx;
+    const inScope = (dayId: string) => !onlyDayIds || onlyDayIds.has(dayId);
+    return (excludedDayIds.has(startDayId) || !inScope(startDayId) ? 0 : 1)
+        + [...echoDayIds].filter(inScope).length;
 }
 
 function calculateSumValueForModuleByField(

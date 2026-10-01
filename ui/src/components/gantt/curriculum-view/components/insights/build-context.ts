@@ -6,10 +6,7 @@ import {
     GanttCurriculumModuleDayMapping,
     GanttEventRecurrenceException,
 } from "@/api-shared/types/gantt/models";
-import {
-    MEAL_BREAKS_SYLLABUS_TITLE,
-    MEAL_EVENT_TITLES,
-} from "@/api-shared/types/settings/meal";
+import { isBreakEvent } from "@/api-shared/types/settings/meal";
 import {
     InsightContext,
     InsightDay,
@@ -23,8 +20,6 @@ import {
     countEventOccurrences,
     RecurrenceOccurrenceContext,
 } from "@/components/gantt/utils";
-
-const MEAL_TITLES = new Set<string>(Object.values(MEAL_EVENT_TITLES));
 
 export type BuildInsightContextInput = {
     curriculum: GanttCurriculumDocument;
@@ -84,7 +79,6 @@ function buildEvents(
     for (const syllabusId of curriculum.syllabuses) {
         const syllabus = state.syllabuses[syllabusId];
         if (!syllabus) continue;
-        const isBreakSyllabus = syllabus.title === MEAL_BREAKS_SYLLABUS_TITLE;
         for (const moduleId of syllabus.modules) {
             const moduleDoc = state.modules[moduleId];
             if (!moduleDoc) continue;
@@ -97,7 +91,7 @@ function buildEvents(
                     event,
                     moduleTitle: moduleDoc.title,
                     syllabusTitle: syllabus.title,
-                    isBreak: isBreakSyllabus || MEAL_TITLES.has(event.title),
+                    isBreak: isBreakEvent(syllabus.title, event.title),
                     isPlaced: placedEventIds.has(eventId) || placedModuleIds.has(moduleId),
                     occurrences,
                     totalMinutes: (event.minimumDuration ?? 0) * occurrences,
