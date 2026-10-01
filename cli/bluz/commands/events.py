@@ -1,8 +1,8 @@
 """
 Name: events.py
 Purpose: Calendar events — query by date range, fetch by ids, create/update from
-         JSON, delete, and compare two iterations. Mirrors
-         ui/src/api-client/calendar.ts.
+         JSON, delete, compare two iterations, change history. Thin Typer
+         layer over `bluz.api.calendar.EventsAPI`.
 Created: 2026-06-27
 Author: Michael K. Steinberg
 """
@@ -11,13 +11,16 @@ from __future__ import annotations
 
 import typer
 
-from bluz.commands._common import LIMIT_OPTION, OFFSET_OPTION, parse_json, show
-from bluz.context import state
+from bluz.commands._common import (
+    LIMIT_OPTION,
+    OFFSET_OPTION,
+    parse_json,
+    session,
+    show,
+)
 from bluz.output import success
 
 app = typer.Typer(help="Calendar events.", no_args_is_help=True)
-
-_BASE = "/api/event"
 
 
 @app.command("list")
@@ -31,10 +34,9 @@ def list_events(
     offset: int = OFFSET_OPTION,
 ) -> None:
     """List events in a date range (optionally for a specific iteration)."""
-    params = {"sd": start_date, "ed": end_date, "it": iteration}
-    with state.client() as client:
+    with session() as bz:
         show(
-            client.get(_BASE, params=params),
+            bz.events.list(start_date, end_date, iteration=iteration),
             title="Events",
             limit=limit,
             offset=offset,
@@ -47,9 +49,8 @@ def get_events(
     iteration: str = typer.Option(None, "--iteration", "--it", help="Iteration id."),
 ) -> None:
     """Fetch multiple events by id."""
-    params = {"ids": ids, "it": iteration}
-    with state.client() as client:
-        show(client.get(_BASE, params=params))
+    with session() as bz:
+        show(bz.events.get(*ids.split(","), iteration=iteration))
 
 
 @app.command()
@@ -57,8 +58,8 @@ def create(
     data: str = typer.Option(..., "--data", help="Event JSON payload."),
 ) -> None:
     """Create a calendar event from a JSON payload."""
-    with state.client() as client:
-        result = client.put(_BASE, json=parse_json(data, what="--data"))
+    with session() as bz:
+        result = bz.events.create(parse_json(data, what="--data"))
     success("Created event")
     show(result)
 
@@ -70,8 +71,8 @@ def update(
     ),
 ) -> None:
     """Update a calendar event from a JSON payload."""
-    with state.client() as client:
-        result = client.post(_BASE, json=parse_json(data, what="--data"))
+    with session() as bz:
+        result = bz.events.update(parse_json(data, what="--data"))
     success("Updated event")
     show(result)
 
@@ -84,8 +85,8 @@ def delete(
     """Delete a calendar event."""
     if not yes:
         typer.confirm(f"Delete event {event_id}?", abort=True)
-    with state.client() as client:
-        client.delete(_BASE, json=event_id)
+    with session() as bz:
+        bz.events.delete(event_id)
     success(f"Deleted event {event_id}")
 
 
@@ -97,9 +98,8 @@ def compare(
     iteration_b: str = typer.Option(None, "--it-b", help="Second iteration id."),
 ) -> None:
     """Compare events of two iterations over the same range."""
-    params = {"sd": start_date, "ed": end_date, "itA": iteration_a, "itB": iteration_b}
-    with state.client() as client:
-        show(client.get(f"{_BASE}/compare", params=params))
+    with session() as bz:
+        show(bz.events.compare(start_date, end_date, iteration_a, iteration_b))
 
 
 @app.command()
@@ -113,9 +113,9 @@ def history(
     Read-only: rows are written by the write paths themselves. The log names
     who changed what, so it is never served anonymously.
     """
-    with state.client() as client:
+    with session() as bz:
         show(
-            client.get(f"{_BASE}/history", params={"id": event_id}),
+            bz.events.history(event_id),
             title=f"History for event {event_id}",
             limit=limit,
             offset=offset,

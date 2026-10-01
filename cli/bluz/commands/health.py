@@ -10,10 +10,7 @@ from __future__ import annotations
 
 import typer
 
-from bluz.commands._common import show
-from bluz.context import state
-
-_PATH = "/api/health"
+from bluz.commands._common import session, show
 
 # "degraded" means Hive is down while Bluz itself still serves — the load
 # balancer keeps routing, so the route answers 200. Only "unhealthy" is a hard
@@ -27,11 +24,10 @@ def health() -> None:
     Exits non-zero when the overall status is `unhealthy`, so this is usable
     as a shell gate: `bluz health || echo "down"`.
     """
-    with state.client() as client:
-        # Not client.get: /api/health does not speak the response envelope.
-        report = client.get_raw(_PATH)
+    with session() as bz:
+        report = bz.system.health()
 
     show(report, title="Health")
 
-    if isinstance(report, dict) and report.get("status") == _FAILING:
+    if report.status == _FAILING:
         raise typer.Exit(1)

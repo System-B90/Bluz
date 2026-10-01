@@ -9,6 +9,7 @@ Author: Michael K. Steinberg
 from __future__ import annotations
 
 import time
+from collections.abc import Iterator
 from typing import Any, Self
 
 import httpx
@@ -55,6 +56,11 @@ class BluzClient:
             verify=not config.insecure,
         )
 
+    @property
+    def config(self) -> Config:
+        """The configuration this client was built from."""
+        return self._config
+
     def __enter__(self) -> Self:
         return self
 
@@ -69,16 +75,24 @@ class BluzClient:
     def get(self, path: str, *, params: dict[str, Any] | None = None) -> Any:
         return self.request("GET", path, params=params, retries=_GET_RETRY_ATTEMPTS)
 
-    def post(self, path: str, *, json: Any = None, params: dict | None = None) -> Any:
+    def post(
+        self, path: str, *, json: Any = None, params: dict[str, Any] | None = None
+    ) -> Any:
         return self.request("POST", path, json=json, params=params)
 
-    def put(self, path: str, *, json: Any = None, params: dict | None = None) -> Any:
+    def put(
+        self, path: str, *, json: Any = None, params: dict[str, Any] | None = None
+    ) -> Any:
         return self.request("PUT", path, json=json, params=params)
 
-    def patch(self, path: str, *, json: Any = None, params: dict | None = None) -> Any:
+    def patch(
+        self, path: str, *, json: Any = None, params: dict[str, Any] | None = None
+    ) -> Any:
         return self.request("PATCH", path, json=json, params=params)
 
-    def delete(self, path: str, *, json: Any = None, params: dict | None = None) -> Any:
+    def delete(
+        self, path: str, *, json: Any = None, params: dict[str, Any] | None = None
+    ) -> Any:
         return self.request("DELETE", path, json=json, params=params)
 
     def get_raw(self, path: str, *, params: dict[str, Any] | None = None) -> Any:
@@ -110,7 +124,7 @@ class BluzClient:
                 "InvalidResponse", f"Server did not return valid JSON: {exc}"
             ) from exc
 
-    def stream_sse(self, path: str, *, json: Any = None):
+    def stream_sse(self, path: str, *, json: Any = None) -> Iterator[dict[str, Any]]:
         """POST a request whose body is a Server-Sent Events stream, yielding
         each `data:` frame already parsed from JSON.
 

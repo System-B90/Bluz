@@ -1,7 +1,7 @@
 """
 Name: iterations.py
 Purpose: Manage course iterations ("Luz" runs) — list, inspect, register, patch,
-         set-current. Mirrors ui/src/api-client/iterations.ts.
+         set-current. Thin Typer layer over `bluz.api.iterations.IterationsAPI`.
 Created: 2026-06-27
 Author: Michael K. Steinberg
 """
@@ -10,13 +10,10 @@ from __future__ import annotations
 
 import typer
 
-from bluz.commands._common import LIMIT_OPTION, OFFSET_OPTION, merge_fields, show
-from bluz.context import state
+from bluz.commands._common import LIMIT_OPTION, OFFSET_OPTION, session, show
 from bluz.output import success
 
 app = typer.Typer(help="Course iterations (bi-annual runs).", no_args_is_help=True)
-
-_BASE = "/api/iterations"
 
 
 @app.command("list")
@@ -25,15 +22,15 @@ def list_iterations(
     offset: int = OFFSET_OPTION,
 ) -> None:
     """List all registered iterations."""
-    with state.client() as client:
-        show(client.get(_BASE), title="Iterations", limit=limit, offset=offset)
+    with session() as bz:
+        show(bz.iterations.list(), title="Iterations", limit=limit, offset=offset)
 
 
 @app.command()
 def current() -> None:
     """Show the current (active, writable) iteration."""
-    with state.client() as client:
-        show(client.get(f"{_BASE}/current"), title="Current iteration")
+    with session() as bz:
+        show(bz.iterations.current(), title="Current iteration")
 
 
 @app.command()
@@ -41,8 +38,8 @@ def get(
     iteration_id: str = typer.Argument(..., help="Iteration id, e.g. 2026a."),
 ) -> None:
     """Fetch a single iteration by id."""
-    with state.client() as client:
-        show(client.get(f"{_BASE}/{iteration_id}"))
+    with session() as bz:
+        show(bz.iterations.get(iteration_id))
 
 
 @app.command()
@@ -64,17 +61,16 @@ def register(
     ),
 ) -> None:
     """Register a new iteration."""
-    payload = merge_fields(
-        ("id", iteration_id),
-        ("label", label),
-        ("dbName", db_name),
-        ("hiveUrl", hive_url),
-        ("startDate", start_date),
-        ("endDate", end_date),
-        ("ganttCurriculumId", gantt_curriculum_id),
-    )
-    with state.client() as client:
-        result = client.post(_BASE, json=payload)
+    with session() as bz:
+        result = bz.iterations.register(
+            iteration_id,
+            label,
+            db_name=db_name,
+            hive_url=hive_url,
+            start_date=start_date,
+            end_date=end_date,
+            gantt_curriculum_id=gantt_curriculum_id,
+        )
     success(f"Registered iteration {iteration_id}")
     show(result)
 
@@ -94,18 +90,18 @@ def patch(
     ),
 ) -> None:
     """Patch mutable fields of an iteration."""
-    payload = merge_fields(
-        ("label", label),
-        ("hiveUrl", hive_url),
-        ("startDate", start_date),
-        ("endDate", end_date),
-        ("ganttCurriculumId", gantt_curriculum_id),
-        ("isCurrent", set_current),
-    )
-    if not payload:
+    fields = {
+        "label": label,
+        "hive_url": hive_url,
+        "start_date": start_date,
+        "end_date": end_date,
+        "gantt_curriculum_id": gantt_curriculum_id,
+        "is_current": set_current,
+    }
+    if all(value is None for value in fields.values()):
         raise typer.BadParameter("Nothing to update — pass at least one field.")
-    with state.client() as client:
-        result = client.patch(f"{_BASE}/{iteration_id}", json=payload)
+    with session() as bz:
+        result = bz.iterations.patch(iteration_id, **fields)
     success(f"Updated iteration {iteration_id}")
     show(result)
 
@@ -115,8 +111,8 @@ def set_current(
     iteration_id: str = typer.Argument(..., help="Iteration id to activate."),
 ) -> None:
     """Make an iteration the current (writable) one."""
-    with state.client() as client:
-        result = client.patch(f"{_BASE}/{iteration_id}", json={"isCurrent": True})
+    with session() as bz:
+        result = bz.iterations.set_current(iteration_id)
     success(f"{iteration_id} is now the current iteration")
     show(result)
 
@@ -129,8 +125,8 @@ def delete(
     """Delete an iteration."""
     if not yes:
         typer.confirm(f"Delete iteration {iteration_id}?", abort=True)
-    with state.client() as client:
-        client.delete(f"{_BASE}/{iteration_id}")
+    with session() as bz:
+        bz.iterations.delete(iteration_id)
     success(f"Deleted iteration {iteration_id}")
 
 
@@ -139,8 +135,8 @@ def sync_hive(
     iteration_id: str = typer.Argument(..., help="Iteration id to re-snapshot."),
 ) -> None:
     """Re-snapshot the iteration's Hive module/subject/room names."""
-    with state.client() as client:
-        result = client.post(f"{_BASE}/{iteration_id}/sync-hive")
+    with session() as bz:
+        result = bz.iterations.sync_hive(iteration_id)
     success(f"Synced iteration {iteration_id} against Hive")
     show(result)
 
@@ -152,9 +148,8 @@ def usage(
     ),
 ) -> None:
     """What still hangs off an iteration — what a delete would take with it."""
-    target = iteration_id or "current"
-    with state.client() as client:
+    with session() as bz:
         show(
-            client.get(f"{_BASE}/{target}/usage"),
-            title=f"Usage for iteration {target}",
+            bz.iterations.usage(iteration_id),
+            title=f"Usage for iteration {iteration_id or 'current'}",
         )

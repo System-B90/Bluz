@@ -1,7 +1,7 @@
 """
 Name: outsiders.py
 Purpose: Manage outsiders (external visitors) — list, create, update, delete.
-         Mirrors ui/src/api-client/outsiders.ts.
+         Thin Typer layer over `bluz.api.directory.OutsidersAPI`.
 Created: 2026-06-27
 Author: Michael K. Steinberg
 """
@@ -12,19 +12,10 @@ import uuid
 
 import typer
 
-from bluz.commands._common import (
-    LIMIT_OPTION,
-    OFFSET_OPTION,
-    find_by_id,
-    merge_fields,
-    show,
-)
-from bluz.context import state
+from bluz.commands._common import LIMIT_OPTION, OFFSET_OPTION, session, show
 from bluz.output import success
 
 app = typer.Typer(help="Outsiders (external visitors).", no_args_is_help=True)
-
-_BASE = "/api/outsiders"
 
 
 @app.command("list")
@@ -33,16 +24,15 @@ def list_outsiders(
     offset: int = OFFSET_OPTION,
 ) -> None:
     """List all outsiders."""
-    with state.client() as client:
-        show(client.get(_BASE), title="Outsiders", limit=limit, offset=offset)
+    with session() as bz:
+        show(bz.outsiders.list(), title="Outsiders", limit=limit, offset=offset)
 
 
 @app.command()
 def get(outsider_id: str = typer.Argument(..., help="Outsider id.")) -> None:
     """Fetch a single outsider by id (filtered client-side — no per-id route)."""
-    with state.client() as client:
-        items = client.get(_BASE)
-    show(find_by_id(items, outsider_id))
+    with session() as bz:
+        show(bz.outsiders.get(outsider_id))
 
 
 @app.command()
@@ -60,18 +50,18 @@ def create(
     ),
 ) -> None:
     """Create an outsider."""
-    payload = merge_fields(
-        ("id", outsider_id or f"outsider-{uuid.uuid4()}"),
-        ("name", name),
-        ("phone", phone),
-        ("personalNumber", personal_number),
-        ("idNumber", id_number),
-        ("releaseDate", release_date),
-        ("comment", comment),
-    )
-    with state.client() as client:
-        result = client.put(_BASE, json=payload)
-    success(f"Created outsider {payload['id']}")
+    outsider_id = outsider_id or f"outsider-{uuid.uuid4()}"
+    with session() as bz:
+        result = bz.outsiders.create(
+            name,
+            phone,
+            personal_number=personal_number,
+            id_number=id_number,
+            release_date=release_date,
+            comment=comment,
+            outsider_id=outsider_id,
+        )
+    success(f"Created outsider {outsider_id}")
     show(result)
 
 
@@ -88,17 +78,16 @@ def update(
     comment: str = typer.Option(None, "--comment", help="New comment."),
 ) -> None:
     """Update an outsider."""
-    payload = merge_fields(
-        ("id", outsider_id),
-        ("name", name),
-        ("phone", phone),
-        ("personalNumber", personal_number),
-        ("idNumber", id_number),
-        ("releaseDate", release_date),
-        ("comment", comment),
-    )
-    with state.client() as client:
-        result = client.post(_BASE, json=payload)
+    with session() as bz:
+        result = bz.outsiders.update(
+            outsider_id,
+            name=name,
+            phone=phone,
+            personal_number=personal_number,
+            id_number=id_number,
+            release_date=release_date,
+            comment=comment,
+        )
     success(f"Updated outsider {outsider_id}")
     show(result)
 
@@ -111,6 +100,6 @@ def delete(
     """Delete an outsider."""
     if not yes:
         typer.confirm(f"Delete outsider {outsider_id}?", abort=True)
-    with state.client() as client:
-        client.delete(_BASE, json=outsider_id)
+    with session() as bz:
+        bz.outsiders.delete(outsider_id)
     success(f"Deleted outsider {outsider_id}")

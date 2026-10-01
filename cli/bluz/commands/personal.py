@@ -10,13 +10,10 @@ from __future__ import annotations
 
 import typer
 
-from bluz.commands._common import merge_fields, parse_json, show
-from bluz.context import state
+from bluz.commands._common import merge_fields, parse_json, session, show
 from bluz.output import success
 
 app = typer.Typer(help="Personal (per-user) settings.", no_args_is_help=True)
-
-_BASE = "/api/personal-settings"
 
 
 def _split(value: str | None) -> list[str] | None:
@@ -28,8 +25,8 @@ def _split(value: str | None) -> list[str] | None:
 @app.command()
 def get() -> None:
     """Read the signed-in user's personal settings."""
-    with state.client() as client:
-        show(client.get(_BASE), title="Personal settings")
+    with session() as bz:
+        show(bz.personal.get(), title="Personal settings")
 
 
 @app.command("set")
@@ -60,11 +57,10 @@ def set_settings(
     The endpoint replaces the whole document, so field flags are merged onto the
     current values; `--data` bypasses the merge and writes verbatim.
     """
-    with state.client() as client:
+    with session() as bz:
         if data is not None:
-            body = parse_json(data, what="--data")
+            result = bz.personal.replace(parse_json(data, what="--data"))
         else:
-            current = client.get(_BASE) or {}
             overrides = merge_fields(
                 ("groups", _split(groups)),
                 ("instructors", _split(instructors)),
@@ -76,7 +72,6 @@ def set_settings(
                 raise typer.BadParameter(
                     "Nothing to change — pass --data or a field flag."
                 )
-            body = {**current, **overrides}
-        result = client.post(_BASE, json=body)
+            result = bz.personal.replace({**bz.personal.get().to_wire(), **overrides})
     success("Saved personal settings")
     show(result)

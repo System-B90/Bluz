@@ -11,15 +11,12 @@ from __future__ import annotations
 
 import typer
 
-from bluz.commands._common import LIMIT_OPTION, OFFSET_OPTION, show
-from bluz.context import state
+from bluz.commands._common import LIMIT_OPTION, OFFSET_OPTION, session, show
 from bluz.output import success
 
 app = typer.Typer(
     help="The student board (read-only projection).", no_args_is_help=True
 )
-
-_BASE = "/api/student-view"
 
 
 @app.command("schedule")
@@ -37,9 +34,9 @@ def schedule(
     offset: int = OFFSET_OPTION,
 ) -> None:
     """One day of the student board — the `StudentEvent` projection, never raw events."""
-    with state.client() as client:
+    with session() as bz:
         show(
-            client.get(f"{_BASE}/schedule", params={"date": date, "it": iteration}),
+            bz.student_view.schedule(date, iteration=iteration),
             title="Student schedule",
             limit=limit,
             offset=offset,
@@ -56,6 +53,6 @@ def report_engagement(
     can only ever add to the reporter's own number, for today; the increment
     is clamped and the daily total capped server-side.
     """
-    with state.client() as client:
-        client.post(f"{_BASE}/engagement", json={"seconds": seconds})
+    with session() as bz:
+        bz.student_view.report_engagement(seconds)
     success(f"Reported {seconds}s of engagement")

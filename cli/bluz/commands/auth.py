@@ -551,10 +551,10 @@ def show_config() -> None:
 @app.command("hive-status")
 def hive_status() -> None:
     """Check whether the server can reach Hive (drives the SSO outage banner)."""
-    from bluz.commands._common import show
+    from bluz.commands._common import session, show
 
-    with state.client() as client:
-        show(client.get("/api/auth/hive-status"), title="Hive status")
+    with session() as bz:
+        show(bz.system.hive_status(), title="Hive status")
 
 
 @app.command("ws-ticket")
@@ -566,9 +566,7 @@ def ws_ticket() -> None:
     client cannot widen its own scope. Useful for driving or debugging the
     real-time sync channel outside a browser.
     """
-    from bluz.commands._common import show
+    from bluz.commands._common import session, show
 
-    with state.client() as client:
-        # Not client.get: /api/ws-ticket answers a bare { ticket } rather than
-        # the response envelope.
-        show(client.get_raw("/api/ws-ticket"), title="WebSocket ticket")
+    with session() as bz:
+        show(bz.system.ws_ticket(), title="WebSocket ticket")
