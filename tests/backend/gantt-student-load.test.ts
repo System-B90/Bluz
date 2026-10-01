@@ -140,7 +140,7 @@ describe("computeStudentSchedule", () => {
             sphinx: 180 + 240,
         });
         expect(day.minutes).toBe(420);
-        expect(day.issues).toEqual([ { kind: "paths-unequal" } ]);
+        expect(day.issues).toEqual([]);
     });
 
     it("flags shuffles whose block lengths differ", () => {

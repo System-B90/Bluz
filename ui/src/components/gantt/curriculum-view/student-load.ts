@@ -30,8 +30,8 @@ import {
  * - a syllabus's shuffles run in parallel inside one shared block, so the
  *   syllabus takes its longest shuffle, and unequal shuffles are an issue;
  * - an event limited to some courses counts only on those courses' paths;
- * - a day's scheduled time is its busiest path, and unequal paths are an
- *   issue — every student's day must be the same length.
+ * - a day's scheduled time is its busiest path; courses need not match each
+ *   other, only the shuffles of one syllabus must.
  *
  * Prayers are not gantt events: they run alongside anything and add nothing.
  */
@@ -45,14 +45,12 @@ export type StudentPath = {
     label: string;
 };
 
-export type StudentLoadIssue =
-    | { kind: "paths-unequal" }
-    | {
-        kind: "shuffles-misaligned";
-        syllabusId: GanttSyllabusId;
-        /** Minutes each of the syllabus' shuffles has on the day. */
-        minutesByShuffle: Record<string, number>;
-    };
+export type StudentLoadIssue = {
+    kind: "shuffles-misaligned";
+    syllabusId: GanttSyllabusId;
+    /** Minutes each of the syllabus' shuffles has on the day. */
+    minutesByShuffle: Record<string, number>;
+};
 
 export type PathDayLoad = {
     pathId: string;
@@ -318,9 +316,6 @@ class StudentLoadTracker implements DayHeadroom {
                 if (new Set(Object.values(minutesByShuffle)).size > 1) {
                     issues.push({ kind: "shuffles-misaligned", syllabusId, minutesByShuffle });
                 }
-            }
-            if (new Set(pathLoads.map((load) => load.minutes)).size > 1) {
-                issues.push({ kind: "paths-unequal" });
             }
 
             byDay[dayId] = {
