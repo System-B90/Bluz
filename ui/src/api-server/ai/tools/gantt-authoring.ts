@@ -149,7 +149,7 @@ export const getModuleTool: AiTool<{ moduleId: string }> = {
             args.moduleId as GanttModuleId,
         )) as Row;
         return {
-            data: { ...module, events: childSummaries(m2e, "event") },
+            data: { ...moduleRow, events: childSummaries(m2e, "event") },
             summary: `נטען המערך "${moduleRow.title}"`,
         };
     },
