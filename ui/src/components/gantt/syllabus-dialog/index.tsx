@@ -207,6 +207,7 @@ export function SyllabusDialog({
                                 onUpdate={({ color }) =>
                                     commit({ color: color ?? null })
                                 }
+                                size="small"
                             />
                         </Stack>
 

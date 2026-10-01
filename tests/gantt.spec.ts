@@ -112,11 +112,6 @@ test.describe("Gantt Page", () => {
         const fab = page.getByRole("button", { name: "גאנטים" });
         await fab.click();
 
-        // Create actions are hidden behind a hover-reveal trigger. Hover
-        // (not click) — see note in beforeEach above.
-        const createTrigger = page.getByRole("button", { name: "גאנט חדש" });
-        await createTrigger.hover();
-
         // Click "דראפט חדש" button
         const draftButton = page.locator('span[title="דראפט חדש"] button, span[aria-label="דראפט חדש"] button');
         await expect(draftButton).toBeVisible();
@@ -225,11 +220,6 @@ test.describe("Gantt Page", () => {
         const fab = page.getByRole("button", { name: "גאנטים" });
         await fab.click();
         await page.waitForTimeout(500);
-
-        // Create actions are hidden behind a hover-reveal trigger. Hover
-        // (not click) — see note in beforeEach above.
-        const createTrigger = page.getByRole("button", { name: "גאנט חדש" });
-        await createTrigger.hover();
 
         const draftButton = page.locator('span[title="דראפט חדש"] button, span[aria-label="דראפט חדש"] button');
         await expect(draftButton).toBeVisible();

@@ -73,7 +73,7 @@ test.describe("File exports", () => {
             .catch(() => {});
 
         const fabPopover = page.locator("[role='presentation']").filter({
-            has: page.getByRole("button", { name: "גאנט חדש" }),
+            has: page.getByRole("button", { name: "דראפט חדש" }),
         });
 
         const listItems = page
@@ -81,10 +81,6 @@ test.describe("File exports", () => {
             .filter({ has: page.getByRole("button") });
 
         if ((await listItems.count()) === 0) {
-            const createTrigger = page.getByRole("button", {
-                name: "גאנט חדש",
-            });
-            await createTrigger.hover();
             const draftButton = page.locator(
                 'span[title="דראפט חדש"] button, span[aria-label="דראפט חדש"] button',
             );

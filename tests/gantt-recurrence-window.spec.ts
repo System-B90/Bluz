@@ -27,12 +27,8 @@ async function createAndSelectCurriculum(page: Page): Promise<void> {
         .waitFor({ state: "hidden", timeout: 10_000 })
         .catch(() => {});
 
-    const createTrigger = page.getByRole("button", { name: "גאנט חדש" });
-    await expect(createTrigger).toBeEnabled({ timeout: 10_000 });
-    await createTrigger.hover();
-
     const draftButton = page.getByRole("button", { name: "דראפט חדש" });
-    await expect(draftButton).toBeVisible({ timeout: 10_000 });
+    await expect(draftButton).toBeEnabled({ timeout: 10_000 });
     await draftButton.click();
 
     await expect(page).toHaveURL(/gc=/, { timeout: 10_000 });

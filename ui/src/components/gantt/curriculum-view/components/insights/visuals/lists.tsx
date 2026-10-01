@@ -1,13 +1,9 @@
-import EditIcon from "@mui/icons-material/Edit";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
-import IconButton from "@mui/material/IconButton";
 import LinearProgress from "@mui/material/LinearProgress";
-import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
 import { InsightVisual } from "@/components/gantt/curriculum-view/components/insights/types";
-import { useSettingsDialogUrl } from "@/components/settings-dialog/UseSettingsDialogUrl";
 
 type VisualOf<K extends InsightVisual["kind"]> = Extract<InsightVisual, { kind: K }>;
 
@@ -15,7 +11,6 @@ const MEDALS = [ "🥇", "🥈", "🥉" ];
 
 export function InsightLeaderboard({ rows }: VisualOf<"leaderboard">) {
     const max = Math.max(1, ...rows.map((r) => r.value));
-    const { openDialog } = useSettingsDialogUrl();
 
     return (
         <Box sx={ { display: "flex", flexDirection: "column", gap: 0.5 } }>
@@ -25,16 +20,6 @@ export function InsightLeaderboard({ rows }: VisualOf<"leaderboard">) {
                         <Typography sx={ { width: 18, fontSize: 12, flexShrink: 0 } }>{ MEDALS[ i ] ?? `${i + 1}.` }</Typography>
                         <Typography noWrap sx={ { flex: 1, minWidth: 0 } } variant="caption">{ row.label }</Typography>
                         <Typography fontWeight={ 600 } variant="caption">{ row.valueLabel }</Typography>
-                        { row.outsiderId ? <Tooltip title="עריכת איש חוץ">
-                            <IconButton
-                                aria-label="עריכת איש חוץ"
-                                onClick={ () => openDialog("outsiders", { editOutsider: row.outsiderId }) }
-                                size="small"
-                                sx={ { p: 0.25 } }
-                            >
-                                <EditIcon sx={ { fontSize: 14 } } />
-                            </IconButton>
-                        </Tooltip> : null }
                     </Box>
                     <LinearProgress
                         sx={ { height: 3, borderRadius: 2, marginInlineStart: "24px" } }
