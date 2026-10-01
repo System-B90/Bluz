@@ -31,5 +31,7 @@ export type GanttSyllabus = {
     courseIds?: Array<CourseId>;
     /** Hive ids of the אחראי מקצוע instructors. */
     leadInstructorIds?: Array<number>;
+    /** Default colour id (custom colour or Hive subject); unset ⇒ none. */
+    color?: null | string;
 } & BaseGantItem;
 export type GanttSyllabusId = GanttSyllabus["id"];

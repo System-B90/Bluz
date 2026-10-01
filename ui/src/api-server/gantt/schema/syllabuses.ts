@@ -31,6 +31,8 @@ export const ganttSyllabusesSchema = pgTable("s", {
     courseIds: text("course_ids").array().notNull().default([]),
     // Hive ids of the אחראי מקצוע instructors.
     leadInstructorIds: integer("lead_instructor_ids").array().notNull().default([]),
+    // Default colour id (custom colour or Hive subject) for the syllabus.
+    color: text("color"),
     createdAt: timestamp("ca").defaultNow().notNull(),
     updatedAt: timestamp("ua").defaultNow().notNull(),
 });
