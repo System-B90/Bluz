@@ -85,6 +85,7 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({
         setSyncedQuery(searchQuery);
         setSearchDraft(searchQuery);
     }
+    const [ searchFocused, setSearchFocused ] = useState(false);
     const commitSearch = () => onSearchChange(searchDraft);
 
     // Palette mirrors of the toolbar controls, calling the same setters.
@@ -193,8 +194,13 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({
                 {/* First-column search: filter syllabus/module/event rows */ }
                 <TextField
                     aria-label="חיפוש בסילבוסים, מודולים ואירועים"
-                    onBlur={ commitSearch }
+                    onBlur={ () =>
+                    {
+                        setSearchFocused(false);
+                        commitSearch();
+                    } }
                     onChange={ (ev) => setSearchDraft(ev.target.value) }
+                    onFocus={ () => setSearchFocused(true) }
                     onKeyDown={ (ev) => { if (ev.key === "Enter") commitSearch(); } }
                     placeholder="חיפוש..."
                     size="small"
@@ -223,7 +229,11 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({
                             ) : null,
                         },
                     } }
-                    sx={ { minWidth: 200 } }
+                    sx={ {
+                        width: searchFocused ? 420 : 280,
+                        maxWidth: "100%",
+                        transition: theme.transitions.create("width"),
+                    } }
                     value={ searchDraft }
                 />
 
