@@ -126,6 +126,28 @@ def stub_bluz():
 
 
 @pytest.fixture
+def sdk(tmp_path, monkeypatch):
+    """Builds a `Bluz` SDK session pointed at a stub, config isolated."""
+    from bluz import Bluz
+
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))
+    sessions: list[Bluz] = []
+
+    def build(stub: StubBluz, **kwargs: Any) -> Bluz:
+        session = Bluz(stub.url, "test-token", **kwargs)
+        sessions.append(session)
+        return session
+
+    yield build
+
+    for session in sessions:
+        session.close()
+
+
+@pytest.fixture
 def run_cli(tmp_path, monkeypatch):
     """Invokes the CLI against a stub, with config isolated to a temp dir."""
     # typer.get_app_dir reads APPDATA on Windows and HOME/XDG elsewhere, so
