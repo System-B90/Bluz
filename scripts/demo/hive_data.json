@@ -1,19 +1,19 @@
 {
   "segel": [
     {
-      "id": 31,
+      "id": 235,
       "username": "test-yuvalb",
       "first_name": "יובל",
       "last_name": "ברוורמן"
     },
     {
-      "id": 32,
+      "id": 236,
       "username": "test-mayag",
       "first_name": "מאיה",
       "last_name": "גבע"
     },
     {
-      "id": 30,
+      "id": 234,
       "username": "test-michaelks",
       "first_name": "מיכאל",
       "last_name": "שטיינברג"
@@ -65,55 +65,55 @@
   ],
   "subjects": [
     {
-      "id": 41,
+      "id": 132,
       "name": "בירוקרטיה ושוטף",
       "symbol": "בו",
       "color": "#ec4899"
     },
     {
-      "id": 37,
+      "id": 128,
       "name": "גיבוש",
       "symbol": "גי",
       "color": "#10b981"
     },
     {
-      "id": 42,
+      "id": 133,
       "name": "מורשת ביס",
       "symbol": "מב",
       "color": "#14b8a6"
     },
     {
-      "id": 39,
+      "id": 130,
       "name": "סיסטם ובינוי",
       "symbol": "סו",
       "color": "#ef4444"
     },
     {
-      "id": 36,
+      "id": 127,
       "name": "סימולציות",
       "symbol": "סי",
       "color": "#06b6d4"
     },
     {
-      "id": 43,
+      "id": 134,
       "name": "עבודה על מקצועות",
       "symbol": "עמ",
       "color": "#f97316"
     },
     {
-      "id": 38,
+      "id": 129,
       "name": "פיקוד אישי",
       "symbol": "פא",
       "color": "#f59e0b"
     },
     {
-      "id": 40,
+      "id": 131,
       "name": "פיקוד הדרכתי",
       "symbol": "פה",
       "color": "#8b5cf6"
     },
     {
-      "id": 35,
+      "id": 126,
       "name": "קפה",
       "symbol": "קפ",
       "color": "#4f46e5"
@@ -121,226 +121,226 @@
   ],
   "modules": [
     {
-      "id": 154,
+      "id": 422,
       "name": "קליטה",
-      "parent_subject_id": 41
+      "parent_subject_id": 132
     },
     {
-      "id": 155,
+      "id": 424,
       "name": "שיבוצים",
-      "parent_subject_id": 41
+      "parent_subject_id": 132
     },
     {
-      "id": 156,
+      "id": 425,
       "name": "אג",
-      "parent_subject_id": 41
+      "parent_subject_id": 132
     },
     {
-      "id": 158,
+      "id": 426,
       "name": "קמפוס דאוס",
-      "parent_subject_id": 41
+      "parent_subject_id": 132
     },
     {
-      "id": 159,
+      "id": 427,
       "name": "חלוקת חניכים",
-      "parent_subject_id": 41
+      "parent_subject_id": 132
     },
     {
-      "id": 129,
+      "id": 398,
       "name": "גיבוש פתיחה קורסי)",
-      "parent_subject_id": 37
+      "parent_subject_id": 128
     },
     {
-      "id": 131,
+      "id": 399,
       "name": "גיבוש פתיחה ביסי)",
-      "parent_subject_id": 37
+      "parent_subject_id": 128
     },
     {
-      "id": 132,
+      "id": 400,
       "name": "משחקים",
-      "parent_subject_id": 37
+      "parent_subject_id": 128
     },
     {
-      "id": 133,
+      "id": 401,
       "name": "תזים",
-      "parent_subject_id": 37
+      "parent_subject_id": 128
     },
     {
-      "id": 135,
+      "id": 402,
       "name": "סכמש",
-      "parent_subject_id": 37
+      "parent_subject_id": 128
     },
     {
-      "id": 136,
+      "id": 403,
       "name": "אחידות",
-      "parent_subject_id": 37
+      "parent_subject_id": 128
     },
     {
-      "id": 137,
+      "id": 404,
       "name": "שעות מקס",
-      "parent_subject_id": 37
+      "parent_subject_id": 128
     },
     {
-      "id": 160,
+      "id": 428,
       "name": "הכרת הביס",
-      "parent_subject_id": 42
+      "parent_subject_id": 133
     },
     {
-      "id": 161,
+      "id": 429,
       "name": "הכרת חוץ ביס",
-      "parent_subject_id": 42
+      "parent_subject_id": 133
     },
     {
-      "id": 162,
+      "id": 430,
       "name": "דמויות הבוגרים",
-      "parent_subject_id": 42
+      "parent_subject_id": 133
     },
     {
-      "id": 147,
+      "id": 415,
       "name": "סיסטם",
-      "parent_subject_id": 39
+      "parent_subject_id": 130
     },
     {
-      "id": 148,
+      "id": 416,
       "name": "בינוי",
-      "parent_subject_id": 39
+      "parent_subject_id": 130
     },
     {
-      "id": 149,
+      "id": 417,
       "name": "שבוע טקטי",
-      "parent_subject_id": 39
+      "parent_subject_id": 130
     },
     {
-      "id": 150,
+      "id": 418,
       "name": "מטווחים",
-      "parent_subject_id": 39
+      "parent_subject_id": 130
     },
     {
-      "id": 127,
+      "id": 396,
       "name": "מקתגים",
-      "parent_subject_id": 36
+      "parent_subject_id": 127
     },
     {
-      "id": 128,
+      "id": 397,
       "name": "מקרי קצה",
-      "parent_subject_id": 36
+      "parent_subject_id": 127
     },
     {
-      "id": 163,
+      "id": 431,
       "name": "מקצועות",
-      "parent_subject_id": 43
+      "parent_subject_id": 134
     },
     {
-      "id": 165,
+      "id": 433,
       "name": "נקודות בקרה",
-      "parent_subject_id": 43
+      "parent_subject_id": 134
     },
     {
-      "id": 167,
+      "id": 434,
       "name": "סדנאות",
-      "parent_subject_id": 43
+      "parent_subject_id": 134
     },
     {
-      "id": 138,
+      "id": 405,
       "name": "תדריכים לתקשורת עם חניכים",
-      "parent_subject_id": 38
+      "parent_subject_id": 129
     },
     {
-      "id": 139,
+      "id": 406,
       "name": "חניכי קצה",
-      "parent_subject_id": 38
+      "parent_subject_id": 129
     },
     {
-      "id": 140,
+      "id": 408,
       "name": "תקשורת עם הורים",
-      "parent_subject_id": 38
+      "parent_subject_id": 129
     },
     {
-      "id": 141,
+      "id": 409,
       "name": "תחקיר",
-      "parent_subject_id": 38
+      "parent_subject_id": 129
     },
     {
-      "id": 142,
+      "id": 410,
       "name": "פיקוד מגדרי",
-      "parent_subject_id": 38
+      "parent_subject_id": 129
     },
     {
-      "id": 143,
+      "id": 411,
       "name": "משמעת וענישה",
-      "parent_subject_id": 38
+      "parent_subject_id": 129
     },
     {
-      "id": 144,
+      "id": 412,
       "name": "מבוא לחניך",
-      "parent_subject_id": 38
+      "parent_subject_id": 129
     },
     {
-      "id": 145,
+      "id": 413,
       "name": "תפיסות תפקיד",
-      "parent_subject_id": 38
+      "parent_subject_id": 129
     },
     {
-      "id": 146,
+      "id": 414,
       "name": "פאים",
-      "parent_subject_id": 38
+      "parent_subject_id": 129
     },
     {
-      "id": 151,
+      "id": 419,
       "name": "כללי",
-      "parent_subject_id": 40
+      "parent_subject_id": 131
     },
     {
-      "id": 152,
+      "id": 420,
       "name": "מישוב",
-      "parent_subject_id": 40
+      "parent_subject_id": 131
     },
     {
-      "id": 153,
+      "id": 421,
       "name": "פיתוח הסגל",
-      "parent_subject_id": 40
+      "parent_subject_id": 131
     },
     {
-      "id": 122,
+      "id": 391,
       "name": "קפה שבוע 1",
-      "parent_subject_id": 35
+      "parent_subject_id": 126
     },
     {
-      "id": 123,
+      "id": 392,
       "name": "קפה שבוע 2",
-      "parent_subject_id": 35
+      "parent_subject_id": 126
     },
     {
-      "id": 124,
+      "id": 394,
       "name": "קפה שבוע 3",
-      "parent_subject_id": 35
+      "parent_subject_id": 126
     },
     {
-      "id": 125,
+      "id": 395,
       "name": "כללי",
-      "parent_subject_id": 35
+      "parent_subject_id": 126
     }
   ],
   "rooms": [
     {
-      "id": 27,
-      "name": "פתח תקווה"
-    },
-    {
-      "id": 24,
-      "name": "תל אביב"
-    },
-    {
-      "id": 26,
+      "id": 55,
       "name": "גבעתיים"
     },
     {
-      "id": 28,
+      "id": 57,
       "name": "ים המלח"
     },
     {
-      "id": 25,
+      "id": 56,
+      "name": "פתח תקווה"
+    },
+    {
+      "id": 54,
       "name": "רמת גן"
+    },
+    {
+      "id": 53,
+      "name": "תל אביב"
     }
   ]
 }
