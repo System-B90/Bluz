@@ -215,6 +215,7 @@ class BluzClient:
                     time.sleep(_GET_RETRY_BACKOFF_SECONDS * (attempt + 1))
         if last_error is not None:
             raise BluzApiError("NetworkError", str(last_error)) from last_error
+        assert response is not None  # the loop either set it or raised
 
         # A redirect on an API call means "log in" (see safeApiFetcher).
         if response.is_redirect:

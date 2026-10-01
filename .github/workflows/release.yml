@@ -93,7 +93,7 @@ jobs:
               # rule must not turn this job red on an unrelated PR.
               run: |
                   pip install -r scripts/requirements.txt
-                  pip install ./cli
+                  pip install "./cli[dev]"
 
             - name: Run ESLint
               run: npm run lint

@@ -37,7 +37,7 @@ class Resource:
         """Resolve an iteration argument, falling back to the session default."""
         if iteration is None:
             return self._bluz.iteration
-        return ref(iteration)
+        return str(ref(iteration))
 
     def _one(self, model: type[M], data: Any) -> M:
         return model.from_wire(data, self._bluz)

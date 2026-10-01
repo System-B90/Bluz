@@ -22,6 +22,7 @@ from typing import (
     Generic,
     Self,
     TypeVar,
+    cast,
     overload,
 )
 
@@ -34,6 +35,7 @@ from bluz.models._base import HHMM, BluzModel, Collection, LenientDate
 if TYPE_CHECKING:
     from rich.tree import Tree
 
+    from bluz.api.gantt import GanttEntityAPI
     from bluz.models.directory import Course
     from bluz.models.misc import (
         CurriculumExecution,
@@ -104,7 +106,7 @@ class GanttSummary(BluzModel):
     Call `.get()` for the full object.
     """
 
-    _repr_fields = ("id", "title")
+    _repr_fields: ClassVar[tuple[str, ...]] = ("id", "title")
 
     id: str
     title: str | int | None = None
@@ -112,7 +114,7 @@ class GanttSummary(BluzModel):
 
     def get(self) -> GanttNode:
         """Fetch the full entity this row names."""
-        return self.bluz.gantt.entity(self._entity).get(self.id)
+        return cast(GanttNode, self.bluz.gantt.entity(self._entity).get(self.id))
 
 
 ChildT = TypeVar("ChildT", bound="GanttNode")
@@ -122,7 +124,7 @@ class GanttNode(BluzModel):
     """Base of every Gantt entity: id + title, refresh/update/delete, and a
     back-reference to the parent it was reached through."""
 
-    _repr_fields = ("id", "title")
+    _repr_fields: ClassVar[tuple[str, ...]] = ("id", "title")
     # Collection name on /api/gantt/<entity>; set by each subclass.
     _entity: ClassVar[str] = ""
 
@@ -133,16 +135,16 @@ class GanttNode(BluzModel):
 
     _parent: GanttNode | None = PrivateAttr(default=None)
 
-    def _api(self) -> Any:
+    def _api(self) -> GanttEntityAPI[Any]:
         return self.bluz.gantt.entity(self._entity)
 
     def refresh(self) -> Self:
         """Re-fetch this entity (with its full sub-tree)."""
-        return self._api().get(self.id)
+        return cast(Self, self._api().get(self.id))
 
     def update(self, data: dict[str, Any] | None = None, /, **fields: Any) -> Self:
         """PATCH fields (snake_case kwargs or a camelCase dict). Returns the result."""
-        return self._api().update(self.id, data, **fields)
+        return cast(Self, self._api().update(self.id, data, **fields))
 
     def delete(self) -> None:
         self._api().delete(self.id)
@@ -484,7 +486,7 @@ class Syllabus(_Container[Module]):
 
     def set_shuffles(
         self, names: list[str], descriptions: dict[str, str] | None = None
-    ) -> Syllabus:
+    ) -> Any:
         """Replace the shuffle list (cascades removals onto modules/events)."""
         return self.bluz.gantt.syllabuses.set_shuffles(self.id, names, descriptions)
 
@@ -716,7 +718,7 @@ class Curriculum(_Container[Syllabus]):
     def mappings(self) -> Collection[DayMapping]:
         return self.bluz.gantt.curriculums.mappings(self.id)
 
-    def constraints(self) -> list[dict[str, Any]]:
+    def constraints(self) -> Any:
         return self.bluz.gantt.curriculums.constraints(self.id)
 
     def recurrence_exceptions(self) -> Collection[RecurrenceException]:
@@ -738,7 +740,7 @@ class Curriculum(_Container[Syllabus]):
         """Materialize into calendar events. See `CurriculumsAPI.cut`."""
         return self.bluz.gantt.curriculums.cut(self.id, **options)
 
-    def pull_back(self) -> dict[str, Any]:
+    def pull_back(self) -> Any:
         return self.bluz.gantt.curriculums.pull_back(self.id)
 
     def execution(self) -> CurriculumExecution:

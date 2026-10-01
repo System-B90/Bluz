@@ -13,6 +13,7 @@ Author: Michael K. Steinberg
 from __future__ import annotations
 
 import uuid
+from collections.abc import Sequence
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
@@ -151,7 +152,7 @@ class CoursesAPI(Resource):
         *,
         color: str | None = None,
         parent: Course | str | None = None,
-        instructor_ids: list[int] | None = None,
+        instructor_ids: Sequence[int] | None = None,
         course_id: str | None = None,
         iteration: str | Iteration | None = None,
         **fields: Any,
@@ -162,7 +163,7 @@ class CoursesAPI(Resource):
             name=name,
             color=color,
             parent_id=ref(parent) if parent is not None else None,
-            instructor_ids=instructor_ids,
+            instructor_ids=list(instructor_ids) if instructor_ids is not None else None,
             **fields,
         )
         return self._one(
@@ -177,7 +178,7 @@ class CoursesAPI(Resource):
         name: str | None = None,
         color: str | None = None,
         parent: Course | str | None = None,
-        instructor_ids: list[int] | None = None,
+        instructor_ids: Sequence[int] | None = None,
         iteration: str | Iteration | None = None,
         **fields: Any,
     ) -> Course:
@@ -186,7 +187,7 @@ class CoursesAPI(Resource):
             name=name,
             color=color,
             parent_id=ref(parent) if parent is not None else None,
-            instructor_ids=instructor_ids,
+            instructor_ids=list(instructor_ids) if instructor_ids is not None else None,
             **fields,
         )
         return self._one(

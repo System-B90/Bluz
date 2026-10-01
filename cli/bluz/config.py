@@ -12,6 +12,7 @@ import json
 import os
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import Any
 
 import typer
 from dotenv import load_dotenv
@@ -84,12 +85,13 @@ class Config:
         return path
 
 
-def _load_file() -> dict:
+def _load_file() -> dict[str, Any]:
     path = _config_path()
     if not path.exists():
         return {}
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        data: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+        return data
     except (json.JSONDecodeError, OSError) as exc:
         raise ConfigError(f"Could not read config file {path}: {exc}") from exc
 

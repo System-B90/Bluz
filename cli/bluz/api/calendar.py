@@ -72,15 +72,19 @@ class EventsAPI(Resource):
 
     def create(
         self, event: Event | Mapping[str, Any] | None = None, /, **fields: Any
-    ) -> Any:
+    ) -> Event:
         """Create an event from a model, a wire dict and/or snake_case fields."""
-        return self._http.put(_BASE, json=_event_payload(event or {}, fields))
+        return self._one(
+            Event, self._http.put(_BASE, json=_event_payload(event or {}, fields))
+        )
 
     def update(
         self, event: Event | Mapping[str, Any] | None = None, /, **fields: Any
-    ) -> Any:
+    ) -> Event:
         """Replace an event (the payload must include `id`)."""
-        return self._http.post(_BASE, json=_event_payload(event or {}, fields))
+        return self._one(
+            Event, self._http.post(_BASE, json=_event_payload(event or {}, fields))
+        )
 
     def delete(self, event: Event | str) -> None:
         self._http.delete(_BASE, json=ref(event))
