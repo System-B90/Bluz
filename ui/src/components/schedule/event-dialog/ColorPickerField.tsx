@@ -68,7 +68,9 @@ const ColorSwatch = memo(function ColorSwatch({
 type ColorPickerFieldProps = {
     event: Partial<Event>;
     onUpdate: (update: Partial<Event>) => void;
-} & Omit<BoxProps, "onSelect">;
+    /** Match the height of the sibling input. */
+    size?: "medium" | "small";
+} & Omit<BoxProps, "onSelect" | "size">;
 // `id` is the color's identity: a custom color's ID, a Hive subject's ID, or
 // DEFAULT_COLOR_ID for the "no override" option.
 type Swatch = { id: string; hex: string; label: string; isSelected: boolean; };
@@ -94,6 +96,7 @@ function SwatchOptionContent({ swatch }: { swatch: Swatch; })
 export function ColorPickerField({
     event,
     onUpdate,
+    size,
     ...boxProps
 }: ColorPickerFieldProps)
 {
@@ -237,16 +240,18 @@ export function ColorPickerField({
     return (
         <FormControl
             fullWidth={ false }
+            size={ size }
             sx={ {
                 minWidth: "5rem",
                 height: "100%",
                 ...((boxProps.sx as object) ?? {}),
             } }
         >
-            <InputLabel id={ labelId }>צבע</InputLabel>
+            <InputLabel id={ labelId } size={ size === "small" ? "small" : undefined }>צבע</InputLabel>
             <Select label="צבע"
                 labelId={ labelId }
                 onChange={ (e) => handleSelectColor(e.target.value) }
+                size={ size }
                 sx={ { height: "100%" } }
                 value={ event.color ?? DEFAULT_COLOR_ID }
             >

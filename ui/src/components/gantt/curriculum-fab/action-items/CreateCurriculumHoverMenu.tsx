@@ -2,7 +2,6 @@ import AddIcon from "@mui/icons-material/Add";
 import Box from "@mui/material/Box";
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
-import { ActionItemButton } from "@/components/gantt/curriculum-fab/action-items/ActionItemButton";
 import { CreateDraftAction } from "@/components/gantt/curriculum-fab/action-items/CreateDraftAction";
 import { CreateFromTemplateAction } from "@/components/gantt/curriculum-fab/action-items/CreateFromTemplateAction";
 import { DuplicateCurriculumAction } from "@/components/gantt/curriculum-fab/action-items/DuplicateCurriculumAction";
@@ -30,11 +29,10 @@ export function CreateCurriculumHoverMenu({
 }: CreateCurriculumHoverMenuProps) {
     return (
         <Box alignItems="center" display="flex">
-            <ActionItemButton
-                disabled={isDisabled}
-                onClick={undefined}
-                startIcon={<AddIcon fontSize="small" />}
-                tooltipTitle="גאנט חדש"
+            <AddIcon
+                aria-hidden
+                color={isDisabled ? "disabled" : "primary"}
+                fontSize="small"
             />
             <Box
                 alignItems="center"

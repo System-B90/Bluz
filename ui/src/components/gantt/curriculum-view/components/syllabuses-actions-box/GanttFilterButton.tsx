@@ -43,15 +43,18 @@ export function GanttFilterButton({
     // Reads the anchor from the ref so the palette mirror can open it too.
     const openFilters = useCallback(() => setAnchorEl(buttonRef.current), []);
 
-    useCommand({
-        id: "gantt.filters.open",
-        title: "סינון סילבוסים",
-        group: COMMAND_GROUPS.gantt,
-        icon: <FilterListIcon />,
-        keywords: ["filter", "filters", "סינון", "סנן"],
-        enabled: withCommand,
-        run: openFilters,
-    });
+    useCommand(
+        withCommand
+            ? {
+                id: "gantt.filters.open",
+                title: "סינון סילבוסים",
+                group: COMMAND_GROUPS.gantt,
+                icon: <FilterListIcon />,
+                keywords: ["filter", "filters", "סינון", "סנן"],
+                run: openFilters,
+            }
+            : null,
+    );
 
     const onCoursesChange = useCallback(
         (event: SelectChangeEvent<Array<CourseId>>) => {
