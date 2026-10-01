@@ -10,6 +10,7 @@ import {
     allowAiBenchmark,
 } from "@/api-server/ai/rate-limit";
 import { ApiErrorMaker, ApiSuccess, withApi } from "@/api-server/common";
+import { DbPersonalSettings } from "@/api-server/db-personal-settings";
 import { requireStaffSession } from "@/api-server/session-user";
 import { AiBenchmarkJobStatus } from "@/api-shared/types/ai-benchmark";
 
@@ -37,6 +38,11 @@ export const POST = withApi(async () => {
     const running = getBenchmarkJob(userId);
     if (running.status === AiBenchmarkJobStatus.Running) return ApiSuccess(running);
 
+    // Built before the throttle so a misconfigured deployment does not burn
+    // the user's one run per hour.
+    const personalSettings = await DbPersonalSettings.get(userId);
+    const provider = getAiProvider(personalSettings.aiApiToken || undefined);
+
     if (!allowAiBenchmark(userId)) {
         const minutes = Math.ceil(aiBenchmarkCooldownMs(userId) / 60_000);
         return ApiErrorMaker(
@@ -48,10 +54,12 @@ export const POST = withApi(async () => {
         );
     }
 
-    // A missing key or unreachable gateway surfaces as a Failed job on the
-    // next poll, not as a status here: the request has already returned.
+    // Same provider chat would use for this user: their personal token when
+    // set, else the server key (#783). A missing key throws here and answers
+    // with its own message (#782); an unreachable gateway surfaces as a Failed
+    // job on the next poll, as the request has already returned by then.
     const { job } = startBenchmarkJob({
-        provider: getAiProvider(),
+        provider,
         actor: {
             id: userId,
             displayName: user.display_name || user.name || "משתמש",
