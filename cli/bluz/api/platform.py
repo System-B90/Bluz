@@ -258,6 +258,11 @@ class AiAPI(Resource):
         """What the assistant can do (`enabled: False` when no model key is set)."""
         return self._one(AiCapabilities, self._http.get(f"{_AI}/tools"))
 
+    def models(self) -> Any:
+        """Models the configured backend lists (`models` empty, with `error`,
+        when it cannot list them)."""
+        return self._http.get(f"{_AI}/models")
+
     def benchmark(self) -> Any:
         """Provider self-test (throttled server-side to once an hour)."""
         return self._http.post(f"{_AI}/benchmark")

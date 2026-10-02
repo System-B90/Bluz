@@ -47,6 +47,17 @@ def list_tools() -> None:
         show(bz.ai.tools(), title="Assistant")
 
 
+@app.command("models")
+def models() -> None:
+    """List the models the configured AI backend offers.
+
+    Use it to pick a valid `AI_MODEL`; an empty list comes with the reason
+    (e.g. an untrusted certificate or a backend without `/models`).
+    """
+    with session() as bz:
+        show(bz.ai.models(), title="Models")
+
+
 @app.command("benchmark")
 def benchmark() -> None:
     """Run the assistant self-test against a fabricated fixture.
