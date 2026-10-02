@@ -21,15 +21,15 @@ import {
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { buildStudentPaths } from "@/components/gantt/curriculum-view/student-load";
 import { parseHoursInput, ZeroChoice } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-allotment";
-import { gridMenuActions, GridMenuAction, summaryRowsUnder } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-context-menu";
 import { onGridExpansionRequest, publishGridAllCollapsed } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-expansion-bus";
 import { useGridAnimation, useGridCompactHeader, useGridIgnoreBreaks, useGridVerticalLines } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-preferences";
 import { buildGridRows, CoursePresence, GridRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-rows";
-import { initialSelection, isCellSelected, selectCell, selectedCells } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-selection";
-import { GridContextMenu, GridMenuTarget } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GridContextMenu";
+import { initialSelection, isCellSelected, selectCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-selection";
+import { GridContextMenu } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GridContextMenu";
 import { mergeRowTransitions, RowPhase, TransitionRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/row-transitions";
 import { GanttViewProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { useGridAllotment } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-grid-allotment";
+import { useGridContextMenu } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-grid-context-menu";
 import { useGanttView } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/UseGanttView";
 import { useHoursFormat } from "@/components/gantt/curriculum-view/use-hours-format";
 import { useCurriculumProviderActions, useCurriculumState } from "@/components/gantt/state/context";
@@ -333,74 +333,26 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         if (isOpen !== open) activate(target);
     };
 
-    /* ── Right-click menu (#858): every entry reuses a keyboard handler ── */
+    /* ── Right-click menu (#858) ── */
 
-    const [ menu, setMenu ] = useState<(GridMenuTarget & { cell: { row: number; col: number }; text: string }) | null>(null);
-    const openMenu = (e: React.MouseEvent<HTMLElement>, cell: { row: number; col: number }) =>
-    {
-        const r = rows[ cell.row ];
-        if (!r) return;
-        e.preventDefault();
-        // Like a left-click, but an existing range survives a right-click inside it.
-        const inSelection = isCellSelected(selection, cell);
-        if (!inSelection) select(cell);
-        const cells = inSelection ? selectedCells(selection) : [ cell ];
-        const week = cell.col >= LEAD_COLUMNS ? cell.col - LEAD_COLUMNS : null;
-        const event = r.kind === "event" ? state.events[ r.id ] : undefined;
-        const actions = gridMenuActions({
-            row: r,
-            week,
-            placedInWeek: week !== null && placedWeeks.has(`${r.id}:${week}`),
-            minutesInWeek: week === null ? 0 : r.weekMinutes[ week ] ?? 0,
-            expanded: r.kind === "module" ? isModuleExpanded(r.key) : r.kind !== "event" && isSyllabusExpanded(r.key),
-            editableSelected: cells.filter((c) => isEditable(c.row, c.col)).length,
-            sharedAcrossShuffles: Boolean(sharedOf(r)) && !event?.groupId && !event?.courseIds?.length,
-        });
-        setMenu({
-            actions,
-            cell,
-            position: { top: e.clientY, left: e.clientX },
-            rangeSize: cells.filter((c) => isEditable(c.row, c.col)).length,
-            text: (e.currentTarget.textContent ?? "").trim(),
-        });
-    };
-    const runMenuAction = (action: Exclude<GridMenuAction, "set-range">) =>
-    {
-        if (!menu) return;
-        const r = rows[ menu.cell.row ];
-        if (!r) return;
-        switch (action)
-        {
-        case "open-dialog": openDialog(r); break;
-        case "expand": setExpanded(r, true); break;
-        case "collapse": setExpanded(r, false); break;
-        case "expand-all-under":
-        case "collapse-all-under":
-            for (const target of summaryRowsUnder(build(() => true, () => true), r.key))
-                setExpanded(target, action === "expand-all-under");
-            break;
-        case "edit-week": startEdit(menu.cell.row, menu.cell.col); break;
-        case "clear-week": void writeWeek(menu.cell, 0, "keep"); break;
-        case "remove-mapping": void writeWeek(menu.cell, 0, "remove"); break;
-        case "split-shuffles": void splitShuffles(r.id, r.moduleId, r.sharedShuffles ?? []); break;
-        case "copy":
-            void navigator.clipboard?.writeText(menu.text).catch(() =>
-                enqueueSnackbar("ההעתקה נכשלה", { variant: "error" }));
-            break;
-        }
-    };
-    const setRange = async (text: string) =>
-    {
-        const minutes = parseHoursInput(text);
-        if (minutes === null)
-        {
-            enqueueSnackbar("ערך שעות לא תקין", { variant: "error" });
-            return;
-        }
-        // Sequential: each write may raise its own question (zero, move, split).
-        for (const cell of selectedCells(selection).filter((c) => isEditable(c.row, c.col)))
-            await writeWeek(cell, minutes);
-    };
+    const { menu, openMenu, closeMenu, runMenuAction, setRange } = useGridContextMenu({
+        rows,
+        allRows: () => build(() => true, () => true),
+        events: state.events,
+        leadColumns: LEAD_COLUMNS,
+        selection,
+        select,
+        isEditable,
+        placedWeeks,
+        isModuleExpanded,
+        isSyllabusExpanded,
+        sharedOf,
+        openDialog,
+        setExpanded,
+        startEdit,
+        writeWeek,
+        splitShuffles,
+    });
 
     const handleKeyDown = (e: React.KeyboardEvent) =>
     {
@@ -677,7 +629,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
             { dialog }
             <GridContextMenu
                 onAction={ runMenuAction }
-                onClose={ () => setMenu(null) }
+                onClose={ closeMenu }
                 onSetRange={ (text) => void setRange(text) }
                 target={ menu }
             />
