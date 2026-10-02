@@ -9,6 +9,8 @@ Author: Michael K. Steinberg
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from functools import partial
 from typing import Any, Self
 
 from bluz.api._base import ref
@@ -39,6 +41,18 @@ from bluz.models.iterations import Iteration
 from bluz.models.misc import SessionInfo
 
 __all__ = ["Bluz", "connect"]
+
+
+class _class_or_instance:
+    """Method that binds to the instance when called on one, else to the class."""
+
+    def __init__(self, func: Callable[..., Bluz]) -> None:
+        self._func = func
+        self.__doc__ = func.__doc__
+        self.__name__ = func.__name__
+
+    def __get__(self, obj: Bluz | None, owner: type[Bluz]) -> Callable[..., Bluz]:
+        return partial(self._func, owner if obj is None else obj)
 
 
 class Bluz:
@@ -114,15 +128,15 @@ class Bluz:
 
     # --- signing in ------------------------------------------------------------
 
-    @classmethod
+    @_class_or_instance
     def login(
-        cls,
+        self_or_cls: type[Bluz] | Bluz,
         url: str | None = None,
         *,
         insecure: bool | None = None,
         save: bool = True,
         timeout: float = 30.0,
-    ) -> Self:
+    ) -> Bluz:
         """Sign in through the browser and return a ready session.
 
         The same handoff flow as `bluz login`: a browser tab opens on the Bluz
@@ -131,15 +145,21 @@ class Bluz:
         when prompted. With `save=True` the result is written to the user
         config file, so later `Bluz()` calls — and the CLI — reuse it.
 
+        Called on a session (`bz.login()`) it signs in to *that session's*
+        server and refreshes the session in place. Called on the class
+        (`Bluz.login(url)`) it returns a new session.
+
         Examples:
             >>> bz = Bluz.login("https://bluz.example")
+            >>> bz.login()  # token expired: sign in again, same server
             >>> bz.whoami().user
         """
         from getpass import getpass
 
         from bluz.commands.auth import browser_login, redeem_handoff_code
 
-        existing = load_config()
+        instance = self_or_cls if isinstance(self_or_cls, Bluz) else None
+        existing = instance.config if instance is not None else load_config()
         target = (url or existing.url or "").rstrip("/")
         if not target:
             raise ConfigError(
@@ -156,7 +176,15 @@ class Bluz:
 
         if save:
             Config(url=target, token=token, insecure=verify_off).save()
-        return cls(target, token, insecure=verify_off, timeout=timeout)
+        if instance is None:
+            return Bluz(target, token, insecure=verify_off, timeout=timeout)
+        instance.config = Config(url=target, token=token, insecure=verify_off)
+        instance._timeout = timeout
+        if instance._http is not None and instance._owns_http:
+            instance._http.close()
+        instance._http = None
+        instance._owns_http = True
+        return instance
 
     def whoami(self) -> SessionInfo:
         """Who this session's token belongs to, and when it expires.
