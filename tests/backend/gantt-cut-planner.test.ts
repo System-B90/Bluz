@@ -39,7 +39,6 @@ function makeEvent(overrides: Partial<CutPlanEventInput> & { id: string }): CutP
         title: overrides.id,
         recurrence: EventRecurrence.None,
         minimumDuration: 60,
-        allocatedDuration: 60,
         splitAcrossBreaks: false,
         ...overrides,
     };
@@ -61,10 +60,10 @@ function baseInput(overrides: Partial<CutPlanInput> = {}): CutPlanInput {
 
 describe("planCut", () => {
     it("plans a single mapped event on the correct date and start time", () => {
-        const event = makeEvent({ id: "e1", minimumDuration: 90, allocatedDuration: 90 });
+        const event = makeEvent({ id: "e1", minimumDuration: 90 });
         const input = baseInput({
             events: [ event ],
-            mappings: [ { eventId: "e1", dayId: "w0d2", sortOrder: 0 } ],
+            mappings: [ { eventId: "e1", dayId: "w0d2", sortOrder: 0, allottedMinutes: 90 } ],
         });
 
         const plan = planCut(input);
@@ -83,13 +82,13 @@ describe("planCut", () => {
     });
 
     it("stacks two events on the same day sequentially by sortOrder", () => {
-        const e1 = makeEvent({ id: "e1", minimumDuration: 60, allocatedDuration: 60 });
-        const e2 = makeEvent({ id: "e2", minimumDuration: 30, allocatedDuration: 30 });
+        const e1 = makeEvent({ id: "e1", minimumDuration: 60 });
+        const e2 = makeEvent({ id: "e2", minimumDuration: 30 });
         const input = baseInput({
             events: [ e1, e2 ],
             mappings: [
-                { eventId: "e2", dayId: "w0d0", sortOrder: 1 },
-                { eventId: "e1", dayId: "w0d0", sortOrder: 0 },
+                { eventId: "e2", dayId: "w0d0", sortOrder: 1, allottedMinutes: 30 },
+                { eventId: "e1", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 },
             ],
         });
 
@@ -109,15 +108,15 @@ describe("planCut", () => {
     });
 
     it("starts shuffle-group siblings on the same day together", () => {
-        const a = makeEvent({ id: "a", groupId: "g1", allocatedDuration: 60 });
-        const b = makeEvent({ id: "b", groupId: "g1", allocatedDuration: 90 });
-        const next = makeEvent({ id: "next", allocatedDuration: 30 });
+        const a = makeEvent({ id: "a", groupId: "g1" });
+        const b = makeEvent({ id: "b", groupId: "g1" });
+        const next = makeEvent({ id: "next" });
         const input = baseInput({
             events: [ a, b, next ],
             mappings: [
-                { eventId: "a", dayId: "w0d0", sortOrder: 0 },
-                { eventId: "next", dayId: "w0d0", sortOrder: 1 },
-                { eventId: "b", dayId: "w0d0", sortOrder: 2 },
+                { eventId: "a", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 },
+                { eventId: "next", dayId: "w0d0", sortOrder: 1, allottedMinutes: 30 },
+                { eventId: "b", dayId: "w0d0", sortOrder: 2, allottedMinutes: 90 },
             ],
         });
 
@@ -140,12 +139,12 @@ describe("planCut", () => {
     it("counts same-day shuffle-group siblings once when balancing", () => {
         const input = baseInput({
             events: [
-                makeEvent({ id: "a", groupId: "g1", allocatedDuration: 90 }),
-                makeEvent({ id: "b", groupId: "g1", allocatedDuration: 90 }),
+                makeEvent({ id: "a", groupId: "g1" }),
+                makeEvent({ id: "b", groupId: "g1" }),
             ],
             mappings: [
-                { eventId: "a", dayId: "w0d0", sortOrder: 0 },
-                { eventId: "b", dayId: "w0d0", sortOrder: 1 },
+                { eventId: "a", dayId: "w0d0", sortOrder: 0, allottedMinutes: 90 },
+                { eventId: "b", dayId: "w0d0", sortOrder: 1, allottedMinutes: 90 },
             ],
         });
         input.days.w0d0 = { ...input.days.w0d0, totalWorkingMinutes: 120 };
@@ -161,11 +160,11 @@ describe("planCut", () => {
         ]);
     });
 
-    it("falls back to minimumDuration when allocatedDuration is falsy", () => {
-        const event = makeEvent({ id: "e1", minimumDuration: 45, allocatedDuration: 0 });
+    it("runs a mapping for its allotted minutes, independent of minimumDuration", () => {
+        const event = makeEvent({ id: "e1", minimumDuration: 45 });
         const input = baseInput({
             events: [ event ],
-            mappings: [ { eventId: "e1", dayId: "w0d0", sortOrder: 0 } ],
+            mappings: [ { eventId: "e1", dayId: "w0d0", sortOrder: 0, allottedMinutes: 75 } ],
         });
 
         const plan = planCut(input);
@@ -173,7 +172,45 @@ describe("planCut", () => {
         if (!plan.ok) return;
 
         const occ = plan.occurrences[0];
-        expect(occ.endTime.getTime() - occ.startTime.getTime()).toBe(45 * 60 * 1000);
+        expect(occ.endTime.getTime() - occ.startTime.getTime()).toBe(75 * 60 * 1000);
+    });
+
+    it("leaves out, without an error, an event whose mappings all allot 0", () => {
+        const input = baseInput({
+            events: [ makeEvent({ id: "zero" }), makeEvent({ id: "kept" }) ],
+            mappings: [
+                { eventId: "zero", dayId: "w0d0", sortOrder: 0, allottedMinutes: 0 },
+                { eventId: "zero", dayId: "w0d1", sortOrder: 1, allottedMinutes: 0 },
+                { eventId: "kept", dayId: "w0d0", sortOrder: 2, allottedMinutes: 60 },
+            ],
+        });
+
+        const plan = planCut(input);
+        expect(plan.ok).toBe(true);
+        if (!plan.ok) return;
+
+        expect(plan.occurrences.map((o) => o.ganttEventId)).toEqual([ "kept" ]);
+    });
+
+    it("runs a recurring event's echoes for its root mapping's minutes", () => {
+        const event = makeEvent({ id: "e1", recurrence: EventRecurrence.Daily, minimumDuration: 15 });
+        const input = baseInput({
+            events: [ event ],
+            mappings: [
+                { eventId: "e1", dayId: "w0d1", sortOrder: 1, allottedMinutes: 90 },
+                { eventId: "e1", dayId: "w0d0", sortOrder: 0, allottedMinutes: 40 },
+            ],
+        });
+
+        const plan = planCut(input);
+        expect(plan.ok).toBe(true);
+        if (!plan.ok) return;
+
+        const echoes = plan.occurrences.filter((o) => o.isRecurrenceEcho);
+        expect(echoes.length).toBeGreaterThan(0);
+        for (const echo of echoes) {
+            expect(echo.endTime.getTime() - echo.startTime.getTime()).toBe(40 * 60 * 1000);
+        }
     });
 
     it("expands a daily recurrence over 2 weeks, skipping an exception day", () => {
@@ -181,11 +218,10 @@ describe("planCut", () => {
             id: "e1",
             recurrence: EventRecurrence.Daily,
             minimumDuration: 60,
-            allocatedDuration: 60,
         });
         const input = baseInput({
             events: [ event ],
-            mappings: [ { eventId: "e1", dayId: "w0d0", sortOrder: 0 } ],
+            mappings: [ { eventId: "e1", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 } ],
             recurrenceExceptions: [ { eventId: "e1", dayId: "w0d2" } ],
         });
 
@@ -207,12 +243,11 @@ describe("planCut", () => {
             id: "e1",
             recurrence: EventRecurrence.Weekly,
             minimumDuration: 60,
-            allocatedDuration: 60,
         });
         const input = baseInput({
             events: [ event ],
             // w0d2 = Tuesday, week 1.
-            mappings: [ { eventId: "e1", dayId: "w0d2", sortOrder: 0 } ],
+            mappings: [ { eventId: "e1", dayId: "w0d2", sortOrder: 0, allottedMinutes: 60 } ],
         });
 
         const plan = planCut(input);
@@ -229,19 +264,17 @@ describe("planCut", () => {
             id: "lunch",
             title: MEAL_EVENT_TITLES.lunchTime,
             minimumDuration: 30,
-            allocatedDuration: 30,
         });
         const exercise = makeEvent({
             id: "ex",
             minimumDuration: 90,
-            allocatedDuration: 90,
             splitAcrossBreaks: false,
         });
         const input = baseInput({
             events: [ lunch, exercise ],
             mappings: [
-                { eventId: "lunch", dayId: "w0d0", sortOrder: 0 },
-                { eventId: "ex", dayId: "w0d0", sortOrder: 1 },
+                { eventId: "lunch", dayId: "w0d0", sortOrder: 0, allottedMinutes: 30 },
+                { eventId: "ex", dayId: "w0d0", sortOrder: 1, allottedMinutes: 90 },
             ],
             dayStartTime: "12:15", // overlaps the 13:00 lunch window
             lunchTime: "13:00",
@@ -268,19 +301,17 @@ describe("planCut", () => {
             id: "dinner",
             title: MEAL_EVENT_TITLES.dinnerTime,
             minimumDuration: 30,
-            allocatedDuration: 30,
         });
         const marathon = makeEvent({
             id: "long",
             minimumDuration: 480,
-            allocatedDuration: 480,
             splitAcrossBreaks: false,
         });
         const input = baseInput({
             events: [ dinner, marathon ],
             mappings: [
-                { eventId: "dinner", dayId: "w0d0", sortOrder: 0 },
-                { eventId: "long", dayId: "w0d0", sortOrder: 1 },
+                { eventId: "dinner", dayId: "w0d0", sortOrder: 0, allottedMinutes: 30 },
+                { eventId: "long", dayId: "w0d0", sortOrder: 1, allottedMinutes: 480 },
             ],
             // 8 hours from 18:00 runs to 02:00; bumping past the 19:00 dinner
             // would end at 03:30 the next day.
@@ -313,19 +344,17 @@ describe("planCut", () => {
             id: "lunch",
             title: MEAL_EVENT_TITLES.lunchTime,
             minimumDuration: 30,
-            allocatedDuration: 30,
         });
         const dinner = makeEvent({
             id: "dinner",
             title: MEAL_EVENT_TITLES.dinnerTime,
             minimumDuration: 45,
-            allocatedDuration: 45,
         });
         const input = baseInput({
             events: [ lunch, dinner ],
             mappings: [
-                { eventId: "lunch", dayId: "w0d0", sortOrder: 0 },
-                { eventId: "dinner", dayId: "w0d0", sortOrder: 1 },
+                { eventId: "lunch", dayId: "w0d0", sortOrder: 0, allottedMinutes: 30 },
+                { eventId: "dinner", dayId: "w0d0", sortOrder: 1, allottedMinutes: 45 },
             ],
             dayStartTime: "08:00",
             // lunchTime / dinnerTime intentionally omitted — mirrors a null
@@ -352,25 +381,22 @@ describe("planCut", () => {
             id: "lunch",
             title: MEAL_EVENT_TITLES.lunchTime,
             minimumDuration: 30,
-            allocatedDuration: 30,
         });
         const dinner = makeEvent({
             id: "dinner",
             title: MEAL_EVENT_TITLES.dinnerTime,
             minimumDuration: 45,
-            allocatedDuration: 45,
         });
         const other = makeEvent({
             id: "other",
             minimumDuration: 30,
-            allocatedDuration: 30,
         });
         const input = baseInput({
             events: [ lunch, dinner, other ],
             mappings: [
-                { eventId: "lunch", dayId: "w0d0", sortOrder: 0 },
-                { eventId: "dinner", dayId: "w0d0", sortOrder: 1 },
-                { eventId: "other", dayId: "w0d0", sortOrder: 2 },
+                { eventId: "lunch", dayId: "w0d0", sortOrder: 0, allottedMinutes: 30 },
+                { eventId: "dinner", dayId: "w0d0", sortOrder: 1, allottedMinutes: 45 },
+                { eventId: "other", dayId: "w0d0", sortOrder: 2, allottedMinutes: 30 },
             ],
             dayStartTime: "08:00",
             lunchTime: "13:00",
@@ -396,19 +422,17 @@ describe("planCut", () => {
             id: "lunch",
             title: MEAL_EVENT_TITLES.lunchTime,
             minimumDuration: 30,
-            allocatedDuration: 30,
         });
         const long = makeEvent({
             id: "long",
             minimumDuration: 300,
-            allocatedDuration: 300,
             splitAcrossBreaks: false,
         });
         const input = baseInput({
             events: [ lunch, long ],
             mappings: [
-                { eventId: "lunch", dayId: "w0d0", sortOrder: 0 },
-                { eventId: "long", dayId: "w0d0", sortOrder: 1 },
+                { eventId: "lunch", dayId: "w0d0", sortOrder: 0, allottedMinutes: 30 },
+                { eventId: "long", dayId: "w0d0", sortOrder: 1, allottedMinutes: 300 },
             ],
             dayStartTime: "12:15",
             lunchTime: "13:00",
@@ -430,19 +454,17 @@ describe("planCut", () => {
             id: "lunch",
             title: MEAL_EVENT_TITLES.lunchTime,
             minimumDuration: 30,
-            allocatedDuration: 30,
         });
         const exercise = makeEvent({
             id: "ex",
             minimumDuration: 90,
-            allocatedDuration: 90,
             splitAcrossBreaks: true,
         });
         const input = baseInput({
             events: [ lunch, exercise ],
             mappings: [
-                { eventId: "lunch", dayId: "w0d0", sortOrder: 0 },
-                { eventId: "ex", dayId: "w0d0", sortOrder: 1 },
+                { eventId: "lunch", dayId: "w0d0", sortOrder: 0, allottedMinutes: 30 },
+                { eventId: "ex", dayId: "w0d0", sortOrder: 1, allottedMinutes: 90 },
             ],
             dayStartTime: "12:15", // overlaps the 13:00 lunch window
             lunchTime: "13:00",
@@ -470,25 +492,22 @@ describe("planCut", () => {
             id: "lunch",
             title: MEAL_EVENT_TITLES.lunchTime,
             minimumDuration: 30,
-            allocatedDuration: 30,
         });
         const exercise = makeEvent({
             id: "ex",
             minimumDuration: 90,
-            allocatedDuration: 90,
             splitAcrossBreaks: true,
         });
         const next = makeEvent({
             id: "next",
             minimumDuration: 60,
-            allocatedDuration: 60,
         });
         const input = baseInput({
             events: [ lunch, exercise, next ],
             mappings: [
-                { eventId: "lunch", dayId: "w0d0", sortOrder: 0 },
-                { eventId: "ex", dayId: "w0d0", sortOrder: 1 },
-                { eventId: "next", dayId: "w0d0", sortOrder: 2 },
+                { eventId: "lunch", dayId: "w0d0", sortOrder: 0, allottedMinutes: 30 },
+                { eventId: "ex", dayId: "w0d0", sortOrder: 1, allottedMinutes: 90 },
+                { eventId: "next", dayId: "w0d0", sortOrder: 2, allottedMinutes: 60 },
             ],
             dayStartTime: "12:15",
             lunchTime: "13:00",
@@ -511,19 +530,17 @@ describe("planCut", () => {
             id: "lunch",
             title: MEAL_EVENT_TITLES.lunchTime,
             minimumDuration: 60,
-            allocatedDuration: 60,
         });
         const exercise = makeEvent({
             id: "ex",
             minimumDuration: 90,
-            allocatedDuration: 90,
             splitAcrossBreaks: true,
         });
         const input = baseInput({
             events: [ lunch, exercise ],
             mappings: [
-                { eventId: "lunch", dayId: "w0d0", sortOrder: 0 },
-                { eventId: "ex", dayId: "w0d0", sortOrder: 1 },
+                { eventId: "lunch", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 },
+                { eventId: "ex", dayId: "w0d0", sortOrder: 1, allottedMinutes: 90 },
             ],
             dayStartTime: "13:15", // inside the 13:00-14:00 lunch window
             lunchTime: "13:00",
@@ -545,19 +562,17 @@ describe("planCut", () => {
             id: "lunch",
             title: MEAL_EVENT_TITLES.lunchTime,
             minimumDuration: 30,
-            allocatedDuration: 30,
         });
         const exercise = makeEvent({
             id: "ex",
             minimumDuration: 60,
-            allocatedDuration: 60,
             splitAcrossBreaks: true,
         });
         const input = baseInput({
             events: [ lunch, exercise ],
             mappings: [
-                { eventId: "lunch", dayId: "w0d0", sortOrder: 0 },
-                { eventId: "ex", dayId: "w0d0", sortOrder: 1 },
+                { eventId: "lunch", dayId: "w0d0", sortOrder: 0, allottedMinutes: 30 },
+                { eventId: "ex", dayId: "w0d0", sortOrder: 1, allottedMinutes: 60 },
             ],
             dayStartTime: "08:00", // nowhere near the 13:00 lunch window
             lunchTime: "13:00",
@@ -599,7 +614,7 @@ describe("planCut", () => {
         });
         const input = baseInput({
             events: [ event ],
-            mappings: [ { eventId: "e1", dayId: "w1d2", sortOrder: 0 } ],
+            mappings: [ { eventId: "e1", dayId: "w1d2", sortOrder: 0, allottedMinutes: 60 } ],
         });
 
         const plan = planCut(input);
@@ -620,7 +635,7 @@ describe("planCut", () => {
         const input = baseInput({
             startDate: null,
             events: [ unmapped, lateRecurring ],
-            mappings: [ { eventId: "e2", dayId: "w1d0", sortOrder: 0 } ],
+            mappings: [ { eventId: "e2", dayId: "w1d0", sortOrder: 0, allottedMinutes: 60 } ],
         });
 
         const plan = planCut(input);
@@ -649,8 +664,8 @@ describe("planCut", () => {
             days: buildWeeks(1).days,
             events: [ bEvent, aEvent ],
             mappings: [
-                { eventId: "b", dayId: "w0d0", sortOrder: 0 },
-                { eventId: "a", dayId: "w0d0", sortOrder: 1 },
+                { eventId: "b", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 },
+                { eventId: "a", dayId: "w0d0", sortOrder: 1, allottedMinutes: 60 },
             ],
         });
 
@@ -670,7 +685,7 @@ describe("planCut", () => {
             days,
             weeks,
             events: [ event ],
-            mappings: [ { eventId: "e1", dayId: "w0d0", sortOrder: 0 } ],
+            mappings: [ { eventId: "e1", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 } ],
             dayStartTime: "08:00",
             weekendHomeStartTime: "10:00",
         });
@@ -692,7 +707,7 @@ describe("planCut", () => {
             days,
             weeks,
             events: [ event ],
-            mappings: [ { eventId: "e1", dayId: "w0d0", sortOrder: 0 } ],
+            mappings: [ { eventId: "e1", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 } ],
             dayStartTime: "08:00",
             weekendHomeStartTime: "10:00",
         });
@@ -714,7 +729,7 @@ describe("planCut", () => {
             days,
             weeks,
             events: [ event ],
-            mappings: [ { eventId: "e1", dayId: "w0d1", sortOrder: 0 } ], // Monday
+            mappings: [ { eventId: "e1", dayId: "w0d1", sortOrder: 0, allottedMinutes: 60 } ], // Monday
             dayStartTime: "08:00",
             weekendHomeStartTime: "10:00",
         });
@@ -735,7 +750,7 @@ describe("planCut", () => {
             days,
             weeks,
             events: [ event ],
-            mappings: [ { eventId: "e1", dayId: "w0d0", sortOrder: 0 } ],
+            mappings: [ { eventId: "e1", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 } ],
             dayStartTime: "08:00",
             weekendHomeStartTime: "10:00",
         });
@@ -767,7 +782,7 @@ describe("planCut — venue timezone anchoring (#415)", () => {
     const planStartInstant = (): string => {
         const input = baseInput({
             events: [ makeEvent({ id: "e1" }) ],
-            mappings: [ { eventId: "e1", dayId: "w0d0", sortOrder: 0 } ],
+            mappings: [ { eventId: "e1", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 } ],
             dayStartTime: "09:30",
         });
         const plan = planCut(input);
@@ -790,7 +805,7 @@ describe("planCut — venue timezone anchoring (#415)", () => {
         const input = baseInput({
             startDate: "2024-08-04",
             events: [ makeEvent({ id: "e1" }) ],
-            mappings: [ { eventId: "e1", dayId: "w0d0", sortOrder: 0 } ],
+            mappings: [ { eventId: "e1", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 } ],
             dayStartTime: "09:30",
         });
 

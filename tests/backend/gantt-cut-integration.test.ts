@@ -195,7 +195,7 @@ const iteration = { id: "2026a", dbName: "bluz_cut", isCurrent: true };
 
 function arrange(args: {
     events: Array<ApiModuleEvent>;
-    mappings?: Array<{ eventId: null | string; dayId: string; sortOrder: number }>;
+    mappings?: Array<{ eventId: null | string; dayId: string; sortOrder: number; allottedMinutes?: number }>;
     exceptions?: Array<{ eventId: string; dayId: string }>;
     curriculumOverrides?: Partial<ApiCurriculum>;
 }) {
@@ -206,7 +206,7 @@ function arrange(args: {
         iteration as Iteration,
     );
     vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue(
-        (args.mappings ?? []) as Awaited<
+        (args.mappings ?? []).map((m) => ({ allottedMinutes: 60, ...m })) as Awaited<
             ReturnType<typeof getModuleDayMappingsForCurriculum>
         >,
     );
@@ -303,8 +303,8 @@ describe("cut — document stacking", () => {
                 makeEvent({ id: "second", cEC: [{ eventId: "second", curriculumId: "c1", allocatedDuration: 90 }] }),
             ],
             mappings: [
-                { eventId: "second", dayId: "w0d0", sortOrder: 5 },
-                { eventId: "first", dayId: "w0d0", sortOrder: 1 },
+                { eventId: "second", dayId: "w0d0", sortOrder: 5, allottedMinutes: 90 },
+                { eventId: "first", dayId: "w0d0", sortOrder: 1, allottedMinutes: 45 },
             ],
         });
 

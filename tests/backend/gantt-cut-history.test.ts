@@ -46,7 +46,7 @@ vi.mock("@/api-server/db-iterations", () => ({
 }));
 vi.mock("@/api-server/gantt/db-mappings", () => ({
     getModuleDayMappingsForCurriculum: vi.fn(async () => [
-        { dayId: "w0d0", eventId: "g1", sortOrder: 0 },
+        { dayId: "w0d0", eventId: "g1", sortOrder: 0, allottedMinutes: 60 },
     ]),
 }));
 
