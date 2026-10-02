@@ -39,4 +39,24 @@ test.describe("Gantt grid right-click menu", () => {
         await page.getByRole("menuitem", { name: "פתיחה" }).click();
         await expect(page.getByRole("dialog").filter({ hasText: "grid-menu-event" })).toBeVisible({ timeout: 15_000 });
     });
+
+    test("table-only toolbar controls show only on the table tab", async ({ page, request }) => {
+        const curriculumId = await createCurriculum(request, "e2e-grid-toolbar");
+        await page.goto(`/gantt?gc=${curriculumId}`, { waitUntil: "commit", timeout: 60_000 });
+        await waitForAppLoad(page);
+
+        const gridOnly = page.getByRole("button", { name: "קווים אנכיים בטבלה" });
+        const hours = page.getByRole("button", { name: "0:45" });
+        await expect(hours).toBeVisible({ timeout: 30_000 });
+        await expect(gridOnly).toHaveCount(0);
+
+        await page.getByRole("tab", { name: "טבלה" }).click();
+        await expect(gridOnly).toBeVisible();
+
+        for (const tab of [ "רצף זמן", "שבועות", "סילבוסים" ]) {
+            await page.getByRole("tab", { name: tab }).click();
+            await expect(gridOnly, `grid toolbar leaked onto ${tab}`).toHaveCount(0);
+            await expect(hours).toBeVisible();
+        }
+    });
 });
