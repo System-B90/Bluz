@@ -2,5 +2,7 @@ FROM nginx:1.25-alpine
 
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY proxy_params.conf /etc/nginx/proxy_params.conf
+# Reloads nginx when an ACME-renewed certificate lands (#803).
+COPY --chmod=755 reload-on-cert-change.sh /docker-entrypoint.d/90-reload-on-cert-change.sh
 
 EXPOSE 80 443
