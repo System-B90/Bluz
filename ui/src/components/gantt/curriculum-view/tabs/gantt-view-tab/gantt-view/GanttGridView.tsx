@@ -386,7 +386,11 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                 <TableRow
                                     hover
                                     key={ `${r.kind}-${r.key}` }
-                                    sx={ isSummary ? { bgcolor: r.kind === "module" ? "action.hover" : "action.selected" } : undefined }
+                                    sx={ {
+                                        ...(isSummary && { bgcolor: r.kind === "module" ? "action.hover" : "action.selected" }),
+                                        // Blue, not the theme's gray hover: gray is the module row's own fill.
+                                        "&.MuiTableRow-hover:hover": { bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.14) },
+                                    } }
                                 >
                                     { courseColumns.columns.map((c, ci) =>
                                     {
