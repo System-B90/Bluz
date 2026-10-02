@@ -16,7 +16,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Typography from "@mui/material/Typography";
 import { useRouter } from "next/navigation";
 import { enqueueSnackbar } from "notistack";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { CourseId } from "@/api-shared/types/course";
 import { EventChangeInitiator } from "@/api-shared/types/event-history";
@@ -66,6 +66,11 @@ export type EventContextMenuProps = {
     ) => void;
     /** Guards the bulk deletes; resolves false when the user backs out. */
     onConfirm: (message: string, options?: { title?: string }) => Promise<boolean>;
+    /**
+     * Asks before editing events another user has open (#775); resolves true
+     * at once when none of them is locked.
+     */
+    onConfirmLockedEdit: (eventIds: Array<EventId>) => Promise<boolean>;
 };
 
 /**
@@ -81,6 +86,7 @@ export function EventContextMenu({
     onSaveEvent,
     onDeleteEvent,
     onConfirm,
+    onConfirmLockedEdit,
 }: EventContextMenuProps) {
     const router = useRouter();
     const { iterationId } = useCalendar();
@@ -97,6 +103,16 @@ export function EventContextMenu({
 
     const isBulk = targets.length > 1;
 
+    // One "edit anyway" covers the whole menu session: submenu toggles are
+    // often flipped two or three in a row and must not ask each time.
+    const lockAckFor = useRef<ContextMenuTarget | null>(null);
+    const ensureLockAck = useCallback(async (): Promise<boolean> => {
+        if (lockAckFor.current === target) return true;
+        const ok = await onConfirmLockedEdit(targets.map((event) => event.id));
+        if (ok) lockAckFor.current = target;
+        return ok;
+    }, [target, targets, onConfirmLockedEdit]);
+
     /**
      * Writes a change for every target, skipping the ones the transform leaves
      * untouched so an already-correct event is not pushed to the server (and
@@ -104,14 +120,17 @@ export function EventContextMenu({
      */
     const applyToTargets = useCallback(
         (transform: (event: Event) => Event | null) => {
-            for (const event of targets) {
-                const updated = transform(event);
-                if (updated && updated !== event) {
-                    onSaveEvent(updated, EventChangeInitiator.ContextMenu);
+            void ensureLockAck().then((ok) => {
+                if (!ok) return;
+                for (const event of targets) {
+                    const updated = transform(event);
+                    if (updated && updated !== event) {
+                        onSaveEvent(updated, EventChangeInitiator.ContextMenu);
+                    }
                 }
-            }
+            });
         },
-        [targets, onSaveEvent],
+        [targets, onSaveEvent, ensureLockAck],
     );
 
     /** Runs an action and dismisses the menu — the shape most entries want. */
@@ -125,7 +144,8 @@ export function EventContextMenu({
 
     /* ── Timing ─────────────────────────────────────────────── */
 
-    const postpone = useCallback(() => {
+    const postpone = useCallback(async () => {
+        if (!(await ensureLockAck())) return;
         // A locked ("מתואם") event refuses timing changes everywhere else —
         // drag, resize and split all bail on it — so postponing must not be
         // the one back door that moves it anyway.
@@ -144,7 +164,7 @@ export function EventContextMenu({
                 { variant: "warning" },
             );
         }
-    }, [targets, onSaveEvent]);
+    }, [targets, onSaveEvent, ensureLockAck]);
 
     const duplicate = useCallback(() => {
         for (const event of targets) {
@@ -155,6 +175,7 @@ export function EventContextMenu({
     /* ── Delete ─────────────────────────────────────────────── */
 
     const remove = useCallback(async () => {
+        if (!(await ensureLockAck())) return;
         // A one-off delete matches the Delete key and is undoable, so it asks
         // nothing. Wiping a whole selection in one click is the case worth a
         // second look.
@@ -169,7 +190,7 @@ export function EventContextMenu({
         for (const event of targets) {
             onDeleteEvent(event.id, EventChangeInitiator.ContextMenu);
         }
-    }, [isBulk, targets, onConfirm, onDeleteEvent]);
+    }, [isBulk, targets, onConfirm, onDeleteEvent, ensureLockAck]);
 
     /* ── Reassignment ───────────────────────────────────────── */
 
@@ -272,7 +293,7 @@ export function EventContextMenu({
                 <ListItemText>{isBulk ? "שכפול הנבחרים" : "שכפול"}</ListItemText>
             </MenuItem>
 
-            <MenuItem onClick={() => runAndClose(postpone)}>
+            <MenuItem onClick={() => runAndClose(() => void postpone())}>
                 <ListItemIcon>
                     <UpdateIcon fontSize="small" />
                 </ListItemIcon>
