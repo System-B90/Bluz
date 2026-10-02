@@ -90,13 +90,6 @@ describe("Gantt Excel Export Route", () => {
                                                 orchestratorId: 42,
                                                 systemRequirements: ["מקרן"],
                                                 comment: "הערה",
-                                                cEC: [
-                                                    {
-                                                        curriculumId: "c1",
-                                                        eventId: "e1",
-                                                        allocatedDuration: 180,
-                                                    },
-                                                ],
                                             },
                                         },
                                     ],
@@ -169,16 +162,16 @@ describe("Gantt Excel Export Route", () => {
             row.eachCell({ includeEmpty: true }, (cell) => cells.push(String(cell.value ?? "")));
             detailText.push(cells);
         });
-        // Syllabus summary row: title in col 1, total required hours (3) in col 7.
+        // Syllabus summary row: title in col 1, total required hours (2) in col 7.
         const syllabusRow = detailText.find((r) => r[0] === "Syllabus 1");
-        expect(syllabusRow?.[6]).toBe("3");
-        // Module summary row: title in col 2, total required hours (3) in col 7.
+        expect(syllabusRow?.[6]).toBe("2");
+        // Module summary row: title in col 2, total required hours (2) in col 7.
         const moduleRow = detailText.find((r) => r[1] === "Module 1");
-        expect(moduleRow?.[6]).toBe("3");
+        expect(moduleRow?.[6]).toBe("2");
         // Event row: name in col 3, with the field columns populated.
         const eventRow = detailText.find((r) => r[2] === "Event 1");
         expect(eventRow?.[3]).toBe("הרצאה"); // type
-        expect(eventRow?.[6]).toBe("3"); // required hours (allocated 180m)
+        expect(eventRow?.[6]).toBe("2"); // required hours (minimum 120m)
     });
 });
 
@@ -210,7 +203,6 @@ describe("Gantt Excel Export - orchestrator names (#466)", () => {
                                                 orchestratorId: 42,
                                                 recurrence: "weekly",
                                                 systemRequirements: [],
-                                                cEC: [],
                                             },
                                         },
                                     ],

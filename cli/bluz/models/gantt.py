@@ -49,7 +49,6 @@ __all__ = [
     "Curriculum",
     "Day",
     "DayMapping",
-    "EventCurriculumAllocation",
     "EventRecurrence",
     "GanttDayIndex",
     "GanttEvent",
@@ -220,22 +219,12 @@ def _bind_parent(children: list[GanttNode], parent: GanttNode) -> None:
 # --- events -----------------------------------------------------------------
 
 
-class EventCurriculumAllocation(BluzModel):
-    """How long a Gantt event is allocated in one curriculum (minutes)."""
-
-    _repr_fields = ("curriculum_id", "allocated_duration")
-
-    event_id: str | None = None
-    curriculum_id: str
-    allocated_duration: int = 0
-
-
 class GanttEvent(GanttNode):
     """A lesson-type item inside a module (מופע). Durations are minutes.
 
     Examples:
         >>> ev = curriculum["Math"]["Algebra"]["Intro"]
-        >>> ev.allocated_duration, ev.module.title, ev.syllabus.title
+        >>> ev.minimum_duration, ev.module.title, ev.syllabus.title
     """
 
     _entity = "events"
@@ -263,9 +252,6 @@ class GanttEvent(GanttNode):
     hive_module_id: int | None = None
     hive_lesson_id: int | None = None
     module_id: str | None = None
-    allocations: list[EventCurriculumAllocation] = Field(
-        default_factory=list, alias="cEC"
-    )
 
     @property
     def module(self) -> Module:
@@ -285,34 +271,6 @@ class GanttEvent(GanttNode):
     def curriculum(self) -> Curriculum | None:
         """The curriculum this event was reached through, if any."""
         return self.module.curriculum
-
-    @property
-    def allocated_duration(self) -> int | None:
-        """Allocated minutes in the curriculum this event was reached through
-        (or in its only curriculum). None when ambiguous or unallocated."""
-        curriculum = self.curriculum if self._parent is not None else None
-        if curriculum is not None:
-            return self.allocated_in(curriculum)
-        if len(self.allocations) == 1:
-            return self.allocations[0].allocated_duration
-        return None
-
-    def allocated_in(self, curriculum: Curriculum | str) -> int | None:
-        """Allocated minutes in a given curriculum."""
-        target = curriculum if isinstance(curriculum, str) else curriculum.id
-        for allocation in self.allocations:
-            if allocation.curriculum_id == target:
-                return allocation.allocated_duration
-        return None
-
-    def set_allocated_duration(
-        self, minutes: int, curriculum: Curriculum | str | None = None
-    ) -> None:
-        """Set allocated minutes in a curriculum (default: the one reached through)."""
-        target = curriculum or self.curriculum
-        if target is None:
-            raise NotFoundError("Pass the curriculum to allocate time in.")
-        self.bluz.gantt.events.set_time(self.id, target, minutes)
 
     def duplicate(self, module: Module | str | None = None) -> GanttEvent:
         """Clone this event into `module` (default: its own module)."""
@@ -608,6 +566,7 @@ class DayMapping(BluzModel):
     day_id: str
     curriculum_id: str | None = None
     sort_order: float = 0
+    allotted_minutes: int = 0
     week_split_minutes: list[int] | None = None
 
 
@@ -634,7 +593,7 @@ class Curriculum(_Container[Syllabus]):
         >>> for syl in cur:
         ...     for module in syl:
         ...         for ev in module:
-        ...             print(syl.title, module.title, ev.title, ev.allocated_duration)
+        ...             print(syl.title, module.title, ev.title, ev.minimum_duration)
         >>> cur["Mathematics"]["Algebra"]          # lookup by title
         >>> plan = cur.cut_plan(); plan.report     # dry-run the schedule cut
     """

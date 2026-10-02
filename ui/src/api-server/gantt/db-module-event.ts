@@ -12,13 +12,11 @@ import {
     ganttModule2EventsSchema,
     ganttModulesSchema,
 } from "@/api-server/gantt/schema";
-import { ganttCurriculumEventConfigurationsSchema } from "@/api-server/gantt/schema/mappings";
 import { nextEventSortOrder } from "@/api-server/gantt/sort-order";
 import { ClientApiError } from "@/api-shared/errors";
 import { ApiModuleEvent } from "@/api-shared/types/gantt/api-layer";
 import { CreateGanttEventPayload } from "@/api-shared/types/gantt/create-payloads";
 import {
-    GanttCurriculumId,
     GanttEvent,
     GanttEventId,
     GanttModuleId,
@@ -48,9 +46,6 @@ const basicOperations = drizzleOperationsBuilder<
 async function getFullModuleEvent(id: GanttModuleId): Promise<ApiModuleEvent> {
     const result = await postgresDb.query.ganttEventsSchema.findFirst({
         where: eq(ganttEventsSchema.id, id),
-        with: {
-            cEC: true,
-        },
     });
 
     if (!result) {
@@ -118,67 +113,8 @@ async function removeEventFromModule(
 }
 
 /**
- * Retrieves the specific allocated duration for an event within a curriculum context.
- */
-async function getAllocatedTime(
-    eventId: GanttEventId,
-    curriculumId: GanttCurriculumId,
-): Promise<number> {
-    const result =
-        await postgresDb.query.ganttCurriculumEventConfigurationsSchema.findFirst(
-            {
-                where: and(
-                    eq(
-                        ganttCurriculumEventConfigurationsSchema.curriculumId,
-                        curriculumId,
-                    ),
-                    eq(
-                        ganttCurriculumEventConfigurationsSchema.eventId,
-                        eventId,
-                    ),
-                ),
-                columns: {
-                    allocatedDuration: true,
-                },
-            },
-        );
-
-    return result?.allocatedDuration ?? 0;
-}
-
-/**
- * Sets or updates the allocated duration for a specific event in a curriculum.
- * Uses an upsert strategy to maintain data integrity.
- */
-async function setAllocatedTime(
-    eventId: GanttEventId,
-    curriculumId: GanttCurriculumId,
-    duration: number,
-): Promise<void> {
-    await postgresDb
-        .insert(ganttCurriculumEventConfigurationsSchema)
-        .values({
-            curriculumId,
-            eventId,
-            allocatedDuration: duration,
-            updatedAt: new Date(),
-        })
-        .onConflictDoUpdate({
-            target: [
-                ganttCurriculumEventConfigurationsSchema.curriculumId,
-                ganttCurriculumEventConfigurationsSchema.eventId,
-            ],
-            set: {
-                allocatedDuration: duration,
-                updatedAt: new Date(),
-            },
-        });
-}
-
-/**
  * The event fields a NEW shuffle-group sibling copies from its origin. Everything
- * else is per-sibling on purpose: the id, the shuffle tag, the placement and
- * the curriculum-scoped allocated duration are exactly what makes one shuffle's
+ * else is per-sibling on purpose: the id, the shuffle tag, and the placement are exactly what makes one shuffle's
  * copy schedulable at a different time from another's (#699).
  */
 function groupSiblingFields(origin: GanttEvent) {
@@ -367,7 +303,6 @@ async function applyShuffleGroup(
                     {
                         ...groupSiblingFields(origin),
                         orchestratorId: siblingOrchestratorId,
-                        allocatedDuration: 0,
                         shuffles: [name],
                         groupId,
                         moduleId,
@@ -395,8 +330,6 @@ export const DbModuleEvent = {
     ...basicOperations,
     linkItem: addEventToModule,
     unlinkItem: removeEventFromModule,
-    getAllocatedTime,
-    setAllocatedTime,
     applyShuffleGroup,
     findGroupMembers,
 } as const;

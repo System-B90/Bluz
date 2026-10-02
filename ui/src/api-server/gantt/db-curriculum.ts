@@ -8,7 +8,6 @@ import {
 import {
     ganttCurriculum2SyllabusesSchema,
     ganttCurriculum2WeeksSchema,
-    ganttCurriculumEventConfigurationsSchema,
     ganttCurriculumEventDayMappingsSchema,
     ganttDaysSchema,
     ganttEventsSchema,
@@ -70,20 +69,7 @@ async function getFullCurriculum(
                                             m2e: {
                                                 orderBy: M2E_ORDER,
                                                 with: {
-                                                    event: {
-                                                        with: {
-                                                            cEC: {
-                                                                where: (
-                                                                    c,
-                                                                    { eq },
-                                                                ) =>
-                                                                    eq(
-                                                                        c.curriculumId,
-                                                                        id,
-                                                                    ),
-                                                            },
-                                                        },
-                                                    },
+                                                    event: true,
                                                 },
                                             },
                                         },
@@ -184,9 +170,8 @@ export type DuplicateCurriculumOverrides = {
  * Clones a curriculum into a brand-new copy (#319, #322). Syllabuses (and
  * their modules/events) are shared, not cloned — the copy is linked to the
  * same syllabus rows as the source. Weeks → days are deep-cloned with fresh
- * ids, and the per-curriculum event configurations (cEC) plus module/event →
- * day mappings (cMDA) are cloned and repointed at the copy's own curriculum
- * id / day ids. Constraints and recurrence exceptions are intentionally out
+ * ids, and the module/event → day mappings (cMDA) are cloned and repointed
+ * at the copy's own curriculum id / day ids. Constraints and recurrence exceptions are intentionally out
  * of scope.
  */
 async function duplicateCurriculum(
@@ -218,16 +203,12 @@ async function duplicateCurriculum(
         });
 
         // Syllabuses are shared, not cloned: relink the existing syllabus (and
-        // its modules/events) to the copy, and clone only the per-curriculum
-        // event configs (cEC) so allocated durations stay independent.
+        // its modules/events) to the copy.
         // Rows are collected and inserted in one statement per table — an
         // awaited insert per row made duplicating a large curriculum hundreds
         // of sequential round trips (#538 item 9).
         const c2sLinks: Array<
             typeof ganttCurriculum2SyllabusesSchema.$inferInsert
-        > = [];
-        const clonedConfigs: Array<
-            typeof ganttCurriculumEventConfigurationsSchema.$inferInsert
         > = [];
 
         for (const c2sLink of source.c2s ?? []) {
@@ -245,27 +226,12 @@ async function duplicateCurriculum(
                 for (const m2eLink of ganttModule.m2e ?? []) {
                     const event = m2eLink.event;
                     eventIdMap.set(event.id, event.id);
-
-                    // Per-curriculum allocated durations, repointed at the copy.
-                    for (const config of event.cEC ?? []) {
-                        clonedConfigs.push({
-                            curriculumId: newCurriculumId,
-                            eventId: event.id,
-                            allocatedDuration: config.allocatedDuration,
-                            updatedAt: now,
-                        });
-                    }
                 }
             }
         }
 
         if (c2sLinks.length > 0) {
             await tx.insert(ganttCurriculum2SyllabusesSchema).values(c2sLinks);
-        }
-        if (clonedConfigs.length > 0) {
-            await tx
-                .insert(ganttCurriculumEventConfigurationsSchema)
-                .values(clonedConfigs);
         }
 
         // Weeks → days (deep clone, all-new ids), collected per table and
@@ -355,6 +321,7 @@ async function duplicateCurriculum(
                         : null,
                     dayId: newDayId,
                     sortOrder: mapping.sortOrder,
+                    allottedMinutes: mapping.allottedMinutes,
                 },
             ];
         });

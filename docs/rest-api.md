@@ -86,7 +86,6 @@ For the TypeScript client and server modules, see the online reference:
 | GET, PATCH, DELETE | `/api/gantt/days/{id}` |
 | GET, POST | `/api/gantt/events` |
 | GET, PATCH, DELETE | `/api/gantt/events/{id}` |
-| GET, POST | `/api/gantt/events/{id}/allocate-time` |
 | POST | `/api/gantt/events/{id}/duplicate` |
 | POST, DELETE | `/api/gantt/events/{id}/link` |
 | POST | `/api/gantt/events/{id}/materialize` |
@@ -94,7 +93,6 @@ For the TypeScript client and server modules, see the online reference:
 | POST | `/api/gantt/events/{id}/shuffle-group` |
 | GET, POST | `/api/gantt/modules` |
 | GET, PATCH, DELETE | `/api/gantt/modules/{id}` |
-| GET, POST | `/api/gantt/modules/{id}/allocate-time` |
 | POST, DELETE | `/api/gantt/modules/{id}/link` |
 | POST | `/api/gantt/modules/{id}/reorder-events` |
 | GET, POST | `/api/gantt/syllabuses` |

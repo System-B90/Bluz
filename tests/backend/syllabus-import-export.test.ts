@@ -30,7 +30,6 @@ import {
 import {
     ganttConstraintsSchema,
     ganttCurriculum2SyllabusesSchema,
-    ganttCurriculumEventConfigurationsSchema,
     ganttEventsSchema,
     ganttModule2EventsSchema,
     ganttModulesSchema,
@@ -67,10 +66,6 @@ function event(id: string, extra: Record<string, unknown> = {}) {
         type: "הרצאה",
         minimumDuration: 60,
         hiveLessonId: 42,
-        cEC: [
-            { curriculumId: "c_src", allocatedDuration: 90 },
-            { curriculumId: "c_other", allocatedDuration: 10 },
-        ],
         ...extra,
     };
 }
@@ -116,7 +111,6 @@ async function runImport(overrides: Partial<Parameters<typeof importSyllabusTree
     const maps = emptyMaps();
     const id = await importSyllabusTree(tx, syllabus(), {
         curriculumId: "c_new",
-        sourceCurriculumId: "c_src",
         now,
         maps,
         ...overrides,
@@ -201,21 +195,6 @@ describe("importSyllabusTree", () => {
         for (const e of rowsOf(rows, ganttEventsSchema)) expect(e.hiveLessonId).toBeNull();
     });
 
-    it("carries the source curriculum's allocated duration", async () => {
-        const { rows } = await runImport();
-        const configs = rowsOf(rows, ganttCurriculumEventConfigurationsSchema);
-        expect(configs).toHaveLength(3);
-        for (const c of configs) {
-            expect(c.allocatedDuration).toBe(90);
-            expect(c.curriculumId).toBe("c_new");
-        }
-    });
-
-    it("writes no duration config without a source curriculum", async () => {
-        const { rows } = await runImport({ sourceCurriculumId: undefined });
-        expect(rowsOf(rows, ganttCurriculumEventConfigurationsSchema)).toHaveLength(0);
-    });
-
     it("fills the id maps for constraints", async () => {
         const { maps } = await runImport();
         expect(Object.keys(maps.moduleIdMap).sort()).toEqual(["m1", "m2"]);
@@ -227,7 +206,7 @@ describe("importSyllabusTree", () => {
         (bad.s2m[0].module.m2e[0].event as unknown as Record<string, unknown>).type = "not-a-type";
         const { tx } = recordingTx();
         await expect(
-            importSyllabusTree(tx, bad, { curriculumId: "c", sourceCurriculumId: "c_src", now, maps: emptyMaps() }),
+            importSyllabusTree(tx, bad, { curriculumId: "c", now, maps: emptyMaps() }),
         ).rejects.toThrow();
     });
 });

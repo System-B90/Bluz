@@ -127,7 +127,6 @@ const baseEvent = {
     title: "פיזיקה",
     type: ModuleEventType.Lecture,
     minimumDuration: 90,
-    allocatedDuration: 90,
     orchestratorId: 42,
     recommendedLecturerIds: ["outsider-abc", "outsider-xyz"],
     systemRequirements: ["לוח חכם"],
@@ -171,7 +170,6 @@ describe("POST /api/gantt/events/[id]/duplicate", () => {
                 isCritical: false,
                 isPaWindow: true,
                 comment: "הערה",
-                allocatedDuration: 0,
             }),
         );
     });

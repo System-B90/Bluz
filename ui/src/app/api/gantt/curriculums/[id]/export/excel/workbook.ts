@@ -9,10 +9,7 @@ import {
 } from "@vendor/exceljs";
 import dayjs from "dayjs";
 
-import {
-    ApiCurriculum,
-    ApiModuleEvent,
-} from "@/api-shared/types/gantt/api-layer";
+import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
 import {
     DAY_NAME_DISPLAY,
     GanttDayIndex,
@@ -49,6 +46,8 @@ export type DayMapping = {
     moduleId: string;
     eventId: null | string;
     sortOrder: null | number;
+    /** Minutes this event takes on this day — the mapping's own share. */
+    allottedMinutes: number;
 };
 
 const BORDER_SIDE: Partial<Border> = {
@@ -148,16 +147,10 @@ export async function buildGanttExcelWorkbook(
     >();
     const eventMap = new Map<
         string,
-        { eventTitle: string; allocatedDuration: number }
+        { eventTitle: string }
     >();
     const moduleEventIds = new Map<string, Array<string>>();
     const syllabusTitles: Array<string> = [];
-
-    // Per-curriculum required duration for an event (allocated, else minimum).
-    const eventRequiredMinutes = (event: ApiModuleEvent): number => {
-        const config = event.cEC?.find((c) => c.curriculumId === curriculum.id);
-        return config?.allocatedDuration ?? event.minimumDuration ?? 0;
-    };
 
     for (const c2sItem of curriculum.c2s ?? []) {
         const syllabus = c2sItem.syllabus;
@@ -174,10 +167,7 @@ export async function buildGanttExcelWorkbook(
             for (const m2eItem of mod.m2e ?? []) {
                 const event = m2eItem.event;
                 if (!event) continue;
-                eventMap.set(event.id, {
-                    eventTitle: event.title,
-                    allocatedDuration: eventRequiredMinutes(event),
-                });
+                eventMap.set(event.id, { eventTitle: event.title });
                 eventIds.push(event.id);
             }
             moduleEventIds.set(mod.id, eventIds);
@@ -384,7 +374,7 @@ export async function buildGanttExcelWorkbook(
                         ? eventMap.get(mapping.eventId)
                         : null;
                     const allocatedHours = minutesToHours(
-                        evInfo?.allocatedDuration ?? 0,
+                        mapping.eventId ? mapping.allottedMinutes : 0,
                     );
                     weekTotalHours += allocatedHours;
 
@@ -537,7 +527,7 @@ export async function buildGanttExcelWorkbook(
                 const event = m2eItem.event;
                 if (!event) continue;
 
-                const requiredMinutes = eventRequiredMinutes(event);
+                const requiredMinutes = event.minimumDuration ?? 0;
                 moduleTotalMinutes += requiredMinutes;
 
                 const row = detailSheet.addRow({

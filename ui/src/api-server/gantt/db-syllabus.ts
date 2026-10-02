@@ -72,11 +72,7 @@ async function getFullSyllabus(id: GanttSyllabusId): Promise<ApiSyllabus> {
                             m2e: {
                                 orderBy: M2E_ORDER,
                                 with: {
-                                    event: {
-                                        with: {
-                                            cEC: true,
-                                        },
-                                    },
+                                    event: true,
                                 },
                             },
                         },

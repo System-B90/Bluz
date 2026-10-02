@@ -61,7 +61,6 @@ function CreateModuleEventButton({ moduleId }: { moduleId: GanttModuleId }) {
             moduleId,
             undefined,
             undefined,
-            undefined,
             null,
             null,
             null,

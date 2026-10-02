@@ -72,7 +72,6 @@ export async function materializeRecurrenceOccurrence(data: {
             title: sourceEvent.title,
             type: sourceEvent.type,
             minimumDuration: sourceEvent.minimumDuration,
-            allocatedDuration: 0,
             orchestratorId: sourceEvent.orchestratorId,
             recommendedLecturerIds: sourceEvent.recommendedLecturerIds,
             systemRequirements: sourceEvent.systemRequirements,

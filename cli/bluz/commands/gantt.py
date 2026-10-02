@@ -1,7 +1,7 @@
 """
 Name: gantt.py
 Purpose: Drive the Gantt / curriculum API. A single entity-app factory provides
-         CRUD + link + allocate-time + reorder for every Gantt entity (DRY), and
+         CRUD + link + reorder for every Gantt entity (DRY), and
          curriculum-specific commands add export/import/constraints/mappings.
          Mirrors ui/src/api-client/gantt/*.
 Created: 2026-06-27
@@ -52,7 +52,6 @@ def _entity_app(
     *,
     help_text: str,
     link: bool = False,
-    allocate: bool = False,
     reorder: str | None = None,
 ) -> typer.Typer:
     """
@@ -147,28 +146,6 @@ def _entity_app(
                 bz.gantt.entity(entity).unlink(item_id, old_parent_id)
             success(f"Unlinked {item_id} from {old_parent_id}")
 
-    if allocate:
-
-        @sub.command("get-time")
-        def get_time(
-            item_id: str = typer.Argument(..., help="Item id."),
-            container_id: str = typer.Argument(..., help="Container (curriculum) id."),
-        ) -> None:
-            """Get the item's allocated time within a container."""
-            with session() as bz:
-                show(bz.gantt.entity(entity).get_time(item_id, container_id))
-
-        @sub.command("set-time")
-        def set_time(
-            item_id: str = typer.Argument(..., help="Item id."),
-            container_id: str = typer.Argument(..., help="Container (curriculum) id."),
-            duration: int = typer.Argument(..., help="Duration to allocate."),
-        ) -> None:
-            """Set the item's allocated time within a container."""
-            with session() as bz:
-                bz.gantt.entity(entity).set_time(item_id, container_id, duration)
-            success(f"Allocated {duration} to {item_id} in {container_id}")
-
     if reorder is not None:
         sub_name = reorder
 
@@ -201,10 +178,9 @@ modules_app = _entity_app(
     "modules",
     help_text="Modules.",
     link=True,
-    allocate=True,
     reorder="reorder-events",
 )
-events_app = _entity_app("events", help_text="Gantt events.", link=True, allocate=True)
+events_app = _entity_app("events", help_text="Gantt events.", link=True)
 days_app = _entity_app("days", help_text="Curriculum days.", link=False)
 weeks_app = _entity_app("weeks", help_text="Curriculum weeks.", link=False)
 

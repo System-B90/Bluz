@@ -118,7 +118,6 @@ function makeEvent(
         title: overrides.id,
         type: ModuleEventType.Lecture,
         minimumDuration: 60,
-        allocatedDuration: 0,
         orchestratorId: null,
         recommendedLecturerIds: [],
         systemRequirements: [],
@@ -131,7 +130,6 @@ function makeEvent(
         hiveSubjectId: null,
         hiveModuleId: null,
         hiveLessonId: null,
-        cEC: [{ eventId: overrides.id, curriculumId: "c1", allocatedDuration: 60 }],
         createdAt: "2024-01-01T00:00:00.000Z",
         updatedAt: "2024-01-01T00:00:00.000Z",
         ...overrides,
@@ -299,8 +297,8 @@ describe("cut — document stacking", () => {
         } as Awaited<ReturnType<typeof DbSettings.get>>);
         arrange({
             events: [
-                makeEvent({ id: "first", cEC: [{ eventId: "first", curriculumId: "c1", allocatedDuration: 45 }] }),
-                makeEvent({ id: "second", cEC: [{ eventId: "second", curriculumId: "c1", allocatedDuration: 90 }] }),
+                makeEvent({ id: "first" }),
+                makeEvent({ id: "second" }),
             ],
             mappings: [
                 { eventId: "second", dayId: "w0d0", sortOrder: 5, allottedMinutes: 90 },

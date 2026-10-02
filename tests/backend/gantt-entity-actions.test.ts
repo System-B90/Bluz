@@ -12,13 +12,12 @@ import { BaseGantItem } from "@/api-shared/types/gantt/models";
  * behaviour that a plausible refactor would silently break.
  */
 
-type TestEntity = { id: string; title: string; allocatedDuration?: number };
+type TestEntity = { id: string; title: string };
 
 function buildActions(
     overrides: {
         api?: Partial<Record<string, unknown>>;
         getEntity?: (id: string) => TestEntity | undefined;
-        getAllocatedTime?: (id: string) => number | undefined;
     } = {},
 ) {
     const dispatch = vi.fn();
@@ -28,7 +27,6 @@ function buildActions(
         apiDelete: vi.fn(),
         apiLink: vi.fn(),
         apiUnlink: vi.fn(),
-        apiSetAllocatedTime: vi.fn(),
         ...overrides.api,
     };
 
@@ -38,7 +36,6 @@ function buildActions(
         label: "test",
         containerLabel: "container",
         getEntity: overrides.getEntity,
-        getAllocatedTime: overrides.getAllocatedTime,
         builders: {
             add: (entity, containerId) => ({
                 type: "ADD",
@@ -51,10 +48,6 @@ function buildActions(
             remove: (containerId, id) => ({
                 type: "REMOVE",
                 payload: { containerId, id },
-            }) as never,
-            allocateTime: (id, curriculumId, duration) => ({
-                type: "ALLOCATE",
-                payload: { id, curriculumId, duration },
             }) as never,
         },
     });
@@ -163,114 +156,6 @@ describe("makeEntityActions - optimistic unlink (#328)", () => {
         });
 
         await expect(actions.unlink("c_1", "e_1")).rejects.toThrow("boom");
-        expect(dispatch).not.toHaveBeenCalled();
-    });
-});
-
-describe("makeEntityActions - optimistic allocateTime (#328)", () => {
-    it("applies the new duration before the API resolves", async () => {
-        let resolveCall: () => void = () => {};
-        const apiSetAllocatedTime = vi.fn(
-            () => new Promise<void>((resolve) => (resolveCall = resolve)),
-        );
-        const { actions, dispatch } = buildActions({
-            api: { apiSetAllocatedTime },
-            getAllocatedTime: () => 30,
-        });
-
-        const pending = actions.allocateTime("e_1", "c_1" as never, 90);
-
-        expect(dispatch).toHaveBeenCalledWith({
-            type: "ALLOCATE",
-            payload: { id: "e_1", curriculumId: "c_1", duration: 90 },
-        });
-
-        resolveCall();
-        await pending;
-        expect(dispatch).toHaveBeenCalledTimes(1);
-    });
-
-    it("restores the previous duration on failure", async () => {
-        const { actions, dispatch } = buildActions({
-            api: {
-                apiSetAllocatedTime: vi
-                    .fn()
-                    .mockRejectedValue(new Error("boom")),
-            },
-            getAllocatedTime: () => 30,
-        });
-
-        await expect(
-            actions.allocateTime("e_1", "c_1" as never, 90),
-        ).rejects.toThrow("boom");
-
-        // REGRESSION: the rollback must send the *snapshot* value, not the
-        // attempted one — dispatching 90 again would leave the failed edit
-        // applied.
-        expect(dispatch).toHaveBeenNthCalledWith(2, {
-            type: "ALLOCATE",
-            payload: { id: "e_1", curriculumId: "c_1", duration: 30 },
-        });
-    });
-
-    it("rolls back correctly when the previous duration was zero", async () => {
-        const { actions, dispatch } = buildActions({
-            api: {
-                apiSetAllocatedTime: vi
-                    .fn()
-                    .mockRejectedValue(new Error("boom")),
-            },
-            getAllocatedTime: () => 0,
-        });
-
-        await expect(
-            actions.allocateTime("e_1", "c_1" as never, 45),
-        ).rejects.toThrow("boom");
-
-        // REGRESSION: 0 is falsy. A truthiness check instead of an
-        // `undefined` check would skip both the optimistic dispatch and this
-        // rollback, stranding the UI at 45.
-        expect(dispatch).toHaveBeenNthCalledWith(1, {
-            type: "ALLOCATE",
-            payload: { id: "e_1", curriculumId: "c_1", duration: 45 },
-        });
-        expect(dispatch).toHaveBeenNthCalledWith(2, {
-            type: "ALLOCATE",
-            payload: { id: "e_1", curriculumId: "c_1", duration: 0 },
-        });
-    });
-
-    it("stays non-optimistic when no prior value is readable", async () => {
-        const { actions, dispatch } = buildActions({
-            api: { apiSetAllocatedTime: vi.fn().mockResolvedValue(undefined) },
-            getAllocatedTime: () => undefined,
-        });
-
-        await actions.allocateTime("m_1", "c_1" as never, 90);
-
-        // REGRESSION: modules deliberately omit `getAllocatedTime` because
-        // ALLOCATE_TIME_TO_MODULE redistributes across children and cannot be
-        // undone with a single number. They must keep awaiting the server.
-        expect(dispatch).toHaveBeenCalledTimes(1);
-        expect(dispatch).toHaveBeenCalledWith({
-            type: "ALLOCATE",
-            payload: { id: "m_1", curriculumId: "c_1", duration: 90 },
-        });
-    });
-
-    it("dispatches nothing when a non-optimistic allocation fails", async () => {
-        const { actions, dispatch } = buildActions({
-            api: {
-                apiSetAllocatedTime: vi
-                    .fn()
-                    .mockRejectedValue(new Error("boom")),
-            },
-            getAllocatedTime: () => undefined,
-        });
-
-        await expect(
-            actions.allocateTime("m_1", "c_1" as never, 90),
-        ).rejects.toThrow("boom");
         expect(dispatch).not.toHaveBeenCalled();
     });
 });
