@@ -29,7 +29,9 @@ npm run dev
 | OpenAI-compatible | `openai` | `OPENAI_BASE_URL`, `OPENAI_API_KEY` |
 
 A user's own token (Settings → אישי → עוזר AI) replaces the key for either
-provider. A missing key or URL answers `503` with a message naming the
+provider. The same card has a **מודל** dropdown fed by the backend's model list
+(free text when listing fails). On the server's key a personal model is used
+only if the backend lists it; on a personal key it is sent as typed. A missing key or URL answers `503` with a message naming the
 variable.
 
 Verify the configured model is actually usable:
@@ -40,7 +42,9 @@ when set, else the server key — the same provider chat would use.
 
 - `OPENAI_BASE_URL` is `https://<host>/api`. Bluz appends `/chat/completions`.
 - Create the key in Open WebUI under **Settings → Account → API Keys**.
-- Get valid model IDs from `https://<host>/api/models` and set `AI_MODEL`.
+- Get valid model IDs from `https://<host>/api/models` and set `AI_MODEL`. Bluz
+  reads the same list (`GET /api/ai/models`): the self-test warns when
+  `AI_MODEL` is not on it.
 - The Bluz **server** makes the call, not the browser. It needs a network route
   to the gateway.
 - The model must support tool calling. Wrapped models and pipes may silently

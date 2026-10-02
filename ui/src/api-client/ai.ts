@@ -13,9 +13,11 @@ import {
     ApiAiChatPayload,
 } from "@/api-shared/types/ai";
 import { AiBenchmarkJob } from "@/api-shared/types/ai-benchmark";
+import { ApiAiModelsResponse } from "@/api-shared/types/ai-models";
 
 const CHAT_ENDPOINT = "/api/ai/chat";
 const TOOLS_ENDPOINT = "/api/ai/tools";
+const MODELS_ENDPOINT = "/api/ai/models";
 const BENCHMARK_ENDPOINT = "/api/ai/benchmark";
 
 /**
@@ -60,6 +62,21 @@ export async function* streamAiChat(
             // turn still streams.
             continue;
         }
+    }
+}
+
+/**
+ * Models the configured AI backend offers (#779). Never throws: an empty list
+ * (with `error`) just leaves the settings field free-text.
+ */
+export async function fetchAiModels(): Promise<ApiAiModelsResponse> {
+    try {
+        const response = await fetch(MODELS_ENDPOINT);
+        const body = await response.json().catch(() => null);
+        if (response.ok && body?.data) return body.data as ApiAiModelsResponse;
+        return { models: [], defaultModel: "", error: body?.error?.message ?? "רשימת המודלים לא זמינה" };
+    } catch {
+        return { models: [], defaultModel: "", error: "רשימת המודלים לא זמינה" };
     }
 }
 
