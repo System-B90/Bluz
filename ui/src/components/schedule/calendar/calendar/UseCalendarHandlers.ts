@@ -13,10 +13,10 @@ import { MIN_SEGMENT_MINUTES, workingMsUpTo } from "@/api-shared/interval-layout
 import { EventChangeInitiator } from "@/api-shared/types/event-history";
 import { ResolvableRoom, resourceKeyToResolvable } from "@/api-shared/types/room";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
+import { DUMMY_ROOM_ID, PasteSlot, pastedEventFrom } from "@/components/schedule/calendar/calendar/paste";
 import { Event } from "@/components/schedule/types/event";
 import { copyableFields } from "@/components/schedule/types/EventUtils";
 
-const DUMMY_ROOM_ID = "no-room-unassigned";
 const MIN_WORKING_MS = MIN_SEGMENT_MINUTES * 60_000;
 
 /**
@@ -231,6 +231,36 @@ export function useCalendarHandlers(
         ],
     );
 
+    /* ── Clipboard: shared by the keyboard and the right-click menus (#859) ── */
+
+    const copyEvent = useCallback((event: Event) => setCopiedEvent(event), []);
+
+    const cutEvent = useCallback(
+        (event: Event) => {
+            setCopiedEvent(event);
+            handleDeleteEvent(event.id, EventChangeInitiator.CopyPaste);
+            setActiveEvent(null);
+        },
+        [handleDeleteEvent],
+    );
+
+    /** Pastes the clipboard at `slot` (or beside the original); no-op when empty. */
+    const pasteAt = useCallback(
+        (slot: null | PasteSlot) => {
+            const copied = copyPasteData.current.copiedEvent;
+            if (!copied) return;
+            // The saved copy carries the id the provider assigned, so
+            // Delete/Ctrl+C/Ctrl+X work on it straight away (#653).
+            const saved = handleSaveEvent(
+                pastedEventFrom(copied, slot),
+                EventChangeInitiator.CopyPaste,
+            );
+            setActiveEvent(saved ?? null);
+            setSelectedSlotInfo(null);
+        },
+        [handleSaveEvent],
+    );
+
     const handleKeyDown = useCallback(
         (e: KeyboardEvent) => {
             // These shortcuts act on the calendar, so they must stay out of the
@@ -269,56 +299,18 @@ export function useCalendarHandlers(
             }
 
             if (isCmdOrCtrl && e.key === "c" && currentActive) {
-                setCopiedEvent(currentActive);
+                copyEvent(currentActive);
             }
 
             if (isCmdOrCtrl && e.key === "x" && currentActive) {
-                setCopiedEvent(currentActive);
-                handleDeleteEvent(
-                    currentActive.id,
-                    EventChangeInitiator.CopyPaste,
-                );
-                setActiveEvent(null);
+                cutEvent(currentActive);
             }
 
             if (isCmdOrCtrl && e.key === "v" && currentCopied) {
                 e.preventDefault();
-                const originalStart = dayjs(currentCopied.startTime);
-                const originalEnd = dayjs(currentCopied.endTime);
-                const duration = originalEnd.diff(originalStart, "minute");
-
-                let newStart = currentSlot
-                    ? dayjs(currentSlot.start)
-                    : originalStart.add(30, "minute");
-                let newEnd = newStart.add(duration, "minute");
-
-                let newRooms = currentCopied.rooms;
-                if (currentSlot?.resourceId) {
-                    const parsedRoomId = resourceKeyToResolvable(
-                        currentSlot.resourceId.toString(),
-                    );
-                    newRooms =
-                        parsedRoomId.id === DUMMY_ROOM_ID ? [] : [parsedRoomId];
-                }
-
-                const newEvent = {
-                    ...copyableFields(currentCopied),
-                    startTime: newStart, // Keep Dayjs objects to align with the Event type signature
-                    endTime: newEnd, // Keep Dayjs objects to align with the Event type signature
-                    rooms: newRooms,
-                } as Event;
-
-                // The saved copy carries the id the provider assigned, so
-                // Delete/Ctrl+C/Ctrl+X work on it straight away (#653).
-                const saved = handleSaveEvent(
-                    newEvent,
-                    EventChangeInitiator.CopyPaste,
-                );
-                setActiveEvent(saved ?? null);
-                setSelectedSlotInfo(null);
+                pasteAt(currentSlot);
             }
-        },
-        [handleSaveEvent, handleDeleteEvent],
+        },        [handleDeleteEvent, copyEvent, cutEvent, pasteAt],
     );
 
     useEffect(() => {
@@ -332,5 +324,9 @@ export function useCalendarHandlers(
         handleSlotSelect,
         setActiveEvent,
         activeEvent,
+        copiedEvent,
+        copyEvent,
+        cutEvent,
+        pasteAt,
     };
 }
