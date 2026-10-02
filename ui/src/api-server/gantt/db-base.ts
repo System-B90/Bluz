@@ -49,9 +49,7 @@ const SERVER_OWNED_COLUMNS = new Set([
  *
  * Unknown fields are dropped rather than rejected: several create payloads
  * legitimately carry values that live in a junction table instead of on the
- * entity — `allocatedDuration` on an event is written through
- * `DbModuleEvent.setAllocatedTime`, not the events table — and the app itself
- * sends them. A missing required field or a bad enum value, by contrast, is
+ * entity — and the app itself sends them. A missing required field or a bad enum value, by contrast, is
  * always a caller mistake, so those become a 400 naming the offending field.
  *
  * Parent foreign keys (`curriculumId`, `moduleId`, …) live in junction tables

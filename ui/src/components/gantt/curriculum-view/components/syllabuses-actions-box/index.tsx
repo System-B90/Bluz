@@ -83,8 +83,6 @@ export function SyllabusesActionsBox({
                                         type: eventDoc.type,
                                         minimumDuration:
                                             eventDoc.minimumDuration,
-                                        allocatedDuration:
-                                            eventDoc.allocatedDuration,
                                         constraints: eventDoc.constraints,
                                         hiveSubjectId: eventDoc.hiveSubjectId,
                                         hiveModuleId: eventDoc.hiveModuleId,
@@ -180,7 +178,6 @@ export function SyllabusesActionsBox({
                                             newModule.id,
                                             eventData.type,
                                             eventData.minimumDuration || 0,
-                                            eventData.allocatedDuration || 0,
                                             eventData.hiveSubjectId ?? null,
                                             eventData.hiveModuleId ?? null,
                                             eventData.hiveLessonId ?? null,

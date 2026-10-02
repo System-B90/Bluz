@@ -1,10 +1,7 @@
 import { Dispatch } from "react";
 
 import { BasicGantApi } from "@/api-client/gantt/base";
-import {
-    BaseGantItem,
-    GanttCurriculumId,
-} from "@/api-shared/types/gantt/models";
+import { BaseGantItem } from "@/api-shared/types/gantt/models";
 import { withGantErrorHandling } from "@/components/gantt/state/hooks/gantt-funcs/WithGantErrorHandling";
 import { Action } from "@/components/gantt/state/reducer";
 
@@ -27,11 +24,6 @@ export type EntityActionBuilders<
      * its temp entity — see `create`'s `buildOptimistic` parameter (#381).
      */
     discard?: (id: TEntity["id"]) => Action;
-    allocateTime?: (
-        id: TEntity["id"],
-        curriculumId: GanttCurriculumId,
-        duration: number,
-    ) => Action;
 };
 
 export type MakeEntityActionsProps<
@@ -53,18 +45,6 @@ export type MakeEntityActionsProps<
      * ref-backed useCallback) so the returned actions stay memoized.
      */
     getEntity?: (id: TEntity["id"]) => TEntity | undefined;
-    /**
-     * Reads the entity's current allocated duration. When provided,
-     * `allocateTime` becomes optimistic and rolls back to this value on
-     * failure.
-     *
-     * Only supply it when `builders.allocateTime` maps to a *scalar* reducer
-     * action. Events qualify (`ALLOCATE_TIME` writes one field); modules do
-     * not — `ALLOCATE_TIME_TO_MODULE` redistributes time across every child
-     * event, so restoring a single number would not undo it. Modules
-     * therefore omit this and keep waiting on the server (#328).
-     */
-    getAllocatedTime?: (id: TEntity["id"]) => number | undefined;
 };
 
 /**
@@ -84,7 +64,6 @@ export function makeEntityActions<
     containerLabel,
     builders,
     getEntity,
-    getAllocatedTime,
 }: MakeEntityActionsProps<TEntity, TContainerId, TCreatePayload>) {
     // Per-id sequence guarding against out-of-order responses: a slow PATCH must
     // not clobber a newer edit made while it was in flight (#327). Persists for
@@ -195,39 +174,5 @@ export function makeEntityActions<
         }
     };
 
-    const allocateTime = async (
-        id: TEntity["id"],
-        curriculumId: GanttCurriculumId,
-        allocatedDuration: number,
-    ) => {
-        const buildAllocateTime = builders.allocateTime;
-        // Optimistic only when the caller can hand back a prior value to
-        // restore — see `getAllocatedTime`.
-        const previous = getAllocatedTime?.(id);
-        const isOptimistic = buildAllocateTime && previous !== undefined;
-
-        if (isOptimistic) {
-            dispatch(buildAllocateTime(id, curriculumId, allocatedDuration));
-        }
-
-        try {
-            await api.apiSetAllocatedTime(id, curriculumId, allocatedDuration);
-            if (!isOptimistic && buildAllocateTime) {
-                dispatch(
-                    buildAllocateTime(id, curriculumId, allocatedDuration),
-                );
-            }
-        } catch (error) {
-            if (isOptimistic) {
-                dispatch(buildAllocateTime(id, curriculumId, previous));
-            }
-            console.error(
-                `Failed to allocate time to ${label} (ID: ${id}):`,
-                error,
-            );
-            throw error;
-        }
-    };
-
-    return { create, update, remove, link, unlink, allocateTime } as const;
+    return { create, update, remove, link, unlink } as const;
 }

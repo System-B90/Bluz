@@ -83,7 +83,6 @@ async function buildCurriculum(
     const event = await apiJson<{ id: string }>(
         await request.post("/api/gantt/events", {
             data: {
-                allocatedDuration: 60,
                 comment: null,
                 hiveLessonId: null,
                 hiveModuleId: null,

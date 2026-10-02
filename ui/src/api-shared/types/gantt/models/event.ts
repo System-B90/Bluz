@@ -30,7 +30,6 @@ export type GanttEvent = {
     title: string;
     type: ModuleEventType;
     minimumDuration: number;
-    allocatedDuration: number;
     /** Hive id of the responsible instructor ("אחראי"); null when unassigned. */
     orchestratorId: null | number;
     /** Outsider IDs, ordered by recommendation priority (top = most recommended). */

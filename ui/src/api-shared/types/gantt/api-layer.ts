@@ -56,13 +56,7 @@ export type BasicGantOperations<
     deleteItem: (id: TEntity["id"]) => Promise<void>;
 };
 
-export type ApiModuleEvent = {
-    cEC: Array<{
-        eventId: GanttEventId;
-        curriculumId: GanttCurriculumId;
-        allocatedDuration: number;
-    }>;
-} & Omit<GanttEvent & RawBaseDocument, "allocatedDuration" | "constraints">;
+export type ApiModuleEvent = Omit<GanttEvent & RawBaseDocument, "constraints">;
 
 export type ApiModule = {
     m2e: Array<{

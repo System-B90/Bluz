@@ -76,7 +76,6 @@ export const POST = withApi(async (request: NextRequest) => {
     }
 
     const newCurriculumId = `c_${crypto.randomUUID()}`;
-    const oldCurriculumId = curriculum.id;
 
     const dayIdMap: Record<string, string> = {};
     const maps: ImportIdMaps = { moduleIdMap: {}, eventIdMap: {} };
@@ -153,7 +152,6 @@ export const POST = withApi(async (request: NextRequest) => {
                 if (!c2sItem.syllabus) continue;
                 await importSyllabusTree(tx, c2sItem.syllabus, {
                     curriculumId: newCurriculumId,
-                    sourceCurriculumId: oldCurriculumId,
                     now,
                     maps,
                 });

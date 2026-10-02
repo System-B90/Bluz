@@ -58,10 +58,6 @@ export function useModuleActions() {
                         type: "PURGE_ENTITY",
                         payload: { collection: "modules", id: moduleId },
                     }),
-                    allocateTime: (moduleId, curriculumId, duration) => ({
-                        type: "ALLOCATE_TIME_TO_MODULE",
-                        payload: { moduleId, curriculumId, duration },
-                    }),
                 },
             }),
         [dispatch, getEntity],
@@ -107,6 +103,5 @@ export function useModuleActions() {
         deleteModule: actions.remove,
         linkModuleToSyllabus: actions.link,
         unlinkModuleToSyllabus: actions.unlink,
-        allocateTimeToModule: actions.allocateTime,
     } as const;
 }

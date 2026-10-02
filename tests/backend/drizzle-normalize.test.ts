@@ -28,10 +28,6 @@ const syllabus = {
                         event: {
                             id: "e1",
                             title: "אירוע",
-                            cEC: [
-                                { curriculumId: "c1", allocatedDuration: 90 },
-                                { curriculumId: "cX", allocatedDuration: 30 },
-                            ],
                         },
                     },
                     { event: { id: "e2", title: "אירוע ב" } },
@@ -88,25 +84,6 @@ describe("normalizeApiSyllabus", () => {
         expect(modules[ 0 ].events).toEqual([ "e1", "e2" ]);
         expect(modules[ 0 ].syllabusId).toBe("s1");
         expect(events.map((e) => e.moduleId)).toEqual([ "m1", "m1" ]);
-    });
-
-    it("picks the allocated duration belonging to this curriculum", () => {
-        const { events } = normalizeApiSyllabus(
-            syllabus,
-            "c1" as GanttCurriculumId,
-        );
-
-        expect(events[ 0 ].allocatedDuration).toBe(90);
-    });
-
-    it("defaults an event with no configuration for this curriculum to zero", () => {
-        const { events } = normalizeApiSyllabus(
-            syllabus,
-            "cY" as GanttCurriculumId,
-        );
-
-        expect(events[ 0 ].allocatedDuration).toBe(0);
-        expect(events[ 1 ].allocatedDuration).toBe(0);
     });
 
     it("keeps the shuffle tags of the syllabus and its modules (#699)", () => {

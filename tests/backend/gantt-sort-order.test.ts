@@ -128,7 +128,7 @@ describe("linking appends instead of using the column default (#761)", () => {
             { id: MID, m2e: [], s2m: [] } as never,
         );
         vi.mocked(postgresDb.query.ganttEventsSchema.findFirst).mockResolvedValue(
-            { id: EID, cEC: [], m2e: [] } as never,
+            { id: EID, m2e: [] } as never,
         );
     });
 

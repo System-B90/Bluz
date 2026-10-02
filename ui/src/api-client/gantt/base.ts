@@ -107,17 +107,6 @@ export type BasicGantApi<
         oldParentId: BaseGantItem["id"],
         options?: ClientApiProps,
     ) => Promise<void>;
-    readonly apiSetAllocatedTime: (
-        itemId: TEntity["id"],
-        containerId: BaseGantItem["id"],
-        allocatedTime: number,
-        options?: ClientApiProps,
-    ) => Promise<void>;
-    readonly apiGetAllocatedTime: (
-        itemId: TEntity["id"],
-        containerId: BaseGantItem["id"],
-        options?: ClientApiProps,
-    ) => Promise<number>;
 };
 
 export function clientGantApiBuilder<
@@ -253,32 +242,6 @@ export function clientGantApiBuilder<
         });
     }
 
-    async function apiSetAllocatedTime(
-        itemId: TEntity["id"],
-        containerId: BaseGantItem["id"],
-        allocatedTime: number,
-        options?: ClientApiProps,
-    ): Promise<void> {
-        await safeApiFetcher<void>(buildItemUrl(itemId, "allocate-time"), {
-            ...options,
-            method: "POST",
-            body: JSON.stringify({ containerId, duration: allocatedTime }),
-        });
-    }
-
-    async function apiGetAllocatedTime(
-        itemId: TEntity["id"],
-        containerId: BaseGantItem["id"],
-        options?: ClientApiProps,
-    ): Promise<number> {
-        const baseUrl = `${window.location.origin}${buildItemUrl(itemId, "allocate-time")}`;
-        const fetchUrl = new URL(baseUrl);
-        // The route reads `containerId`; anything else is a 400.
-        fetchUrl.searchParams.set("containerId", containerId);
-
-        return await safeApiFetcher<number>(fetchUrl.toString(), options);
-    }
-
     return {
         apiList,
         apiListWithParents,
@@ -289,7 +252,5 @@ export function clientGantApiBuilder<
         apiGetMany,
         apiLink,
         apiUnlink,
-        apiGetAllocatedTime,
-        apiSetAllocatedTime,
     } as const;
 }

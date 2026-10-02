@@ -186,7 +186,7 @@ export const getGanttEventTool: AiTool<{ eventId: string }> = {
     danger: AiToolDanger.Safe,
     kind: AiToolKind.Read,
     description:
-        "מחזיר מופע (אירוע גאנט) אחד עם כל שדותיו, כולל הזמן המוקצה לו בכל גאנט (cEC).",
+        "מחזיר מופע (אירוע גאנט) אחד עם כל שדותיו.",
     parameters: {
         type: "object",
         properties: { eventId: idParam("מזהה המופע") },
@@ -309,7 +309,7 @@ type GanttEntitySpec = {
     /** Defaults for NOT NULL columns without a DB default. */
     createDefaults?: Record<string, unknown>;
     deleteImpact: Array<string>;
-    /** Extra work after a create — e.g. setting allocated time. */
+    /** Extra work after a create. */
     afterCreate?: (created: Row, args: Row, context: Parameters<AiTool["execute"]>[1]) => Promise<void>;
     /** Fields accepted on create only (not edit). */
     createOnlyFields?: Record<string, Record<string, unknown>>;
