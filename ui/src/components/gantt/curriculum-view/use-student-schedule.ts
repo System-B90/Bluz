@@ -72,7 +72,12 @@ export function useCurriculumStudentSchedule(
             scheduledMinutes: sumStudentMinutes(schedule.byDay, linearDays),
             requiredMinutes: calculateStudentMinutes({
                 courses,
-                occurrenceCtx: { mappings: curriculumMappings, exceptions, linearDays },
+                occurrenceCtx: {
+                    mappings: curriculumMappings,
+                    exceptions,
+                    linearDays,
+                    dateOf: (dayId) => dateByDayId.get(dayId),
+                },
                 state,
                 syllabusIds: curriculum.syllabuses,
             }),

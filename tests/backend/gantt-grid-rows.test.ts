@@ -28,7 +28,7 @@ type EventInput = {
 
 function store(events: Record<string, EventInput>) {
     return {
-        days: Object.fromEntries(LINEAR_DAYS.map((id) => [ id, { id, dayIndex: Number(id[1]) - 1 } ])),
+        days: Object.fromEntries(LINEAR_DAYS.map((id) => [ id, { id, weekId: `w${id[0]}`, dayIndex: Number(id[1]) - 1 } ])),
         syllabuses: { s1: { id: "s1", title: "סילבוס", modules: [ "m1" ] } },
         modules: { m1: { id: "m1", title: "מודול", syllabusId: "s1", events: Object.keys(events) } },
         events: Object.fromEntries(
