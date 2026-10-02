@@ -89,4 +89,13 @@ describe("useGridAllotment sibling suggestion", () =>
         expect(removeMapping).toHaveBeenCalledWith({ moduleId: "m1", eventId: "a", dayId: "d1" });
         expect(enqueueSnackbar.mock.calls[ 0 ][ 0 ]).toBe("להסיר את השיבוץ גם מהשאפלים ב, ג?");
     });
+
+    it("keeps a 0-minute mapping, siblings included, when the answer is keep", async () =>
+    {
+        saveZeroChoice("keep");
+        const { result } = setup([ map("a", "d1", 60), map("b", "d1", 60) ]);
+        await act(() => result.current.commitWeek("a", "m1", 0, 0));
+        expect(removeMapping).not.toHaveBeenCalled();
+        expect(setAllottedMinutes).toHaveBeenCalledWith({ moduleId: "m1", eventId: "a", dayId: "d1", allottedMinutes: 0 });
+    });
 });
