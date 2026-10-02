@@ -240,3 +240,20 @@ docker compose config >> diag.txt
 docker compose logs --tail=200 >> diag.txt
 docker version >> diag.txt
 ```
+
+## AI assistant: `תעודת ה-TLS של שירות ה-AI אינה מהימנה`
+
+**Cause.** The AI gateway (e.g. Open WebUI on an internal network) presents a
+certificate signed by a private CA that the Bluz container does not trust.
+Disabling validation is not supported.
+
+**Fix.**
+
+```bash
+mkdir -p ai-ca && cp /path/to/internal-ca.pem ai-ca/ca.pem
+echo 'AI_CA_CERT_PATH=/etc/bluz/ai-ca/ca.pem' >> .env
+docker compose up -d ui
+```
+
+`AI_CA_CERT_PATH` is trusted by the AI client only. Use
+`NODE_EXTRA_CA_CERTS=/etc/bluz/ai-ca/ca.pem` instead to trust it process-wide.

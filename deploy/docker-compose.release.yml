@@ -35,6 +35,10 @@ services:
         # SIGNIN_OAUTH_ERROR and nothing else in the logs (#412).
         extra_hosts:
             - "host.docker.internal:host-gateway"
+        # Private CA for an internal AI gateway (#780): put the PEM at
+        # ./ai-ca/ca.pem and set AI_CA_CERT_PATH=/etc/bluz/ai-ca/ca.pem.
+        volumes:
+            - ./ai-ca:/etc/bluz/ai-ca:ro
         depends_on:
             curriculum-db:
                 condition: service_healthy
