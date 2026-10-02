@@ -271,3 +271,17 @@ describe("buildGridRows ignoreBreaks", () => {
         expect(rows.find((r) => r.kind === "syllabus")?.weekMinutes[ 0 ]).toBe(60);
     });
 });
+
+describe("buildGridRows childless", () => {
+    it("flags modules and syllabuses with nothing under them", () => {
+        const state = store({});
+        const rows = buildGridRows([ "s1" ], placement(state, {}), () => true, () => true);
+        expect(rows.map((r) => [ r.kind, r.childless ])).toEqual([ [ "syllabus", false ], [ "module", true ] ]);
+    });
+
+    it("leaves modules with events unflagged", () => {
+        const state = store({ e1: { minimumDuration: 60 } });
+        const rows = buildGridRows([ "s1" ], placement(state, {}), () => true, () => true);
+        expect(rows.filter((r) => r.kind !== "event").map((r) => r.childless)).toEqual([ false, false ]);
+    });
+});

@@ -1,5 +1,6 @@
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
+import Remove from "@mui/icons-material/Remove";
 import InputBase from "@mui/material/InputBase";
 import Paper from "@mui/material/Paper";
 import { alpha, keyframes, Theme } from "@mui/material/styles";
@@ -522,7 +523,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                         ref={ ri === row && col === 0 ? selectedRef : undefined }
                                         sx={ cellSx(ri, 0, r.kind, r.depth) }
                                     >
-                                        { isSummary ? (expanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />) : null }
+                                        { isSummary ? (r.childless ? <Remove fontSize="inherit" /> : expanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />) : null }
                                         { " " }{ r.title }
                                     </TableCell>
                                     { values.map((value, vi) => (
