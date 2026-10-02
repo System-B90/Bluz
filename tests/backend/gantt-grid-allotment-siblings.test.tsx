@@ -2,7 +2,8 @@
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { enqueueSnackbar, setAllottedMinutes } = vi.hoisted(() => ({
+const { enqueueSnackbar, removeMapping, setAllottedMinutes } = vi.hoisted(() => ({
+    removeMapping: vi.fn(async () => undefined),
     enqueueSnackbar: vi.fn(),
     setAllottedMinutes: vi.fn(async () => undefined),
 }));
@@ -15,7 +16,7 @@ vi.mock("@/components/gantt/state/mappings/hooks", () => ({
         createMapping: vi.fn(),
         moveMapping: vi.fn(),
         refreshMappings: vi.fn(),
-        removeMapping: vi.fn(),
+        removeMapping,
         setAllottedMinutes,
     }),
 }));
@@ -26,6 +27,7 @@ vi.mock("@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions", () =
     useModuleEventActions: () => ({ updateEvent: vi.fn() }),
 }));
 
+import { saveZeroChoice } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-allotment";
 import { useGridAllotment } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-grid-allotment";
 
 const map = (eventId: string, dayId: string, allottedMinutes: number) =>
@@ -57,6 +59,8 @@ describe("useGridAllotment sibling suggestion", () =>
     {
         enqueueSnackbar.mockClear();
         setAllottedMinutes.mockClear();
+        removeMapping.mockClear();
+        window.localStorage.clear();
     });
 
     it("names only the shuffles whose event had the same week and duration", async () =>
@@ -73,5 +77,16 @@ describe("useGridAllotment sibling suggestion", () =>
         const { result } = setup([ map("a", "d1", 60), map("b", "d2", 60), map("c", "d1", 90) ]);
         await act(() => result.current.commitWeek("a", "m1", 0, 120));
         expect(enqueueSnackbar).not.toHaveBeenCalled();
+    });
+
+    it("removes only the edited event's mapping and asks before removing the siblings'", async () =>
+    {
+        // A remembered "remove" answer must not silently carry over to the siblings.
+        saveZeroChoice("remove");
+        const { result } = setup([ map("a", "d1", 60), map("b", "d1", 60), map("c", "d1", 60) ]);
+        await act(() => result.current.commitWeek("a", "m1", 0, 0));
+        expect(removeMapping).toHaveBeenCalledTimes(1);
+        expect(removeMapping).toHaveBeenCalledWith({ moduleId: "m1", eventId: "a", dayId: "d1" });
+        expect(enqueueSnackbar.mock.calls[ 0 ][ 0 ]).toBe("להסיר את השיבוץ גם מהשאפלים ב, ג?");
     });
 });
