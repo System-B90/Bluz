@@ -9,6 +9,7 @@ export const GANTT_TAB_INDEX = {
     syllabuses: 0,
     weeks: 1,
     timeline: 2,
+    grid: 3,
 } as const;
 
 export const GANTT_TAB_COUNT = Object.keys(GANTT_TAB_INDEX).length;

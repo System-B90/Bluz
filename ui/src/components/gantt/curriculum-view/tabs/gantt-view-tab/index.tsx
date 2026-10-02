@@ -2,7 +2,8 @@
 import React, { useMemo } from "react";
 
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
-import { CurriculumGanttViewInner } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/CurriculumGanttViewInner";
+import { GanttView } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view";
+import { GanttViewProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { GanttConstraintProvider } from "@/components/gantt/state/constraints/Provider";
 import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
 import { GanttMappingProvider } from "@/components/gantt/state/mappings/Provider";
@@ -14,6 +15,8 @@ import { GanttRecurrenceExceptionProvider } from "@/components/gantt/state/recur
 export type CurriculumGanttViewProps = {
     /** The unique identifier of the Gantt curriculum. */
     readonly curriculumId: GanttCurriculumId;
+    /** The view rendered inside the providers; the timeline by default. */
+    readonly View?: React.FC<GanttViewProps>;
 };
 
 /**
@@ -24,6 +27,7 @@ export type CurriculumGanttViewProps = {
  */
 export function CurriculumGanttView({
     curriculumId,
+    View = GanttView,
 }: CurriculumGanttViewProps): null | React.ReactElement {
     const curriculum = useCurriculum(curriculumId);
     // Stable identity: GanttConstraintProvider refetches whenever this
@@ -39,7 +43,7 @@ export function CurriculumGanttView({
         <GanttMappingProvider curriculumId={curriculumId}>
             <GanttRecurrenceExceptionProvider curriculumId={curriculumId}>
                 <GanttConstraintProvider context={constraintContext}>
-                    <CurriculumGanttViewInner curriculumId={curriculumId} />
+                    <View curriculumId={curriculumId} />
                 </GanttConstraintProvider>
             </GanttRecurrenceExceptionProvider>
         </GanttMappingProvider>

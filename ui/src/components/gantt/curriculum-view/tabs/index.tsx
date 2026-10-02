@@ -18,6 +18,7 @@ import {
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { GANTT_ANCHORS } from "@/components/app-onboarding/anchors";
 import { CurriculumGanttView } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab";
+import { GanttGridView } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttGridView";
 import { SyllabusesTab } from "@/components/gantt/curriculum-view/tabs/syllabuses-tab";
 import { WeeksTab } from "@/components/gantt/curriculum-view/tabs/weeks-tab";
 
@@ -62,6 +63,7 @@ function TabLabels({ selectedTabIndex, setSelectedTabIndex }: TabProps) {
                 <Tab label="סילבוסים" />
                 <Tab label="שבועות" />
                 <Tab label="רצף זמן" />
+                <Tab label="טבלה" />
             </Tabs>
         </Fragment>
     );
@@ -101,6 +103,8 @@ function renderTabContent(tabIndex: number, curriculumId: GanttCurriculumId) {
         return <WeeksTab curriculumId={curriculumId} />;
     case 2:
         return <MemoizedCurriculumGanttView curriculumId={curriculumId} />;
+    case 3:
+        return <MemoizedCurriculumGanttView curriculumId={curriculumId} View={GanttGridView} />;
     default:
         return null;
     }
