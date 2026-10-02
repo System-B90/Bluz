@@ -149,6 +149,65 @@ describe("buildGridRows", () => {
     });
 });
 
+describe("buildGridRows with shuffles", () => {
+    const shuffled = () =>
+    {
+        const state = store({
+            e1: { minimumDuration: 60 },
+            e2: { minimumDuration: 30 },
+            e3: { minimumDuration: 120 },
+            e4: { minimumDuration: 15 },
+        });
+        Object.assign(state.syllabuses.s1, { title: "מתמטיקה", modules: [ "m1", "m2" ], shuffles: [ "מתחילים", "מתקדמים" ] });
+        Object.assign(state.modules.m1, { events: [ "e1", "e2", "e3" ] });
+        // e1 shared, e2 only מתחילים, e3 only מתקדמים; m2 only מתקדמים.
+        Object.assign(state.events.e2, { shuffles: [ "מתחילים" ] });
+        Object.assign(state.events.e3, { shuffles: [ "מתקדמים" ] });
+        Object.assign(state, {
+            modules: { ...state.modules, m2: { id: "m2", title: "מודול 2", syllabusId: "s1", events: [ "e4" ], shuffles: [ "מתקדמים" ] } },
+        });
+        return state;
+    };
+    const grid = (expanded: (key: string) => boolean = () => true) =>
+    {
+        const state = shuffled();
+        return buildGridRows([ "s1" ], placement(state, { e1: "a1", e2: "a2", e3: "b1", e4: "b2" }), expanded, expanded);
+    };
+
+    it("splits a syllabus into one section per shuffle holding only its modules and events", () => {
+        expect(grid().map((r) => [ r.kind, r.title ])).toEqual([
+            [ "syllabus", "מתמטיקה" ],
+            [ "shuffle", "מתמטיקה (מתחילים)" ],
+            [ "module", "מודול" ],
+            [ "event", "e1" ],
+            [ "event", "e2" ],
+            [ "shuffle", "מתמטיקה (מתקדמים)" ],
+            [ "module", "מודול" ],
+            [ "event", "e1" ],
+            [ "event", "e3" ],
+            [ "module", "מודול 2" ],
+            [ "event", "e4" ],
+        ]);
+        expect(new Set(grid().map((r) => r.key)).size).toBe(11);
+    });
+
+    it("sums each shuffle on its own and shows the busiest one on the syllabus, not both", () => {
+        const rows = grid();
+        const [ syllabus, beginners ] = rows;
+        const advanced = rows.find((r) => r.title === "מתמטיקה (מתקדמים)");
+        expect(beginners.weekMinutes).toEqual([ 90, 0, 0 ]);
+        expect(advanced?.weekMinutes).toEqual([ 60, 135, 0 ]);
+        expect(syllabus.weekMinutes).toEqual([ 90, 135, 0 ]);
+        expect(syllabus.requiredMinutes).toBe(195);
+    });
+
+    it("collapses a shuffle section into its syllabus and each section on its own", () => {
+        expect(grid((key) => key !== "s1").map((r) => r.kind)).toEqual([ "syllabus" ]);
+        const rows = grid((key) => key !== "s1::מתחילים");
+        expect(rows.slice(0, 3).map((r) => r.title)).toEqual([ "מתמטיקה", "מתמטיקה (מתחילים)", "מתמטיקה (מתקדמים)" ]);
+    });
+});
+
 describe("formatHours", () => {
     afterEach(() => setHoursFormat("decimal"));
 

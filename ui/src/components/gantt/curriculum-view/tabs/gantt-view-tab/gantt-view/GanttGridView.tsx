@@ -94,7 +94,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         ],
     );
 
-    // Syllabus rows are always present and sum everything under them.
+    // Syllabus rows are always present and sum everything under them (busiest shuffle, not every shuffle).
     const usedByWeek = rows
         .filter((r) => r.kind === "syllabus")
         .reduce((sum, r) => sum.map((m, w) => m + r.weekMinutes[ w ]), new Array<number>(weekCount).fill(0));
@@ -112,8 +112,8 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
 
     const activate = (target: GridRow) =>
     {
-        if (target.kind === "syllabus") toggleSyllabus(target.id);
-        else if (target.kind === "module") toggleModule(target.id);
+        if (target.kind === "syllabus" || target.kind === "shuffle") toggleSyllabus(target.key);
+        else if (target.kind === "module") toggleModule(target.key);
         else openEventDialog(target.syllabusId, target.moduleId, target.id);
     };
 
@@ -226,9 +226,9 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                         {
                             const allocated = r.weekMinutes.reduce((sum, m) => sum + m, 0);
                             const isSummary = r.kind !== "event";
-                            const expanded = r.kind === "syllabus"
-                                ? isSyllabusExpanded(r.id)
-                                : r.kind === "module" && isModuleExpanded(r.id);
+                            const expanded = r.kind === "module"
+                                ? isModuleExpanded(r.key)
+                                : isSummary && isSyllabusExpanded(r.key);
                             const conflict = allocated !== r.requiredMinutes;
                             const values = [
                                 hours(r.requiredMinutes),
@@ -238,8 +238,8 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                             return (
                                 <TableRow
                                     hover
-                                    key={ `${r.kind}-${r.id}` }
-                                    sx={ isSummary ? { bgcolor: r.kind === "syllabus" ? "action.selected" : "action.hover" } : undefined }
+                                    key={ `${r.kind}-${r.key}` }
+                                    sx={ isSummary ? { bgcolor: r.kind === "module" ? "action.hover" : "action.selected" } : undefined }
                                 >
                                     <TableCell
                                         aria-selected={ ri === row && col === 0 }

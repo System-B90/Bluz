@@ -2,11 +2,13 @@ import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
 import { GanttCurriculumModuleDayMapping, GanttEventRecurrenceException } from "@/api-shared/types/gantt/models";
 import { EventDaySpan } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { forEachRecurrenceOccurrence } from "@/components/gantt/curriculum-view/student-load";
-import { countRequiredOccurrences } from "@/components/gantt/utils";
+import { appliesToShuffle, countRequiredOccurrences } from "@/components/gantt/utils";
 
 export type GridRow = {
-    kind: "event" | "module" | "syllabus";
+    kind: "event" | "module" | "shuffle" | "syllabus";
     id: string;
+    /** Unique per row: expansion-state key and React key. Shuffle sections repeat modules/events. */
+    key: string;
     syllabusId: string;
     moduleId: string;
     title: string;
@@ -59,16 +61,26 @@ export function buildEventWeekMinutes({
     return byEvent;
 }
 
+/** Per-week max: parallel shuffles take the same student time, not their sum. */
+const maxWeeks = (rows: Array<GridRow>, weekCount: number) =>
+    Array.from({ length: weekCount }, (_, w) => Math.max(0, ...rows.map((row) => row.weekMinutes[ w ])));
+
+/** Key of a row under a shuffle section, so each section collapses on its own. */
+export const shuffleKey = (id: string, shuffle: string) => `${id}::${shuffle}`;
+
 /**
  * The grid's visible rows in display order. A summary row sums all of its
  * children, collapsed or not. An event's required time is its duration times
- * its required occurrences.
+ * its required occurrences. A syllabus with several shuffles gets one section
+ * per shuffle ("Title (Shuffle)") holding only that shuffle's modules and
+ * events; the syllabus row then shows the busiest shuffle, since students sit
+ * in exactly one shuffle.
  */
 export function buildGridRows(
     syllabusIds: Array<string>,
     placement: GridPlacement,
-    isSyllabusExpanded: (id: string) => boolean,
-    isModuleExpanded: (id: string) => boolean,
+    isSyllabusExpanded: (key: string) => boolean,
+    isModuleExpanded: (key: string) => boolean,
 ): Array<GridRow>
 {
     const { state, weeks } = placement;
@@ -77,56 +89,98 @@ export function buildGridRows(
     const empty = new Array<number>(weekCount).fill(0);
     const out: Array<GridRow> = [];
 
-    for (const syllabusId of syllabusIds)
+    /** Module rows (and their visible events) of one syllabus, or one shuffle of it. */
+    const moduleSection = (syllabusId: string, shuffle: null | string, depth: number) =>
     {
-        const syllabus = state.syllabuses[ syllabusId ];
-        if (!syllabus) continue;
         const moduleRows: Array<GridRow> = [];
         const visible: Array<GridRow> = [];
-        for (const moduleId of syllabus.modules)
+        for (const moduleId of state.syllabuses[ syllabusId ].modules)
         {
             const mod = state.modules[ moduleId ];
             if (!mod) continue;
             const eventRows: Array<GridRow> = mod.events.flatMap((eventId) =>
             {
                 const event = state.events[ eventId ];
-                return event ? [ {
+                if (!event) return [];
+                // An event's own shuffle tags override its module's.
+                const tags = event.shuffles?.length ? event.shuffles : mod.shuffles;
+                if (shuffle !== null && !appliesToShuffle(tags, shuffle)) return [];
+                return [ {
                     kind: "event" as const,
                     id: eventId,
+                    key: shuffle === null ? eventId : shuffleKey(eventId, shuffle),
                     syllabusId,
                     moduleId,
                     title: event.title,
-                    depth: 2,
+                    depth: depth + 1,
                     requiredMinutes: (event.minimumDuration ?? 0)
                         * countRequiredOccurrences(event, eventId, state, placement),
                     weekMinutes: eventWeekMinutes.get(eventId) ?? empty,
-                } ] : [];
+                } ];
             });
+            if (shuffle !== null && eventRows.length === 0 && !appliesToShuffle(mod.shuffles, shuffle)) continue;
+            const key = shuffle === null ? moduleId : shuffleKey(moduleId, shuffle);
             const moduleRow: GridRow = {
                 kind: "module",
                 id: moduleId,
+                key,
                 syllabusId,
                 moduleId,
                 title: mod.title,
-                depth: 1,
+                depth,
                 requiredMinutes: sumRequired(eventRows),
                 weekMinutes: sumWeeks(eventRows, weekCount),
             };
             moduleRows.push(moduleRow);
             visible.push(moduleRow);
-            if (isModuleExpanded(moduleId)) visible.push(...eventRows);
+            if (isModuleExpanded(key)) visible.push(...eventRows);
         }
-        out.push({
-            kind: "syllabus",
-            id: syllabusId,
-            syllabusId,
-            moduleId: "",
-            title: syllabus.title,
-            depth: 0,
-            requiredMinutes: sumRequired(moduleRows),
-            weekMinutes: sumWeeks(moduleRows, weekCount),
+        return { moduleRows, visible };
+    };
+
+    for (const syllabusId of syllabusIds)
+    {
+        const syllabus = state.syllabuses[ syllabusId ];
+        if (!syllabus) continue;
+        const shuffles = syllabus.shuffles ?? [];
+        const base = { syllabusId, moduleId: "", key: syllabusId, id: syllabusId, title: syllabus.title };
+        if (shuffles.length < 2)
+        {
+            const { moduleRows, visible } = moduleSection(syllabusId, null, 1);
+            out.push({
+                ...base,
+                kind: "syllabus",
+                depth: 0,
+                requiredMinutes: sumRequired(moduleRows),
+                weekMinutes: sumWeeks(moduleRows, weekCount),
+            });
+            if (isSyllabusExpanded(syllabusId)) out.push(...visible);
+            continue;
+        }
+        const sections = shuffles.map((shuffle) =>
+        {
+            const { moduleRows, visible } = moduleSection(syllabusId, shuffle, 2);
+            const key = shuffleKey(syllabusId, shuffle);
+            const row: GridRow = {
+                ...base,
+                kind: "shuffle",
+                key,
+                title: `${syllabus.title} (${shuffle})`,
+                depth: 1,
+                requiredMinutes: sumRequired(moduleRows),
+                weekMinutes: sumWeeks(moduleRows, weekCount),
+            };
+            return [ row, ...(isSyllabusExpanded(key) ? visible : []) ];
         });
-        if (isSyllabusExpanded(syllabusId)) out.push(...visible);
+        const shuffleRows = sections.map(([ row ]) => row);
+        out.push({
+            ...base,
+            kind: "syllabus",
+            depth: 0,
+            requiredMinutes: Math.max(...shuffleRows.map((r) => r.requiredMinutes)),
+            weekMinutes: maxWeeks(shuffleRows, weekCount),
+        });
+        if (isSyllabusExpanded(syllabusId)) out.push(...sections.flat());
     }
     return out;
 }
