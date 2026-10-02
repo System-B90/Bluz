@@ -19,6 +19,7 @@ import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { GANTT_ANCHORS } from "@/components/app-onboarding/anchors";
 import { CurriculumGanttView } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab";
 import { GanttGridView } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttGridView";
+import { GanttPageToolbar } from "@/components/gantt/curriculum-view/tabs/GanttPageToolbar";
 import { SyllabusesTab } from "@/components/gantt/curriculum-view/tabs/syllabuses-tab";
 import { WeeksTab } from "@/components/gantt/curriculum-view/tabs/weeks-tab";
 
@@ -38,7 +39,7 @@ function TabLabels({ selectedTabIndex, setSelectedTabIndex }: TabProps) {
     const tabsAnchor = useTourAnchor<HTMLDivElement>(GANTT_ANCHORS.tabs);
 
     return (
-        <Fragment>
+        <Box alignItems="center" display="flex" gap={1} mb={1.5}>
             <Tabs
                 onChange={(_, v) => setSelectedTabIndex(v)}
                 ref={tabsAnchor}
@@ -47,7 +48,8 @@ function TabLabels({ selectedTabIndex, setSelectedTabIndex }: TabProps) {
                     EndScrollButtonIcon: KeyboardArrowRight,
                 }}
                 sx={{
-                    mb: 1.5,
+                    flexGrow: 1,
+                    minWidth: 0,
                     flexDirection: "row-reverse", // TODO: Known issue: https://github.com/mui/material-ui/issues/30409?issue=mui%7Cmaterial-ui%7C30207
                     "& .MuiTabs-scroller": {
                         // Ensures the scroll container respects the RTL flow
@@ -65,7 +67,8 @@ function TabLabels({ selectedTabIndex, setSelectedTabIndex }: TabProps) {
                 <Tab label="רצף זמן" />
                 <Tab label="טבלה" />
             </Tabs>
-        </Fragment>
+            <GanttPageToolbar />
+        </Box>
     );
 }
 
