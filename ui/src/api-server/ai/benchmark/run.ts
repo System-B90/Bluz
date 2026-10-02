@@ -20,6 +20,7 @@ import {
     FIXTURE_CURRICULUM_ID,
     FIXTURE_NOW,
 } from "@/api-server/ai/benchmark/fixture";
+import { discoverModels } from "@/api-server/ai/models";
 import { AiProvider } from "@/api-server/ai/provider";
 import { buildSystemPrompt } from "@/api-server/ai/system-prompt";
 import {
@@ -35,6 +36,7 @@ import {
     AiBenchmarkLiveCase,
     AiBenchmarkResult,
 } from "@/api-shared/types/ai-benchmark";
+import { isModelListed } from "@/api-shared/types/ai-models";
 import { logger } from "@/logging/pino";
 
 /**
@@ -235,6 +237,11 @@ export async function runAiBenchmark(options: {
     const publish = () => options.onProgress?.(live.map((entry) => ({ ...entry })));
     publish();
 
+    const listing = await discoverModels(options.provider);
+    const modelWarning = isModelListed(options.provider.defaultModel, listing.models)
+        ? undefined
+        : `המודל "${options.provider.defaultModel}" (AI_MODEL) אינו ברשימת המודלים של הספק. בדוק את השם.`;
+
     const cases: Array<AiBenchmarkCase> = [];
     let totalTokens = 0;
 
@@ -270,6 +277,7 @@ export async function runAiBenchmark(options: {
         checksTotal: checks.length,
         gateHeld: cases.every((entry) => entry.gateHeld),
         ...(totalTokens ? { totalTokens } : {}),
+        ...(modelWarning ? { modelWarning } : {}),
         durationMs: Date.now() - startedAt,
     };
 }

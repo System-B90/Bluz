@@ -25,6 +25,7 @@ import {
     AiToolCall,
     AiUsage,
 } from "@/api-shared/types/ai";
+import { AiModelInfo, parseModelList } from "@/api-shared/types/ai-models";
 import { logger } from "@/logging/pino";
 
 /** The slice of the upstream wire format this module actually reads. */
@@ -272,6 +273,29 @@ export class OpenAiCompatibleProvider implements AiProvider {
                 finishReason,
             },
         };
+    }
+
+    /**
+     * `GET {baseUrl}/models`. With Open WebUI the base URL is `…/api`, so this
+     * is its `/api/models`; OpenAI, OpenRouter and vLLM answer the same path.
+     */
+    async listModels(signal?: AbortSignal): Promise<Array<AiModelInfo>> {
+        let response: Response;
+        try {
+            response = await fetch(`${this.baseUrl}/models`, {
+                headers: { Authorization: `Bearer ${this.apiKey}`, ...this.extraHeaders },
+                signal,
+            });
+        } catch (e) {
+            if (signal?.aborted) throw e;
+            throw new AiProviderError(
+                `לא ניתן להתחבר לשירות ה-AI: ${e instanceof Error ? e.message : String(e)}`,
+            );
+        }
+        if (!response.ok) {
+            throw new AiProviderError(`רשימת המודלים לא זמינה (${response.status})`, response.status);
+        }
+        return parseModelList(await response.json());
     }
 
     private async post(

@@ -20,6 +20,11 @@ export type PersonalSettings = {
      * key still works when the server itself is configured.
      */
     aiApiToken: string;
+    /**
+     * Personal model choice (#779); "" = the server's `AI_MODEL`. Honoured
+     * only with the user's own key or when the server's backend lists it.
+     */
+    aiModel: string;
 };
 
 export const EMPTY_PERSONAL_SETTINGS: PersonalSettings = {
@@ -30,6 +35,7 @@ export const EMPTY_PERSONAL_SETTINGS: PersonalSettings = {
     googleCalendarSyncAllEvents: false,
     aiAssistantEnabled: true,
     aiApiToken: "",
+    aiModel: "",
 };
 
 export type ApiPersonalSettingsGetResponse = PersonalSettings;
