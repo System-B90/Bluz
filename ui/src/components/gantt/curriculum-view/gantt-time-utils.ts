@@ -61,10 +61,51 @@ export function parseTimeInputToMinutes(value: string): null | number {
     return clampWorkingMinutes(decimalHours * 60);
 }
 
+/** How hour amounts render: decimal (0.75) or clock (0:45). Per viewer. */
+export type HoursFormat = "clock" | "decimal";
+
+const HOURS_FORMAT_KEY = "bluz.hoursFormat";
+const hoursFormatListeners = new Set<() => void>();
+
+function readHoursFormat(): HoursFormat {
+    try {
+        return typeof window !== "undefined"
+            && window.localStorage.getItem(HOURS_FORMAT_KEY) === "clock"
+            ? "clock"
+            : "decimal";
+    } catch {
+        return "decimal";
+    }
+}
+
+let hoursFormat: HoursFormat = readHoursFormat();
+
+export const getHoursFormat = (): HoursFormat => hoursFormat;
+
+export function setHoursFormat(format: HoursFormat): void {
+    hoursFormat = format;
+    try {
+        window.localStorage.setItem(HOURS_FORMAT_KEY, format);
+    } catch {
+        // Best-effort: private browsing keeps it for this session only.
+    }
+    hoursFormatListeners.forEach((listener) => listener());
+}
+
+export function subscribeHoursFormat(listener: () => void): () => void {
+    hoursFormatListeners.add(listener);
+    return () => hoursFormatListeners.delete(listener);
+}
+
 export function formatHours(
     minutes: number,
     maximumFractionDigits = 1,
 ): string {
+    if (hoursFormat === "clock") {
+        const total = Math.round(Math.abs(minutes));
+        const sign = minutes < 0 && total ? "-" : "";
+        return `${sign}${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+    }
     return new Intl.NumberFormat("he-IL", {
         maximumFractionDigits,
         minimumFractionDigits: 0,
