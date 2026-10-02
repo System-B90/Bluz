@@ -39,6 +39,22 @@ def test_ai_tools_reads_the_capability_report(stub_bluz, run_cli):
     assert stub.last().path == "/api/ai/tools"
 
 
+def test_ai_models_lists_the_backend_models(stub_bluz, run_cli):
+    stub = stub_bluz()
+    stub.envelope(
+        "GET",
+        "/api/ai/models",
+        {"models": [{"id": "kimi-k2"}], "defaultModel": "kimi-k2"},
+    )
+
+    result = run_cli(stub, "ai", "models")
+
+    assert result.exit_code == 0
+    assert stub.last().method == "GET"
+    assert stub.last().path == "/api/ai/models"
+    assert "kimi-k2" in result.stdout
+
+
 def test_ai_benchmark_posts_with_no_body(stub_bluz, run_cli):
     stub = stub_bluz()
     stub.envelope("POST", "/api/ai/benchmark", {"cases": []})
