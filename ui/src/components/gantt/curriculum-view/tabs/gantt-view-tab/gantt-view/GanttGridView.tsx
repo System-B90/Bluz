@@ -20,7 +20,7 @@ import {
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { buildStudentPaths } from "@/components/gantt/curriculum-view/student-load";
 import { parseHoursInput } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-allotment";
-import { useGridAnimation } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-animation";
+import { useGridAnimation, useGridVerticalLines } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-preferences";
 import { buildGridRows, CoursePresence, GridRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-rows";
 import { initialSelection, isCellSelected, selectCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-selection";
 import { mergeRowTransitions, RowPhase, TransitionRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/row-transitions";
@@ -168,6 +168,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
     // Collapse/expand: vanished rows linger as `exit` and new ones play `enter` for one animation.
     // Compared by identity of the row list's content, since `rows` is rebuilt on every state change.
     const animated = useGridAnimation();
+    const verticalLines = useGridVerticalLines();
     const signature = rows.map(rowId).join("|");
     const stay = (list: Array<GridRow>) => list.map((row) => ({ row, phase: "stay" as const }));
     const [ shown, setShown ] = useState<{ signature: string; items: Array<TransitionRow> }>(
@@ -381,6 +382,12 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                         "& th, & td": {
                             borderBottomColor: (theme: Theme) =>
                                 theme.palette.grey[ theme.palette.mode === "dark" ? 800 : 300 ],
+                            // Faint column separators, drawn on the cell so sticky cells carry them along.
+                            ...(verticalLines && {
+                                borderInlineEnd: "1px solid",
+                                borderInlineEndColor: (theme: Theme) =>
+                                    alpha(theme.palette.grey[ theme.palette.mode === "dark" ? 700 : 400 ], 0.25),
+                            }),
                         },
                         // Collapsed borders belong to the table, not the sticky header cells, so they scroll
                         // away and leave the header see-through; separate borders travel with each cell.
