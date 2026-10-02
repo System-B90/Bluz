@@ -31,11 +31,11 @@ import {
     PULSING_ICON_BUTTON_SX,
 } from "@/components/schedule/calendar/calendar/toolbar-button-sx";
 import { useLockedEditGuard } from "@/components/schedule/calendar/calendar/use-locked-edit-guard";
+import { useViewRangeSync } from "@/components/schedule/calendar/calendar/use-view-range-sync";
 import { useCalendarHandlers } from "@/components/schedule/calendar/calendar/UseCalendarHandlers";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { InstructorDndProvider } from "@/components/schedule/calendar/instructor-dnd/InstructorDndProvider";
 import { InstructorRail } from "@/components/schedule/calendar/instructor-dnd/InstructorRail";
-import { getRangeForView } from "@/components/schedule/calendar/utils";
 import { EventContextMenu } from "@/components/schedule/event-context-menu";
 import {
     SlotContextMenu,
@@ -92,13 +92,18 @@ export function BluzCalendar({
 
     const [mounted, setMounted] = useState(false);
     const [currentView, setCurrentView] = useState<View>(initialView);
-    const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
     const [showToolbar, setShowToolbar] = useState<boolean>(true);
     const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
     const { rooms } = useRooms();
     const { startDate, endDate, setStartDate, setEndDate, isReadOnlyIteration, eventLocks } =
         useCalendar();
+    const [currentDate, setCurrentDate] = useViewRangeSync({
+        view: currentView,
+        startDate,
+        setStartDate,
+        setEndDate,
+    });
     // The provider's own flag, so the room filter counts too — the local
     // copy this replaced left it out and the indicator stayed dark with only
     // a room filter active.
@@ -157,15 +162,6 @@ export function BluzCalendar({
         setMounted(true);
     }, []);
 
-    const updateDateRange = useCallback(
-        (date: Date, view: View) => {
-            const { start, end } = getRangeForView(date, view);
-            setStartDate(start);
-            setEndDate(end);
-        },
-        [setStartDate, setEndDate],
-    );
-
     const handleToggleFullscreen = useCallback(() => setIsFullscreen(true), []);
     const handleToggleToolbar = useCallback(
         () => setShowToolbar((prev) => !prev),
@@ -174,7 +170,7 @@ export function BluzCalendar({
 
     const onNavigate = useCallback((newDate: Date) => {
         setCurrentDate(newDate);
-    }, []);
+    }, [setCurrentDate]);
 
     // Mirrors react-big-calendar's own PREV/NEXT stepping so palette
     // navigation matches the toolbar buttons: a day at a time in day view,
@@ -184,11 +180,11 @@ export function BluzCalendar({
             const unit = currentView === Views.DAY ? "day" : "week";
             setCurrentDate((prev) => moment(prev).add(direction, unit).toDate());
         },
-        [currentView],
+        [currentView, setCurrentDate],
     );
     const navigatePrev = useCallback(() => stepDate(-1), [stepDate]);
     const navigateNext = useCallback(() => stepDate(1), [stepDate]);
-    const navigateToday = useCallback(() => setCurrentDate(new Date()), []);
+    const navigateToday = useCallback(() => setCurrentDate(new Date()), [setCurrentDate]);
 
     const exportIcs = useCallback(() => {
         if (!startDate || !endDate) return;
@@ -223,23 +219,6 @@ export function BluzCalendar({
         toggleFullscreen: handleToggleFullscreen,
         exportIcs,
     });
-
-    useEffect(() => {
-        updateDateRange(currentDate, currentView);
-    }, [currentDate, currentView, updateDateRange]);
-
-    // The view owns `currentDate` and pushes its range into the context, so a
-    // jump made through the context setters (snapshot restore) was pushed
-    // straight back. Follow a range the view didn't produce (#653).
-    useEffect(() => {
-        if (!startDate) return;
-        const { start, end } = getRangeForView(currentDate, currentView);
-        if (startDate >= start && startDate <= end) return;
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- Syncs view state to an external range change
-        setCurrentDate(startDate);
-        // Only an outside change to the context range should move the view.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [startDate]);
 
     // The calendar resolves its own split pieces back to the canonical event
     // before calling out, so these only ever see whole events.
