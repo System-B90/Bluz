@@ -36,6 +36,7 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
         timelineWeeks,
         linearDays,
         allLinearDays,
+        dateOfDayId,
         ignoreBreaks,
         dayIndexMap,
         weekIndexByDayId,
@@ -147,9 +148,10 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
                     mappings: mappingState.mappings,
                     exceptions: exceptionsState.exceptions,
                     linearDays: allLinearDays,
+                    dateOf: dateOfDayId,
                 }, ignoreBreaks)
                 : 0,
-        [ganttModule, moduleId, state, courses, mappingState.mappings, exceptionsState.exceptions, allLinearDays, ignoreBreaks],
+        [ganttModule, moduleId, state, courses, mappingState.mappings, exceptionsState.exceptions, allLinearDays, dateOfDayId, ignoreBreaks],
     );
     // Time the module has in the zoomed week (#799).
     const weekMinutes = useMemo(
@@ -160,9 +162,10 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
                     exceptions: exceptionsState.exceptions,
                     linearDays: allLinearDays,
                     onlyDayIds: new Set(linearDays),
+                    dateOf: dateOfDayId,
                 }, ignoreBreaks)
                 : 0,
-        [singleWeekDayZoom, ganttModule, moduleId, state, courses, mappingState.mappings, exceptionsState.exceptions, allLinearDays, linearDays, ignoreBreaks],
+        [singleWeekDayZoom, ganttModule, moduleId, state, courses, mappingState.mappings, exceptionsState.exceptions, allLinearDays, linearDays, dateOfDayId, ignoreBreaks],
     );
     // Zoomed single-week day view: label the module block with this week's time out of its total.
     const timeLabel = singleWeekDayZoom && ganttModule
