@@ -6,37 +6,9 @@ Created: 2026-10-02
 Author: Michael K. Steinberg
 """
 
-from dataclasses import dataclass, field
-
 import pytest
 import setup
-
-
-@dataclass
-class FakeWizard:
-    """Scripted stand-in for sb90_deploy's Wizard: answers by env key."""
-
-    answers: dict[str, str]
-    confirms: list[bool]
-    values: dict[str, str] = field(default_factory=dict)
-    asked: list[str] = field(default_factory=list)
-
-    def keep(self, key: str, default: str = "") -> None:
-        self.values.setdefault(key, default)
-
-    def prev(self, key: str, default: str = "") -> str:
-        return self.values.get(key, default)
-
-    def confirm(self, message: str, default: bool = False) -> bool:
-        return self.confirms.pop(0)
-
-    def ask(self, key: str, message: str, default: str = "") -> str:
-        self.asked.append(key)
-        self.values[key] = self.answers.get(key, default)
-        return self.values[key]
-
-    def ask_secret(self, key: str, message: str) -> str:
-        return self.ask(key, message)
+from fake_wizard import FakeWizard
 
 
 def test_openai_provider_asks_base_url_and_key_not_openrouter() -> None:
@@ -75,3 +47,10 @@ def test_declining_ai_asks_nothing() -> None:
     w = FakeWizard(answers={}, confirms=[False])
     setup._ask_ai(w)  # type: ignore[arg-type]
     assert w.asked == []
+
+
+def test_no_private_ca_clears_a_stale_path() -> None:
+    w = FakeWizard(answers={"AI_PROVIDER": "openai"}, confirms=[True, False])
+    w.values["AI_CA_CERT_PATH"] = setup.AI_CA_DEFAULT_PATH
+    setup._ask_ai(w)  # type: ignore[arg-type]
+    assert w.values["AI_CA_CERT_PATH"] == ""
