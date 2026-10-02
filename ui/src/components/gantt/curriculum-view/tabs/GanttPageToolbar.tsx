@@ -1,3 +1,4 @@
+import AnimationIcon from "@mui/icons-material/Animation";
 import MenuIcon from "@mui/icons-material/Menu";
 import IconButton from "@mui/material/IconButton";
 import Popover from "@mui/material/Popover";
@@ -10,6 +11,7 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import { useState } from "react";
 
 import { HoursFormat, setHoursFormat } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { setGridAnimation, useGridAnimation } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-animation";
 import { useHoursFormat } from "@/components/gantt/curriculum-view/use-hours-format";
 
 function HoursFormatToggle()
@@ -31,6 +33,24 @@ function HoursFormatToggle()
     );
 }
 
+function GridAnimationToggle()
+{
+    const animated = useGridAnimation();
+    return (
+        <Tooltip title="אנימציית פתיחה וסגירה בטבלה">
+            <ToggleButton
+                aria-label="אנימציית פתיחה וסגירה בטבלה"
+                onChange={ () => setGridAnimation(!animated) }
+                selected={ animated }
+                size="small"
+                value="animation"
+            >
+                <AnimationIcon fontSize="small" />
+            </ToggleButton>
+        </Tooltip>
+    );
+}
+
 /**
  * Gantt page toolbar, inline with the tab names on the opposite side.
  * Folds into a burger menu when the viewport is too narrow.
@@ -39,7 +59,12 @@ export function GanttPageToolbar()
 {
     const narrow = useMediaQuery(useTheme().breakpoints.down("md"));
     const [ anchor, setAnchor ] = useState<HTMLElement | null>(null);
-    const items = <HoursFormatToggle />;
+    const items = (
+        <>
+            <GridAnimationToggle />
+            <HoursFormatToggle />
+        </>
+    );
 
     if (!narrow) return <Stack alignItems="center" direction="row" gap={ 1 }>{ items }</Stack>;
     return (
