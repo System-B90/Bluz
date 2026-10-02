@@ -63,6 +63,7 @@ export function useGridAllotment(ctx: Context): {
 
     const [ question, setQuestion ] = useState<null | Question>(null);
     const [ remember, setRemember ] = useState(false);
+    const zeroChoiceRef = useRef<null | ZeroChoice>(null);
     const resolveRef = useRef<(answer: Answer | null) => void>(() => undefined);
     const ask = useCallback((q: Question) => new Promise<Answer | null>((resolve) =>
     {
@@ -117,6 +118,7 @@ export function useGridAllotment(ctx: Context): {
         moduleId: string,
         plan: AllotmentPlan,
         interactive: boolean,
+        forcedZero?: ZeroChoice,
     ): Promise<boolean> =>
     {
         const title = ctx.state.events[ eventId ]?.title ?? "";
@@ -131,8 +133,10 @@ export function useGridAllotment(ctx: Context): {
         case "create":
             return Boolean(await createMapping({ moduleId, eventId, dayId: plan.dayId, allottedMinutes: plan.minutes }));
         case "zero": {
-            const choice = readZeroChoice() ?? (interactive ? await ask({ kind: "zero", title }) : null);
+            // A remembered answer never reaches siblings: only the one the user just gave, shown in the suggestion.
+            const choice = forcedZero ?? (interactive ? readZeroChoice() ?? await ask({ kind: "zero", title }) : null);
             if (choice !== "keep" && choice !== "remove") return false;
+            if (interactive) zeroChoiceRef.current = choice;
             for (const dayId of plan.dayIds)
             {
                 if (choice === "keep") await setAllottedMinutes({ moduleId, eventId, dayId, allottedMinutes: 0 });
@@ -188,7 +192,9 @@ export function useGridAllotment(ctx: Context): {
     {
         // Read before the edit: only siblings that matched this event's week allotment qualify.
         const before = allottedInWeek(eventId, week);
+        zeroChoiceRef.current = null;
         const changed = await apply(eventId, moduleId, planFor(eventId, week, minutes), true);
+        const zeroChoice = zeroChoiceRef.current;
         const groupId = ctx.state.events[ eventId ]?.groupId;
         if (!changed || !groupId || before === 0) return;
         // Shuffle siblings may rightly differ: only suggest, never apply on our own.
@@ -200,7 +206,10 @@ export function useGridAllotment(ctx: Context): {
             .filter(Boolean)
             .join(", ");
         const target = names ? `השאפלים ${names}` : `${siblings.length} השאפלים האחרים`;
-        enqueueSnackbar(`להחיל ${formatHours(minutes, 2)} שעות גם על ${target}?`, {
+        const question = zeroChoice === "remove"
+            ? `להסיר את השיבוץ גם מ${target}?`
+            : `להחיל ${formatHours(minutes, 2)} שעות גם על ${target}?`;
+        enqueueSnackbar(question, {
             variant: "info",
             action: (key) => (
                 <Button
@@ -211,7 +220,7 @@ export function useGridAllotment(ctx: Context): {
                         void (async () =>
                         {
                             for (const [ id, event ] of siblings)
-                                await apply(id, event.moduleId ?? moduleId, planFor(id, week, minutes), false);
+                                await apply(id, event.moduleId ?? moduleId, planFor(id, week, minutes), false, zeroChoice ?? undefined);
                         })();
                     } }
                     size="small"
