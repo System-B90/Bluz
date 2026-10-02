@@ -1,7 +1,7 @@
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
 import { GanttCurriculumModuleDayMapping, GanttEventRecurrenceException } from "@/api-shared/types/gantt/models";
 import { EventDaySpan } from "@/components/gantt/curriculum-view/gantt-time-utils";
-import { forEachRecurrenceOccurrence } from "@/components/gantt/curriculum-view/student-load";
+import { forEachRecurrenceOccurrence, StudentPath } from "@/components/gantt/curriculum-view/student-load";
 import { appliesToShuffle, countRequiredOccurrences } from "@/components/gantt/utils";
 
 export type GridRow = {
@@ -15,7 +15,11 @@ export type GridRow = {
     depth: number;
     requiredMinutes: number;
     weekMinutes: Array<number>;
+    /** Per course column: does that course attend all, some, or none of the row. */
+    coursePresence: Array<CoursePresence>;
 };
+
+export type CoursePresence = "full" | "none" | "partial";
 
 export type GridPlacement = {
     dateOf?: (dayId: string) => string | undefined;
@@ -61,6 +65,26 @@ export function buildEventWeekMinutes({
     return byEvent;
 }
 
+/**
+ * Course columns each attending event: its own courses, else its syllabus'.
+ * No (known) course means the whole syllabus or every student.
+ */
+const eventPresence = (courseIds: Array<string>, paths: Array<StudentPath>): Array<CoursePresence> =>
+{
+    const known = courseIds.filter((id) => paths.some((path) => path.courseIds.includes(id)));
+    return paths.map((path) =>
+        known.length === 0 || known.some((id) => path.courseIds.includes(id)) ? "full" : "none");
+};
+
+/** A summary attends fully when every child does, not at all when none do, else partially. */
+const mergePresence = (rows: Array<GridRow>, columns: number): Array<CoursePresence> =>
+    Array.from({ length: columns }, (_, c) =>
+    {
+        const seen = new Set(rows.map((row) => row.coursePresence[ c ]));
+        if (seen.size === 0) return "none";
+        return seen.size === 1 ? [ ...seen ][ 0 ] : "partial";
+    });
+
 /** Per-week max: parallel shuffles take the same student time, not their sum. */
 const maxWeeks = (rows: Array<GridRow>, weekCount: number) =>
     Array.from({ length: weekCount }, (_, w) => Math.max(0, ...rows.map((row) => row.weekMinutes[ w ])));
@@ -81,6 +105,8 @@ export function buildGridRows(
     placement: GridPlacement,
     isSyllabusExpanded: (key: string) => boolean,
     isModuleExpanded: (key: string) => boolean,
+    /** Course columns, one per leaf course; none ⇒ no presence computed. */
+    paths: Array<StudentPath> = [],
 ): Array<GridRow>
 {
     const { state, weeks } = placement;
@@ -94,6 +120,7 @@ export function buildGridRows(
     {
         const moduleRows: Array<GridRow> = [];
         const visible: Array<GridRow> = [];
+        const syllabusPresence = eventPresence(state.syllabuses[ syllabusId ].courseIds ?? [], paths);
         for (const moduleId of state.syllabuses[ syllabusId ].modules)
         {
             const mod = state.modules[ moduleId ];
@@ -116,6 +143,7 @@ export function buildGridRows(
                     requiredMinutes: (event.minimumDuration ?? 0)
                         * countRequiredOccurrences(event, eventId, state, placement),
                     weekMinutes: eventWeekMinutes.get(eventId) ?? empty,
+                    coursePresence: event.courseIds?.length ? eventPresence(event.courseIds, paths) : syllabusPresence,
                 } ];
             });
             if (shuffle !== null && eventRows.length === 0 && !appliesToShuffle(mod.shuffles, shuffle)) continue;
@@ -130,6 +158,7 @@ export function buildGridRows(
                 depth,
                 requiredMinutes: sumRequired(eventRows),
                 weekMinutes: sumWeeks(eventRows, weekCount),
+                coursePresence: eventRows.length ? mergePresence(eventRows, paths.length) : syllabusPresence,
             };
             moduleRows.push(moduleRow);
             visible.push(moduleRow);
@@ -153,6 +182,7 @@ export function buildGridRows(
                 depth: 0,
                 requiredMinutes: sumRequired(moduleRows),
                 weekMinutes: sumWeeks(moduleRows, weekCount),
+                coursePresence: mergePresence(moduleRows, paths.length),
             });
             if (isSyllabusExpanded(syllabusId)) out.push(...visible);
             continue;
@@ -169,6 +199,7 @@ export function buildGridRows(
                 depth: 1,
                 requiredMinutes: sumRequired(moduleRows),
                 weekMinutes: sumWeeks(moduleRows, weekCount),
+                coursePresence: mergePresence(moduleRows, paths.length),
             };
             return [ row, ...(isSyllabusExpanded(key) ? visible : []) ];
         });
@@ -179,6 +210,7 @@ export function buildGridRows(
             depth: 0,
             requiredMinutes: Math.max(...shuffleRows.map((r) => r.requiredMinutes)),
             weekMinutes: maxWeeks(shuffleRows, weekCount),
+            coursePresence: mergePresence(shuffleRows, paths.length),
         });
         if (isSyllabusExpanded(syllabusId)) out.push(...sections.flat());
     }
