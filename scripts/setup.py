@@ -30,10 +30,9 @@ except ImportError:
     sys.exit(1)
 
 
-# Where docker-compose mounts ./acme/ca for a private ACME server CA (#803).
-ACME_CA_DEFAULT_PATH = "/etc/bluz/acme-ca/ca.pem"
-# The compose profile that runs the certbot sidecar (#803).
-ACME_PROFILE = "acme"
+# Where docker-compose mounts ./acme/ca into the proxy for a private ACME
+# server CA (#803).
+ACME_CA_DEFAULT_PATH = "/etc/nginx/acme-ca/ca.pem"
 
 # Where docker-compose mounts ./ai-ca for a private AI gateway CA (#780).
 AI_CA_DEFAULT_PATH = "/etc/bluz/ai-ca/ca.pem"
@@ -66,32 +65,20 @@ def _ask_private_ca(
         w.set(key, "")
 
 
-def _profiles_with(current: str, profile: str, enabled: bool) -> str:
-    """COMPOSE_PROFILES with `profile` added or removed, others kept in order."""
-    names = [p for p in (s.strip() for s in current.split(",")) if p and p != profile]
-    if enabled:
-        names.append(profile)
-    return ",".join(names)
-
-
 def _ask_acme(w: Wizard, domain: str) -> None:
     """Optional ACME certificates (#803), e.g. the network's own Let's Encrypt.
 
-    The self-signed certificate from w.tls() stays in place until the certbot
-    sidecar issues the real one, so the proxy can always start.
+    The proxy's built-in ACME client does the work; ACME_DIRECTORY_URL turns
+    it on. The self-signed certificate from w.tls() keeps serving until the
+    first issue succeeds, so the proxy can always start.
     """
-    for key in ("ACME_DIRECTORY_URL", "ACME_EMAIL", "ACME_CA_BUNDLE"):
+    for key in ("ACME_DIRECTORY_URL", "ACME_DOMAIN", "ACME_EMAIL", "ACME_CA_BUNDLE"):
         w.keep(key)
-    w.keep("COMPOSE_PROFILES")
-    enabled = w.confirm(
+    if not w.confirm(
         "Issue the certificate from an ACME server (e.g. an internal Let's Encrypt)?",
         default=bool(w.prev("ACME_DIRECTORY_URL")),
-    )
-    w.set(
-        "COMPOSE_PROFILES",
-        _profiles_with(w.prev("COMPOSE_PROFILES"), ACME_PROFILE, enabled),
-    )
-    if not enabled:
+    ):
+        w.set("ACME_DIRECTORY_URL", "")
         return
     w.ask(
         "ACME_DIRECTORY_URL",
@@ -113,9 +100,11 @@ def _ask_acme(w: Wizard, domain: str) -> None:
             "  Copy the ACME server's CA (PEM) to acme/ca/ca.pem beside "
             "docker-compose.yml."
         )
+    else:
+        w.set("ACME_CA_BUNDLE", "")
     print(
         "  The ACME server must reach this host on port 80 (HTTP-01). "
-        "The certbot service renews every 12h."
+        "The proxy renews the certificate on its own."
     )
 
 
