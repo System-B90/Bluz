@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
-import { act, renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { act, cleanup, render, renderHook, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { enqueueSnackbar, removeMapping, setAllottedMinutes } = vi.hoisted(() => ({
+const { applyEventShuffleGroup, createMapping, enqueueSnackbar, removeMapping, setAllottedMinutes } = vi.hoisted(() => ({
+    applyEventShuffleGroup: vi.fn(),
+    createMapping: vi.fn(async () => undefined),
     removeMapping: vi.fn(async () => undefined),
     enqueueSnackbar: vi.fn(),
     setAllottedMinutes: vi.fn(async () => undefined),
@@ -13,7 +15,7 @@ vi.mock("@/api-client/gantt", () => ({ ganttApi: {} }));
 vi.mock("@/components/base/ApiErrorSnackbar", () => ({ enqueueApiErrorSnackbar: vi.fn() }));
 vi.mock("@/components/gantt/state/mappings/hooks", () => ({
     useGanttMappings: () => ({
-        createMapping: vi.fn(),
+        createMapping,
         moveMapping: vi.fn(),
         refreshMappings: vi.fn(),
         removeMapping,
@@ -24,7 +26,7 @@ vi.mock("@/components/gantt/state/recurrence-exceptions/hooks", () => ({
     useGanttRecurrenceExceptions: () => ({ materializeOccurrence: vi.fn() }),
 }));
 vi.mock("@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions", () => ({
-    useModuleEventActions: () => ({ updateEvent: vi.fn() }),
+    useModuleEventActions: () => ({ applyEventShuffleGroup, updateEvent: vi.fn() }),
 }));
 
 import { saveZeroChoice } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-allotment";
@@ -34,9 +36,9 @@ const map = (eventId: string, dayId: string, allottedMinutes: number) =>
     [ `${eventId}-${dayId}`, { eventId, dayId, allottedMinutes } ] as const;
 
 /** Three grouped shuffle events, all with a mapping on d1 (week 0); `overrides` tweak the mappings. */
-const setup = (mappings: Array<readonly [string, unknown]>) =>
+const setup = (mappings: Array<readonly [string, unknown]>, grouped = true) =>
 {
-    const event = (shuffle: string) => ({ groupId: "g", moduleId: "m1", shuffles: [ shuffle ] });
+    const event = (shuffle: string) => ({ groupId: grouped ? "g" : undefined, moduleId: "m1", shuffles: [ shuffle ] });
     const ctx = {
         curriculumId: "c1",
         dateOf: () => undefined,
@@ -55,11 +57,15 @@ const setup = (mappings: Array<readonly [string, unknown]>) =>
 
 describe("useGridAllotment sibling suggestion", () =>
 {
+    afterEach(cleanup);
+
     beforeEach(() =>
     {
         enqueueSnackbar.mockClear();
         setAllottedMinutes.mockClear();
         removeMapping.mockClear();
+        createMapping.mockClear();
+        applyEventShuffleGroup.mockReset();
         window.localStorage.clear();
     });
 
@@ -97,5 +103,53 @@ describe("useGridAllotment sibling suggestion", () =>
         await act(() => result.current.commitWeek("a", "m1", 0, 0));
         expect(removeMapping).not.toHaveBeenCalled();
         expect(setAllottedMinutes).toHaveBeenCalledWith({ moduleId: "m1", eventId: "a", dayId: "d1", allottedMinutes: 0 });
+    });
+
+    describe("event shared by every shuffle", () =>
+    {
+        const shared = { shuffle: "ב", shuffles: [ "א", "ב" ] };
+        const click = async (label: string) =>
+        {
+            const button = await screen.findByText(label);
+            await act(async () => button.click());
+        };
+        const start = (mappings: Array<readonly [string, unknown]>) =>
+        {
+            const hook = setup(mappings, false);
+            const view = render(<>{ hook.result.current.dialog }</>);
+            const commit = () => act(async () =>
+            {
+                void hook.result.current.commitWeek("a", "m1", 0, 120, shared);
+            });
+            const refresh = () => view.rerender(<>{ hook.result.current.dialog }</>);
+            return { commit, refresh, hook };
+        };
+
+        it("asks first and edits the event for all shuffles when told so", async () =>
+        {
+            const { commit, refresh } = start([ map("a", "d1", 60) ]);
+            await commit();
+            refresh();
+            expect(applyEventShuffleGroup).not.toHaveBeenCalled();
+            expect(setAllottedMinutes).not.toHaveBeenCalled();
+            await click("שנה את כל השאפלים יחד (מומלץ)");
+            await vi.waitFor(() => expect(setAllottedMinutes).toHaveBeenCalledTimes(1));
+            expect(applyEventShuffleGroup).not.toHaveBeenCalled();
+        });
+
+        it("splits per shuffle, copies the placement and edits only the chosen shuffle", async () =>
+        {
+            applyEventShuffleGroup.mockResolvedValue([
+                { id: "a", shuffles: [ "א" ] },
+                { id: "n", shuffles: [ "ב" ] },
+            ]);
+            const { commit, refresh } = start([ map("a", "d1", 60) ]);
+            await commit();
+            refresh();
+            await click("פצל לפי שאפלים");
+            await vi.waitFor(() => expect(createMapping).toHaveBeenCalledTimes(1));
+            expect(applyEventShuffleGroup).toHaveBeenCalledWith("a", "m1", [ "א", "ב" ]);
+            expect(createMapping).toHaveBeenCalledWith({ moduleId: "m1", eventId: "n", dayId: "d1", allottedMinutes: 60 });
+        });
     });
 });

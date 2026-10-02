@@ -32,8 +32,11 @@ import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrenc
 type Question =
     | { kind: "materialize"; title: string }
     | { kind: "outside"; title: string }
+    | { kind: "shuffles"; title: string }
     | { kind: "zero"; title: string };
-type Answer = "materialize" | "move" | "split" | ZeroChoice;
+type Answer = "materialize" | "move" | "split" | "splitShuffles" | "together" | ZeroChoice;
+/** The shuffle sections one un-tagged event is shown in; several ⇒ it serves all of them. */
+type SharedShuffles = { shuffle: string; shuffles: Array<string> };
 type Context = {
     curriculumId: string;
     dateOf: (dayId: string) => string | undefined;
@@ -52,14 +55,14 @@ type Context = {
  * occurrence. Never touches the event's minimumDuration.
  */
 export function useGridAllotment(ctx: Context): {
-    commitWeek: (eventId: string, moduleId: string, week: number, minutes: number) => Promise<void>;
+    commitWeek: (eventId: string, moduleId: string, week: number, minutes: number, shared?: SharedShuffles) => Promise<void>;
     dialog: ReactNode;
 }
 {
     const { enqueueSnackbar, closeSnackbar } = useSnackbar();
     const { createMapping, moveMapping, refreshMappings, removeMapping, setAllottedMinutes } = useGanttMappings();
     const { materializeOccurrence } = useGanttRecurrenceExceptions();
-    const { updateEvent } = useModuleEventActions();
+    const { applyEventShuffleGroup, updateEvent } = useModuleEventActions();
 
     const [ question, setQuestion ] = useState<null | Question>(null);
     const [ remember, setRemember ] = useState(false);
@@ -188,8 +191,48 @@ export function useGridAllotment(ctx: Context): {
         }
     }, [ ask, createMapping, ctx, enqueueSnackbar, materializeOccurrence, moveMapping, refreshMappings, removeMapping, setAllottedMinutes, updateEvent ]);
 
-    const commitWeek = useCallback(async (eventId: string, moduleId: string, week: number, minutes: number) =>
+    /** Splits a shared event into one per shuffle, each keeping the placement, then edits only `shared.shuffle`'s. */
+    const splitAndApply = useCallback(async (
+        eventId: string,
+        moduleId: string,
+        week: number,
+        minutes: number,
+        shared: SharedShuffles,
+    ) =>
     {
+        // Planned on the original's mappings, which every copy starts with.
+        const plan = planFor(eventId, week, minutes);
+        const original = Object.values(ctx.mappings).filter((m) => m.eventId === eventId);
+        const members = await applyEventShuffleGroup(eventId, moduleId, shared.shuffles);
+        if (!members) return;
+        for (const member of members.filter((m) => m.id !== eventId))
+        {
+            for (const m of original)
+                await createMapping({ moduleId, eventId: member.id, dayId: m.dayId, allottedMinutes: m.allottedMinutes ?? 0 });
+        }
+        const target = members.find((m) => m.shuffles?.[ 0 ] === shared.shuffle);
+        if (target) await apply(target.id, moduleId, plan, true);
+    }, [ applyEventShuffleGroup, apply, createMapping, ctx.mappings, planFor ]);
+
+    const commitWeek = useCallback(async (
+        eventId: string,
+        moduleId: string,
+        week: number,
+        minutes: number,
+        shared?: SharedShuffles,
+    ) =>
+    {
+        // An event with no shuffle of its own serves every shuffle: editing it changes them all.
+        if (shared && shared.shuffles.length > 1 && !ctx.state.events[ eventId ]?.groupId)
+        {
+            const choice = await ask({ kind: "shuffles", title: ctx.state.events[ eventId ]?.title ?? "" });
+            if (choice === null) return;
+            if (choice === "splitShuffles")
+            {
+                await splitAndApply(eventId, moduleId, week, minutes, shared);
+                return;
+            }
+        }
         // Read before the edit: only siblings that matched this event's week allotment qualify.
         const before = allottedInWeek(eventId, week);
         zeroChoiceRef.current = null;
@@ -229,7 +272,7 @@ export function useGridAllotment(ctx: Context): {
                 </Button>
             ),
         });
-    }, [ allottedInWeek, apply, closeSnackbar, ctx.state.events, enqueueSnackbar, planFor ]);
+    }, [ allottedInWeek, apply, ask, closeSnackbar, ctx.state.events, enqueueSnackbar, planFor, splitAndApply ]);
 
     const texts: Record<Question["kind"], { title: string; body: string; actions: Array<{ value: Answer; label: string; primary?: boolean }> }> = {
         zero: {
@@ -244,6 +287,15 @@ export function useGridAllotment(ctx: Context): {
             actions: [
                 { value: "split", label: "אפשר פיצול בין שבועות (לא מומלץ)" },
                 { value: "move", label: "העבר את השיבוץ לכאן (מומלץ)", primary: true },
+            ],
+        },
+        shuffles: {
+            title: "מופע משותף לכל השאפלים",
+            body: "המופע הזה לא משויך לשאפל מסוים, ולכן הוא חל על כל השאפלים. אפשר לשנות אותו עבור כולם יחד, "
+                + "או לפצל אותו למופע נפרד לכל שאפל ולשנות רק את השאפל הזה. הפיצול משכפל את השיבוץ הנוכחי לכל שאפל.",
+            actions: [
+                { value: "splitShuffles", label: "פצל לפי שאפלים" },
+                { value: "together", label: "שנה את כל השאפלים יחד (מומלץ)", primary: true },
             ],
         },
         materialize: {

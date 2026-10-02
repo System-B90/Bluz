@@ -215,7 +215,10 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
             return;
         }
         if (minutes === r.weekMinutes[ week ]) return;
-        void commitWeek(r.id, r.moduleId, week, minutes);
+        const shared = r.shuffle && (r.sharedShuffles?.length ?? 0) > 1
+            ? { shuffle: r.shuffle, shuffles: r.sharedShuffles ?? [] }
+            : undefined;
+        void (shared ? commitWeek(r.id, r.moduleId, week, minutes, shared) : commitWeek(r.id, r.moduleId, week, minutes));
     };
 
     useEffect(() =>
