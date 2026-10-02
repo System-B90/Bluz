@@ -428,6 +428,12 @@ def _run_callback_server(url: str, *, insecure: bool = False) -> str | None:
     return server.token
 
 
+# Public names for the browser handoff flow, reused by `Bluz.login()` so the
+# SDK and the CLI sign in exactly the same way.
+browser_login = _run_callback_server
+redeem_handoff_code = _redeem_handoff_code
+
+
 @app.command()
 def login(
     url: str = typer.Option(

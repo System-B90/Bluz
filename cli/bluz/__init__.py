@@ -35,6 +35,7 @@ from bluz.errors import (
     NotAuthenticatedError,
     NotFoundError,
 )
+from bluz.help import describe
 from bluz.models import (
     Collection,
     Course,
@@ -80,5 +81,6 @@ __all__ = [
     "Week",
     "__version__",
     "connect",
+    "describe",
     "today",
 ]

@@ -34,6 +34,8 @@ __all__ = [
     "PersonalSettings",
     "PrayerSettings",
     "ScheduleSettings",
+    "SessionInfo",
+    "SessionUser",
     "ShuffleUsageItem",
     "ShuffleUsages",
     "StudentSchedule",
@@ -216,6 +218,36 @@ class ShuffleUsages(BluzModel):
     events: list[ShuffleUsageItem] = Field(default_factory=list)
 
 
+# --- session ---------------------------------------------------------------------
+
+
+class SessionUser(BluzModel):
+    """The signed-in user, as next-auth describes them."""
+
+    _repr_fields = ("name", "email")
+
+    name: str | None = None
+    email: str | None = None
+    image: str | None = None
+
+
+class SessionInfo(BluzModel):
+    """`bz.whoami()`: who the token belongs to and when the session expires.
+
+    An empty session (`user is None`) means the token is missing or expired.
+    """
+
+    _repr_fields = ("user", "expires")
+
+    user: SessionUser | None = None
+    expires: datetime | None = None
+
+    @property
+    def authenticated(self) -> bool:
+        """True when the token is valid."""
+        return self.user is not None
+
+
 # --- platform --------------------------------------------------------------------
 
 
@@ -229,6 +261,7 @@ class HealthReport(BluzModel):
 
     @property
     def healthy(self) -> bool:
+        """True only for an all-green report (not degraded)."""
         return self.status == "healthy"
 
 

@@ -33,7 +33,10 @@ from bluz.api.platform import (
 )
 from bluz.client import BluzClient
 from bluz.config import Config, load_config
+from bluz.errors import ConfigError, NotAuthenticatedError
+from bluz.help import describe
 from bluz.models.iterations import Iteration
+from bluz.models.misc import SessionInfo
 
 __all__ = ["Bluz", "connect"]
 
@@ -109,6 +112,89 @@ class Bluz:
         """Wrap an existing low-level `BluzClient` (it is not closed by this session)."""
         return cls(http=http, iteration=iteration)
 
+    # --- signing in ------------------------------------------------------------
+
+    @classmethod
+    def login(
+        cls,
+        url: str | None = None,
+        *,
+        insecure: bool | None = None,
+        save: bool = True,
+        timeout: float = 30.0,
+    ) -> Self:
+        """Sign in through the browser and return a ready session.
+
+        The same handoff flow as `bluz login`: a browser tab opens on the Bluz
+        login page and hands the session back automatically. If it cannot
+        (no browser, blocked loopback), paste the handoff code the tab shows
+        when prompted. With `save=True` the result is written to the user
+        config file, so later `Bluz()` calls — and the CLI — reuse it.
+
+        Example:
+            >>> bz = Bluz.login("https://bluz.example")
+            >>> bz.whoami().user
+        """
+        from getpass import getpass
+
+        from bluz.commands.auth import browser_login, redeem_handoff_code
+
+        existing = load_config()
+        target = (url or existing.url or "").rstrip("/")
+        if not target:
+            raise ConfigError(
+                "Pass the server URL: Bluz.login('https://bluz.example')."
+            )
+        verify_off = existing.insecure if insecure is None else insecure
+
+        token = browser_login(target, insecure=verify_off)
+        if not token:
+            code = getpass("Handoff code shown in the browser tab: ").strip()
+            if not code:
+                raise NotAuthenticatedError("Login cancelled — no handoff code.")
+            token = redeem_handoff_code(target, code, insecure=verify_off)
+
+        if save:
+            Config(url=target, token=token, insecure=verify_off).save()
+        return cls(target, token, insecure=verify_off, timeout=timeout)
+
+    def whoami(self) -> SessionInfo:
+        """Who this session's token belongs to, and when it expires.
+
+        Returns an empty `SessionInfo` (`.authenticated is False`) instead of
+        raising when the token is missing or expired.
+        """
+        try:
+            data = self.http.get_raw("/api/auth/session")
+        except NotAuthenticatedError:
+            data = {}
+        return SessionInfo.from_wire(data or {}, self)
+
+    @property
+    def is_authenticated(self) -> bool:
+        """True when the server accepts this session's token (one request)."""
+        return self.whoami().authenticated
+
+    def require_login(self) -> SessionInfo:
+        """Fail fast with a clear message unless the token is valid.
+
+        Call it at the top of a script so an expired session stops the run
+        before the first write, not halfway through.
+        """
+        info = self.whoami()
+        if not info.authenticated:
+            raise NotAuthenticatedError(
+                f"Not signed in to {self.url}. Run `bluz login` or "
+                "`Bluz.login(url)`, or set BLUZ_TOKEN."
+            )
+        return info
+
+    def help(self) -> None:
+        """Print every namespace and its methods, one line each."""
+        print(describe(self))
+
+    # --- plumbing ---------------------------------------------------------------
+
     @property
     def http(self) -> BluzClient:
         """The low-level client (`.get/.post/...` on raw `/api/*` paths) — the
@@ -119,6 +205,7 @@ class Bluz:
 
     @property
     def url(self) -> str | None:
+        """The server base URL this session talks to."""
         return self.config.url
 
     def scoped(self, iteration: str | Iteration | None) -> Bluz:
@@ -142,6 +229,7 @@ class Bluz:
         return sibling
 
     def close(self) -> None:
+        """Close the HTTP connection (a no-op for sessions sharing another's)."""
         if self._http is not None and self._owns_http:
             self._http.close()
             self._http = None

@@ -89,6 +89,7 @@ class Event(BluzModel):
 
     @property
     def duration(self) -> timedelta:
+        """`end_time - start_time` as a timedelta."""
         return self.end_time - self.start_time
 
     @property
@@ -120,6 +121,7 @@ class Event(BluzModel):
         return self.bluz.events.update(self)
 
     def delete(self) -> None:
+        """Delete (archive) this event."""
         self.bluz.events.delete(self)
 
 
@@ -172,6 +174,7 @@ class CalendarDraft(BluzModel):
         return self.bluz.drafts.get(self)
 
     def delete(self) -> None:
+        """Delete this draft."""
         self.bluz.drafts.delete(self)
 
 
@@ -191,6 +194,7 @@ class CalendarSnapshot(BluzModel):
     events: list[Event] = Field(default_factory=list)
 
     def load(self) -> CalendarSnapshot:
+        """The full snapshot, including its captured events."""
         return self.bluz.snapshots.get(self)
 
     def restore(self) -> SnapshotRestoreResult:
@@ -198,6 +202,7 @@ class CalendarSnapshot(BluzModel):
         return self.bluz.snapshots.restore(self)
 
     def delete(self) -> None:
+        """Delete this snapshot (the live calendar is not touched)."""
         self.bluz.snapshots.delete(self)
 
 

@@ -10,6 +10,7 @@ Author: Michael K. Steinberg
 
 from __future__ import annotations
 
+import inspect
 import warnings
 from collections.abc import Iterator, Mapping
 from datetime import UTC, date, datetime, time
@@ -129,6 +130,25 @@ class BluzModel(BaseModel):
     _repr_fields: ClassVar[tuple[str, ...]] = ("id",)
 
     _bluz: Bluz | None = PrivateAttr(default=None)
+
+    @classmethod
+    def __pydantic_init_subclass__(cls, **kwargs: Any) -> None:
+        """Append a generated "Fields" table to every model's docstring, so
+        `help(Model)` and IPython's `Model?` list the attributes up front
+        instead of burying them under pydantic's inherited methods."""
+        super().__pydantic_init_subclass__(**kwargs)
+        from bluz.help import field_table
+
+        table = field_table(cls)
+        if table and "\nFields:\n" not in (cls.__doc__ or ""):
+            cls.__doc__ = f"{inspect.cleandoc(cls.__doc__ or '')}\n\nFields:\n{table}\n"
+
+    @classmethod
+    def help(cls) -> None:
+        """Print this model's fields, properties and methods, one per line."""
+        from bluz.help import describe
+
+        print(describe(cls))
 
     # --- binding --------------------------------------------------------------
 
@@ -285,9 +305,11 @@ class Collection(list[T], Generic[T]):
 
     @property
     def ids(self) -> list[Any]:
+        """Every item's id, in order."""
         return [getattr(item, "id", None) for item in self]
 
     def to_wire(self) -> list[Any]:
+        """The items as wire JSON."""
         return [to_wire(item) for item in self]
 
     def __iter__(self) -> Iterator[T]:

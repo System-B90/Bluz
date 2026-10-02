@@ -147,6 +147,7 @@ class GanttNode(BluzModel):
         return cast(Self, self._api().update(self.id, data, **fields))
 
     def delete(self) -> None:
+        """Delete this item on the server."""
         self._api().delete(self.id)
 
 
@@ -277,6 +278,7 @@ class GanttEvent(GanttNode):
 
     @property
     def syllabus(self) -> Syllabus:
+        """The syllabus this event's module belongs to."""
         return self.module.syllabus
 
     @property
@@ -350,6 +352,7 @@ class Module(_Container[GanttEvent]):
     event_ids: list[str] | None = Field(default=None, alias="events")
 
     def model_post_init(self, context: Any, /) -> None:
+        """Point each event back at this module."""
         if self.links:
             _bind_parent([link.event for link in self.links], self)
 
@@ -370,6 +373,7 @@ class Module(_Container[GanttEvent]):
 
     @property
     def syllabus(self) -> Syllabus:
+        """The syllabus this module was reached through (or its own, fetched)."""
         if isinstance(self._parent, Syllabus):
             return self._parent
         if not self.syllabus_id:
@@ -378,6 +382,7 @@ class Module(_Container[GanttEvent]):
 
     @property
     def curriculum(self) -> Curriculum | None:
+        """The curriculum this module was reached through, if any."""
         return self.syllabus.curriculum
 
     def create_event(
@@ -434,6 +439,7 @@ class Syllabus(_Container[Module]):
     module_ids: list[str] | None = Field(default=None, alias="modules")
 
     def model_post_init(self, context: Any, /) -> None:
+        """Point each module back at this syllabus."""
         if self.links:
             _bind_parent([link.module for link in self.links], self)
 
@@ -449,6 +455,7 @@ class Syllabus(_Container[Module]):
 
     @property
     def modules(self) -> Collection[Module]:
+        """This syllabus's modules, in order."""
         return self._children()
 
     @property
@@ -496,11 +503,13 @@ class Syllabus(_Container[Module]):
         courses: list[Course | str] | None = None,
         lead_instructor_ids: list[int] | None = None,
     ) -> Syllabus:
+        """Set linked courses and/or lead instructors (`[]` clears)."""
         return self.bluz.gantt.syllabuses.set_links(
             self.id, courses=courses, lead_instructor_ids=lead_instructor_ids
         )
 
     def reorder(self, modules: list[Module | str]) -> None:
+        """Set the order of this syllabus's modules."""
         self.bluz.gantt.syllabuses.reorder(self.id, modules)
 
 
@@ -521,6 +530,7 @@ class Day(GanttNode):
 
     @property
     def week(self) -> Week:
+        """The week this day belongs to."""
         if isinstance(self._parent, Week):
             return self._parent
         if not self.week_id:
@@ -547,6 +557,7 @@ class Week(_Container[Day]):
     day_ids: list[str] | None = Field(default=None, alias="days")
 
     def model_post_init(self, context: Any, /) -> None:
+        """Sort days by weekday and point each back at this week."""
         if self.links:
             self.links.sort(key=lambda link: int(link.day.day_index))
             _bind_parent([link.day for link in self.links], self)
@@ -563,6 +574,7 @@ class Week(_Container[Day]):
 
     @property
     def days(self) -> Collection[Day]:
+        """This week's days, Sunday first."""
         return self._children()
 
     def day(self, index: Annotated[GanttDayIndex | int, _ENUM_FIRST]) -> Day:
@@ -642,6 +654,7 @@ class Curriculum(_Container[Syllabus]):
     week_ids: list[str] | None = Field(default=None, alias="weeks")
 
     def model_post_init(self, context: Any, /) -> None:
+        """Sort weeks by number and point every child back here."""
         if self.syllabus_links:
             _bind_parent([link.syllabus for link in self.syllabus_links], self)
         if self.week_links:
@@ -664,6 +677,7 @@ class Curriculum(_Container[Syllabus]):
 
     @property
     def syllabuses(self) -> Collection[Syllabus]:
+        """This curriculum's syllabuses, in order."""
         return self._children()
 
     @property
@@ -689,6 +703,7 @@ class Curriculum(_Container[Syllabus]):
         return Collection(event for module in self.modules for event in module)
 
     def week(self, number: int) -> Week:
+        """The week with this number (1-based)."""
         for week in self.weeks:
             if week.number == number:
                 return week
@@ -697,6 +712,7 @@ class Curriculum(_Container[Syllabus]):
     # --- authoring ------------------------------------------------------------
 
     def create_syllabus(self, title: str, **fields: Any) -> Syllabus:
+        """Create a syllabus in this curriculum."""
         fields.setdefault("hive_ids", [])
         return self.bluz.gantt.syllabuses.create(
             curriculum_id=self.id, title=title, **fields
@@ -711,25 +727,31 @@ class Curriculum(_Container[Syllabus]):
         return self.bluz.gantt.curriculums.export(self.id)
 
     def export_excel(self) -> bytes:
+        """This curriculum as an .xlsx workbook (bytes)."""
         return self.bluz.gantt.curriculums.export_excel(self.id)
 
     # --- placement ------------------------------------------------------------
 
     def mappings(self) -> Collection[DayMapping]:
+        """Every module/event placement on a day."""
         return self.bluz.gantt.curriculums.mappings(self.id)
 
     def constraints(self) -> Any:
+        """Every scheduling constraint in this curriculum."""
         return self.bluz.gantt.curriculums.constraints(self.id)
 
     def recurrence_exceptions(self) -> Collection[RecurrenceException]:
+        """Skipped/materialized occurrences of recurring events."""
         return self.bluz.gantt.curriculums.recurrence_exceptions(self.id)
 
     # --- cut pipeline -----------------------------------------------------------
 
     def cut_status(self) -> CutStatus:
+        """Whether the linked iteration holds cut events of this curriculum."""
         return self.bluz.gantt.curriculums.cut_status(self.id)
 
     def cut_preview(self) -> Any:
+        """The planner's dated occurrences — no gating, no writes."""
         return self.bluz.gantt.curriculums.cut_preview(self.id)
 
     def cut_plan(self, **options: Any) -> CutPlan:
@@ -741,6 +763,7 @@ class Curriculum(_Container[Syllabus]):
         return self.bluz.gantt.curriculums.cut(self.id, **options)
 
     def pull_back(self) -> Any:
+        """Undo a cut: soft-delete every live event generated from it."""
         return self.bluz.gantt.curriculums.pull_back(self.id)
 
     def execution(self) -> CurriculumExecution:

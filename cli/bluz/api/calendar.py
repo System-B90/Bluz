@@ -87,6 +87,7 @@ class EventsAPI(Resource):
         )
 
     def delete(self, event: Event | str) -> None:
+        """Delete (archive) an event by id or object."""
         self._http.delete(_BASE, json=ref(event))
 
     def compare(
@@ -167,6 +168,7 @@ class DraftsAPI(Resource):
         *,
         iteration: str | Iteration | None = None,
     ) -> CalendarDraft:
+        """Create a shared draft holding `events` (models or wire dicts)."""
         body = {"label": label, "events": _events_body(events) or []}
         return self._one(
             CalendarDraft,
@@ -191,6 +193,7 @@ class DraftsAPI(Resource):
     def delete(
         self, draft: CalendarDraft | str, *, iteration: str | Iteration | None = None
     ) -> None:
+        """Delete a shared draft."""
         self._http.delete(_DRAFTS, params={"id": ref(draft), "it": self._it(iteration)})
 
 
@@ -200,6 +203,7 @@ class SnapshotsAPI(Resource):
     def list(
         self, *, iteration: str | Iteration | None = None
     ) -> Collection[CalendarSnapshot]:
+        """Snapshot summaries, newest first (no events — see `get`)."""
         return self._many(
             CalendarSnapshot,
             self._http.get(_SNAPSHOTS, params={"it": self._it(iteration)}),
@@ -211,6 +215,7 @@ class SnapshotsAPI(Resource):
         *,
         iteration: str | Iteration | None = None,
     ) -> CalendarSnapshot:
+        """One snapshot including its captured events."""
         params = {"id": ref(snapshot), "it": self._it(iteration)}
         return self._one(CalendarSnapshot, self._http.get(_SNAPSHOTS, params=params))
 
@@ -221,6 +226,7 @@ class SnapshotsAPI(Resource):
         *,
         iteration: str | Iteration | None = None,
     ) -> CalendarSnapshot:
+        """Capture a restore point from `events` (models or wire dicts)."""
         body = {"label": label, "events": _events_body(events) or []}
         return self._one(
             CalendarSnapshot,
@@ -233,6 +239,7 @@ class SnapshotsAPI(Resource):
         *,
         iteration: str | Iteration | None = None,
     ) -> None:
+        """Delete a snapshot (the live calendar is not touched)."""
         self._http.delete(
             _SNAPSHOTS, params={"id": ref(snapshot), "it": self._it(iteration)}
         )

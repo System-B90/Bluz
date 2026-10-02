@@ -81,6 +81,7 @@ class Room(BluzModel):
 
     @property
     def is_custom(self) -> bool:
+        """True for a Bluz-defined room (only those can be edited)."""
         return self.source == RoomSource.CUSTOM
 
     @property
@@ -138,9 +139,11 @@ class Course(BluzModel):
         return self.bluz.courses.list().where(parent_id=self.id)
 
     def update(self, **fields: Any) -> Course:
+        """Update this course. Unset arguments are not sent."""
         return self.bluz.courses.update(self, **fields)
 
     def delete(self) -> None:
+        """Delete this course."""
         self.bluz.courses.delete(self)
 
 
@@ -158,9 +161,11 @@ class Outsider(BluzModel):
     comment: str | None = None
 
     def update(self, **fields: Any) -> Outsider:
+        """Update this outsider. Unset arguments are not sent."""
         return self.bluz.outsiders.update(self, **fields)
 
     def delete(self) -> None:
+        """Delete this outsider."""
         self.bluz.outsiders.delete(self)
 
 
@@ -174,9 +179,11 @@ class CustomColor(BluzModel):
     hex: str = ""
 
     def update(self, **fields: Any) -> CustomColor:
+        """Update this colour; unset fields keep their value."""
         return self.bluz.colors.update(self, **fields)
 
     def delete(self) -> None:
+        """Delete this colour."""
         self.bluz.colors.delete(self)
 
 
@@ -212,6 +219,7 @@ class Reservation(BluzModel):
 
     @property
     def room(self) -> Room:
+        """The reserved `Room` (one list request)."""
         return self.bluz.rooms.get(self.room_id)
 
     def cancel(self) -> None:

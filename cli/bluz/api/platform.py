@@ -90,21 +90,27 @@ class SettingsAPI(Resource):
         self._http.post(f"{_SETTINGS}/{name}", json=_body(value))
 
     def schedule(self) -> ScheduleSettings:
+        """Day bounds the cut and the calendar use (`time` values)."""
         return self._one(ScheduleSettings, self.get(SCHEDULE_SETTING_KEY) or {})
 
     def set_schedule(self, value: ScheduleSettings | Mapping[str, Any]) -> None:
+        """Write the schedule settings (a model or a wire dict)."""
         self.set(SCHEDULE_SETTING_KEY, value)
 
     def meal_times(self) -> MealSettings:
+        """Preferred breakfast / lunch / dinner times."""
         return self._one(MealSettings, self.get(MEAL_TIMES_SETTING_KEY) or {})
 
     def set_meal_times(self, value: MealSettings | Mapping[str, Any]) -> None:
+        """Write the meal times (a model or a wire dict)."""
         self.set(MEAL_TIMES_SETTING_KEY, value)
 
     def prayer_times(self) -> PrayerSettings:
+        """Shacharit / mincha / arvit times."""
         return self._one(PrayerSettings, self.get(PRAYER_TIMES_SETTING_KEY) or {})
 
     def set_prayer_times(self, value: PrayerSettings | Mapping[str, Any]) -> None:
+        """Write the prayer times (a model or a wire dict)."""
         self.set(PRAYER_TIMES_SETTING_KEY, value)
 
 
@@ -112,6 +118,7 @@ class PersonalSettingsAPI(Resource):
     """`bz.personal` — the signed-in user's own preferences."""
 
     def get(self) -> PersonalSettings:
+        """The signed-in user's own settings."""
         return self._one(PersonalSettings, self._http.get(_PERSONAL) or {})
 
     def replace(
@@ -133,6 +140,7 @@ class GoogleCalendarAPI(Resource):
     """`bz.google` — the per-user Google Calendar mirror."""
 
     def status(self) -> GoogleCalendarStatus:
+        """Whether Google Calendar is configured on the server and linked for you."""
         return self._one(GoogleCalendarStatus, self._http.get(f"{_GOOGLE}/status"))
 
     def connect(self, code: str) -> None:
@@ -140,6 +148,7 @@ class GoogleCalendarAPI(Resource):
         self._http.post(f"{_GOOGLE}/connect", json={"code": code})
 
     def disconnect(self) -> None:
+        """Revoke your stored Google tokens."""
         self._http.post(f"{_GOOGLE}/disconnect")
 
     def sync(self) -> GoogleSyncResult:
@@ -147,6 +156,7 @@ class GoogleCalendarAPI(Resource):
         return self._one(GoogleSyncResult, self._http.post(f"{_GOOGLE}/sync") or {})
 
     def calendars(self) -> GoogleCalendarList:
+        """Calendars you can mirror into, and which one is selected."""
         return self._one(GoogleCalendarList, self._http.get(f"{_GOOGLE}/calendars"))
 
     def select_calendar(
@@ -185,21 +195,27 @@ class HiveAPI(Resource):
         return self._http.get(f"{_HIVE}/{name}", params=params) or []
 
     def users(self) -> list[dict[str, Any]]:
+        """Hive staff users."""
         return self._list("users")
 
     def students(self) -> list[dict[str, Any]]:
+        """Hive students."""
         return self._list("students")
 
     def classes(self) -> list[dict[str, Any]]:
+        """Hive classes (student groups — Bluz shuffles map onto these)."""
         return self._list("classes")
 
     def subjects(self) -> list[dict[str, Any]]:
+        """Hive subjects."""
         return self._list("subjects")
 
     def modules(self) -> list[dict[str, Any]]:
+        """Hive modules."""
         return self._list("modules")
 
     def rooms(self) -> list[dict[str, Any]]:
+        """Hive rooms."""
         return self._list("rooms")
 
     def lessons(

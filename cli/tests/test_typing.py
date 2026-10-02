@@ -23,6 +23,7 @@ _SDK_FILES = [
     "errors.py",
     "client.py",
     "config.py",
+    "help.py",
 ]
 
 

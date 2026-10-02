@@ -29,17 +29,17 @@ ipython
 from bluz import Bluz, EventType, today
 from datetime import timedelta
 
-bz = Bluz()                                   # uses `bluz login` / BLUZ_URL + BLUZ_TOKEN
-bz.iterations.current()                       # Iteration(id='2026b', ...)
+bz = Bluz()  # uses `bluz login` / BLUZ_URL + BLUZ_TOKEN
+bz.iterations.current()  # Iteration(id='2026b', ...)
 
-cur = bz.gantt.curriculums["Bis90 2026"]      # by title or id — one request, whole tree
-for syllabus in cur:                          # Curriculum → Syllabus → Module → GanttEvent
+cur = bz.gantt.curriculums["Bis90 2026"]  # by title or id — one request, whole tree
+for syllabus in cur:  # Curriculum → Syllabus → Module → GanttEvent
     for module in syllabus:
         print(syllabus.title, module.title, sum(e.minimum_duration for e in module))
 cur["Mathematics"]["Algebra"]["Intro"].allocated_duration
 
 week = bz.events.list(today(), today() + timedelta(days=7))
-week.where(type=EventType.LECTURE)            # Collection: list + lookup/filter helpers
+week.where(type=EventType.LECTURE)  # Collection: list + lookup/filter helpers
 ```
 
 ```bash

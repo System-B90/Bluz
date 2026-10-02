@@ -68,31 +68,37 @@ class BluzClient:
         self.close()
 
     def close(self) -> None:
+        """Close the underlying HTTP connection pool."""
         self._client.close()
 
     # --- verb helpers -------------------------------------------------------
 
     def get(self, path: str, *, params: dict[str, Any] | None = None) -> Any:
+        """GET and unwrap the envelope. Transient network errors are retried."""
         return self.request("GET", path, params=params, retries=_GET_RETRY_ATTEMPTS)
 
     def post(
         self, path: str, *, json: Any = None, params: dict[str, Any] | None = None
     ) -> Any:
+        """POST and unwrap the envelope (never retried)."""
         return self.request("POST", path, json=json, params=params)
 
     def put(
         self, path: str, *, json: Any = None, params: dict[str, Any] | None = None
     ) -> Any:
+        """PUT and unwrap the envelope (never retried)."""
         return self.request("PUT", path, json=json, params=params)
 
     def patch(
         self, path: str, *, json: Any = None, params: dict[str, Any] | None = None
     ) -> Any:
+        """PATCH and unwrap the envelope (never retried)."""
         return self.request("PATCH", path, json=json, params=params)
 
     def delete(
         self, path: str, *, json: Any = None, params: dict[str, Any] | None = None
     ) -> Any:
+        """DELETE and unwrap the envelope (never retried)."""
         return self.request("DELETE", path, json=json, params=params)
 
     def get_raw(self, path: str, *, params: dict[str, Any] | None = None) -> Any:

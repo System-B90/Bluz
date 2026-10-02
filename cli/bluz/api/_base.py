@@ -45,6 +45,12 @@ class Resource:
     def _many(self, model: type[M], data: Any) -> Collection[M]:
         return Collection(model.from_wire(item, self._bluz) for item in data or [])
 
+    def help(self) -> None:
+        """Print this namespace's methods with signatures, one per line."""
+        from bluz.help import describe
+
+        print(describe(self))
+
     def __repr__(self) -> str:
         public = sorted(
             name

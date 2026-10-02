@@ -129,6 +129,7 @@ class GanttEntityAPI(Resource, Generic[N]):
         )
 
     def delete(self, item: N | str) -> None:
+        """Delete an item (and its junction rows)."""
         self._http.delete(f"{_BASE}/{self.entity}/{ref(item)}")
 
 
@@ -202,6 +203,7 @@ class CurriculumsAPI(GanttEntityAPI[Curriculum]):
         is_archived: bool = False,
         **fields: Any,
     ) -> Curriculum:
+        """Create a curriculum. New ones start as drafts with no syllabuses or weeks."""
         if data is None:
             data = {
                 "description": description,
@@ -255,6 +257,7 @@ class CurriculumsAPI(GanttEntityAPI[Curriculum]):
         syllabus: Syllabus | str | None = None,
         module: Module | str | None = None,
     ) -> Any:
+        """Scheduling constraints, optionally scoped to a syllabus or module."""
         params = {"syllabusId": ref(syllabus), "moduleId": ref(module)}
         return self._http.get(
             f"{_BASE}/curriculums/{ref(curriculum)}/constraints", params=params
@@ -263,6 +266,7 @@ class CurriculumsAPI(GanttEntityAPI[Curriculum]):
     # --- day mappings (cMDA) ---------------------------------------------------
 
     def mappings(self, curriculum: Curriculum | str) -> Collection[DayMapping]:
+        """Every module/event placement on a day (cMDA)."""
         return self._many(
             DayMapping,
             self._http.get(f"{_BASE}/curriculums/{ref(curriculum)}/mappings"),
@@ -323,6 +327,7 @@ class CurriculumsAPI(GanttEntityAPI[Curriculum]):
         *,
         event: GanttEvent | str | None = None,
     ) -> None:
+        """Remove a module (or event) placement from a day."""
         payload = {"moduleId": ref(module), "eventId": ref(event), "dayId": ref(day)}
         self._http.delete(
             f"{_BASE}/curriculums/{ref(curriculum)}/mappings", json=payload
@@ -435,6 +440,7 @@ class CurriculumsAPI(GanttEntityAPI[Curriculum]):
     def recurrence_exceptions(
         self, curriculum: Curriculum | str
     ) -> Collection[RecurrenceException]:
+        """Every skipped or materialized occurrence of a recurring event."""
         return self._many(
             RecurrenceException,
             self._http.get(

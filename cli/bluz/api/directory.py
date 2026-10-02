@@ -130,6 +130,7 @@ class CoursesAPI(Resource):
         return {"it": self._it(iteration)}
 
     def list(self, *, iteration: str | Iteration | None = None) -> Collection[Course]:
+        """Every course of the iteration (a flat list — see `roots()` / `Course.children`)."""
         return self._many(
             Course, self._http.get(_COURSES, params=self._params(iteration))
         )
@@ -137,6 +138,7 @@ class CoursesAPI(Resource):
     def get(
         self, course_id: str, *, iteration: str | Iteration | None = None
     ) -> Course:
+        """One course by id (filtered client-side)."""
         return find_by_id(self.list(iteration=iteration), course_id, what="course")
 
     def __getitem__(self, key: str) -> Course:
@@ -182,6 +184,7 @@ class CoursesAPI(Resource):
         iteration: str | Iteration | None = None,
         **fields: Any,
     ) -> Course:
+        """Update a course. Unset arguments are not sent."""
         payload = camel_payload(
             id=ref(course),
             name=name,
@@ -198,6 +201,7 @@ class CoursesAPI(Resource):
     def delete(
         self, course: Course | str, *, iteration: str | Iteration | None = None
     ) -> None:
+        """Delete a course."""
         self._http.delete(_COURSES, json=ref(course), params=self._params(iteration))
 
 
@@ -205,9 +209,11 @@ class OutsidersAPI(Resource):
     """`bz.outsiders` — external visitors / guest lecturers."""
 
     def list(self) -> Collection[Outsider]:
+        """Every outsider."""
         return self._many(Outsider, self._http.get(_OUTSIDERS))
 
     def get(self, outsider_id: str) -> Outsider:
+        """One outsider by id (filtered client-side)."""
         return find_by_id(self.list(), outsider_id, what="outsider")
 
     def __getitem__(self, key: str) -> Outsider:
@@ -224,6 +230,7 @@ class OutsidersAPI(Resource):
         comment: str | None = None,
         outsider_id: str | None = None,
     ) -> Outsider:
+        """Create an outsider. An id (`outsider-<uuid>`) is generated when omitted."""
         payload = camel_payload(
             id=outsider_id or f"outsider-{uuid.uuid4()}",
             name=name,
@@ -246,6 +253,7 @@ class OutsidersAPI(Resource):
         release_date: str | None = None,
         comment: str | None = None,
     ) -> Outsider:
+        """Update an outsider. Unset arguments are not sent."""
         payload = camel_payload(
             id=ref(outsider),
             name=name,
@@ -258,6 +266,7 @@ class OutsidersAPI(Resource):
         return self._one(Outsider, self._http.post(_OUTSIDERS, json=payload))
 
     def delete(self, outsider: Outsider | str) -> None:
+        """Delete an outsider."""
         self._http.delete(_OUTSIDERS, json=ref(outsider))
 
 
@@ -265,9 +274,11 @@ class ColorsAPI(Resource):
     """`bz.colors` — named custom event colours."""
 
     def list(self) -> Collection[CustomColor]:
+        """Every custom colour."""
         return self._many(CustomColor, self._http.get(_COLORS))
 
     def get(self, color_id: str) -> CustomColor:
+        """One colour by id (filtered client-side)."""
         return find_by_id(self.list(), color_id, what="colour")
 
     def __getitem__(self, key: str) -> CustomColor:
@@ -276,6 +287,7 @@ class ColorsAPI(Resource):
     def create(
         self, name: str, hex: str, *, color_id: str | None = None
     ) -> CustomColor:
+        """Create a colour. An id is generated when omitted."""
         body = {"id": color_id or str(uuid.uuid4()), "name": name, "hex": hex}
         return self._one(CustomColor, self._http.put(_COLORS, json=body))
 
@@ -297,6 +309,7 @@ class ColorsAPI(Resource):
         return self._one(CustomColor, self._http.post(_COLORS, json=body))
 
     def delete(self, color: CustomColor | str) -> None:
+        """Delete a colour."""
         self._http.delete(_COLORS, json=ref(color))
 
 
@@ -330,6 +343,7 @@ class ReservationsAPI(Resource):
         return self._many(Reservation, self._http.get(_RESERVATIONS, params=params))
 
     def get(self, reservation_id: str) -> Reservation:
+        """One reservation by its `_id` (filtered client-side)."""
         for item in self.list():
             if item.mongo_id == reservation_id:
                 return item
@@ -349,6 +363,7 @@ class ReservationsAPI(Resource):
         note: str | None = None,
         iteration: str | Iteration | None = None,
     ) -> Reservation:
+        """Book a room. `room_source` defaults to the room's own (Hive for a bare id)."""
         if room_source is None:
             room_source = room.source if isinstance(room, Room) else RoomSource.HIVE
         payload: dict[str, Any] = {
@@ -374,6 +389,7 @@ class ReservationsAPI(Resource):
         *,
         iteration: str | Iteration | None = None,
     ) -> None:
+        """Cancel (delete) a reservation."""
         reservation_id = (
             reservation.mongo_id
             if isinstance(reservation, Reservation)

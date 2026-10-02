@@ -29,6 +29,7 @@ class IterationsAPI(Resource):
     """
 
     def list(self) -> Collection[Iteration]:
+        """Every registered iteration."""
         return self._many(Iteration, self._http.get(_BASE))
 
     def current(self) -> Iteration:
@@ -36,6 +37,7 @@ class IterationsAPI(Resource):
         return self._one(Iteration, self._http.get(f"{_BASE}/current"))
 
     def get(self, iteration_id: str) -> Iteration:
+        """One iteration by id."""
         return self._one(Iteration, self._http.get(f"{_BASE}/{iteration_id}"))
 
     def __getitem__(self, key: str) -> Iteration:
@@ -97,6 +99,7 @@ class IterationsAPI(Resource):
         return self.patch(iteration, is_current=True)
 
     def delete(self, iteration: Iteration | str) -> None:
+        """Delete an iteration. Only an orphaned one (see `usage`) is deletable."""
         self._http.delete(f"{_BASE}/{ref(iteration)}")
 
     def sync_hive(self, iteration: Iteration | str) -> SyncHiveResult:
