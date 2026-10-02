@@ -62,4 +62,15 @@ test.describe("Release screenshots", () => {
         await waitForAppLoad(page);
         await shoot(page, "03-gantt");
     });
+
+    test("gantt grid context menu", async ({ page }) => {
+        await open(page, "/gantt");
+        await waitForAppLoad(page);
+        await page.getByRole("tab", { name: "טבלה" }).click();
+        const firstCell = page.getByRole("grid", { name: "טבלת גאנט" }).locator("tbody td").first();
+        await firstCell.waitFor({ timeout: 30_000 });
+        await firstCell.click({ button: "right" });
+        await page.getByRole("menu").waitFor();
+        await shoot(page, "04-gantt-grid-menu");
+    });
 });

@@ -22,6 +22,7 @@ const { ctx, actions } = vi.hoisted(() => ({
         openModuleDialog: vi.fn(),
         openSyllabusDialog: vi.fn(),
         commitWeek: vi.fn(),
+        splitShuffles: vi.fn(),
     },
 }));
 
@@ -51,7 +52,7 @@ vi.mock("@/components/base/CoursesProvider", () => ({
 vi.mock("notistack", () => ({ useSnackbar: () => ({ enqueueSnackbar: vi.fn() }) }));
 
 vi.mock("@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-grid-allotment", () => ({
-    useGridAllotment: () => ({ commitWeek: actions.commitWeek, dialog: null }),
+    useGridAllotment: () => ({ commitWeek: actions.commitWeek, splitShuffles: actions.splitShuffles, dialog: null }),
 }));
 
 vi.mock("@/components/gantt/state/recurrence-exceptions/hooks", () => ({
@@ -304,5 +305,83 @@ describe("GanttGridView", () => {
         expect(rowCells("אירוע").slice(1).map((c) => c.textContent)).toEqual([ "1:30", "1:30", "1:30", "" ]);
         act(() => setHoursFormat("decimal"));
         expect(rowCells("אירוע")[ 1 ].textContent).toBe("1.5");
+    });
+});
+
+describe("GanttGridView right-click menu (#858)", () => {
+    const menuItems = () => screen.getAllByRole("menuitem").map((m) => m.textContent);
+
+    it("an event's placed week cell offers edit, clear and remove, wired to commitWeek", async () => {
+        renderGrid();
+        const week1 = rowCells("אירוע")[ 3 ];
+        fireEvent.contextMenu(week1);
+        expect(menuItems()).toEqual([
+            "פתיחה", "עריכת הזמן המוקצה לשבוע", "איפוס השבוע (0 שעות)", "הסרת השיבוץ מהשבוע", "העתקת ערך",
+        ]);
+        fireEvent.click(screen.getByRole("menuitem", { name: "איפוס השבוע (0 שעות)" }));
+        await vi.waitFor(() => expect(actions.commitWeek).toHaveBeenCalledWith("e1", "m1", 0, 0, undefined, "keep"));
+
+        fireEvent.contextMenu(week1);
+        fireEvent.click(screen.getByRole("menuitem", { name: "הסרת השיבוץ מהשבוע" }));
+        await vi.waitFor(() => expect(actions.commitWeek).toHaveBeenCalledWith("e1", "m1", 0, 0, undefined, "remove"));
+    });
+
+    it("selects the right-clicked cell, as a left-click would", () => {
+        renderGrid();
+        const target = rowCells("אירוע")[ 4 ];
+        fireEvent.contextMenu(target);
+        // The open menu is modal, so the grid is aria-hidden: read the DOM directly.
+        expect(target.getAttribute("aria-current")).toBe("true");
+    });
+
+    it("keeps a range when the right-click lands inside it, and offers set-range", () => {
+        renderGrid();
+        fireEvent.click(rowCells("אירוע")[ 3 ]);
+        fireEvent.click(rowCells("אירוע")[ 4 ], { shiftKey: true });
+        fireEvent.contextMenu(rowCells("אירוע")[ 3 ]);
+        expect(document.querySelectorAll('td[aria-selected="true"]')).toHaveLength(2);
+        expect(menuItems()).toContain("הגדרת ערך לכל התאים שנבחרו…");
+    });
+
+    it("set-range writes the typed value to every selected editable cell", async () => {
+        renderGrid();
+        fireEvent.click(rowCells("אירוע")[ 3 ]);
+        fireEvent.click(rowCells("אירוע")[ 4 ], { shiftKey: true });
+        fireEvent.contextMenu(rowCells("אירוע")[ 4 ]);
+        fireEvent.click(screen.getByRole("menuitem", { name: "הגדרת ערך לכל התאים שנבחרו…" }));
+        fireEvent.change(await screen.findByLabelText("שעות"), { target: { value: "2" } });
+        fireEvent.click(screen.getByRole("button", { name: "החלה" }));
+        await vi.waitFor(() => expect(actions.commitWeek).toHaveBeenCalledTimes(2));
+        expect(actions.commitWeek).toHaveBeenCalledWith("e1", "m1", 0, 120);
+        expect(actions.commitWeek).toHaveBeenCalledWith("e1", "m1", 1, 120);
+    });
+
+    it("summary rows open their dialog and collapse from the menu", () => {
+        renderGrid();
+        fireEvent.contextMenu(rowCells("סילבוס")[ 0 ]);
+        expect(menuItems()).toEqual([ "פתיחה", "כיווץ", "הרחבת הכל מתחת", "כיווץ הכל מתחת", "העתקת ערך" ]);
+        fireEvent.click(screen.getByRole("menuitem", { name: "פתיחה" }));
+        expect(actions.openSyllabusDialog).toHaveBeenCalledWith("s1");
+
+        fireEvent.contextMenu(rowCells("סילבוס")[ 0 ]);
+        fireEvent.click(screen.getByRole("menuitem", { name: "כיווץ" }));
+        expect(actions.toggleSyllabus).toHaveBeenCalledWith("s1");
+    });
+
+    it("collapse-all-under closes the syllabus and every open module beneath it", () => {
+        renderGrid();
+        fireEvent.contextMenu(rowCells("סילבוס")[ 0 ]);
+        fireEvent.click(screen.getByRole("menuitem", { name: "כיווץ הכל מתחת" }));
+        expect(actions.toggleSyllabus).toHaveBeenCalledWith("s1");
+        expect(actions.toggleModule).toHaveBeenCalledWith("m1");
+    });
+
+    it("copies the cell's text", async () => {
+        const writeText = vi.fn(async () => undefined);
+        Object.assign(navigator, { clipboard: { writeText } });
+        renderGrid();
+        fireEvent.contextMenu(rowCells("אירוע")[ 1 ]);
+        fireEvent.click(screen.getByRole("menuitem", { name: "העתקת ערך" }));
+        expect(writeText).toHaveBeenCalledWith("1.5");
     });
 });
