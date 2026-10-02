@@ -152,6 +152,17 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
     const usedByWeek = rows
         .filter((r) => r.kind === "syllabus")
         .reduce((sum, r) => sum.map((m, w) => m + r.weekMinutes[ w ]), new Array<number>(weekCount).fill(0));
+    // Weeks where an event keeps a mapping, so a kept 0 reads "0" rather than looking removed.
+    const placedWeeks = useMemo(() =>
+    {
+        const placed = new Set<string>();
+        for (const m of Object.values(curriculumMappings))
+        {
+            const week = weekIndexByDayId.get(m.dayId);
+            if (m.eventId && week !== undefined) placed.add(`${m.eventId}:${week}`);
+        }
+        return placed;
+    }, [ curriculumMappings, weekIndexByDayId ]);
     const availableByWeek = timelineWeeks.map((week) => getWeekTotalMinutes(week, state));
 
     const [ selection, setSelection ] = useState(initialSelection);
@@ -380,7 +391,8 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                             const values = [
                                 hours(r.requiredMinutes),
                                 hours(allocated),
-                                ...r.weekMinutes.map(hoursOrBlank),
+                                ...r.weekMinutes.map((minutes, w) =>
+                                    minutes === 0 && r.kind === "event" && placedWeeks.has(`${r.id}:${w}`) ? hours(0) : hoursOrBlank(minutes)),
                             ];
                             return (
                                 <TableRow
