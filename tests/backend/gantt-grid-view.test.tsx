@@ -171,6 +171,15 @@ describe("GanttGridView", () => {
         expect(actions.openEventDialog).toHaveBeenCalledWith("s1", "m1", "e1");
     });
 
+    it("toggles a summary row on a double-click anywhere in it, once", () => {
+        renderGrid();
+        const cells = screen.getAllByRole("row").filter((r) => r.textContent?.includes("סילבוס"))[ 0 ].querySelectorAll("td");
+        fireEvent.doubleClick(cells[ cells.length - 1 ]);
+        expect(actions.toggleSyllabus).toHaveBeenCalledTimes(1);
+        fireEvent.doubleClick(screen.getByText(/סילבוס/));
+        expect(actions.toggleSyllabus).toHaveBeenCalledTimes(2);
+    });
+
     it("expands on + and collapses on -, only when the state differs", () => {
         const grid = renderGrid();
         const open = actions.toggleSyllabus.mock.calls.length;
