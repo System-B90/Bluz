@@ -15,6 +15,7 @@ import {
     useCurriculumProviderActions,
     useCurriculumState,
 } from "@/components/gantt/state/context";
+import { CreateMapping } from "@/components/gantt/state/mappings/context";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
 
@@ -121,7 +122,7 @@ export const useGanttView = (curriculumId: string) =>
         registerRevealHandler,
     });
 
-    const { curriculumMappings, eventMappings, moduleMappings } = useGanttMappingsMerge(
+    const { curriculumMappings, eventMappings: anyEventMappings, moduleMappings } = useGanttMappingsMerge(
         globalMappings,
         curriculumId,
     );
@@ -131,6 +132,12 @@ export const useGanttView = (curriculumId: string) =>
         ignoreBreaks,
         state,
     });
+
+    // An event mapped onto several days is anchored on its earliest one.
+    const eventMappings = useMemo(() => ({
+        ...anyEventMappings,
+        ...Object.fromEntries(Object.entries(eventSpans).map(([ eventId, span ]) => [ eventId, span.dayIds[ 0 ] ])),
+    }), [ anyEventMappings, eventSpans ]);
 
     const { unallocatedBySyllabus, unallocatedCount } = useGanttUnallocated({
         curriculum,
@@ -151,6 +158,15 @@ export const useGanttView = (curriculumId: string) =>
         modules: state.modules,
     });
 
+    // Placing an event allots its whole duration on that day.
+    const createFullMapping = useCallback<CreateMapping>(
+        (args) => createMapping({
+            allottedMinutes: args.eventId ? state.events[ args.eventId ]?.minimumDuration ?? 0 : 0,
+            ...args,
+        }),
+        [ createMapping, state.events ],
+    );
+
     const {
         handleDragEnd,
         handleMapModule,
@@ -163,7 +179,7 @@ export const useGanttView = (curriculumId: string) =>
         modulesById: state.modules,
         moduleMappings,
         eventMappings,
-        createMapping,
+        createMapping: createFullMapping,
         moveMapping,
         removeMapping,
         deleteOccurrence,

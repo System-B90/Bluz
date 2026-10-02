@@ -357,7 +357,7 @@ function assignedCourseIds(
 
 /**
  * Calls `visit` once per recurrence echo of every mapped recurring event (its
- * start day excluded), with the event's minutes. Skipped and materialized
+ * start day excluded), with its root mapping's allotted minutes. Skipped and materialized
  * occurrences are left out.
  */
 export function forEachRecurrenceOccurrence(
@@ -382,7 +382,18 @@ export function forEachRecurrenceOccurrence(
         excluded.add(exception.dayId);
         excludedByEvent.set(exception.eventId, excluded);
     }
+    // A recurring event echoes from its earliest mapping, for that mapping's
+    // allotted minutes; its other mappings are standalone parts.
+    const dayOrder = new Map(linearDays.map((dayId, i) => [dayId, i]));
+    const rootByEvent = new Map<string, GanttCurriculumModuleDayMapping>();
     for (const mapping of Object.values(mappings)) {
+        if (!mapping.eventId || !dayOrder.has(mapping.dayId)) continue;
+        const root = rootByEvent.get(mapping.eventId);
+        if (!root || (dayOrder.get(mapping.dayId) ?? 0) < (dayOrder.get(root.dayId) ?? 0)) {
+            rootByEvent.set(mapping.eventId, mapping);
+        }
+    }
+    for (const mapping of rootByEvent.values()) {
         if (!mapping.eventId) continue;
         const event = state.events[mapping.eventId];
         if (!event || event.recurrence === EventRecurrence.None) continue;
@@ -398,7 +409,7 @@ export function forEachRecurrenceOccurrence(
             allowedDayIndices: getAllowedDayIndices(event.constraints),
         });
         for (const dayId of occurrenceDayIds) {
-            visit(dayId, mapping.eventId, event.minimumDuration ?? 0);
+            visit(dayId, mapping.eventId, mapping.allottedMinutes ?? 0);
         }
     }
 }

@@ -17,6 +17,8 @@ export type CreateMapping = ({
     moduleId: GanttModuleId;
     eventId: GanttEventId | null;
     dayId: GanttDayId;
+    /** Omitted ⇒ the event's whole minimumDuration. */
+    allottedMinutes?: number;
 }) => Promise<GanttCurriculumModuleDayMapping | undefined>;
 export type MoveMapping = ({
     moduleId,
@@ -39,18 +41,18 @@ export type RemoveMapping = ({
     dayId: GanttDayId;
 }) => Promise<void>;
 
-/** Sets the minutes-per-week split of an event mapping (#768). */
-export type SetWeekSplit = ({
+/** Sets the minutes an event is allotted on one of its mapped days. */
+export type SetAllottedMinutes = ({
     moduleId,
     eventId,
     dayId,
-    weekSplitMinutes,
+    allottedMinutes,
 }: {
     moduleId: GanttModuleId;
     eventId: GanttEventId;
     dayId: GanttDayId;
-    weekSplitMinutes: Array<number>;
-}) => Promise<void>;
+    allottedMinutes: number;
+}) => Promise<boolean>;
 
 export type GanttMappingContextType = {
     state: GanttMappingState;
@@ -58,7 +60,7 @@ export type GanttMappingContextType = {
     createMapping: CreateMapping;
     moveMapping: MoveMapping;
     removeMapping: RemoveMapping;
-    setWeekSplit: SetWeekSplit;
+    setAllottedMinutes: SetAllottedMinutes;
 };
 
 export const GanttMappingContext = createContext<
