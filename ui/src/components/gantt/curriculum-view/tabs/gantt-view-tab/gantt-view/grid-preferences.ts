@@ -44,6 +44,11 @@ const animation = createViewerFlag("bluz.gridAnimation", true);
 export const setGridAnimation = animation.set;
 export const useGridAnimation = animation.use;
 
+/** Whether the gantt grid leaves break events out of its rows and sums. Off by default (breaks counted). */
+const ignoreBreaks = createViewerFlag("bluz.gridIgnoreBreaks", false);
+export const setGridIgnoreBreaks = ignoreBreaks.set;
+export const useGridIgnoreBreaks = ignoreBreaks.use;
+
 /** Whether the gantt grid draws faint vertical lines between columns. Off by default. */
 const verticalLines = createViewerFlag("bluz.gridVerticalLines", false);
 export const setGridVerticalLines = verticalLines.set;

@@ -1,5 +1,6 @@
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
 import { GanttCurriculumModuleDayMapping, GanttEventRecurrenceException } from "@/api-shared/types/gantt/models";
+import { isBreakEvent } from "@/api-shared/types/settings/meal";
 import { EventDaySpan } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { forEachRecurrenceOccurrence, StudentPath } from "@/components/gantt/curriculum-view/student-load";
 import { appliesToShuffle, countRequiredOccurrences } from "@/components/gantt/utils";
@@ -26,6 +27,8 @@ export type GridRow = {
 export type CoursePresence = "full" | "none" | "partial";
 
 export type GridPlacement = {
+    /** Leave break events out of the rows (and so every sum). */
+    ignoreBreaks?: boolean;
     dateOf?: (dayId: string) => string | undefined;
     eventSpans: Record<string, EventDaySpan>;
     exceptions: Record<string, GanttEventRecurrenceException>;
@@ -133,6 +136,7 @@ export function buildGridRows(
             {
                 const event = state.events[ eventId ];
                 if (!event) return [];
+                if (placement.ignoreBreaks && isBreakEvent(state.syllabuses[ syllabusId ].title, event.title)) return [];
                 // An event's own shuffle tags override its module's.
                 const tags = event.shuffles?.length ? event.shuffles : mod.shuffles;
                 if (shuffle !== null && !appliesToShuffle(tags, shuffle)) return [];

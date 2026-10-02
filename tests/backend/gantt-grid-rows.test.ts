@@ -251,3 +251,23 @@ describe("formatHours", () => {
             .toEqual([ "0:45", "1:30", "10:05", "-0:30", "0:00" ]);
     });
 });
+
+describe("buildGridRows ignoreBreaks", () => {
+    const rowsFor = (ignoreBreaks: boolean) => {
+        const state = store({ lesson: { minimumDuration: 60 }, "ארוחת בוקר": { minimumDuration: 35 } });
+        const placed = { lesson: "a1", "ארוחת בוקר": "a1" };
+        return buildGridRows([ "s1" ], { ...placement(state, placed), ignoreBreaks }, () => true, () => true);
+    };
+
+    it("counts break events by default", () => {
+        const rows = rowsFor(false);
+        expect(rows.map((r) => r.title)).toContain("ארוחת בוקר");
+        expect(rows.find((r) => r.kind === "syllabus")?.weekMinutes[ 0 ]).toBe(95);
+    });
+
+    it("leaves break events out of the rows and every sum", () => {
+        const rows = rowsFor(true);
+        expect(rows.map((r) => r.title)).not.toContain("ארוחת בוקר");
+        expect(rows.find((r) => r.kind === "syllabus")?.weekMinutes[ 0 ]).toBe(60);
+    });
+});
