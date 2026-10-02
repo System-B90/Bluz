@@ -37,6 +37,11 @@ import
     localizer,
 } from "@/components/schedule/calendar/calendar/DndLocalizer";
 import { dayRangeHeaderFormat } from "@/components/schedule/calendar/calendar/range-header";
+import {
+    CalendarTimeSlotWrapper,
+    OpenSlotContextMenu,
+    slotContextMenuHandler,
+} from "@/components/schedule/calendar/calendar/slot-context-menu";
 import type { GridInteraction } from "@/components/schedule/calendar/calendar/UseCalendarHandlers";
 import {
     DragModifiers,
@@ -172,6 +177,7 @@ const CALENDAR_COMPONENTS = {
     event: BluzEventComponent,
     toolbar: CalendarToolbarSlot,
     header: CalendarHeader,
+    timeSlotWrapper: CalendarTimeSlotWrapper,
 };
 
 const MIN_WORKING_MS = MIN_SEGMENT_MINUTES * 60_000;
@@ -274,8 +280,10 @@ type CalendarViewProps = {
     /** Plain click on a tile or on empty grid: the selection collapses. */
     onSelectOnly: (eventId: EventId) => void;
     onClearSelection: () => void;
-    /** Right-click on a tile; null while the calendar is read-only. */
+    /** Right-click on a tile; null keeps the browser menu. */
     onContextMenuEvent: null | OpenEventContextMenu;
+    /** Right-click on empty grid (#859); null keeps the browser menu. */
+    onContextMenuSlot: null | OpenSlotContextMenu;
     /**
      * Reports a committed grid interaction in event-space. `interaction`
      * distinguishes a move from a resize from a Ctrl-held duplicate so the
@@ -308,6 +316,7 @@ export function CalendarView({
     onSelectOnly,
     onClearSelection,
     onContextMenuEvent,
+    onContextMenuSlot,
     onEventDrop,
     onSplitEvent,
     onToggleFullscreen,
@@ -363,6 +372,7 @@ export function CalendarView({
             setHoveredEventId,
             splitEventAt: onSplitEvent,
             openContextMenu: onContextMenuEvent,
+            slotContextMenuEnabled: onContextMenuSlot !== null,
         }),
         [
             breakWindows,
@@ -372,6 +382,7 @@ export function CalendarView({
             selectedEventIds,
             onSplitEvent,
             onContextMenuEvent,
+            onContextMenuSlot,
         ],
     );
 
@@ -592,6 +603,11 @@ export function CalendarView({
         return [ NO_ROOM_RESOURCE, ...rooms, ...orphans.values() ];
     }, [ rooms, events ]);
 
+    const handleSlotContextMenu = useMemo(
+        () => slotContextMenuHandler(onContextMenuSlot),
+        [ onContextMenuSlot ],
+    );
+
     const { calendarDayStartTime, calendarDayEndTime } = useSettings();
     const calendarMin = useMemo(
         () => dayjs(calendarDayStartTime, "HH:mm").toDate(),
@@ -611,50 +627,54 @@ export function CalendarView({
     return (
         <ToolbarExtrasContext.Provider value={ toolbarExtras }>
             <SplitCalendarProvider value={ splitCalendar }>
-                <DnDCalendar
-                    className="relative grow h-full"
-                    components={ CALENDAR_COMPONENTS }
-                    date={ date }
-                    dayLayoutAlgorithm={ splitAwareDayLayout }
-                    defaultView={ Views.WEEK }
-                    draggableAccessor={
-                        isReadOnlyIteration ? nothingDraggable : draggableAccessor
-                    }
-                    endAccessor={ endAccessor }
-                    eventPropGetter={ segmentPropGetter }
-                    events={ visibleSegments }
-                    formats={ CALENDAR_FORMATS }
-                    localizer={ localizer }
-                    max={ calendarMax }
-                    messages={ CALENDAR_MESSAGES }
-                    min={ calendarMin }
-                    onDoubleClickEvent={ handleDoubleClickSegment }
-                    onDragStart={ handleDragStart }
-                    onEventDrop={ handleSegmentDrop }
-                    onEventResize={ handleSegmentResize }
-                    onNavigate={ onNavigate }
-                    onSelectEvent={ handleSelectSegment }
-                    onSelectSlot={ handleSelectSlot }
-                    onView={ onView }
-                    resizableAccessor={
-                        isReadOnlyIteration ? nothingDraggable : resizableAccessor
-                    }
-                    resourceAccessor={ resourceAccessor }
-                    resourceIdAccessor={ resourceIdAccessor }
-                    // Resource logic
-                    resources={
-                        currentView === Views.DAY ? dayResources : undefined
-                    }
-                    resourceTitleAccessor="name"
-                    rtl={ true }
-                    selectable
-                    startAccessor={ startAccessor }
-                    step={ 5 }
-                    style={ { height: "100%" } }
-                    timeslots={ 12 }
-                    view={ currentView }
-                    views={ { day: true, week: true, work_week: CustomWorkWeek } }
-                />
+                { /* `display: contents` keeps the grid's own layout; the
+                    handler only needs the bubbling right-click (#859). */ }
+                <Box onContextMenu={ handleSlotContextMenu } sx={ { display: "contents" } }>
+                    <DnDCalendar
+                        className="relative grow h-full"
+                        components={ CALENDAR_COMPONENTS }
+                        date={ date }
+                        dayLayoutAlgorithm={ splitAwareDayLayout }
+                        defaultView={ Views.WEEK }
+                        draggableAccessor={
+                            isReadOnlyIteration ? nothingDraggable : draggableAccessor
+                        }
+                        endAccessor={ endAccessor }
+                        eventPropGetter={ segmentPropGetter }
+                        events={ visibleSegments }
+                        formats={ CALENDAR_FORMATS }
+                        localizer={ localizer }
+                        max={ calendarMax }
+                        messages={ CALENDAR_MESSAGES }
+                        min={ calendarMin }
+                        onDoubleClickEvent={ handleDoubleClickSegment }
+                        onDragStart={ handleDragStart }
+                        onEventDrop={ handleSegmentDrop }
+                        onEventResize={ handleSegmentResize }
+                        onNavigate={ onNavigate }
+                        onSelectEvent={ handleSelectSegment }
+                        onSelectSlot={ handleSelectSlot }
+                        onView={ onView }
+                        resizableAccessor={
+                            isReadOnlyIteration ? nothingDraggable : resizableAccessor
+                        }
+                        resourceAccessor={ resourceAccessor }
+                        resourceIdAccessor={ resourceIdAccessor }
+                        // Resource logic
+                        resources={
+                            currentView === Views.DAY ? dayResources : undefined
+                        }
+                        resourceTitleAccessor="name"
+                        rtl={ true }
+                        selectable
+                        startAccessor={ startAccessor }
+                        step={ 5 }
+                        style={ { height: "100%" } }
+                        timeslots={ 12 }
+                        view={ currentView }
+                        views={ { day: true, week: true, work_week: CustomWorkWeek } }
+                    />
+                </Box>
             </SplitCalendarProvider>
         </ToolbarExtrasContext.Provider>
     );

@@ -228,9 +228,8 @@ function EventSegmentBlock({ segment }: { segment: EventSegment }) {
     );
 
     // Right-click opens the tile menu (#706). The browser menu is suppressed
-    // only when we actually have one to put there, so a read-only iteration
-    // keeps the native menu (copy, inspect) rather than swallowing the gesture
-    // and offering nothing. The propagation stop keeps the grid underneath
+    // only when we actually have one to put there. A past iteration gets the
+    // menu too, with only Copy enabled (#859). The propagation stop keeps the grid underneath
     // from also treating the press as a slot selection.
     const handleContextMenu = useCallback(
         (pointer: ReactMouseEvent<HTMLElement>) => {

@@ -19,6 +19,7 @@ export type CourseSubmenuProps = {
     /** Whether all, some or none of the targeted events carry the course. */
     stateOf: (courseId: CourseId) => "all" | "none" | "some";
     onToggle: (courseId: CourseId) => void;
+    disabled?: boolean;
 };
 
 /**
@@ -26,7 +27,7 @@ export type CourseSubmenuProps = {
  * `CourseSelect`, with its search box and arrow-key hand-off, but tri-state
  * checkboxes since one click can target several events. Stays open on click.
  */
-export function CourseSubmenu({ stateOf, onToggle }: CourseSubmenuProps) {
+export function CourseSubmenu({ stateOf, onToggle, disabled }: CourseSubmenuProps) {
     const { courses } = useCourses();
     const [searchQuery, setSearchQuery] = useState("");
 
@@ -36,7 +37,7 @@ export function CourseSubmenu({ stateOf, onToggle }: CourseSubmenuProps) {
     );
 
     return (
-        <Submenu icon={<GroupsIcon fontSize="small" />} label="שיוך מסלולים">
+        <Submenu disabled={disabled} icon={<GroupsIcon fontSize="small" />} label="שיוך מסלולים">
             <SelectSearchHeader
                 onChange={setSearchQuery}
                 placeholder="חיפוש מסלול..."

@@ -38,13 +38,15 @@ export type SplitCalendarContextValue = {
     selectedEventIds: ReadonlySet<EventId>;
     setHoveredEventId: (eventId: EventId | null) => void;
     /**
-     * `null` while the calendar is read-only — a past iteration has nothing to
-     * offer a menu whose every entry is a write, and the tiles then leave the
-     * browser's own menu alone.
+     * `null` leaves the browser's own menu alone. The calendar always supplies
+     * one: on a past iteration its write entries are disabled but Copy still
+     * works, to carry an event into a writable iteration (#859).
      */
     openContextMenu: null | OpenEventContextMenu;
     /** Middle-click / Shift+click on a tile: cut the event in two at `atMs` (#657). */
     splitEventAt: (event: Event, atMs: number) => void;
+    /** Right-click on empty grid opens the paste menu (#859). */
+    slotContextMenuEnabled: boolean;
 };
 
 const EMPTY: SplitCalendarContextValue = {
@@ -56,6 +58,7 @@ const EMPTY: SplitCalendarContextValue = {
     setHoveredEventId: () => undefined,
     openContextMenu: null,
     splitEventAt: () => undefined,
+    slotContextMenuEnabled: false,
 };
 
 const SplitCalendarContext = createContext<SplitCalendarContextValue>(EMPTY);
