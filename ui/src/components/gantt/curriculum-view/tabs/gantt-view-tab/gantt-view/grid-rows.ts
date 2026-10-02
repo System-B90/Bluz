@@ -142,7 +142,8 @@ export function buildGridRows(
                 // An event's own shuffle tags override its module's.
                 const tags = event.shuffles?.length ? event.shuffles : mod.shuffles;
                 if (shuffle !== null && !appliesToShuffle(tags, shuffle)) return [];
-                const sharedShuffles = shuffle === null
+                // An event split by course is not shared by shuffles: shuffles don't apply to it.
+                const sharedShuffles = shuffle === null || event.courseIds?.length
                     ? undefined
                     : (state.syllabuses[ syllabusId ].shuffles ?? []).filter((name) => appliesToShuffle(tags, name));
                 return [ {

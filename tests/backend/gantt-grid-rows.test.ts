@@ -285,3 +285,22 @@ describe("buildGridRows childless", () => {
         expect(rows.filter((r) => r.kind !== "event").map((r) => r.childless)).toEqual([ false, false ]);
     });
 });
+
+describe("buildGridRows sharedShuffles", () => {
+    const sharedOf = (courseIds: Array<string>) => {
+        const state = store({ e1: { minimumDuration: 60 } });
+        state.syllabuses.s1 = { ...state.syllabuses.s1, shuffles: [ "א", "ב" ] } as never;
+        state.events.e1 = { ...state.events.e1, courseIds } as never;
+        return buildGridRows([ "s1" ], placement(state, {}), () => true, () => true)
+            .filter((r) => r.kind === "event")
+            .map((r) => r.sharedShuffles);
+    };
+
+    it("lists every shuffle an untagged event serves", () => {
+        expect(sharedOf([])).toEqual([ [ "א", "ב" ], [ "א", "ב" ] ]);
+    });
+
+    it("leaves an event split by course unshared", () => {
+        expect(sharedOf([ "c1" ])).toEqual([ undefined, undefined ]);
+    });
+});
