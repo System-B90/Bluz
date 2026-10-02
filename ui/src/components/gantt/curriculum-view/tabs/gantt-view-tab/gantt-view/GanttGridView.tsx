@@ -18,6 +18,7 @@ import {
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { buildStudentPaths } from "@/components/gantt/curriculum-view/student-load";
 import { buildGridRows, CoursePresence, GridRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-rows";
+import { initialSelection, isCellSelected, selectCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-selection";
 import { GanttViewProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { useGanttView } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/UseGanttView";
 import { useHoursFormat } from "@/components/gantt/curriculum-view/use-hours-format";
@@ -46,6 +47,11 @@ const errorTint = {
     },
 };
 
+/** Selected-cell overlay: an inset shadow tints over any background, error tint included. */
+const selectedSx = {
+    boxShadow: (theme: Theme) => `inset 0 0 0 100vmax ${alpha(theme.palette.primary.main, 0.16)}`,
+};
+
 /** Course cell fill: solid when the course attends all of the row, stripes when only some. */
 const presenceSx = (presence: CoursePresence, color: string) =>
     presence === "full"
@@ -58,7 +64,8 @@ const presenceSx = (presence: CoursePresence, color: string) =>
  * Spreadsheet-style gantt: weeks as columns, events as rows, each cell the
  * hours the event takes that week (recurrence echoes and week splits
  * included). Syllabus/module summary rows sum their children and collapse.
- * Arrow keys move the selected cell; Enter toggles a summary row or opens an
+ * Arrow keys move the selected cell; Shift+arrows/click select a range,
+ * Ctrl+click adds or removes a cell. Enter toggles a summary row or opens an
  * event's dialog.
  */
 export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
@@ -142,9 +149,12 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         .reduce((sum, r) => sum.map((m, w) => m + r.weekMinutes[ w ]), new Array<number>(weekCount).fill(0));
     const availableByWeek = timelineWeeks.map((week) => getWeekTotalMinutes(week, state));
 
-    const [ cursor, setCursor ] = useState({ row: 0, col: 0 });
-    const row = Math.min(cursor.row, rows.length - 1);
-    const col = Math.min(cursor.col, LEAD_COLUMNS + weekCount - 1);
+    const [ selection, setSelection ] = useState(initialSelection);
+    const row = Math.min(selection.cursor.row, rows.length - 1);
+    const col = Math.min(selection.cursor.col, LEAD_COLUMNS + weekCount - 1);
+    const select = (cell: { row: number; col: number }, mode: { shift?: boolean; ctrl?: boolean } = {}) =>
+        setSelection((prev) => selectCell(prev, cell, mode));
+    const clickMode = (e: React.MouseEvent) => ({ shift: e.shiftKey, ctrl: e.ctrlKey || e.metaKey });
     const selectedRef = useRef<HTMLTableCellElement>(null);
 
     useEffect(() =>
@@ -175,10 +185,10 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         {
             e.preventDefault();
             const clamp = (v: number, max: number) => Math.max(0, Math.min(v, max));
-            setCursor({
+            select({
                 row: clamp(row + move[ 0 ], rows.length - 1),
                 col: clamp(col + move[ 1 ], LEAD_COLUMNS + weekCount - 1),
-            });
+            }, { shift: e.shiftKey });
         }
         else if ((e.key === "Enter" || e.key === " ") && rows[ row ])
         {
@@ -195,9 +205,12 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         fontWeight: kind === "event" ? "normal" : "bold",
         overflowWrap: "anywhere",
         textAlign: c === 0 ? "start" : "center",
+        // Shift+click selects cells, not text.
+        userSelect: "none",
         outline: r === row && c === col ? "2px solid" : "none",
         outlineColor: "primary.main",
         outlineOffset: -2,
+        ...(isCellSelected(selection, { row: r, col: c }) && selectedSx),
     });
 
     return (
@@ -318,8 +331,9 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                         />
                                     )) }
                                     <TableCell
-                                        aria-selected={ ri === row && col === 0 }
-                                        onClick={ () => setCursor({ row: ri, col: 0 }) }
+                                        aria-current={ ri === row && col === 0 ? "true" : undefined }
+                                        aria-selected={ isCellSelected(selection, { row: ri, col: 0 }) }
+                                        onClick={ (e) => select({ row: ri, col: 0 }, clickMode(e)) }
                                         onDoubleClick={ () => activate(r) }
                                         ref={ ri === row && col === 0 ? selectedRef : undefined }
                                         sx={ cellSx(ri, 0, r.kind, r.depth) }
@@ -329,9 +343,10 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                     </TableCell>
                                     { values.map((value, vi) => (
                                         <TableCell
-                                            aria-selected={ ri === row && col === vi + 1 }
+                                            aria-current={ ri === row && col === vi + 1 ? "true" : undefined }
+                                            aria-selected={ isCellSelected(selection, { row: ri, col: vi + 1 }) }
                                             key={ vi }
-                                            onClick={ () => setCursor({ row: ri, col: vi + 1 }) }
+                                            onClick={ (e) => select({ row: ri, col: vi + 1 }, clickMode(e)) }
                                             ref={ ri === row && col === vi + 1 ? selectedRef : undefined }
                                             sx={ {
                                                 ...cellSx(ri, vi + 1, r.kind),
