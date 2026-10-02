@@ -61,10 +61,12 @@ export function GanttMappingProvider({
             moduleId,
             eventId,
             dayId,
+            allottedMinutes,
         }: {
             moduleId: GanttModuleId;
             eventId: GanttEventId | null;
             dayId: GanttDayId;
+            allottedMinutes?: number;
         }) =>
         {
             const tempSortOrder = Date.now();
@@ -75,6 +77,7 @@ export function GanttMappingProvider({
                     eventId,
                     dayId,
                     sortOrder: tempSortOrder,
+                    allottedMinutes,
                     createdAt: new Date(),
                     updatedAt: new Date(),
                 };
@@ -89,6 +92,7 @@ export function GanttMappingProvider({
                     eventId,
                     dayId,
                     sortOrder: tempSortOrder,
+                    allottedMinutes,
                 });
                 // Update with the actual data from the server (e.g., if IDs or timestamps were generated)
                 dispatch({ type: "UPSERT_MAPPING", payload: result });
@@ -170,26 +174,26 @@ export function GanttMappingProvider({
         [ curriculumId, dispatch, enqueueSnackbar ],
     );
 
-    const setWeekSplit = useCallback(
+    const setAllottedMinutes = useCallback(
         async ({
             moduleId,
             eventId,
             dayId,
-            weekSplitMinutes,
+            allottedMinutes,
         }: {
             moduleId: GanttModuleId;
             eventId: GanttEventId;
             dayId: GanttDayId;
-            weekSplitMinutes: Array<number>;
+            allottedMinutes: number;
         }) =>
         {
             const key = getGanttMappingKey({ dayId, moduleId, eventId });
             const originalMapping = mappingsRef.current[ key ];
-            if (!originalMapping) return;
+            if (!originalMapping) return false;
 
             dispatch({
                 type: "UPSERT_MAPPING",
-                payload: { ...originalMapping, weekSplitMinutes },
+                payload: { ...originalMapping, allottedMinutes },
             });
             try
             {
@@ -198,16 +202,18 @@ export function GanttMappingProvider({
                     moduleId,
                     eventId,
                     { dayId },
-                    { weekSplitMinutes },
+                    { allottedMinutes },
                 );
+                return true;
             } catch (e)
             {
                 dispatch({ type: "UPSERT_MAPPING", payload: originalMapping });
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
-                    "עדכון פיצול השבועות נכשל!",
+                    "עדכון הזמן המוקצה נכשל!",
                     e,
                 );
+                return false;
             }
         },
         [ curriculumId, dispatch, enqueueSnackbar ],
@@ -287,9 +293,9 @@ export function GanttMappingProvider({
             moveMapping,
             removeMapping,
             createMapping,
-            setWeekSplit,
+            setAllottedMinutes,
         }),
-        [ state, refreshMappings, moveMapping, removeMapping, createMapping, setWeekSplit ],
+        [ state, refreshMappings, moveMapping, removeMapping, createMapping, setAllottedMinutes ],
     );
 
     return (

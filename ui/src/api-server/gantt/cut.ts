@@ -96,8 +96,8 @@ export type CutMappingRow = {
     eventId: null | string;
     dayId: string;
     sortOrder?: null | number;
-    /** Minutes per consecutive week for a split-across-weeks event (#768). */
-    weekSplitMinutes?: Array<number> | null;
+    /** Minutes the event takes on this day. */
+    allottedMinutes?: null | number;
 };
 
 /** Plain-data recurrence-exception row. */
@@ -419,7 +419,6 @@ export function buildCutPlanInput(args: {
         title: event.title,
         recurrence: event.recurrence,
         minimumDuration: event.minimumDuration,
-        allocatedDuration: event.cEC?.[0]?.allocatedDuration ?? 0,
         splitAcrossBreaks: event.splitAcrossBreaks,
         splitAcrossWeeks: event.splitAcrossWeeks,
         type: event.type,
@@ -445,7 +444,7 @@ export function buildCutPlanInput(args: {
                 eventId: m.eventId,
                 dayId: m.dayId,
                 sortOrder: m.sortOrder ?? 0,
-                weekSplitMinutes: m.weekSplitMinutes ?? [],
+                allottedMinutes: m.allottedMinutes ?? 0,
             })),
         recurrenceExceptions: exceptions.map((e) => ({
             eventId: e.eventId,

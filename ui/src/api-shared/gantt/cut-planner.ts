@@ -29,7 +29,6 @@ import {
     getRecurrenceOccurrenceDayIds,
     isRecurrenceSatisfied,
 } from "@/api-shared/gantt/recurrence";
-import { getEffectiveWeekSplit, getWeekSplitDayIds } from "@/api-shared/gantt/week-split";
 import { layoutAroundWindows, layoutEnd } from "@/api-shared/interval-layout";
 import {
     EventRecurrence,
@@ -74,8 +73,6 @@ export type CutPlanEventInput = {
     title: string;
     recurrence: EventRecurrence;
     minimumDuration: number;
-    /** Per-curriculum allocated duration (minutes); falls back to `minimumDuration` when falsy. */
-    allocatedDuration: number;
     /** Recurrence window bounds ("YYYY-MM-DD"); null/absent ⇒ unbounded (#468). */
     recurrenceStartDate?: null | string;
     recurrenceEndDate?: null | string;
@@ -108,8 +105,8 @@ export type CutPlanMappingInput = {
     eventId: string;
     dayId: string;
     sortOrder: number;
-    /** Minutes per consecutive week for a split-across-weeks event (#768). */
-    weekSplitMinutes?: Array<number>;
+    /** Minutes the event takes on this day; 0 leaves it out of the cut. */
+    allottedMinutes: number;
 };
 
 export type CutPlanRecurrenceExceptionInput = {
@@ -271,10 +268,6 @@ export type CutPlan =
           report: CutPlanReport;
       };
 
-function eventDuration(event: CutPlanEventInput): number {
-    return event.allocatedDuration || event.minimumDuration;
-}
-
 const MINUTES_PER_DAY = 24 * 60;
 
 const pad2 = (value: number): string => String(value).padStart(2, "0");
@@ -378,9 +371,20 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
     const weeksForRecurrence = input.weeks.map((w) => ({ days: w.dayIds }));
 
     const startDayIdByEvent = new Map<string, string>();
+    /** Minutes each recurrence echo runs: the root mapping's allotment. */
+    const echoMinutesByEvent = new Map<string, number>();
     const skippedEventIds = new Set<string>();
+    // Allotted 0 in total: documented in the gantt, not part of the curriculum.
+    const unallottedEventIds = new Set(
+        input.events
+            .filter((event) =>
+                (mappingsByEvent.get(event.id) ?? []).every((m) => m.allottedMinutes <= 0))
+            .filter((event) => (mappingsByEvent.get(event.id) ?? []).length > 0)
+            .map((event) => event.id),
+    );
 
     for (const event of input.events) {
+        if (unallottedEventIds.has(event.id)) continue;
         const ownMappings = (mappingsByEvent.get(event.id) ?? [])
             .filter((m) => linearDayIds.includes(m.dayId))
             .sort((a, b) => a.sortOrder - b.sortOrder);
@@ -393,6 +397,7 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
 
         const startDayId = ownMappings[0].dayId;
         startDayIdByEvent.set(event.id, startDayId);
+        echoMinutesByEvent.set(event.id, ownMappings[0].allottedMinutes);
 
         if (event.recurrence !== EventRecurrence.None) {
             const startWeekIdx = weekIndexOfDay(startDayId);
@@ -430,6 +435,11 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
     if (options.force && skippedEventIds.size > 0) {
         input = { ...input, events: input.events.filter((e) => !skippedEventIds.has(e.id)) };
     }
+    if (unallottedEventIds.size > 0) {
+        input = { ...input, events: input.events.filter((e) => !unallottedEventIds.has(e.id)) };
+    }
+    const eventDuration = (event: CutPlanEventInput): number =>
+        echoMinutesByEvent.get(event.id) ?? event.minimumDuration;
 
     const parseTime = (time: string): [number, number] => {
         const [ hour, minute ] = time.split(":").map(Number);
@@ -459,7 +469,7 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
     type Slot = {
         eventId: string;
         isRecurrenceEcho: boolean;
-        /** A week-split part's own length, replacing the event's (#768). */
+        /** This mapping's allotted minutes; echoes run the root's. */
         durationMinutes?: number;
     };
     const slotsByDay = new Map<string, Array<Slot>>();
@@ -469,41 +479,17 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
         slotsByDay.set(dayId, arr);
     };
 
-    // Own mapped days first, ordered by sortOrder.
+    // Own mapped days first, ordered by sortOrder. Each mapping is its own
+    // occurrence of its allotted length; a 0-minute mapping is left out.
     const ownMappingsSorted = [ ...input.mappings ]
-        .filter((m) => linearDayIds.includes(m.dayId))
+        .filter((m) => linearDayIds.includes(m.dayId) && m.allottedMinutes > 0)
         .sort((a, b) => a.sortOrder - b.sortOrder);
-    const splitWeeks = input.weeks.map((w) => ({ days: w.dayIds }));
-    const eventInputById = new Map(input.events.map((e) => [ e.id, e ]));
     for (const mapping of ownMappingsSorted) {
-        // Split across weeks (#768): one slot per part, each in its own week.
-        const event = eventInputById.get(mapping.eventId);
-        const split = event
-            ? getEffectiveWeekSplit(
-                event.splitAcrossWeeks,
-                mapping.weekSplitMinutes,
-                event.minimumDuration,
-            )
-            : null;
-        if (split) {
-            const dayIds = getWeekSplitDayIds(mapping.dayId, split.length, splitWeeks);
-            dayIds.forEach((dayId, i) => {
-                // Parts past the timeline's end fold into its last week.
-                const durationMinutes =
-                    i === dayIds.length - 1
-                        ? split.slice(i).reduce((sum, part) => sum + part, 0)
-                        : split[ i ];
-                // A 0-hour part skips its week.
-                if (durationMinutes <= 0) return;
-                pushSlot(dayId, {
-                    eventId: mapping.eventId,
-                    isRecurrenceEcho: false,
-                    durationMinutes,
-                });
-            });
-            continue;
-        }
-        pushSlot(mapping.dayId, { eventId: mapping.eventId, isRecurrenceEcho: false });
+        pushSlot(mapping.dayId, {
+            eventId: mapping.eventId,
+            isRecurrenceEcho: false,
+            durationMinutes: mapping.allottedMinutes,
+        });
     }
 
     // Recurrence echoes land after a day's own events, ordered by title.
@@ -534,7 +520,9 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
     for (const [ dayId, echoes ] of echoesByDay) {
         echoes.sort((a, b) => a.title.localeCompare(b.title));
         for (const echo of echoes) {
-            pushSlot(dayId, { eventId: echo.eventId, isRecurrenceEcho: true });
+            const durationMinutes = echoMinutesByEvent.get(echo.eventId) ?? 0;
+            if (durationMinutes <= 0) continue;
+            pushSlot(dayId, { eventId: echo.eventId, isRecurrenceEcho: true, durationMinutes });
         }
     }
 
@@ -608,7 +596,7 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
     const groupSiblingsByLeadKey = new Map<string, Array<BalancerSlot>>();
     const groupBlockDurationByLeadKey = new Map<string, number>();
     const originalDayIdBySlotKey = new Map<string, string>();
-    // Week-split parts run their own length, not the event's (#768).
+    // Each slot runs its mapping's allotted length.
     const durationOverrideBySlotKey = new Map<string, number>();
     for (const [ dayId, daySlots ] of slotsByDay) {
         const built = daySlots.map((slot, ordinal) => {

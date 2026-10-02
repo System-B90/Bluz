@@ -126,7 +126,6 @@ export async function updateCurriculumModuleDayMapping(
     newValues: {
         dayId?: GanttDayId;
         sortOrder?: number;
-        weekSplitMinutes?: Array<number>;
         allottedMinutes?: number;
     },
 ) {

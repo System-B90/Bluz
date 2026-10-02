@@ -72,7 +72,7 @@ async function apiUpdateModuleDayMapping(
     newValues: {
         dayId?: GanttDayId;
         sortOrder?: number;
-        weekSplitMinutes?: Array<number>;
+        allottedMinutes?: number;
     },
     options?: ClientApiProps,
 ): Promise<GanttCurriculumModuleDayMapping> {
