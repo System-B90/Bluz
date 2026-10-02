@@ -49,6 +49,11 @@ const ignoreBreaks = createViewerFlag("bluz.gridIgnoreBreaks", false);
 export const setGridIgnoreBreaks = ignoreBreaks.set;
 export const useGridIgnoreBreaks = ignoreBreaks.use;
 
+/** Whether the grid's available/allotted header rows fold into one "allotted / available" row. Off by default. */
+const compactHeader = createViewerFlag("bluz.gridCompactHeader", false);
+export const setGridCompactHeader = compactHeader.set;
+export const useGridCompactHeader = compactHeader.use;
+
 /** Whether the gantt grid draws faint vertical lines between columns. Off by default. */
 const verticalLines = createViewerFlag("bluz.gridVerticalLines", false);
 export const setGridVerticalLines = verticalLines.set;

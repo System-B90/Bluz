@@ -1,6 +1,7 @@
 import AnimationIcon from "@mui/icons-material/Animation";
 import FreeBreakfastIcon from "@mui/icons-material/FreeBreakfast";
 import MenuIcon from "@mui/icons-material/Menu";
+import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import IconButton from "@mui/material/IconButton";
 import Popover from "@mui/material/Popover";
@@ -15,9 +16,11 @@ import { useState } from "react";
 import { HoursFormat, setHoursFormat } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import {
     setGridAnimation,
+    setGridCompactHeader,
     setGridIgnoreBreaks,
     setGridVerticalLines,
     useGridAnimation,
+    useGridCompactHeader,
     useGridIgnoreBreaks,
     useGridVerticalLines,
 } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-preferences";
@@ -55,6 +58,24 @@ function GridAnimationToggle()
                 value="animation"
             >
                 <AnimationIcon fontSize="small" />
+            </ToggleButton>
+        </Tooltip>
+    );
+}
+
+function GridCompactHeaderToggle()
+{
+    const compact = useGridCompactHeader();
+    return (
+        <Tooltip title="שורת זמן משובץ / זמין אחת בכותרת">
+            <ToggleButton
+                aria-label="שורת זמן משובץ / זמין אחת בכותרת"
+                onChange={ () => setGridCompactHeader(!compact) }
+                selected={ compact }
+                size="small"
+                value="compact"
+            >
+                <UnfoldLessIcon fontSize="small" />
             </ToggleButton>
         </Tooltip>
     );
@@ -110,6 +131,7 @@ export function GanttPageToolbar()
         <>
             <GridAnimationToggle />
             <GridVerticalLinesToggle />
+            <GridCompactHeaderToggle />
             <GridIgnoreBreaksToggle />
             <HoursFormatToggle />
         </>
