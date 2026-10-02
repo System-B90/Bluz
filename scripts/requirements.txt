@@ -16,7 +16,7 @@ sb90-devops>=0.2.0
 # Shared install/upgrade/bundle/publish flows (System-B90/deploy-py).
 # scripts/setup.py and scripts/tests import it; `python -m sb90_deploy publish`
 # (0.2.0+) cuts releases; release bundles vendor it themselves.
-sb90-deploy>=0.2.0
+sb90-deploy>=0.5.0
 tqdm>=4.70.0
 # The bluz CLI's own runtime deps, so e2e can drive `bluz auth login` (#580).
 httpx>=0.28.0
