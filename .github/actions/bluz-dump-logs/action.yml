@@ -1,0 +1,48 @@
+name: Dump Bluz container logs
+description: >-
+    Writes bounded container logs to container-logs/ and prints the ui
+    container's state, log tail and any migration errors (#729).
+
+inputs:
+    containers:
+        description: >-
+            Space-separated `docker ps --filter name=` patterns to dump. Empty
+            dumps every container on the daemon (throwaway VMs only).
+        required: false
+        default: ""
+
+runs:
+    using: composite
+    steps:
+        - name: Dump logs
+          shell: bash
+          env:
+              PATTERNS: ${{ inputs.containers }}
+          run: |
+              mkdir -p container-logs
+              docker ps -a
+              if [ -z "$PATTERNS" ]; then
+                  ids=$(docker ps -aq)
+              else
+                  ids=$(for p in $PATTERNS; do docker ps -aq --filter "name=$p"; done | sort -u)
+              fi
+              # Bounded per container: an unbounded loop once spent 28 minutes on
+              # a wedged daemon and delayed the teardown that follows.
+              for c in $ids; do
+                  name=$(docker inspect --format '{{.Name}}' "$c" | tr -d '/')
+                  timeout 30 docker logs --tail 2000 "$c" > "container-logs/$name.log" 2>&1 || true
+              done
+              echo "::group::Bluz UI container status + log (tail)"
+              ui=$(docker ps -a --filter "name=^/bluz-test-.*-ui" --format '{{.Names}}' | head -1)
+              if [ -n "$ui" ]; then
+                  docker inspect --format 'State={{.State.Status}} ExitCode={{.State.ExitCode}} OOMKilled={{.State.OOMKilled}} Restarts={{.RestartCount}}' "$ui" || true
+                  docker logs --tail 400 "$ui" 2>&1 || true
+              else
+                  echo "No Bluz UI container found."
+              fi
+              echo "::endgroup::"
+              echo "::group::Bluz UI migration errors (if any)"
+              if [ -n "$ui" ]; then
+                  docker logs "$ui" 2>&1 | grep -iE "migration|Cannot find module|MODULE_NOT_FOUND" || echo "No migration-related errors found."
+              fi
+              echo "::endgroup::"
