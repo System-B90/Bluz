@@ -297,3 +297,35 @@ describe("POST /api/ai/chat", () => {
         expect(response.status).toBe(200);
     });
 });
+
+describe("POST /api/ai/chat — personal model (#779)", () => {
+    const settings = (aiModel: string, aiApiToken = "") => ({
+        groups: [],
+        instructors: [],
+        favoriteOutsiders: [],
+        googleCalendarEnabled: false,
+        googleCalendarSyncAllEvents: false,
+        aiAssistantEnabled: true,
+        aiApiToken,
+        aiModel,
+    });
+
+    it("forwards the personal model when the user chats on their own key", async () => {
+        const { DbPersonalSettings } = await import("@/api-server/db-personal-settings");
+        vi.mocked(DbPersonalSettings.get).mockResolvedValueOnce(settings("my-model", "user-key"));
+        await POST(post(validPayload));
+        expect((runAiAgent.mock.calls[0][0] as { model?: string }).model).toBe("my-model");
+    });
+
+    it("drops an unlisted personal model on the server's key", async () => {
+        const { DbPersonalSettings } = await import("@/api-server/db-personal-settings");
+        vi.mocked(DbPersonalSettings.get).mockResolvedValueOnce(settings("pricey-model"));
+        await POST(post(validPayload));
+        expect((runAiAgent.mock.calls[0][0] as { model?: string }).model).toBeUndefined();
+    });
+
+    it("still ignores a model sent in the request body", async () => {
+        await POST(post({ ...validPayload, model: "from-body" }));
+        expect((runAiAgent.mock.calls[0][0] as { model?: string }).model).toBeUndefined();
+    });
+});
