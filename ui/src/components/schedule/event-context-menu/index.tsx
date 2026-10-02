@@ -53,6 +53,31 @@ import {
 } from "@/components/schedule/event-flags";
 import { Event, EventId } from "@/components/schedule/types/event";
 
+/** Clipboard (#859): the same actions as Ctrl+C / Ctrl+X / Ctrl+V. */
+export type ContextMenuClipboard = {
+    copy: (event: Event) => void;
+    cut: (event: Event) => void;
+    /** Pastes at the clicked event's start time. */
+    paste: (slot: PasteSlot) => void;
+    canPaste: boolean;
+};
+
+/** What stands between a menu entry and a write. */
+export type ContextMenuGuards = {
+    /** Guards the bulk deletes; resolves false when the user backs out. */
+    confirm: (message: string, options?: { title?: string }) => Promise<boolean>;
+    /**
+     * Asks before editing events another user has open (#775); resolves true
+     * at once when none of them is locked.
+     */
+    confirmLockedEdit: (eventIds: Array<EventId>) => Promise<boolean>;
+    /**
+     * A past iteration: the server rejects its writes, so only Copy (to paste
+     * into a writable iteration) and navigation stay enabled.
+     */
+    readOnly: boolean;
+};
+
 export type EventContextMenuProps = {
     target: ContextMenuTarget | null;
     onClose: () => void;
@@ -67,24 +92,8 @@ export type EventContextMenuProps = {
         eventId: EventId,
         initiator?: EventChangeInitiator,
     ) => void;
-    /** Guards the bulk deletes; resolves false when the user backs out. */
-    onConfirm: (message: string, options?: { title?: string }) => Promise<boolean>;
-    /**
-     * Asks before editing events another user has open (#775); resolves true
-     * at once when none of them is locked.
-     */
-    onConfirmLockedEdit: (eventIds: Array<EventId>) => Promise<boolean>;
-    /** Clipboard (#859): the same actions as Ctrl+C / Ctrl+X / Ctrl+V. */
-    onCopy: (event: Event) => void;
-    onCut: (event: Event) => void;
-    /** Pastes at the clicked event's start time. */
-    onPaste: (slot: PasteSlot) => void;
-    canPaste: boolean;
-    /**
-     * A past iteration: the server rejects its writes, so only Copy (to paste
-     * into a writable iteration) and navigation stay enabled.
-     */
-    readOnly: boolean;
+    clipboard: ContextMenuClipboard;
+    guards: ContextMenuGuards;
 };
 
 /**
@@ -99,13 +108,8 @@ export function EventContextMenu({
     rooms,
     onSaveEvent,
     onDeleteEvent,
-    onConfirm,
-    onConfirmLockedEdit,
-    onCopy,
-    onCut,
-    onPaste,
-    canPaste,
-    readOnly,
+    clipboard: { copy: onCopy, cut: onCut, paste: onPaste, canPaste },
+    guards: { confirm: onConfirm, confirmLockedEdit: onConfirmLockedEdit, readOnly },
 }: EventContextMenuProps) {
     const router = useRouter();
     const { iterationId } = useCalendar();

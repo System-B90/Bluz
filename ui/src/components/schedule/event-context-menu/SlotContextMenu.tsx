@@ -5,13 +5,26 @@ import ListItemText from "@mui/material/ListItemText";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Typography from "@mui/material/Typography";
+import { useCallback, useState } from "react";
 
 import { PasteSlot } from "@/components/schedule/calendar/calendar/paste";
+import { OpenSlotContextMenu } from "@/components/schedule/calendar/calendar/slot-context-menu";
 
 export type SlotContextMenuTarget = {
     position: { top: number; left: number };
     slot: PasteSlot;
 };
+
+/** Open/close state for {@link SlotContextMenu}, opened at the pointer. */
+export function useSlotContextMenu() {
+    const [target, setTarget] = useState<null | SlotContextMenuTarget>(null);
+    const open = useCallback<OpenSlotContextMenu>(
+        (slot, clientX, clientY) => setTarget({ slot, position: { top: clientY, left: clientX } }),
+        [],
+    );
+    const close = useCallback(() => setTarget(null), []);
+    return { target, open, close };
+}
 
 /**
  * Right-click menu for empty grid (#859): pastes the clipboard event at the

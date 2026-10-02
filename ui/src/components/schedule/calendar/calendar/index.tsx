@@ -26,7 +26,6 @@ import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useRooms } from "@/components/base/RoomsProvider";
 import { useConfirmDialog } from "@/components/base/UseConfirmDialog";
 import { CalendarView } from "@/components/schedule/calendar/calendar/CalendarView";
-import { OpenSlotContextMenu } from "@/components/schedule/calendar/calendar/slot-context-menu";
 import {
     GROWING_CONTROL_BUTTON_SX,
     PULSING_ICON_BUTTON_SX,
@@ -40,7 +39,7 @@ import { getRangeForView } from "@/components/schedule/calendar/utils";
 import { EventContextMenu } from "@/components/schedule/event-context-menu";
 import {
     SlotContextMenu,
-    SlotContextMenuTarget,
+    useSlotContextMenu,
 } from "@/components/schedule/event-context-menu/SlotContextMenu";
 import { useEventContextMenu } from "@/components/schedule/event-context-menu/use-event-context-menu";
 import { useEventSelection } from "@/components/schedule/event-context-menu/use-event-selection";
@@ -285,17 +284,17 @@ export function BluzCalendar({
     // The menus open on a past iteration too: Copy there is how an event is
     // carried into a writable iteration. Write entries are disabled instead.
     const handleContextMenuEvent = openAt;
+    const clipboard = useMemo(
+        () => ({ copy: copyEvent, cut: cutEvent, paste: pasteAt, canPaste: copiedEvent !== null }),
+        [copyEvent, cutEvent, pasteAt, copiedEvent],
+    );
+    const menuGuards = useMemo(
+        () => ({ confirm, confirmLockedEdit, readOnly: isReadOnlyIteration }),
+        [confirm, confirmLockedEdit, isReadOnlyIteration],
+    );
 
     // Right-click on empty grid: a paste-only menu at the slot (#859).
-    const [slotMenuTarget, setSlotMenuTarget] =
-        useState<null | SlotContextMenuTarget>(null);
-    const openSlotMenu = useCallback<OpenSlotContextMenu>(
-        (slot, clientX, clientY) =>
-            setSlotMenuTarget({ slot, position: { top: clientY, left: clientX } }),
-        [],
-    );
-    const closeSlotMenu = useCallback(() => setSlotMenuTarget(null), []);
-    const handleContextMenuSlot = openSlotMenu;
+    const slotMenu = useSlotContextMenu();
 
     // Escape drops the selection, matching the ring it clears on screen. The
     // menu swallows its own Escape (MUI closes it first), so this only ever
@@ -463,7 +462,7 @@ export function BluzCalendar({
                         events={events}
                         onClearSelection={selection.clear}
                         onContextMenuEvent={handleContextMenuEvent}
-                        onContextMenuSlot={handleContextMenuSlot}
+                        onContextMenuSlot={slotMenu.open}
                         onDoubleClickEvent={handleEditEvent}
                         onEventDrop={guardedEventDrag}
                         onExportIcs={exportIcs}
@@ -489,25 +488,20 @@ export function BluzCalendar({
             </InstructorDndProvider>
 
             <EventContextMenu
-                canPaste={copiedEvent !== null}
+                clipboard={clipboard}
                 events={events}
+                guards={menuGuards}
                 onClose={closeContextMenu}
-                onConfirm={confirm}
-                onConfirmLockedEdit={confirmLockedEdit}
-                onCopy={copyEvent}
-                onCut={cutEvent}
                 onDeleteEvent={handleDeleteEvent}
-                onPaste={pasteAt}
                 onSaveEvent={handleSaveEvent}
-                readOnly={isReadOnlyIteration}
                 rooms={rooms}
                 target={contextMenuTarget}
             />
             <SlotContextMenu
                 canPaste={copiedEvent !== null && !isReadOnlyIteration}
-                onClose={closeSlotMenu}
+                onClose={slotMenu.close}
                 onPaste={pasteAt}
-                target={slotMenuTarget}
+                target={slotMenu.target}
             />
             {confirmDialog}
         </Box>
