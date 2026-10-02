@@ -32,13 +32,19 @@ import {
 } from "@/components/schedule/calendar/calendar/toolbar-button-sx";
 import { useCalendarHandlers } from "@/components/schedule/calendar/calendar/UseCalendarHandlers";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
+import {
+    LOCKED_EDIT_CONFIRM_LABEL,
+    LOCKED_EDIT_TITLE,
+    lockedEditMessage,
+    lockHoldersOf,
+} from "@/components/schedule/calendar/calendar-provider/locked-edit";
 import { InstructorDndProvider } from "@/components/schedule/calendar/instructor-dnd/InstructorDndProvider";
 import { InstructorRail } from "@/components/schedule/calendar/instructor-dnd/InstructorRail";
 import { getRangeForView } from "@/components/schedule/calendar/utils";
 import { EventContextMenu } from "@/components/schedule/event-context-menu";
 import { useEventContextMenu } from "@/components/schedule/event-context-menu/use-event-context-menu";
 import { useEventSelection } from "@/components/schedule/event-context-menu/use-event-selection";
-import { Event } from "@/components/schedule/types/event";
+import { Event, EventId } from "@/components/schedule/types/event";
 
 /** Keys the schedule's global hotkeys use (see use-schedule-commands). */
 const SCHEDULE_HOTKEYS = new Set(["z", "y", "arrowleft", "arrowright"]);
@@ -92,7 +98,7 @@ export function BluzCalendar({
     const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
     const { rooms } = useRooms();
-    const { startDate, endDate, setStartDate, setEndDate, isReadOnlyIteration } =
+    const { startDate, endDate, setStartDate, setEndDate, isReadOnlyIteration, eventLocks } =
         useCalendar();
     // The provider's own flag, so the room filter counts too — the local
     // copy this replaced left it out and the indicator stayed dark with only
@@ -253,6 +259,38 @@ export function BluzCalendar({
     const { target: contextMenuTarget, openAt, close: closeContextMenu } =
         useEventContextMenu(selection);
     const { confirm, confirmDialog } = useConfirmDialog();
+
+    // Quick edits skip the event dialog and its "being edited by" banner, so
+    // they ask loudly before touching an event someone else has open (#775).
+    const confirmLockedEdit = useCallback(
+        async (eventIds: Array<EventId>): Promise<boolean> => {
+            const holders = lockHoldersOf(eventIds, eventLocks);
+            if (holders.length === 0) return true;
+            return await confirm(lockedEditMessage(holders, eventIds.length), {
+                title: LOCKED_EDIT_TITLE,
+                confirmLabel: LOCKED_EDIT_CONFIRM_LABEL,
+            });
+        },
+        [eventLocks, confirm],
+    );
+    const guardedEventDrag = useCallback(
+        (...args: Parameters<typeof handleEventDrag>) => {
+            // A Ctrl+drag copy leaves the locked original untouched.
+            if (args[1] === "duplicate") return handleEventDrag(...args);
+            void confirmLockedEdit([ args[0].event.id ]).then((ok) => {
+                if (ok) handleEventDrag(...args);
+            });
+        },
+        [confirmLockedEdit, handleEventDrag],
+    );
+    const guardedSplitEvent = useCallback(
+        (...args: Parameters<typeof handleSplitEvent>) => {
+            void confirmLockedEdit([ args[0].id ]).then((ok) => {
+                if (ok) handleSplitEvent(...args);
+            });
+        },
+        [confirmLockedEdit, handleSplitEvent],
+    );
 
     // Every entry in the menu is a write, so a past iteration — which the
     // server rejects writes to — gets no menu at all rather than one whose
@@ -426,13 +464,13 @@ export function BluzCalendar({
                         onClearSelection={selection.clear}
                         onContextMenuEvent={handleContextMenuEvent}
                         onDoubleClickEvent={handleEditEvent}
-                        onEventDrop={handleEventDrag}
+                        onEventDrop={guardedEventDrag}
                         onExportIcs={exportIcs}
                         onNavigate={onNavigate}
                         onSelectEvent={handleSelectEvent}
                         onSelectOnly={selection.selectOnly}
                         onSelectSlot={handleSlotSelect}
-                        onSplitEvent={handleSplitEvent}
+                        onSplitEvent={guardedSplitEvent}
                         onToggleEventSelection={selection.toggle}
                         onToggleFullscreen={handleToggleFullscreen}
                         onToggleToolbar={handleToggleToolbar}
@@ -453,6 +491,7 @@ export function BluzCalendar({
                 events={events}
                 onClose={closeContextMenu}
                 onConfirm={confirm}
+                onConfirmLockedEdit={confirmLockedEdit}
                 onDeleteEvent={handleDeleteEvent}
                 onSaveEvent={handleSaveEvent}
                 rooms={rooms}
