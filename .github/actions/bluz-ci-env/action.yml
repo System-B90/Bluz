@@ -1,0 +1,50 @@
+name: Generate Bluz CI .env
+description: >-
+    Writes the .env every Bluz e2e job needs: fresh random secrets, placeholder
+    SSO credentials (run_tests.py registers the real client) and the Hive
+    location. One source for the self-hosted and GitHub-hosted jobs (#729).
+
+inputs:
+    hive-url:
+        description: NEXT_PUBLIC_HIVE_URL the ui container talks to.
+        required: true
+    hive-network:
+        description: Docker network of the Hive compose project the ui joins.
+        required: true
+    mongo-password:
+        description: Fixed Mongo root password; empty generates a random one.
+        required: false
+        default: ""
+
+runs:
+    using: composite
+    steps:
+        - name: Write .env
+          shell: bash
+          env:
+              HIVE_URL: ${{ inputs.hive-url }}
+              HIVE_NET: ${{ inputs.hive-network }}
+              MONGO_PASS_INPUT: ${{ inputs.mongo-password }}
+          run: |
+              PG_PASS=$(openssl rand -hex 16)
+              MONGO_PASS=${MONGO_PASS_INPUT:-$(openssl rand -hex 16)}
+              cat > .env <<EOF
+              BLUZ_VERSION=latest
+              HIVE_NETWORK_NAME=${HIVE_NET}
+              WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY=$(openssl rand -hex 32)
+              NEXT_PUBLIC_HIVE_URL=${HIVE_URL}
+              NODE_TLS_REJECT_UNAUTHORIZED=0
+              NEXTAUTH_URL=https://bluz.dev
+              NEXTAUTH_SECRET=$(openssl rand -hex 32)
+              HIVE_CLIENT_ID=ci-placeholder
+              HIVE_CLIENT_SECRET=ci-placeholder
+              MONGO_ROOT_USER=mongo_admin
+              MONGO_ROOT_PASSWORD=${MONGO_PASS}
+              MONGO_CONNECTION_STRING=mongodb://mongo_admin:${MONGO_PASS}@bluz-mongodb:27017/?authSource=admin
+              JWT_SECRET=$(openssl rand -hex 32)
+              SYM_ENC_KEY=$(openssl rand -hex 32)
+              POSTGRES_USER=admin
+              POSTGRES_PASSWORD=${PG_PASS}
+              POSTGRES_DB=curriculum_db
+              DATABASE_URL=postgres://admin:${PG_PASS}@bluz-curriculum-db:5432/curriculum_db
+              EOF
