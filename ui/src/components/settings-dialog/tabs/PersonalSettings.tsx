@@ -30,7 +30,7 @@ import
     type ReactNode,
 } from "react";
 
-import { fetchAiTools } from "@/api-client/ai";
+import { fetchAiModels, fetchAiTools } from "@/api-client/ai";
 import
 {
     apiConnectGoogleCalendar,
@@ -45,6 +45,7 @@ import
     apiGetPersonalSettings,
     apiSetPersonalSettings,
 } from "@/api-client/personal-settings";
+import { ApiAiModelsResponse, isModelListed } from "@/api-shared/types/ai-models";
 import { GoogleCalendarStatus } from "@/api-shared/types/google-calendar";
 import { Class, ClassTypeEnum } from "@/api-shared/types/hive";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
@@ -61,6 +62,7 @@ type PersonalState = {
     googleCalendarSyncAllEvents: boolean;
     aiAssistantEnabled: boolean;
     aiApiToken: string;
+    aiModel: string;
 };
 type PersonalAction =
     | { type: "ADD_GROUP"; payload: string; }
@@ -72,6 +74,7 @@ type PersonalAction =
     | { type: "REMOVE_OUTSIDER"; payload: string; }
     | { type: "SET_AI_API_TOKEN"; payload: string; }
     | { type: "SET_AI_ASSISTANT_ENABLED"; payload: boolean; }
+    | { type: "SET_AI_MODEL"; payload: string; }
     | { type: "SET_GOOGLE_CALENDAR_ENABLED"; payload: boolean; }
     | { type: "SET_GOOGLE_CALENDAR_SYNC_ALL_EVENTS"; payload: boolean; };
 
@@ -126,6 +129,8 @@ function personalSettingsReducer(
         return { ...state, aiAssistantEnabled: action.payload };
     case "SET_AI_API_TOKEN":
         return { ...state, aiApiToken: action.payload };
+    case "SET_AI_MODEL":
+        return { ...state, aiModel: action.payload };
     }
 }
 
@@ -279,6 +284,7 @@ export function PersonalSettings()
         googleCalendarSyncAllEvents: false,
         aiAssistantEnabled: true,
         aiApiToken: "",
+        aiModel: "",
     });
     const [ isLoaded, setIsLoaded ] = useState(false);
     // Tracks the last value we told the user was saved, so blurring the API
@@ -290,6 +296,7 @@ export function PersonalSettings()
     const [ googleSyncing, setGoogleSyncing ] = useState(false);
     const [ aiApiTokenVisible, setAiApiTokenVisible ] = useState(false);
     const [ aiModel, setAiModel ] = useState<null | string>(null);
+    const [ aiModels, setAiModels ] = useState<ApiAiModelsResponse | null>(null);
 
     const refreshGoogleStatus = useCallback(() =>
     {
@@ -317,6 +324,7 @@ export function PersonalSettings()
             // Deployment with no AI configured at all: nothing to show, not
             // an error worth a snackbar over.
             .catch(() => setAiModel(null));
+        void fetchAiModels().then(setAiModels);
     }, []);
 
     useEffect(() =>
@@ -753,10 +761,49 @@ export function PersonalSettings()
                         type={ aiApiTokenVisible ? "text" : "password" }
                         value={ state.aiApiToken }
                     />
+                    <Autocomplete
+                        freeSolo
+                        onBlur={ refreshAiModel }
+                        onInputChange={ (_e, value) => dispatch({ type: "SET_AI_MODEL", payload: value }) }
+                        options={ (aiModels?.models ?? []).map((m) => m.id) }
+                        renderInput={ (params) => (
+                            <TextField
+                                { ...params }
+                                helperText={ aiModelHelper(state.aiModel, aiModels, Boolean(state.aiApiToken)) }
+                                label="מודל"
+                                placeholder={ aiModels?.defaultModel || "ברירת המחדל של השרת" }
+                                size="small"
+                            />
+                        ) }
+                        size="small"
+                        value={ state.aiModel || null }
+                    />
                     <Divider />
                     <AiSelfTest />
                 </Box>
             </Box>
         </Box>
     );
+}
+
+/**
+ * Helper text under the model field (#779): says which model answers, and why
+ * a typed one may be ignored.
+ */
+export function aiModelHelper(model: string, list: ApiAiModelsResponse | null, hasOwnKey: boolean): string
+{
+    const fallback = list?.defaultModel ? `ריק = ${list.defaultModel} (ברירת המחדל של השרת).` : "ריק = ברירת המחדל של השרת.";
+    if (!model.trim()) return fallback;
+    if (list && list.models.length === 0)
+    {
+        const why = `לא ניתן לטעון את רשימת המודלים${list.error ? ` (${list.error})` : ""}`;
+        return hasOwnKey ? `${why}; הערך יישלח כפי שהוקלד.` : `${why}; ללא מפתח אישי ייעשה שימוש בברירת המחדל.`;
+    }
+    if (list && !isModelListed(model, list.models))
+    {
+        return hasOwnKey
+            ? "המודל לא מופיע ברשימה — ודא שהשם מדויק."
+            : "המודל לא מופיע ברשימת השרת, ולכן ייעשה שימוש בברירת המחדל.";
+    }
+    return fallback;
 }
