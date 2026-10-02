@@ -31,7 +31,8 @@ dependencies = [
 
 [project.optional-dependencies]
 ipython = ["ipython>=8"]
-dev = ["pytest>=8", "mypy>=1.10", "ipython>=8"]
+excel = ["openpyxl>=3.1", "types-openpyxl"]
+dev = ["pytest>=8", "mypy>=1.10", "ipython>=8", "openpyxl>=3.1", "types-openpyxl"]
 
 [project.scripts]
 bluz = "bluz.main:run"

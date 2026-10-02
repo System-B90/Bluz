@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import date, datetime
 from typing import TYPE_CHECKING, Any
 
 from bluz.api._base import Resource, find_by_id, iso, lookup, ref
@@ -326,8 +326,8 @@ class ReservationsAPI(Resource):
         *,
         room: Room | int | str | None = None,
         room_source: RoomSource | int | None = None,
-        start: datetime | str | None = None,
-        end: datetime | str | None = None,
+        start: datetime | date | str | None = None,
+        end: datetime | date | str | None = None,
         iteration: str | Iteration | None = None,
     ) -> Collection[Reservation]:
         """Reservations, optionally for one room and/or within a date range."""
