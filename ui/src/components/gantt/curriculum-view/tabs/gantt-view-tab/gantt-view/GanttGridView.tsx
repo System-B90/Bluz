@@ -21,7 +21,7 @@ import {
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { buildStudentPaths } from "@/components/gantt/curriculum-view/student-load";
 import { parseHoursInput } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-allotment";
-import { useGridAnimation, useGridIgnoreBreaks, useGridVerticalLines } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-preferences";
+import { useGridAnimation, useGridCompactHeader, useGridIgnoreBreaks, useGridVerticalLines } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-preferences";
 import { buildGridRows, CoursePresence, GridRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-rows";
 import { initialSelection, isCellSelected, selectCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-selection";
 import { mergeRowTransitions, RowPhase, TransitionRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/row-transitions";
@@ -173,6 +173,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
     // Compared by identity of the row list's content, since `rows` is rebuilt on every state change.
     const animated = useGridAnimation();
     const verticalLines = useGridVerticalLines();
+    const compactHeader = useGridCompactHeader();
     const signature = rows.map(rowId).join("|");
     const stay = (list: Array<GridRow>) => list.map((row) => ({ row, phase: "stay" as const }));
     const [ shown, setShown ] = useState<{ signature: string; items: Array<TransitionRow> }>(
@@ -426,7 +427,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                     align="center"
                                     colSpan={ g.span }
                                     key={ `${g.id}-${i}` }
-                                    rowSpan={ g.id ? 1 : 3 }
+                                    rowSpan={ g.id ? 1 : compactHeader ? 2 : 3 }
                                     sx={ { fontSize: "0.75rem", px: 0.5 } }
                                 >
                                     { g.name }
@@ -440,15 +441,16 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                             )) }
                         </TableRow>
                         { ([
-                            [ "זמן זמין", availableByWeek ],
-                            [ "זמן משובץ", usedByWeek ],
-                        ] as const).map(([ label, byWeek ]) => (
+                            ...(compactHeader
+                                ? [ [ "משובץ / זמין", usedByWeek, availableByWeek ] as const ]
+                                : [ [ "זמן זמין", availableByWeek ] as const, [ "זמן משובץ", usedByWeek ] as const ]),
+                        ]).map(([ label, byWeek, against ], rowNumber) => (
                             <TableRow key={ label }>
-                                { label === "זמן זמין" && courseColumns.columns.filter((c) => c.group).map((c) => (
+                                { rowNumber === 0 && courseColumns.columns.filter((c) => c.group).map((c) => (
                                     <TableCell
                                         align="center"
                                         key={ c.path.id }
-                                        rowSpan={ 2 }
+                                        rowSpan={ compactHeader ? 1 : 2 }
                                         sx={ { fontSize: "0.75rem", fontWeight: "normal", px: 0.5 } }
                                     >
                                         { c.name }
@@ -461,7 +463,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                         key={ week.id }
                                         sx={ usedByWeek[ w ] > availableByWeek[ w ] ? errorTint : undefined }
                                     >
-                                        { hours(byWeek[ w ]) }
+                                        { against ? `${hours(byWeek[ w ])} / ${hours(against[ w ])}` : hours(byWeek[ w ]) }
                                     </TableCell>
                                 )) }
                             </TableRow>

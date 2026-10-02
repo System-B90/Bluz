@@ -79,6 +79,7 @@ vi.mock("@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/UseGa
 }));
 
 import { setHoursFormat } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { setGridCompactHeader } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-preferences";
 import { GanttGridView } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttGridView";
 
 beforeAll(() => {
@@ -212,6 +213,21 @@ describe("GanttGridView", () => {
             "השיבוץ שונה מהנדרש",
         ]);
         expect(rowCells("אירוע")[ 3 ].getAttribute("title")).toBeNull();
+    });
+
+    it("folds the available and allocated header rows into one allotted / available row", () => {
+        setGridCompactHeader(true);
+        try {
+            renderGrid();
+            const header = screen.getAllByRole("row").slice(0, 2).map((row) =>
+                within(row).getAllByRole("columnheader").map((c) => c.textContent));
+            expect(header).toEqual([
+                [ "שם", "נדרש", "שובץ", "שבוע 1", "שבוע 2" ],
+                [ "משובץ / זמין", "1.5 / 1", "0 / 8" ],
+            ]);
+        } finally {
+            setGridCompactHeader(false);
+        }
     });
 
     it("shows a course column per leaf course, grouped under its parent, filled by attendance", () => {
