@@ -1,6 +1,7 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import { GanttDbExecutor, postgresDb } from "@/api-server/gantt";
+import { ganttEventsSchema } from "@/api-server/gantt/schema/events";
 import { ganttWeek2DaysSchema } from "@/api-server/gantt/schema/junctions";
 import { ganttCurriculumEventDayMappingsSchema } from "@/api-server/gantt/schema/mappings";
 import {
@@ -77,12 +78,22 @@ export async function createCurriculumModuleDayMapping(
         eventId?: GanttEventId | null;
         dayId: GanttDayId;
         sortOrder?: number;
+        /** Defaults to the event's whole duration: placing an event allots it in full. */
+        allottedMinutes?: number;
     },
     // Optional transaction handle, so a caller can make this write part of a
     // larger atomic unit (#518).
     executor: GanttDbExecutor = postgresDb,
 ) {
-    const { eventId, moduleId, sortOrder, ...v } = { ...data };
+    const { eventId, moduleId, sortOrder, allottedMinutes, ...v } = { ...data };
+    let minutes = allottedMinutes ?? 0;
+    if (allottedMinutes === undefined && eventId) {
+        const [event] = await executor
+            .select({ minimumDuration: ganttEventsSchema.minimumDuration })
+            .from(ganttEventsSchema)
+            .where(eq(ganttEventsSchema.id, eventId));
+        minutes = event?.minimumDuration ?? 0;
+    }
 
     return await executor
         .insert(ganttCurriculumEventDayMappingsSchema)
@@ -91,6 +102,7 @@ export async function createCurriculumModuleDayMapping(
             moduleId,
             eventId,
             sortOrder: sortOrder ?? 0,
+            allottedMinutes: minutes,
         })
         .returning();
 }
@@ -115,6 +127,7 @@ export async function updateCurriculumModuleDayMapping(
         dayId?: GanttDayId;
         sortOrder?: number;
         weekSplitMinutes?: Array<number>;
+        allottedMinutes?: number;
     },
 ) {
     return await postgresDb
