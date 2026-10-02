@@ -210,6 +210,8 @@ jobs:
 
             - name: Set up Node + Playwright
               uses: System-B90/.github/actions/setup-playwright@main
+              with:
+                  node-version: "24"
 
             # Built here rather than handed over as an artifact, so a rerun of
             # this job alone still has its images. Tags match what
@@ -497,6 +499,8 @@ jobs:
 
             - name: Set up Node + Playwright
               uses: System-B90/.github/actions/setup-playwright@main
+              with:
+                  node-version: "24"
               env:
                   NPM_TOKEN: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
 

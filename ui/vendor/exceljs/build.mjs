@@ -68,7 +68,7 @@ await build({
     bundle: true,
     format: "cjs",
     platform: "node",
-    // Node 20 is what the Dockerfile runs; nothing older has to parse this.
+    // The images run Node 24; node20 stays a conservative syntax floor.
     target: "node20",
     minify: true,
     legalComments: "none",

@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM node:22-alpine AS deps
+FROM node:24.21.0-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
@@ -18,7 +18,7 @@ COPY . .
 ENV NODE_ENV=development
 CMD ["npm", "run", "dev"]
 
-FROM node:22-alpine AS builder
+FROM node:24.21.0-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -39,10 +39,10 @@ RUN npm run build
 # Bundle (not just transpile) so migrate.js carries its own deps
 # (drizzle-orm, pg) inline -- it runs in the runner stage, which only ships
 # the pruned node_modules traced from the Next.js app, not this script's.
-RUN npx esbuild ui/src/api-server/drizzle-migrate.ts --bundle --platform=node --target=node22 --outfile=/app/dist-migrate/drizzle-migrate.js --external:pg-native
+RUN npx esbuild ui/src/api-server/drizzle-migrate.ts --bundle --platform=node --target=node24 --outfile=/app/dist-migrate/drizzle-migrate.js --external:pg-native
 RUN npm prune --omit=dev
 
-FROM node:22-alpine AS runner
+FROM node:24.21.0-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
