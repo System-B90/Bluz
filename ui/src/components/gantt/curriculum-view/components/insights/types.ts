@@ -96,6 +96,8 @@ export type InsightEvent = {
     occurrences: number;
     /** minimumDuration × occurrences. */
     totalMinutes: number;
+    /** Minutes its mappings allot, recurrence echoes included. */
+    allottedMinutes: number;
 };
 
 /** Everything a generator needs, derived once per state change. */

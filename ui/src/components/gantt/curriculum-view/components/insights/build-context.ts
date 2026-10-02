@@ -14,7 +14,7 @@ import {
     InsightWeek,
 } from "@/components/gantt/curriculum-view/components/insights/types";
 import { getDayDate } from "@/components/gantt/curriculum-view/gantt-time-utils";
-import { sumStudentMinutes } from "@/components/gantt/curriculum-view/student-load";
+import { sumAllottedMinutesByEvent, sumStudentMinutes } from "@/components/gantt/curriculum-view/student-load";
 import { CurriculumStudentSchedule } from "@/components/gantt/curriculum-view/use-student-schedule";
 import {
     countEventOccurrences,
@@ -76,6 +76,7 @@ function buildEvents(
     placedModuleIds: Set<string>,
 ): Array<InsightEvent> {
     const events: Array<InsightEvent> = [];
+    const allotted = sumAllottedMinutesByEvent({ ...occurrenceCtx, state });
     for (const syllabusId of curriculum.syllabuses) {
         const syllabus = state.syllabuses[syllabusId];
         if (!syllabus) continue;
@@ -95,6 +96,7 @@ function buildEvents(
                     isPlaced: placedEventIds.has(eventId) || placedModuleIds.has(moduleId),
                     occurrences,
                     totalMinutes: (event.minimumDuration ?? 0) * occurrences,
+                    allottedMinutes: allotted.get(eventId) ?? 0,
                 });
             }
         }

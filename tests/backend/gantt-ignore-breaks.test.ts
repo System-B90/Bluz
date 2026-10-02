@@ -28,8 +28,8 @@ function setup() {
         },
     } as unknown as NormalizedStore;
     const mappings = {
-        m1: { id: "m1", curriculumId: "c", moduleId: "wm", eventId: "lesson", dayId: "d1" },
-        m2: { id: "m2", curriculumId: "c", moduleId: "bm", eventId: "lunch", dayId: "d1" },
+        m1: { id: "m1", curriculumId: "c", moduleId: "wm", eventId: "lesson", dayId: "d1", allottedMinutes: 180 },
+        m2: { id: "m2", curriculumId: "c", moduleId: "bm", eventId: "lunch", dayId: "d1", allottedMinutes: 60 },
     } as never;
     return { state, mappings };
 }
