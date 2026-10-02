@@ -458,3 +458,43 @@ describe("useCalendarHandlers — keyboard", () => {
         expect(handleDeleteEvent).not.toHaveBeenCalled();
     });
 });
+
+describe("useCalendarHandlers — right-click clipboard (#859)", () => {
+    it("copyEvent then pasteAt places a copy at the clicked slot", () => {
+        const { result, handleSaveEvent } = renderHandlers();
+
+        act(() => result.current.copyEvent(baseEvent));
+        expect(result.current.copiedEvent).toBe(baseEvent);
+        act(() => result.current.pasteAt({ start: new Date("2026-03-04T10:00:00.000Z") }));
+
+        const [ pasted, initiator ] = handleSaveEvent.mock.calls[ 0 ];
+        expect(initiator).toBe(EventChangeInitiator.CopyPaste);
+        expect(pasted.id).toBeUndefined();
+        expect(pasted.startTime.toISOString()).toBe("2026-03-04T10:00:00.000Z");
+        expect(pasted.endTime.diff(pasted.startTime, "minute")).toBe(60);
+    });
+
+    it("cutEvent copies, deletes and clears the selection — same as Ctrl+X", () => {
+        const { result, handleDeleteEvent } = renderHandlers();
+
+        act(() => result.current.setActiveEvent(baseEvent));
+        act(() => result.current.cutEvent(baseEvent));
+
+        expect(result.current.copiedEvent).toBe(baseEvent);
+        expect(handleDeleteEvent).toHaveBeenCalledWith("e1", EventChangeInitiator.CopyPaste);
+        expect(result.current.activeEvent).toBeNull();
+    });
+
+    it("pasteAt with an empty clipboard writes nothing", () => {
+        const { result, handleSaveEvent } = renderHandlers();
+        act(() => result.current.pasteAt({ start: new Date() }));
+        expect(handleSaveEvent).not.toHaveBeenCalled();
+    });
+
+    it("a menu copy is what Ctrl+V pastes next", () => {
+        const { result, handleSaveEvent } = renderHandlers();
+        act(() => result.current.copyEvent(baseEvent));
+        press("v", { ctrlKey: true });
+        expect(handleSaveEvent).toHaveBeenCalledTimes(1);
+    });
+});
