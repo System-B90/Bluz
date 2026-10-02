@@ -34,7 +34,7 @@ const mocks = vi.hoisted(() => {
         },
         syllabus: { ...entity("s"), reorderModules: vi.fn(), getItem: vi.fn() },
         module: { ...entity("m"), reorderEvents: vi.fn(), getItem: vi.fn() },
-        event: { ...entity("e"), setAllocatedTime: vi.fn(), getItem: vi.fn() },
+        event: { ...entity("e"), getItem: vi.fn() },
         week: {
             ...entity("w"),
             createNewItem: vi.fn(async () => ({
@@ -165,22 +165,6 @@ describe("authoring the tree end to end", () => {
             create.execute({ moduleId: "m_1", title: "מופע" }, context),
         ).rejects.toThrow("type");
         expect(mocks.event.createNewItem).not.toHaveBeenCalled();
-    });
-
-    it("writes allocated time as curriculum config, never as an event column", async () => {
-        await tool("create_gantt_event").execute(
-            {
-                moduleId: "m_1",
-                title: "מופע",
-                type: ModuleEventType.Exercise,
-                allocatedDuration: 90,
-            },
-            context,
-        );
-        expect(mocks.event.createNewItem.mock.calls[0][0]).not.toHaveProperty(
-            "allocatedDuration",
-        );
-        expect(mocks.event.setAllocatedTime).toHaveBeenCalledWith("e_1", "c_1", 90);
     });
 
     it("edits only the fields given", async () => {
