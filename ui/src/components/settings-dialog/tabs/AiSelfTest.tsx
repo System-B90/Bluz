@@ -264,6 +264,9 @@ export function AiSelfTest() {
                             ייצוא JSON
                         </Button>
                     </Stack>
+                    { result.modelWarning
+                        ? <Alert severity="warning">{ result.modelWarning }</Alert>
+                        : null }
                     { result.gateHeld
                         ? null
                         : <Alert severity="error">
