@@ -40,7 +40,7 @@ def _print_json(data: Any) -> None:
     print(json.dumps(_to_jsonable(data), ensure_ascii=False, indent=2, default=str))
 
 
-def _render_list(data: list, title: str | None) -> None:
+def _render_list(data: list[Any], title: str | None) -> None:
     if not data:
         console.print("[dim](no results)[/dim]")
         return
@@ -62,7 +62,7 @@ def _render_list(data: list, title: str | None) -> None:
             console.print(_cell(item))
 
 
-def _render_dict(data: dict, title: str | None) -> None:
+def _render_dict(data: dict[str, Any], title: str | None) -> None:
     # If the dictionary values are all simple scalar types and we have a title (e.g. lists),
     # format it as a beautiful structured table with ID and Title columns.
     is_entity_map = title is not None and all(

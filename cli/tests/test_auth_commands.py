@@ -160,8 +160,8 @@ def test_login_redeems_a_pasted_handoff_code_when_automatic_login_fails(
         return "pasted-token"
 
     monkeypatch.setattr(auth, "_redeem_handoff_code", fake_redeem)
-    monkeypatch.setattr(auth.inquirer, "secret", fake_secret)
-    monkeypatch.setattr(auth.inquirer, "confirm", lambda **kw: _FixedPrompt(False))
+    monkeypatch.setattr(auth, "SecretPrompt", fake_secret)
+    monkeypatch.setattr(auth, "ConfirmPrompt", lambda **kw: _FixedPrompt(False))
 
     result = CliRunner().invoke(
         app,

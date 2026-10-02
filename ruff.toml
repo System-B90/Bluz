@@ -18,3 +18,8 @@ extend-immutable-calls = ["typer.Option", "typer.Argument"]
 # Best-effort demo seeding against a live Hive: every create/delete logs its
 # failure and moves on to the next item, so one bad record never aborts a run.
 "scripts/demo/populate_demo_hive.py" = ["BLE001"]
+
+[format]
+# Docs embed `--8<--` snippet includes and aligned trailing comments in python
+# fences; the markdown formatter would corrupt both.
+exclude = ["*.md"]
