@@ -32,16 +32,15 @@ function event(overrides: Partial<CutPlanEventInput> = {}): CutPlanEventInput {
         title: "ע\"ע",
         recurrence: EventRecurrence.None,
         minimumDuration: 600,
-        allocatedDuration: 600,
         splitAcrossBreaks: false,
-        splitAcrossWeeks: true,
         ...overrides,
     };
 }
 
+/** One mapping per entry: `[dayId, allottedMinutes]`, sortOrder by position. */
 function input(
     ev: CutPlanEventInput,
-    weekSplitMinutes: Array<number> | undefined,
+    mappings: Array<[string, number]>,
     weekCount = 3,
 ): CutPlanInput {
     const { days, weeks } = buildWeeks(weekCount);
@@ -50,7 +49,12 @@ function input(
         weeks,
         days,
         events: [ ev ],
-        mappings: [ { eventId: "e1", dayId: "w0d1", sortOrder: 0, weekSplitMinutes } ],
+        mappings: mappings.map(([ dayId, allottedMinutes ], sortOrder) => ({
+            eventId: ev.id,
+            dayId,
+            sortOrder,
+            allottedMinutes,
+        })),
         recurrenceExceptions: [],
         dayStartTime: "08:00",
     };
@@ -59,15 +63,22 @@ function input(
 const minutes = (occ: { startTime: Date; endTime: Date }) =>
     (occ.endTime.getTime() - occ.startTime.getTime()) / 60000;
 
-describe("planCut week split (#768)", () => {
-    it("cuts one occurrence per part, same weekday in consecutive weeks", () => {
-        const plan = planCut(input(event(), [ 180, 180, 240 ]));
+const byDate = <T extends { occurrenceDate: string }>(occs: Array<T>): Array<T> =>
+    [ ...occs ].sort((a, b) => a.occurrenceDate.localeCompare(b.occurrenceDate));
+
+describe("planCut one event mapped on several days", () => {
+    it("cuts one occurrence per mapping, each its own allotted length", () => {
+        const plan = planCut(
+            input(event(), [
+                [ "w0d1", 180 ],
+                [ "w1d1", 180 ],
+                [ "w2d1", 240 ],
+            ]),
+        );
         expect(plan.ok).toBe(true);
         if (!plan.ok) return;
 
-        const occs = [ ...plan.occurrences ].sort((a, b) =>
-            a.occurrenceDate.localeCompare(b.occurrenceDate),
-        );
+        const occs = byDate(plan.occurrences);
         expect(occs.map((o) => o.occurrenceDate)).toEqual([
             "2024-01-08",
             "2024-01-15",
@@ -75,42 +86,35 @@ describe("planCut week split (#768)", () => {
         ]);
         expect(occs.map(minutes)).toEqual([ 180, 180, 240 ]);
         expect(occs.every((o) => o.ganttEventId === "e1")).toBe(true);
+        expect(occs.every((o) => !o.isRecurrenceEcho)).toBe(true);
     });
 
-    it("cuts nothing in a week whose part is 0 hours", () => {
-        const plan = planCut(input(event(), [ 300, 0, 300 ]));
+    it("skips a mapping that allots 0 minutes", () => {
+        const plan = planCut(
+            input(event(), [
+                [ "w0d1", 300 ],
+                [ "w1d1", 0 ],
+                [ "w2d1", 300 ],
+            ]),
+        );
         expect(plan.ok).toBe(true);
         if (!plan.ok) return;
 
-        const occs = [ ...plan.occurrences ].sort((a, b) =>
-            a.occurrenceDate.localeCompare(b.occurrenceDate),
-        );
+        const occs = byDate(plan.occurrences);
         expect(occs.map((o) => o.occurrenceDate)).toEqual([ "2024-01-08", "2024-01-22" ]);
         expect(occs.map(minutes)).toEqual([ 300, 300 ]);
     });
 
-    it("folds parts past the timeline's end into its last week", () => {
-        const plan = planCut(input(event({ minimumDuration: 360, allocatedDuration: 360 }), [ 120, 120, 120 ], 2));
+    it("ignores minimumDuration once mappings allot their own minutes", () => {
+        const plan = planCut(
+            input(event({ minimumDuration: 30 }), [
+                [ "w0d0", 90 ],
+                [ "w0d3", 45 ],
+            ]),
+        );
         expect(plan.ok).toBe(true);
         if (!plan.ok) return;
 
-        expect(plan.occurrences.map(minutes).sort()).toEqual([ 120, 240 ]);
-    });
-
-    it("regression: an unflagged event cuts whole despite a stored split", () => {
-        const plan = planCut(input(event({ splitAcrossWeeks: false }), [ 300, 300 ]));
-        expect(plan.ok).toBe(true);
-        if (!plan.ok) return;
-
-        expect(plan.occurrences).toHaveLength(1);
-        expect(minutes(plan.occurrences[ 0 ])).toBe(600);
-    });
-
-    it("regression: a split not matching the duration cuts whole", () => {
-        const plan = planCut(input(event(), [ 60, 60 ]));
-        expect(plan.ok).toBe(true);
-        if (!plan.ok) return;
-
-        expect(plan.occurrences).toHaveLength(1);
+        expect(byDate(plan.occurrences).map(minutes)).toEqual([ 90, 45 ]);
     });
 });

@@ -62,7 +62,6 @@ function event(id: string, constraints: Array<GanttConstraint> = []): CutPlanEve
         title: id,
         recurrence: EventRecurrence.None,
         minimumDuration: 60,
-        allocatedDuration: 60,
         splitAcrossBreaks: false,
         type: ModuleEventType.Lecture,
         constraints,
@@ -105,7 +104,7 @@ function input(
         weeks,
         days,
         events,
-        mappings: mappings.map(([eventId, dayId], sortOrder) => ({ eventId, dayId, sortOrder })),
+        mappings: mappings.map(([eventId, dayId], sortOrder) => ({ eventId, dayId, sortOrder, allottedMinutes: 60 })),
         recurrenceExceptions: [],
         dayStartTime: "08:00",
     };
