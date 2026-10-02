@@ -71,12 +71,20 @@ export const POST = withApi(
             );
         }
 
+        if (
+            body.allottedMinutes !== undefined &&
+            !(Number.isInteger(body.allottedMinutes) && body.allottedMinutes >= 0)
+        ) {
+            throw new ClientApiError("allottedMinutes must be whole minutes, 0 or more.");
+        }
+
         const mapping = await createCurriculumModuleDayMapping({
             curriculumId,
             moduleId: body.moduleId,
             eventId: body.eventId,
             dayId: body.dayId,
             sortOrder: body.sortOrder,
+            allottedMinutes: body.allottedMinutes,
         });
 
         return ApiSuccess(mapping);
@@ -101,6 +109,7 @@ export const PATCH = withApi(
                 dayId?: GanttDayId;
                 sortOrder?: number;
                 weekSplitMinutes?: Array<number>;
+                allottedMinutes?: number;
             };
         };
         if (!moduleId || !oldMapping || !oldMapping.dayId) {
@@ -115,6 +124,13 @@ export const PATCH = withApi(
             throw new ClientApiError(
                 "weekSplitMinutes must be whole minutes, 0 or more, with the first week above 0.",
             );
+        }
+
+        if (
+            newValues?.allottedMinutes !== undefined &&
+            !(Number.isInteger(newValues.allottedMinutes) && newValues.allottedMinutes >= 0)
+        ) {
+            throw new ClientApiError("allottedMinutes must be whole minutes, 0 or more.");
         }
 
         const updated = await updateCurriculumModuleDayMapping(
