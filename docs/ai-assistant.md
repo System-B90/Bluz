@@ -47,6 +47,13 @@ when set, else the server key — the same provider chat would use.
   `AI_MODEL` is not on it.
 - The Bluz **server** makes the call, not the browser. It needs a network route
   to the gateway.
+- **Private CA** (#780): never disable TLS validation. Put the CA PEM at
+  `ai-ca/ca.pem` beside `docker-compose.yml` (`certificates/ai-ca/` in a
+  checkout) and set `AI_CA_CERT_PATH=/etc/bluz/ai-ca/ca.pem`. It is trusted by
+  the AI client only, on top of the system roots. `NODE_EXTRA_CA_CERTS` (same
+  path) also works, process-wide. The setup wizard asks for it. An untrusted
+  certificate now reports `תעודת ה-TLS של שירות ה-AI אינה מהימנה (<code>)`
+  instead of the generic connect error.
 - The model must support tool calling. Wrapped models and pipes may silently
   drop `tools`; run the self-test to catch that.
 

@@ -14,7 +14,7 @@
         "root": "/var/backups/bluz",
         "root_windows": "%ProgramData%\\bluz\\backups"
     },
-    "state": ["nginx/ssl"],
+    "state": ["nginx/ssl", "ai-ca"],
     "venv_packages": ["bluz"],
     "release": {
         "manifests": [
