@@ -6,10 +6,7 @@ import {
     ganttCurriculum2SyllabusesSchema,
     ganttCurriculum2WeeksSchema,
 } from "./junctions";
-import {
-    ganttCurriculumEventConfigurationsSchema,
-    ganttCurriculumEventDayMappingsSchema,
-} from "./mappings";
+import { ganttCurriculumEventDayMappingsSchema } from "./mappings";
 
 /**
  * Drizzle database schema definition for the Gantt Curriculums table (`c`).
@@ -32,7 +29,6 @@ export const ganttCurriculumsRelationsSchema = relations(
     ganttCurriculumsSchema,
     ({ many }) => ({
         c2s: many(ganttCurriculum2SyllabusesSchema),
-        cEC: many(ganttCurriculumEventConfigurationsSchema), // eventConfigs
         cMDA: many(ganttCurriculumEventDayMappingsSchema),
         c2w: many(ganttCurriculum2WeeksSchema),
         eRE: many(ganttEventRecurrenceExceptionsSchema),

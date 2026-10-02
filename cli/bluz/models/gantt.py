@@ -567,7 +567,6 @@ class DayMapping(BluzModel):
     curriculum_id: str | None = None
     sort_order: float = 0
     allotted_minutes: int = 0
-    week_split_minutes: list[int] | None = None
 
 
 class RecurrenceException(BluzModel):

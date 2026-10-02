@@ -37,8 +37,6 @@ export
 } from "./junctions";
 export
 {
-    ganttCurriculumEventConfigurationsRelationsSchema,
-    ganttCurriculumEventConfigurationsSchema,
     ganttCurriculumEventDayMappingsRelationsSchema,
     ganttCurriculumEventDayMappingsSchema
 } from "./mappings";

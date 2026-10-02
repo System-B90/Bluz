@@ -3,7 +3,6 @@ import {
     index,
     integer,
     pgTable,
-    primaryKey,
     real,
     text,
     timestamp,
@@ -45,12 +44,6 @@ export const ganttCurriculumEventDayMappingsSchema = pgTable(
         // source of an event's scheduled time: totals are sums of these, and
         // 0 keeps the event documented but out of the cut.
         allottedMinutes: integer("allotted_minutes").notNull().default(0),
-        // Minutes per consecutive week, starting at the mapped day's week, for
-        // an event that splits across weeks (#768). Empty ⇒ runs whole.
-        weekSplitMinutes: integer("week_split_minutes")
-            .array()
-            .notNull()
-            .default([]),
         createdAt: timestamp("ca").defaultNow().notNull(),
         updatedAt: timestamp("ua").defaultNow().notNull(),
     },
@@ -89,46 +82,6 @@ export const ganttCurriculumEventDayMappingsRelationsSchema = relations(
         day: one(ganttDaysSchema, {
             fields: [ganttCurriculumEventDayMappingsSchema.dayId],
             references: [ganttDaysSchema.id],
-        }),
-    }),
-);
-
-/**
- * Drizzle database schema definition for the Gantt Curriculum Event Configurations table (`cEC`).
- * Maps specific durations to an event within the context of a curriculum.
- */
-export const ganttCurriculumEventConfigurationsSchema = pgTable(
-    "cEC",
-    {
-        curriculumId: text("curriculum_id")
-            .notNull()
-            .references(() => ganttCurriculumsSchema.id, {
-                onDelete: "cascade",
-            }),
-        eventId: text("event_id")
-            .notNull()
-            .references(() => ganttEventsSchema.id, { onDelete: "cascade" }),
-        allocatedDuration: integer("allocated_duration").notNull().default(0),
-        updatedAt: timestamp("updated_at").defaultNow().notNull(),
-    },
-    (t) => ({
-        pk: primaryKey({ columns: [t.curriculumId, t.eventId] }),
-    }),
-);
-
-/**
- * Relations definition for the Curriculum Event Configurations schema.
- */
-export const ganttCurriculumEventConfigurationsRelationsSchema = relations(
-    ganttCurriculumEventConfigurationsSchema,
-    ({ one }) => ({
-        curriculum: one(ganttCurriculumsSchema, {
-            fields: [ganttCurriculumEventConfigurationsSchema.curriculumId],
-            references: [ganttCurriculumsSchema.id],
-        }),
-        event: one(ganttEventsSchema, {
-            fields: [ganttCurriculumEventConfigurationsSchema.eventId],
-            references: [ganttEventsSchema.id],
         }),
     }),
 );

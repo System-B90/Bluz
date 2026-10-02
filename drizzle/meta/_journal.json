@@ -204,6 +204,13 @@
       "when": 1790948802766,
       "tag": "0028_allotted_minutes",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1790950517894,
+      "tag": "0029_drop_allocated_duration",
+      "breakpoints": true
     }
   ]
 }
