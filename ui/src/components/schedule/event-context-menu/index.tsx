@@ -1,5 +1,7 @@
 "use client";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import ContentCutIcon from "@mui/icons-material/ContentCut";
+import ContentPasteIcon from "@mui/icons-material/ContentPaste";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import LabelOutlinedIcon from "@mui/icons-material/LabelOutlined";
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
@@ -26,6 +28,7 @@ import {
     roomLikeToResourceKey,
 } from "@/api-shared/types/room";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
+import { PasteSlot } from "@/components/schedule/calendar/calendar/paste";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import {
     duplicateOf,
@@ -71,6 +74,17 @@ export type EventContextMenuProps = {
      * at once when none of them is locked.
      */
     onConfirmLockedEdit: (eventIds: Array<EventId>) => Promise<boolean>;
+    /** Clipboard (#859): the same actions as Ctrl+C / Ctrl+X / Ctrl+V. */
+    onCopy: (event: Event) => void;
+    onCut: (event: Event) => void;
+    /** Pastes at the clicked event's start time. */
+    onPaste: (slot: PasteSlot) => void;
+    canPaste: boolean;
+    /**
+     * A past iteration: the server rejects its writes, so only Copy (to paste
+     * into a writable iteration) and navigation stay enabled.
+     */
+    readOnly: boolean;
 };
 
 /**
@@ -87,6 +101,11 @@ export function EventContextMenu({
     onDeleteEvent,
     onConfirm,
     onConfirmLockedEdit,
+    onCopy,
+    onCut,
+    onPaste,
+    canPaste,
+    readOnly,
 }: EventContextMenuProps) {
     const router = useRouter();
     const { iterationId } = useCalendar();
@@ -192,6 +211,17 @@ export function EventContextMenu({
         }
     }, [isBulk, targets, onConfirm, onDeleteEvent, ensureLockAck]);
 
+    /* ── Clipboard (#859) ───────────────────────────────────── */
+
+    // The clipboard holds one event, matching Ctrl+C, so copy/cut are offered
+    // for a single target only.
+    const single = targets.length === 1 ? targets[0] : null;
+
+    const cut = useCallback(async () => {
+        if (!single || !(await ensureLockAck())) return;
+        onCut(single);
+    }, [single, ensureLockAck, onCut]);
+
     /* ── Reassignment ───────────────────────────────────────── */
 
     const roomOptions = useMemo<Array<PickerOption>>(
@@ -286,14 +316,54 @@ export function EventContextMenu({
                 </Box>
             ) : null}
 
-            <MenuItem onClick={() => runAndClose(duplicate)}>
+            <MenuItem disabled={readOnly || !single} onClick={() => runAndClose(() => void cut())}>
+                <ListItemIcon>
+                    <ContentCutIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>גזירה</ListItemText>
+                <Typography color="text.secondary" sx={{ marginInlineStart: 2 }} variant="body2">
+                    Ctrl+X
+                </Typography>
+            </MenuItem>
+            <MenuItem
+                disabled={!single}
+                onClick={() => runAndClose(() => single && onCopy(single))}
+            >
+                <ListItemIcon>
+                    <ContentCopyIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>העתקה</ListItemText>
+                <Typography color="text.secondary" sx={{ marginInlineStart: 2 }} variant="body2">
+                    Ctrl+C
+                </Typography>
+            </MenuItem>
+            <MenuItem
+                disabled={readOnly || !canPaste || !single}
+                onClick={() =>
+                    runAndClose(() =>
+                        single && onPaste({ start: single.startTime.toDate() }),
+                    )
+                }
+            >
+                <ListItemIcon>
+                    <ContentPasteIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>הדבקה</ListItemText>
+                <Typography color="text.secondary" sx={{ marginInlineStart: 2 }} variant="body2">
+                    Ctrl+V
+                </Typography>
+            </MenuItem>
+
+            <Divider />
+
+            <MenuItem disabled={readOnly} onClick={() => runAndClose(duplicate)}>
                 <ListItemIcon>
                     <ContentCopyIcon fontSize="small" />
                 </ListItemIcon>
                 <ListItemText>{isBulk ? "שכפול הנבחרים" : "שכפול"}</ListItemText>
             </MenuItem>
 
-            <MenuItem onClick={() => runAndClose(() => void postpone())}>
+            <MenuItem disabled={readOnly} onClick={() => runAndClose(() => void postpone())}>
                 <ListItemIcon>
                     <UpdateIcon fontSize="small" />
                 </ListItemIcon>
@@ -304,6 +374,7 @@ export function EventContextMenu({
 
             <PickerSubmenu
                 clearLabel="ללא כיתה"
+                disabled={readOnly}
                 emptyLabel="אין כיתות"
                 icon={<MeetingRoomIcon fontSize="small" />}
                 label="שיוך כיתה"
@@ -314,6 +385,7 @@ export function EventContextMenu({
             {/* Marker, shuffle and instructor submenus stay open on click:
                 these are the entries a user flips two or three of in a row. */}
             <Submenu
+                disabled={readOnly}
                 icon={<PersonOutlineIcon fontSize="small" />}
                 label="שיוך מבזר"
             >
@@ -351,6 +423,7 @@ export function EventContextMenu({
             </Submenu>
 
             <CourseSubmenu
+                disabled={readOnly}
                 onToggle={toggleCourse}
                 stateOf={(courseId) =>
                     triStateOf(targets, (event) =>
@@ -359,7 +432,7 @@ export function EventContextMenu({
                 }
             />
 
-            <Submenu icon={<LabelOutlinedIcon fontSize="small" />} label="סימון כ…">
+            <Submenu disabled={readOnly} icon={<LabelOutlinedIcon fontSize="small" />} label="סימון כ…">
                 {EVENT_FLAGS.map(({ key, label, hue, Icon }) => {
                     const state = triStateOf(targets, (event) => !!event[key]);
                     return (
@@ -398,6 +471,7 @@ export function EventContextMenu({
             <Divider />
 
             <MenuItem
+                disabled={readOnly}
                 onClick={() => {
                     // Closed first so the confirmation is not raised behind
                     // the menu it was invoked from.
