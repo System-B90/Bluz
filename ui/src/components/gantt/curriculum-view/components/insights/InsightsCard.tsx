@@ -3,6 +3,7 @@ import CalendarMonthOutlined from "@mui/icons-material/CalendarMonthOutlined";
 import CategoryOutlined from "@mui/icons-material/CategoryOutlined";
 import ChevronLeft from "@mui/icons-material/ChevronLeft";
 import ChevronRight from "@mui/icons-material/ChevronRight";
+import CloseRounded from "@mui/icons-material/CloseRounded";
 import CompareArrowsOutlined from "@mui/icons-material/CompareArrowsOutlined";
 import EmojiEmotionsOutlined from "@mui/icons-material/EmojiEmotionsOutlined";
 import PauseRounded from "@mui/icons-material/PauseRounded";
@@ -19,6 +20,10 @@ import Typography from "@mui/material/Typography";
 import { useEffect, useState } from "react";
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
+import {
+    dismissInsights,
+    readInsightsDismissedUntil,
+} from "@/components/gantt/curriculum-view/components/insights/dismiss";
 import {
     Insight,
     InsightCategory,
@@ -72,9 +77,18 @@ export function InsightsCard({ curriculum }: { curriculum: GanttCurriculumDocume
     const insights = useInsights(curriculum);
     const [ hovered, setHovered ] = useState(false);
     const [ userPaused, setUserPaused ] = useState(false);
+    // Lazy read is SSR-safe: the helper returns null without `window`, and the
+    // card renders nothing on the server anyway (no curriculum loaded yet).
+    const [ dismissedUntil, setDismissedUntil ] = useState(() => readInsightsDismissedUntil());
     const { index, go } = useRotation(insights, hovered || userPaused);
 
-    if (!curriculum || insights.length === 0) return null;
+    useEffect(() => {
+        if (dismissedUntil === null) return;
+        const timer = setTimeout(() => setDismissedUntil(null), Math.max(0, dismissedUntil - Date.now()));
+        return () => clearTimeout(timer);
+    }, [ dismissedUntil ]);
+
+    if (!curriculum || insights.length === 0 || dismissedUntil !== null) return null;
 
     const insight = insights[ index ];
     const color = theme.palette[ SEVERITY_COLOR[ insight.severity ] ].main;
@@ -114,6 +128,11 @@ export function InsightsCard({ curriculum }: { curriculum: GanttCurriculumDocume
                 <IconButton aria-label="תובנה הבאה" onClick={ () => go(1) } size="small">
                     <ChevronLeft fontSize="small" />
                 </IconButton>
+                <Tooltip title="הסתרה לשעה">
+                    <IconButton aria-label="הסתרת התובנות" onClick={ () => setDismissedUntil(dismissInsights()) } size="small">
+                        <CloseRounded fontSize="small" />
+                    </IconButton>
+                </Tooltip>
             </Box>
 
             <Fade in key={ insight.id } timeout={ 450 }>
