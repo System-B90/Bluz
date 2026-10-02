@@ -247,6 +247,13 @@ class SessionInfo(BluzModel):
         """True when the token is valid."""
         return self.user is not None
 
+    def __repr__(self) -> str:
+        if not self.authenticated:
+            return (
+                "SessionInfo(authenticated=False — run `bluz login` or Bluz.login(url))"
+            )
+        return super().__repr__()
+
 
 # --- platform --------------------------------------------------------------------
 
