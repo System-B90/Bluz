@@ -11,28 +11,18 @@ import Typography from "@mui/material/Typography";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import { formatHours } from "@/components/gantt/curriculum-view/gantt-time-utils";
-import { forEachRecurrenceOccurrence } from "@/components/gantt/curriculum-view/student-load";
+import { buildGridRows, GridRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-rows";
 import { GanttViewProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { useGanttView } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/UseGanttView";
 import { useCurriculumProviderActions, useCurriculumState } from "@/components/gantt/state/context";
 import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
 
-type GridRow = {
-    kind: "event" | "module" | "syllabus";
-    id: string;
-    syllabusId: string;
-    moduleId: string;
-    title: string;
-    depth: number;
-    requiredMinutes: number;
-    weekMinutes: Array<number>;
-};
-
 /** Leading columns before the weeks: title, required, allocated. */
 const LEAD_COLUMNS = 3;
 
-const sumWeeks = (rows: Array<GridRow>, weekCount: number) =>
-    Array.from({ length: weekCount }, (_, w) => rows.reduce((sum, row) => sum + row.weekMinutes[ w ], 0));
+/** Static column widths (px); long titles wrap instead of widening. */
+const TITLE_WIDTH = 220;
+const HOURS_WIDTH = 64;
 
 const hoursOrBlank = (minutes: number) => (minutes ? formatHours(minutes) : "");
 
@@ -63,88 +53,27 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
     } = contextValue;
     const weekCount = timelineWeeks.length;
 
-    // Minutes each event takes per week: its placed parts plus every echo.
-    const eventWeekMinutes = useMemo(() =>
-    {
-        const byEvent = new Map<string, Array<number>>();
-        const add = (dayId: string, eventId: string, minutes: number) =>
-        {
-            const week = weekIndexByDayId.get(dayId);
-            if (week === undefined) return;
-            let weeks = byEvent.get(eventId);
-            if (!weeks) byEvent.set(eventId, (weeks = new Array<number>(weekCount).fill(0)));
-            weeks[ week ] += minutes;
-        };
-        Object.entries(eventSpans).forEach(([ eventId, span ]) =>
-            span.dayIds.forEach((dayId, i) => add(dayId, eventId, span.minutesPerDay[ i ])));
-        forEachRecurrenceOccurrence(
-            { dateOf: dateOfDayId, exceptions, linearDays: allLinearDays, mappings: curriculumMappings, state },
-            add,
-        );
-        return byEvent;
-    }, [ allLinearDays, curriculumMappings, dateOfDayId, eventSpans, exceptions, state, weekCount, weekIndexByDayId ]);
-
-    // Visible rows in display order; a summary row sums all of its children,
-    // collapsed or not.
-    const rows = useMemo(() =>
-    {
-        const out: Array<GridRow> = [];
-        const empty = new Array<number>(weekCount).fill(0);
-        for (const syllabusId of curriculum?.syllabuses ?? [])
-        {
-            const syllabus = state.syllabuses[ syllabusId ];
-            if (!syllabus) continue;
-            const syllabusRow: GridRow = {
-                kind: "syllabus",
-                id: syllabusId,
-                syllabusId,
-                moduleId: "",
-                title: syllabus.title,
-                depth: 0,
-                requiredMinutes: 0,
-                weekMinutes: empty,
-            };
-            const moduleRows: Array<GridRow> = [];
-            const visible: Array<GridRow> = [];
-            for (const moduleId of syllabus.modules)
+    const rows = useMemo(
+        () => buildGridRows(
+            curriculum?.syllabuses ?? [],
             {
-                const mod = state.modules[ moduleId ];
-                if (!mod) continue;
-                const eventRows: Array<GridRow> = mod.events.flatMap((eventId) =>
-                {
-                    const event = state.events[ eventId ];
-                    return event ? [ {
-                        kind: "event" as const,
-                        id: eventId,
-                        syllabusId,
-                        moduleId,
-                        title: event.title,
-                        depth: 2,
-                        requiredMinutes: event.minimumDuration ?? 0,
-                        weekMinutes: eventWeekMinutes.get(eventId) ?? empty,
-                    } ] : [];
-                });
-                const moduleRow: GridRow = {
-                    kind: "module",
-                    id: moduleId,
-                    syllabusId,
-                    moduleId,
-                    title: mod.title,
-                    depth: 1,
-                    requiredMinutes: eventRows.reduce((sum, row) => sum + row.requiredMinutes, 0),
-                    weekMinutes: sumWeeks(eventRows, weekCount),
-                };
-                moduleRows.push(moduleRow);
-                visible.push(moduleRow);
-                if (isModuleExpanded(moduleId)) visible.push(...eventRows);
-            }
-            syllabusRow.requiredMinutes = moduleRows.reduce((sum, row) => sum + row.requiredMinutes, 0);
-            syllabusRow.weekMinutes = sumWeeks(moduleRows, weekCount);
-            out.push(syllabusRow);
-            if (isSyllabusExpanded(syllabusId)) out.push(...visible);
-        }
-        return out;
-    }, [ curriculum?.syllabuses, eventWeekMinutes, isModuleExpanded, isSyllabusExpanded, state, weekCount ]);
+                dateOf: dateOfDayId,
+                eventSpans,
+                exceptions,
+                linearDays: allLinearDays,
+                mappings: curriculumMappings,
+                state,
+                weekIndexByDayId,
+                weeks: timelineWeeks.map((week) => week.days),
+            },
+            isSyllabusExpanded,
+            isModuleExpanded,
+        ),
+        [
+            allLinearDays, curriculum?.syllabuses, curriculumMappings, dateOfDayId, eventSpans, exceptions,
+            isModuleExpanded, isSyllabusExpanded, state, timelineWeeks, weekIndexByDayId,
+        ],
+    );
 
     const [ cursor, setCursor ] = useState({ row: 0, col: 0 });
     const row = Math.min(cursor.row, rows.length - 1);
@@ -197,7 +126,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         paddingInlineStart: c === 0 ? 1 + depth * 2 : 1,
         fontVariantNumeric: "tabular-nums",
         fontWeight: kind === "event" ? "normal" : "bold",
-        whiteSpace: "nowrap",
+        overflowWrap: "anywhere",
         textAlign: c === 0 ? "start" : "center",
         outline: r === row && c === col ? "2px solid" : "none",
         outlineColor: "primary.main",
@@ -213,7 +142,17 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                 sx={ { maxHeight: "calc(100vh - 180px)", "&:focus": { outline: "none" } } }
                 tabIndex={ 0 }
             >
-                <Table size="small" stickyHeader sx={ { width: "max-content", minWidth: "100%" } }>
+                <Table
+                    size="small"
+                    stickyHeader
+                    sx={ { tableLayout: "fixed", width: TITLE_WIDTH + (LEAD_COLUMNS - 1 + weekCount) * HOURS_WIDTH } }
+                >
+                    <colgroup>
+                        <col style={ { width: TITLE_WIDTH } } />
+                        { Array.from({ length: LEAD_COLUMNS - 1 + weekCount }, (_, i) => (
+                            <col key={ i } style={ { width: HOURS_WIDTH } } />
+                        )) }
+                    </colgroup>
                     <TableHead>
                         <TableRow>
                             <TableCell>שם</TableCell>

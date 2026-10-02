@@ -1,5 +1,5 @@
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
-import { getRecurrenceOccurrenceDayIds } from "@/api-shared/gantt/recurrence";
+import { getRecurrenceOccurrenceDayIds, isDayInRecurrenceWindow } from "@/api-shared/gantt/recurrence";
 import {
     EventRecurrence,
     GanttCurriculumModuleDayMapping,
@@ -87,6 +87,64 @@ export function countEventOccurrences(
     const inScope = (dayId: string) => !onlyDayIds || onlyDayIds.has(dayId);
     return (excludedDayIds.has(startDayId) || !inScope(startDayId) ? 0 : 1)
         + [...echoDayIds].filter(inScope).length;
+}
+
+/**
+ * How many times a recurring event is required to occur: every day (daily)
+ * or week (weekly) its recurrence pattern hits inside its recurrence window,
+ * minus explicitly skipped or materialized occurrences. Independent of where
+ * the event is placed, except that a placed weekly event fixes its weekday.
+ * A non-recurring event is required once.
+ */
+export function countRequiredOccurrences(
+    event: GanttEvent,
+    eventId: string,
+    state: NormalizedStore,
+    {
+        dateOf,
+        exceptions,
+        mappings,
+        weeks,
+    }: {
+        dateOf?: (dayId: string) => string | undefined;
+        exceptions: Record<string, GanttEventRecurrenceException>;
+        mappings: Record<string, GanttCurriculumModuleDayMapping>;
+        /** Timeline weeks in order, each its day ids in order. */
+        weeks: Array<Array<string>>;
+    },
+): number {
+    if (event.recurrence === EventRecurrence.None) return 1;
+
+    const startDayId = Object.values(mappings).find((m) => m.eventId === eventId)?.dayId;
+    const startDow = startDayId ? state.days[startDayId]?.dayIndex : undefined;
+    const allowed = getAllowedDayIndices(event.constraints);
+    const skipped = new Set(
+        Object.values(exceptions).filter((e) => e.eventId === eventId).map((e) => e.dayId),
+    );
+    const window = {
+        recurrenceStartDate: event.recurrenceStartDate,
+        recurrenceEndDate: event.recurrenceEndDate,
+        dateOf,
+    };
+    const isCandidate = (dayId: string) => {
+        const dow = state.days[dayId]?.dayIndex;
+        if (dow !== undefined && allowed && !allowed.has(dow)) return false;
+        if (event.recurrence === EventRecurrence.Weekly && startDow !== undefined && dow !== startDow) {
+            return false;
+        }
+        return isDayInRecurrenceWindow(dayId, window);
+    };
+
+    let count = 0;
+    for (const days of weeks) {
+        const hits = days.filter(isCandidate);
+        if (event.recurrence === EventRecurrence.Daily) {
+            count += hits.filter((dayId) => !skipped.has(dayId)).length;
+        } else if (hits.length > 0 && !hits.every((dayId) => skipped.has(dayId))) {
+            count += 1;
+        }
+    }
+    return count;
 }
 
 function calculateSumValueForModuleByField(
