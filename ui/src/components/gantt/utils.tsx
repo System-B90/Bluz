@@ -42,12 +42,15 @@ export type RecurrenceOccurrenceContext = {
     linearDays: Array<string>;
     /** Count only occurrences on these days (e.g. one week); unplaced events count 0. */
     onlyDayIds?: ReadonlySet<string>;
+    /** Calendar date of a day ("YYYY-MM-DD"), so the recurrence window applies (#468). */
+    dateOf?: (dayId: string) => string | undefined;
 };
 
 /**
- * Number of times an event occurs on the timeline: 1 for a non-recurring or
- * unplaced event, otherwise 1 (its mapped start day) plus every surviving
- * echoed occurrence — skipping days recorded as recurrence exceptions (#111).
+ * Number of times an event occurs. Without `onlyDayIds` this is its required
+ * count ({@link countRequiredOccurrences}). With it, the placed occurrences on
+ * those days: its mapped start day plus every surviving echo inside the
+ * recurrence window, skipping recurrence exceptions (#111, #468).
  */
 export function countEventOccurrences(
     event: GanttEvent,
@@ -56,6 +59,7 @@ export function countEventOccurrences(
     ctx?: RecurrenceOccurrenceContext,
 ): number {
     if (!ctx || (event.recurrence === EventRecurrence.None && !ctx.onlyDayIds)) return 1;
+    if (!ctx.onlyDayIds) return countRequiredOccurrences(event, eventId, state, ctx);
 
     let startDayId: string | undefined;
     for (const mapping of Object.values(ctx.mappings)) {
@@ -80,6 +84,7 @@ export function countEventOccurrences(
         excludedDayIds,
         recurrenceStartDate: event.recurrenceStartDate,
         recurrenceEndDate: event.recurrenceEndDate,
+        dateOf: ctx.dateOf,
         allowedDayIndices: getAllowedDayIndices(event.constraints),
     });
 
@@ -103,15 +108,9 @@ export function countRequiredOccurrences(
     {
         dateOf,
         exceptions,
+        linearDays,
         mappings,
-        weeks,
-    }: {
-        dateOf?: (dayId: string) => string | undefined;
-        exceptions: Record<string, GanttEventRecurrenceException>;
-        mappings: Record<string, GanttCurriculumModuleDayMapping>;
-        /** Timeline weeks in order, each its day ids in order. */
-        weeks: Array<Array<string>>;
-    },
+    }: Pick<RecurrenceOccurrenceContext, "dateOf" | "exceptions" | "linearDays" | "mappings">,
 ): number {
     if (event.recurrence === EventRecurrence.None) return 1;
 
@@ -135,8 +134,14 @@ export function countRequiredOccurrences(
         return isDayInRecurrenceWindow(dayId, window);
     };
 
+    const weeks = new Map<string, Array<string>>();
+    for (const dayId of linearDays) {
+        const weekId = state.days[dayId]?.weekId ?? dayId;
+        weeks.set(weekId, [...(weeks.get(weekId) ?? []), dayId]);
+    }
+
     let count = 0;
-    for (const days of weeks) {
+    for (const days of weeks.values()) {
         const hits = days.filter(isCandidate);
         if (event.recurrence === EventRecurrence.Daily) {
             count += hits.filter((dayId) => !skipped.has(dayId)).length;

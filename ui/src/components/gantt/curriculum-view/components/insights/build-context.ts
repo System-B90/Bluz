@@ -124,7 +124,10 @@ export function buildInsightContext({
     for (const mapping of Object.values(mappings)) {
         if (!mapping.eventId) placedModuleIds.add(mapping.moduleId);
     }
-    const occurrenceCtx = { mappings, exceptions, linearDays };
+    const dateByDayId = new Map(
+        weeks.flatMap((week) => week.days).flatMap((day) => (day.date ? [ [ day.id, day.date.format("YYYY-MM-DD") ] as const ] : [])),
+    );
+    const occurrenceCtx = { mappings, exceptions, linearDays, dateOf: (dayId: string) => dateByDayId.get(dayId) };
     const events = buildEvents(
         curriculum,
         state,

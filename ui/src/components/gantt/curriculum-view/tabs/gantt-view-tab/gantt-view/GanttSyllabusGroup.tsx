@@ -109,7 +109,8 @@ const GanttSyllabusGroupComponent: React.FC<GanttSyllabusGroupProps> = ({
         toggleSyllabus,
         isSyllabusVisible,
         isModuleVisible,
-        linearDays,
+        allLinearDays,
+        dateOfDayId,
     } = useGanttContext();
     const { state: exceptionsState } = useGanttRecurrenceExceptions();
     const { state: mappingState } = useGanttMappings();
@@ -124,10 +125,11 @@ const GanttSyllabusGroupComponent: React.FC<GanttSyllabusGroupProps> = ({
                 ? calculateStudentSyllabusMinutes(syllabusId, state, courses, {
                     mappings: mappingState.mappings,
                     exceptions: exceptionsState.exceptions,
-                    linearDays,
+                    linearDays: allLinearDays,
+                    dateOf: dateOfDayId,
                 })
                 : 0,
-        [syllabus, syllabusId, state, courses, mappingState.mappings, exceptionsState.exceptions, linearDays],
+        [syllabus, syllabusId, state, courses, mappingState.mappings, exceptionsState.exceptions, allLinearDays, dateOfDayId],
     );
 
     // Every day id any module or event of this syllabus is mapped to.
