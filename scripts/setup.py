@@ -87,21 +87,13 @@ def _ask_acme(w: Wizard, domain: str) -> None:
     )
     w.ask("ACME_EMAIL", "Contact e-mail for the ACME account (ACME_EMAIL, optional)")
     w.set("ACME_DOMAIN", domain)
-    if w.confirm(
+    _ask_private_ca(
+        w,
+        "ACME_CA_BUNDLE",
         "Is the ACME server itself signed by a private CA?",
-        default=bool(w.prev("ACME_CA_BUNDLE")),
-    ):
-        w.ask(
-            "ACME_CA_BUNDLE",
-            "ACME server CA path inside the container (ACME_CA_BUNDLE)",
-            ACME_CA_DEFAULT_PATH,
-        )
-        print(
-            "  Copy the ACME server's CA (PEM) to acme/ca/ca.pem beside "
-            "docker-compose.yml."
-        )
-    else:
-        w.set("ACME_CA_BUNDLE", "")
+        ACME_CA_DEFAULT_PATH,
+        "Copy the ACME server's CA (PEM) to acme/ca/ca.pem beside docker-compose.yml.",
+    )
     print(
         "  The ACME server must reach this host on port 80 (HTTP-01). "
         "The proxy renews the certificate on its own."
