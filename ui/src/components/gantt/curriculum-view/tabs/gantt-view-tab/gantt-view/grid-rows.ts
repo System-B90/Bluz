@@ -18,6 +18,8 @@ export type GridRow = {
     weekMinutes: Array<number>;
     /** Per course column: does that course attend all, some, or none of the row. */
     coursePresence: Array<CoursePresence>;
+    /** Summary rows with nothing under them: there is nothing to expand. */
+    childless?: boolean;
     /** Event rows in a shuffle section: that section's shuffle. */
     shuffle?: string;
     /** Event rows: every shuffle section the same event appears in (several ⇒ one event shared by all). */
@@ -172,6 +174,7 @@ export function buildGridRows(
                 requiredMinutes: sumRequired(eventRows),
                 weekMinutes: sumWeeks(eventRows, weekCount),
                 coursePresence: eventRows.length ? mergePresence(eventRows, paths.length) : syllabusPresence,
+                childless: eventRows.length === 0,
             };
             moduleRows.push(moduleRow);
             visible.push(moduleRow);
@@ -196,6 +199,7 @@ export function buildGridRows(
                 requiredMinutes: sumRequired(moduleRows),
                 weekMinutes: sumWeeks(moduleRows, weekCount),
                 coursePresence: mergePresence(moduleRows, paths.length),
+                childless: moduleRows.length === 0,
             });
             if (isSyllabusExpanded(syllabusId)) out.push(...visible);
             continue;
@@ -213,6 +217,7 @@ export function buildGridRows(
                 requiredMinutes: sumRequired(moduleRows),
                 weekMinutes: sumWeeks(moduleRows, weekCount),
                 coursePresence: mergePresence(moduleRows, paths.length),
+                childless: moduleRows.length === 0,
             };
             return [ row, ...(isSyllabusExpanded(key) ? visible : []) ];
         });
