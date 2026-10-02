@@ -1,20 +1,24 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
  * Spreadsheet grid tab: blank summary cells, required/allocated columns,
- * and keyboard navigation (arrows in RTL, Enter toggles/opens).
+ * keyboard navigation (arrows in RTL, Enter toggles/opens), week
+ * used/available header, conflict tint, and decimal/clock hours.
  */
 
 const { ctx, actions } = vi.hoisted(() => ({
-    ctx: { expanded: new Set<string>() },
+    ctx: { expanded: new Set<string>(), placedDayIds: [ "a1" ] },
     actions: { toggleSyllabus: vi.fn(), toggleModule: vi.fn(), openEventDialog: vi.fn() },
 }));
 
 const state = {
-    days: { a1: { id: "a1", dayIndex: 0 }, b1: { id: "b1", dayIndex: 0 } },
+    days: {
+        a1: { id: "a1", dayIndex: 0, totalWorkingMinutes: 60 },
+        b1: { id: "b1", dayIndex: 0, totalWorkingMinutes: 480 },
+    },
     syllabuses: { s1: { id: "s1", title: "סילבוס", modules: [ "m1" ] } },
     modules: { m1: { id: "m1", title: "מודול", syllabusId: "s1", events: [ "e1" ] } },
     events: { e1: { id: "e1", title: "אירוע", minimumDuration: 90, recurrence: "none" } },
@@ -36,7 +40,9 @@ vi.mock("@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/UseGa
             allLinearDays: [ "a1", "b1" ],
             curriculumMappings: { x: { eventId: "e1", moduleId: "m1", dayId: "a1", sortOrder: 0 } },
             dateOfDayId: () => undefined,
-            eventSpans: { e1: { dayIds: [ "a1" ], minutesPerDay: [ 90 ], spillover: false } },
+            eventSpans: {
+                e1: { dayIds: ctx.placedDayIds, minutesPerDay: ctx.placedDayIds.map(() => 90), spillover: false },
+            },
             isModuleExpanded: (id: string) => ctx.expanded.has(id),
             isSyllabusExpanded: (id: string) => ctx.expanded.has(id),
             timelineWeeks: [ { id: "w1", title: "שבוע 1", days: [ "a1" ] }, { id: "w2", title: "שבוע 2", days: [ "b1" ] } ],
@@ -47,6 +53,7 @@ vi.mock("@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/UseGa
     }),
 }));
 
+import { setHoursFormat } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { GanttGridView } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttGridView";
 
 beforeAll(() => {
@@ -54,6 +61,8 @@ beforeAll(() => {
 });
 beforeEach(() => {
     ctx.expanded = new Set([ "s1", "m1" ]);
+    ctx.placedDayIds = [ "a1" ];
+    setHoursFormat("decimal");
     vi.clearAllMocks();
 });
 afterEach(cleanup);
@@ -110,5 +119,32 @@ describe("GanttGridView", () => {
         fireEvent.keyDown(grid, { key: "ArrowDown" });
         fireEvent.keyDown(grid, { key: "Enter" });
         expect(actions.openEventDialog).toHaveBeenCalledWith("s1", "m1", "e1");
+    });
+
+    it("shows each week's used / available hours in the header", () => {
+        renderGrid();
+        const headers = screen.getAllByRole("columnheader").slice(3).map((c) => c.textContent);
+        expect(headers).toEqual([ "שבוע 11.5 / 1", "שבוע 20 / 8" ]);
+    });
+
+    it("tints required and allocated only when they differ", () => {
+        renderGrid();
+        expect(screen.queryAllByTitle("השיבוץ שונה מהנדרש")).toHaveLength(0);
+        cleanup();
+        ctx.placedDayIds = [ "a1", "b1" ];
+        renderGrid();
+        expect(rowCells("אירוע").slice(1, 3).map((c) => c.getAttribute("title"))).toEqual([
+            "השיבוץ שונה מהנדרש",
+            "השיבוץ שונה מהנדרש",
+        ]);
+        expect(rowCells("אירוע")[ 3 ].getAttribute("title")).toBeNull();
+    });
+
+    it("switches every hour value to clock format", () => {
+        renderGrid();
+        fireEvent.click(screen.getByRole("button", { name: "0:45" }));
+        expect(rowCells("אירוע").slice(1).map((c) => c.textContent)).toEqual([ "1:30", "1:30", "1:30", "" ]);
+        act(() => setHoursFormat("decimal"));
+        expect(rowCells("אירוע")[ 1 ].textContent).toBe("1.5");
     });
 });
