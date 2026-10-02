@@ -51,7 +51,7 @@ const presenceSx = (presence: CoursePresence, color: string) =>
     presence === "full"
         ? { bgcolor: color }
         : presence === "partial"
-            ? { backgroundImage: `repeating-linear-gradient(45deg, ${color} 0 4px, transparent 4px 8px)` }
+            ? { backgroundImage: `repeating-linear-gradient(-45deg, ${color} 0 4px, transparent 4px 8px)` }
             : undefined;
 
 /**
@@ -217,6 +217,10 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                             borderBottomColor: (theme: Theme) =>
                                 theme.palette.grey[ theme.palette.mode === "dark" ? 800 : 300 ],
                         },
+                        // Collapsed borders belong to the table, not the sticky header cells, so they scroll
+                        // away and leave the header see-through; separate borders travel with each cell.
+                        borderCollapse: "separate",
+                        borderSpacing: 0,
                         tableLayout: "fixed",
                         width: "100%",
                         minWidth: courseCount * COURSE_WIDTH + TITLE_MIN_WIDTH + (LEAD_COLUMNS - 1) * HOURS_WIDTH + weekCount * WEEK_WIDTH,
