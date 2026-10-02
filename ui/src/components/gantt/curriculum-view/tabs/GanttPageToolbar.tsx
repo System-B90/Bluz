@@ -1,5 +1,6 @@
 import AnimationIcon from "@mui/icons-material/Animation";
 import MenuIcon from "@mui/icons-material/Menu";
+import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import IconButton from "@mui/material/IconButton";
 import Popover from "@mui/material/Popover";
 import Stack from "@mui/material/Stack";
@@ -11,7 +12,12 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import { useState } from "react";
 
 import { HoursFormat, setHoursFormat } from "@/components/gantt/curriculum-view/gantt-time-utils";
-import { setGridAnimation, useGridAnimation } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-animation";
+import {
+    setGridAnimation,
+    setGridVerticalLines,
+    useGridAnimation,
+    useGridVerticalLines,
+} from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-preferences";
 import { useHoursFormat } from "@/components/gantt/curriculum-view/use-hours-format";
 
 function HoursFormatToggle()
@@ -51,6 +57,24 @@ function GridAnimationToggle()
     );
 }
 
+function GridVerticalLinesToggle()
+{
+    const lines = useGridVerticalLines();
+    return (
+        <Tooltip title="קווים אנכיים בטבלה">
+            <ToggleButton
+                aria-label="קווים אנכיים בטבלה"
+                onChange={ () => setGridVerticalLines(!lines) }
+                selected={ lines }
+                size="small"
+                value="lines"
+            >
+                <ViewColumnIcon fontSize="small" />
+            </ToggleButton>
+        </Tooltip>
+    );
+}
+
 /**
  * Gantt page toolbar, inline with the tab names on the opposite side.
  * Folds into a burger menu when the viewport is too narrow.
@@ -62,6 +86,7 @@ export function GanttPageToolbar()
     const items = (
         <>
             <GridAnimationToggle />
+            <GridVerticalLinesToggle />
             <HoursFormatToggle />
         </>
     );
