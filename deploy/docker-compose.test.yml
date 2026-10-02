@@ -80,7 +80,7 @@ services:
             - google-stub
 
     google-stub:
-        image: node:22.20.0-alpine
+        image: node:24.21.0-alpine
         container_name: ${TEST_PROJECT_NAME:-bluz-test}-google-stub
         command: ["node", "/stub/server.mjs"]
         volumes:
