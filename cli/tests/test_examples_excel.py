@@ -45,12 +45,6 @@ TREE = {
                                         "minimumDuration": 90,
                                         "shuffles": ["A"],
                                         "isCritical": True,
-                                        "cEC": [
-                                            {
-                                                "curriculumId": "c1",
-                                                "allocatedDuration": 100,
-                                            }
-                                        ],
                                     }
                                 }
                             ],
@@ -196,7 +190,7 @@ def test_export_then_import_is_a_no_op(stub_bluz, sdk, tmp_path):
     assert report.created == {"syllabus": 0, "module": 0, "event": 0}
 
 
-def test_export_writes_allocated_minutes_rtl(tmp_path):
+def test_export_writes_minutes_rtl(tmp_path):
     from openpyxl import load_workbook
 
     curriculum = Curriculum.from_wire(TREE)
@@ -208,7 +202,6 @@ def test_export_writes_allocated_minutes_rtl(tmp_path):
         "OSI model",
         "הרצאה",
         90,
-        100,
         "A",
         "yes",
     ]

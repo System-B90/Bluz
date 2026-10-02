@@ -121,11 +121,13 @@ export function GanttMappingProvider({
             eventId,
             from,
             to,
+            allottedMinutes,
         }: {
             moduleId: GanttModuleId;
             eventId: GanttEventId | null;
             from: { d: GanttDayId; };
             to: { d: GanttDayId; };
+            allottedMinutes?: number;
         }) =>
         {
             // Optimistic UI Update
@@ -138,7 +140,11 @@ export function GanttMappingProvider({
 
             if (!originalMapping) return;
 
-            const updatedMapping = { ...originalMapping, dayId: to.d };
+            const updatedMapping = {
+                ...originalMapping,
+                dayId: to.d,
+                ...(allottedMinutes !== undefined && { allottedMinutes }),
+            };
 
             dispatch({
                 type: "DELETE_MAPPING",
@@ -153,7 +159,7 @@ export function GanttMappingProvider({
                     moduleId,
                     eventId,
                     { dayId: from.d },
-                    { dayId: to.d },
+                    { dayId: to.d, ...(allottedMinutes !== undefined && { allottedMinutes }) },
                 );
             } catch (e)
             {
