@@ -241,4 +241,21 @@ test.describe("Gantt Page", () => {
             timeout: 60_000,
         });
     });
+
+    // ─── Insights card (#854) ───────────────────────────────────────────────
+
+    test("dismissing the insights card hides it for the session", async ({ page }) => {
+        await expect(page).toHaveURL(/[?&]gc=/, { timeout: 10_000 });
+        const dismiss = page.getByRole("button", { name: "הסתרת התובנות" });
+        await expect(dismiss).toBeVisible({ timeout: 20_000 });
+
+        await dismiss.click();
+        await expect(dismiss).toHaveCount(0);
+        const until = await page.evaluate(() => Number(sessionStorage.getItem("bluz.gantt.insights.dismissedUntil")));
+        expect(until - Date.now()).toBeGreaterThan(59 * 60_000);
+
+        await page.reload();
+        await waitForAppLoad(page);
+        await expect(page.getByRole("button", { name: "הסתרת התובנות" })).toHaveCount(0);
+    });
 });
