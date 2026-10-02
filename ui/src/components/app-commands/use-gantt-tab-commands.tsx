@@ -1,6 +1,7 @@
 "use client";
 import CalendarViewWeekIcon from "@mui/icons-material/CalendarViewWeek";
 import SchoolIcon from "@mui/icons-material/School";
+import TableChartIcon from "@mui/icons-material/TableChart";
 import ViewTimelineIcon from "@mui/icons-material/ViewTimeline";
 import { Command, useCommands } from "@system-b90/command-palette";
 import { ReactNode, useMemo } from "react";
@@ -29,6 +30,12 @@ const TABS: Array<{ tab: TabKey; title: string; icon: ReactNode; keywords: Array
         title: "רצף זמן",
         icon: <ViewTimelineIcon />,
         keywords: [ "timeline", "gantt view", "ציר זמן" ],
+    },
+    {
+        tab: "grid",
+        title: "טבלה",
+        icon: <TableChartIcon />,
+        keywords: [ "grid", "table", "excel", "אקסל" ],
     },
 ];
 
