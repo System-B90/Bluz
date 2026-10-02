@@ -52,3 +52,16 @@ export function selectCell(selection: GridSelection, cell: GridCell, mode: { shi
     }
     return { anchor: cell, cursor: cell, extra };
 }
+
+/** Every selected cell, row-major, de-duplicated (the range plus Ctrl+click extras). */
+export function selectedCells(selection: GridSelection): Array<GridCell>
+{
+    const keys = new Set([
+        ...(selection.anchor ? rangeKeys(selection.anchor, selection.cursor) : []),
+        ...selection.extra,
+    ]);
+    return [ ...keys ]
+        .map((key) => key.split(",").map(Number))
+        .map(([ row, col ]) => ({ row, col }))
+        .sort((a, b) => a.row - b.row || a.col - b.col);
+}

@@ -20,11 +20,13 @@ import {
     getWeekTotalMinutes,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { buildStudentPaths } from "@/components/gantt/curriculum-view/student-load";
-import { parseHoursInput } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-allotment";
+import { parseHoursInput, ZeroChoice } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-allotment";
+import { gridMenuActions, GridMenuAction, summaryRowsUnder } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-context-menu";
 import { onGridExpansionRequest, publishGridAllCollapsed } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-expansion-bus";
 import { useGridAnimation, useGridCompactHeader, useGridIgnoreBreaks, useGridVerticalLines } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-preferences";
 import { buildGridRows, CoursePresence, GridRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-rows";
-import { initialSelection, isCellSelected, selectCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-selection";
+import { initialSelection, isCellSelected, selectCell, selectedCells } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-selection";
+import { GridContextMenu, GridMenuTarget } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GridContextMenu";
 import { mergeRowTransitions, RowPhase, TransitionRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/row-transitions";
 import { GanttViewProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { useGridAllotment } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-grid-allotment";
@@ -251,7 +253,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
     const gridRef = useRef<HTMLDivElement>(null);
     const { enqueueSnackbar } = useSnackbar();
 
-    const { commitWeek, dialog } = useGridAllotment({
+    const { commitWeek, splitShuffles, dialog } = useGridAllotment({
         curriculumId,
         dateOf: dateOfDayId,
         exceptions,
@@ -280,21 +282,29 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
             cancelledRef.current = false;
             return;
         }
-        const r = rows[ target.row ];
-        if (!r) return;
-        const week = target.col - LEAD_COLUMNS;
         const minutes = parseHoursInput(text);
         if (minutes === null)
         {
             enqueueSnackbar("ערך שעות לא תקין", { variant: "error" });
             return;
         }
-        if (minutes === r.weekMinutes[ week ]) return;
-        const shared = r.shuffle && (r.sharedShuffles?.length ?? 0) > 1
-            ? { shuffle: r.shuffle, shuffles: r.sharedShuffles ?? [] }
-            : undefined;
-        void (shared ? commitWeek(r.id, r.moduleId, week, minutes, shared) : commitWeek(r.id, r.moduleId, week, minutes));
+        void writeWeek(target, minutes);
     };
+    /** Writes one week cell; `zero` pre-answers keep-0 vs remove (the right-click entries, #858). */
+    const writeWeek = async (target: { row: number; col: number }, minutes: number, zero?: ZeroChoice) =>
+    {
+        const r = rows[ target.row ];
+        if (!r || !isEditable(target.row, target.col)) return;
+        const week = target.col - LEAD_COLUMNS;
+        if (!zero && minutes === r.weekMinutes[ week ]) return;
+        const shared = sharedOf(r);
+        if (zero) await commitWeek(r.id, r.moduleId, week, minutes, shared, zero);
+        else if (shared) await commitWeek(r.id, r.moduleId, week, minutes, shared);
+        else await commitWeek(r.id, r.moduleId, week, minutes);
+    };
+    const sharedOf = (r: GridRow) => (r.shuffle && (r.sharedShuffles?.length ?? 0) > 1
+        ? { shuffle: r.shuffle, shuffles: r.sharedShuffles ?? [] }
+        : undefined);
 
     useEffect(() =>
     {
@@ -321,6 +331,75 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         if (target.kind === "event") return;
         const isOpen = target.kind === "module" ? isModuleExpanded(target.key) : isSyllabusExpanded(target.key);
         if (isOpen !== open) activate(target);
+    };
+
+    /* ── Right-click menu (#858): every entry reuses a keyboard handler ── */
+
+    const [ menu, setMenu ] = useState<(GridMenuTarget & { cell: { row: number; col: number }; text: string }) | null>(null);
+    const openMenu = (e: React.MouseEvent<HTMLElement>, cell: { row: number; col: number }) =>
+    {
+        const r = rows[ cell.row ];
+        if (!r) return;
+        e.preventDefault();
+        // Like a left-click, but an existing range survives a right-click inside it.
+        const inSelection = isCellSelected(selection, cell);
+        if (!inSelection) select(cell);
+        const cells = inSelection ? selectedCells(selection) : [ cell ];
+        const week = cell.col >= LEAD_COLUMNS ? cell.col - LEAD_COLUMNS : null;
+        const event = r.kind === "event" ? state.events[ r.id ] : undefined;
+        const actions = gridMenuActions({
+            row: r,
+            week,
+            placedInWeek: week !== null && placedWeeks.has(`${r.id}:${week}`),
+            minutesInWeek: week === null ? 0 : r.weekMinutes[ week ] ?? 0,
+            expanded: r.kind === "module" ? isModuleExpanded(r.key) : r.kind !== "event" && isSyllabusExpanded(r.key),
+            editableSelected: cells.filter((c) => isEditable(c.row, c.col)).length,
+            sharedAcrossShuffles: Boolean(sharedOf(r)) && !event?.groupId && !event?.courseIds?.length,
+        });
+        setMenu({
+            actions,
+            cell,
+            position: { top: e.clientY, left: e.clientX },
+            rangeSize: cells.filter((c) => isEditable(c.row, c.col)).length,
+            text: (e.currentTarget.textContent ?? "").trim(),
+        });
+    };
+    const runMenuAction = (action: Exclude<GridMenuAction, "set-range">) =>
+    {
+        if (!menu) return;
+        const r = rows[ menu.cell.row ];
+        if (!r) return;
+        switch (action)
+        {
+        case "open-dialog": openDialog(r); break;
+        case "expand": setExpanded(r, true); break;
+        case "collapse": setExpanded(r, false); break;
+        case "expand-all-under":
+        case "collapse-all-under":
+            for (const target of summaryRowsUnder(build(() => true, () => true), r.key))
+                setExpanded(target, action === "expand-all-under");
+            break;
+        case "edit-week": startEdit(menu.cell.row, menu.cell.col); break;
+        case "clear-week": void writeWeek(menu.cell, 0, "keep"); break;
+        case "remove-mapping": void writeWeek(menu.cell, 0, "remove"); break;
+        case "split-shuffles": void splitShuffles(r.id, r.moduleId, r.sharedShuffles ?? []); break;
+        case "copy":
+            void navigator.clipboard?.writeText(menu.text).catch(() =>
+                enqueueSnackbar("ההעתקה נכשלה", { variant: "error" }));
+            break;
+        }
+    };
+    const setRange = async (text: string) =>
+    {
+        const minutes = parseHoursInput(text);
+        if (minutes === null)
+        {
+            enqueueSnackbar("ערך שעות לא תקין", { variant: "error" });
+            return;
+        }
+        // Sequential: each write may raise its own question (zero, move, split).
+        for (const cell of selectedCells(selection).filter((c) => isEditable(c.row, c.col)))
+            await writeWeek(cell, minutes);
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) =>
@@ -528,6 +607,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                                 data-presence={ r.coursePresence[ ci ] }
                                                 key={ c.path.id }
                                                 onClick={ (e) => select({ row: ri, col: cc }, clickMode(e)) }
+                                                onContextMenu={ (e) => openMenu(e, { row: ri, col: cc }) }
                                                 ref={ ri === row && col === cc ? selectedRef : undefined }
                                                 // The 1/0 value is data only: transparent text.
                                                 sx={ { ...cellSx(ri, cc, "event"), ...(presenceSx(r.coursePresence[ ci ], c.color) as object), color: "transparent" } }
@@ -541,6 +621,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                         aria-current={ ri === row && col === 0 ? "true" : undefined }
                                         aria-selected={ isCellSelected(selection, { row: ri, col: 0 }) }
                                         onClick={ (e) => select({ row: ri, col: 0 }, clickMode(e)) }
+                                        onContextMenu={ (e) => openMenu(e, { row: ri, col: 0 }) }
                                         onDoubleClick={ isSummary ? undefined : () => activate(r) }
                                         ref={ ri === row && col === 0 ? selectedRef : undefined }
                                         sx={ cellSx(ri, 0, r.kind, r.depth) }
@@ -555,6 +636,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                             aria-selected={ isCellSelected(selection, { row: ri, col: vi + 1 }) }
                                             key={ vi }
                                             onClick={ (e) => select({ row: ri, col: vi + 1 }, clickMode(e)) }
+                                            onContextMenu={ (e) => openMenu(e, { row: ri, col: vi + 1 }) }
                                             onDoubleClick={ () => startEdit(ri, vi + 1) }
                                             ref={ ri === row && col === vi + 1 ? selectedRef : undefined }
                                             sx={ {
@@ -593,6 +675,12 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                 </Table>
             </TableContainer>
             { dialog }
+            <GridContextMenu
+                onAction={ runMenuAction }
+                onClose={ () => setMenu(null) }
+                onSetRange={ (text) => void setRange(text) }
+                target={ menu }
+            />
         </Paper>
     );
 };
