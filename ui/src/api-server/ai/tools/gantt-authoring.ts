@@ -18,6 +18,7 @@ import {
     requireText,
 } from "@/api-server/ai/tools/common";
 import { requireCurriculumId, CURRICULUM_ID_PARAM } from "@/api-server/ai/tools/gantt";
+import { setGanttEventAllottedTimeTool } from "@/api-server/ai/tools/gantt-allotment";
 import { weekHints } from "@/api-server/ai/tools/hints";
 import { AiTool } from "@/api-server/ai/tools/types";
 import {
@@ -779,6 +780,7 @@ export const GANTT_AUTHORING_TOOLS = [
     ...SYLLABUS_WRITE_TOOLS,
     ...MODULE_WRITE_TOOLS,
     ...GANTT_EVENT_WRITE_TOOLS,
+    setGanttEventAllottedTimeTool,
     createConstraintTool,
     deleteConstraintTool,
     editWeekTool,

@@ -8,7 +8,6 @@ import { askUserTool } from "@/api-server/ai/tools/ask-user";
 import { CALENDAR_TOOLS } from "@/api-server/ai/tools/calendar";
 import { CALENDAR_ENTITY_TOOLS } from "@/api-server/ai/tools/calendar-entities";
 import { GANTT_TOOLS } from "@/api-server/ai/tools/gantt";
-import { setGanttEventAllottedTimeTool } from "@/api-server/ai/tools/gantt-allotment";
 import { GANTT_AUTHORING_TOOLS } from "@/api-server/ai/tools/gantt-authoring";
 import { HIVE_TOOLS } from "@/api-server/ai/tools/hive";
 import { AiTool } from "@/api-server/ai/tools/types";
@@ -22,7 +21,6 @@ const ALL_TOOLS: Array<AiTool<any>> = [
     ...CALENDAR_ENTITY_TOOLS,
     ...GANTT_TOOLS,
     ...GANTT_AUTHORING_TOOLS,
-    setGanttEventAllottedTimeTool,
     ...HIVE_TOOLS,
 ];
 
