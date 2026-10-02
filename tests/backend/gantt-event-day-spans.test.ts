@@ -5,7 +5,7 @@ import { computeEventDaySpans } from "@/components/gantt/curriculum-view/gantt-t
 
 const LINEAR_DAYS = [ "a1", "a2", "b1", "b2", "c1", "c2" ];
 
-function store(event: { minimumDuration: number; splitAcrossWeeks: boolean }) {
+function store(minimumDuration: number) {
     const day = (id: string, weekId: string) => ({ id, weekId, totalWorkingMinutes: 480 });
     return {
         weeks: {
@@ -16,28 +16,48 @@ function store(event: { minimumDuration: number; splitAcrossWeeks: boolean }) {
         days: Object.fromEntries(
             LINEAR_DAYS.map((id) => [ id, day(id, `w${id[0]}`) ]),
         ),
-        events: { e1: { id: "e1", ...event } },
+        events: { e1: { id: "e1", minimumDuration } },
     } as unknown as NormalizedStore;
 }
 
-function mapping(dayId: string, weekSplitMinutes?: Array<number>) {
+/** One e1 mapping per `[dayId, allottedMinutes]` pair, keyed in the given order. */
+function mappings(...parts: Array<[ string, number ]>) {
+    return Object.fromEntries(
+        parts.map(([ dayId, allottedMinutes ], i) => [
+            `m${i}`,
+            { curriculumId: "c", moduleId: "m1", eventId: "e1", dayId, sortOrder: 0, allottedMinutes },
+        ]),
+    );
+}
+
+function collectLoad() {
+    const byDay: Record<string, number> = {};
     return {
-        m: {
-            curriculumId: "c",
-            moduleId: "m1",
-            eventId: "e1",
-            dayId,
-            sortOrder: 0,
-            weekSplitMinutes,
+        byDay,
+        load: {
+            consume: (dayId: string, _eventId: string, minutes: number) => {
+                byDay[ dayId ] = (byDay[ dayId ] ?? 0) + minutes;
+            },
         },
     };
 }
 
-describe("computeEventDaySpans week split (#768)", () => {
-    it("puts each part on the same weekday of consecutive weeks", () => {
+describe("computeEventDaySpans per-mapping allotted minutes", () => {
+    it("runs a single mapping for its allotted minutes, not the event's minimum", () => {
         const spans = computeEventDaySpans({
-            mappings: mapping("a2", [ 180, 180, 240 ]),
-            state: store({ minimumDuration: 600, splitAcrossWeeks: true }),
+            mappings: mappings([ "a1", 90 ]),
+            state: store(600),
+            linearDays: LINEAR_DAYS,
+        });
+
+        expect(spans.e1).toEqual({ dayIds: [ "a1" ], minutesPerDay: [ 90 ], spillover: false });
+        expect(spans.e1.multiDay).toBeFalsy();
+    });
+
+    it("merges several mappings of one event into one multi-day span, ordered by day", () => {
+        const spans = computeEventDaySpans({
+            mappings: mappings([ "c2", 240 ], [ "a2", 180 ], [ "b2", 180 ]),
+            state: store(600),
             linearDays: LINEAR_DAYS,
         });
 
@@ -45,62 +65,53 @@ describe("computeEventDaySpans week split (#768)", () => {
             dayIds: [ "a2", "b2", "c2" ],
             minutesPerDay: [ 180, 180, 240 ],
             spillover: false,
-            weekSplit: true,
+            multiDay: true,
         });
     });
 
-    it("counts each part toward its own week's scheduled minutes", () => {
-        const byDay: Record<string, number> = {};
+    it("counts each mapping's minutes toward its own day", () => {
+        const { byDay, load } = collectLoad();
         computeEventDaySpans({
-            mappings: mapping("a1", [ 300, 300 ]),
-            state: store({ minimumDuration: 600, splitAcrossWeeks: true }),
+            mappings: mappings([ "a1", 300 ], [ "b1", 200 ]),
+            state: store(600),
             linearDays: LINEAR_DAYS,
-            load: {
-                consume: (dayId, _eventId, minutes) => {
-                    byDay[ dayId ] = (byDay[ dayId ] ?? 0) + minutes;
-                },
-            },
+            load,
         });
 
-        expect(byDay).toEqual({ a1: 300, b1: 300 });
+        expect(byDay).toEqual({ a1: 300, b1: 200 });
     });
 
-    it("parks parts past the timeline's end on its last week", () => {
+    it("keeps a 0-minute mapping as a 0-minute day", () => {
         const spans = computeEventDaySpans({
-            mappings: mapping("c1", [ 120, 120, 120 ]),
-            state: store({ minimumDuration: 360, splitAcrossWeeks: true }),
+            mappings: mappings([ "a1", 300 ], [ "b1", 0 ], [ "c1", 300 ]),
+            state: store(600),
             linearDays: LINEAR_DAYS,
         });
 
-        expect(spans.e1.dayIds).toEqual([ "c1" ]);
-        expect(spans.e1.minutesPerDay).toEqual([ 360 ]);
+        expect(spans.e1).toMatchObject({
+            dayIds: [ "a1", "b1", "c1" ],
+            minutesPerDay: [ 300, 0, 300 ],
+            multiDay: true,
+        });
     });
 
-    it("regression: an unflagged event ignores a stored split and stays whole on its day", () => {
+    it("treats a mapping without allotted minutes as 0", () => {
         const spans = computeEventDaySpans({
-            mappings: mapping("a1", [ 300, 300 ]),
-            state: store({ minimumDuration: 600, splitAcrossWeeks: false }),
+            mappings: { m: { curriculumId: "c", moduleId: "m1", eventId: "e1", dayId: "a1", sortOrder: 0 } } as never,
+            state: store(600),
             linearDays: LINEAR_DAYS,
         });
 
-        expect(spans.e1).toEqual({
-            dayIds: [ "a1" ],
-            minutesPerDay: [ 600 ],
-            spillover: false,
-        });
+        expect(spans.e1.minutesPerDay).toEqual([ 0 ]);
     });
 
     it("never spreads an event past its day's capacity onto the next day", () => {
-        const byDay: Record<string, number> = {};
+        const { byDay, load } = collectLoad();
         const spans = computeEventDaySpans({
-            mappings: mapping("a1"),
-            state: store({ minimumDuration: 1000, splitAcrossWeeks: false }),
+            mappings: mappings([ "a1", 1000 ]),
+            state: store(1000),
             linearDays: LINEAR_DAYS,
-            load: {
-                consume: (dayId, _eventId, minutes) => {
-                    byDay[ dayId ] = (byDay[ dayId ] ?? 0) + minutes;
-                },
-            },
+            load,
         });
 
         expect(spans.e1.dayIds).toEqual([ "a1" ]);
@@ -108,27 +119,13 @@ describe("computeEventDaySpans week split (#768)", () => {
         expect(byDay).toEqual({ a1: 1000 });
     });
 
-    it("regression: an incomplete split runs the event whole", () => {
+    it("ignores mappings on days outside the timeline", () => {
         const spans = computeEventDaySpans({
-            mappings: mapping("a1", [ 60, 60 ]),
-            state: store({ minimumDuration: 240, splitAcrossWeeks: true }),
+            mappings: mappings([ "a1", 60 ], [ "zz", 60 ]),
+            state: store(120),
             linearDays: LINEAR_DAYS,
         });
 
-        expect(spans.e1).toEqual({
-            dayIds: [ "a1" ],
-            minutesPerDay: [ 240 ],
-            spillover: false,
-        });
-    });
-
-    it("skips a week whose part is 0 hours", () => {
-        const spans = computeEventDaySpans({
-            mappings: mapping("a1", [ 300, 0, 300 ]),
-            state: store({ minimumDuration: 600, splitAcrossWeeks: true }),
-            linearDays: LINEAR_DAYS,
-        });
-
-        expect(spans.e1).toMatchObject({ dayIds: [ "a1", "c1" ], minutesPerDay: [ 300, 300 ] });
+        expect(spans.e1.dayIds).toEqual([ "a1" ]);
     });
 });

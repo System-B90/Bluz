@@ -169,7 +169,7 @@ beforeEach(() => {
         makeCurriculum([makeEvent({ id: "e1" })]),
     );
     vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([
-        { eventId: "e1", dayId: "w0d0", sortOrder: 0 },
+        { eventId: "e1", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 },
     ]);
 });
 
@@ -279,7 +279,7 @@ describe("getCurriculumExecution — plan divergence after the cut", () => {
         );
         // Only e1 is mapped to a day; e2 is left unmapped.
         vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([
-            { eventId: "e1", dayId: "w0d0", sortOrder: 0 },
+            { eventId: "e1", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 },
         ]);
         findToArray.mockResolvedValue([
             cutDoc(),
@@ -315,8 +315,8 @@ describe("getCurriculumExecution — plan divergence after the cut", () => {
             makeCurriculum([makeEvent({ id: "e1" }), makeEvent({ id: "e2" })]),
         );
         vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([
-            { eventId: "e1", dayId: "w0d0", sortOrder: 0 },
-            { eventId: "e2", dayId: "w0d0", sortOrder: 1 },
+            { eventId: "e1", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 },
+            { eventId: "e2", dayId: "w0d0", sortOrder: 1, allottedMinutes: 60 },
         ]);
         findToArray.mockResolvedValue([
             cutDoc(),

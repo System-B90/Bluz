@@ -415,6 +415,29 @@ export function forEachRecurrenceOccurrence(
 }
 
 /**
+ * Minutes each event is allotted in a curriculum: every one of its mappings'
+ * allotted minutes, plus each surviving recurrence echo at its earliest
+ * mapping's. The single read path for an event's scheduled time; 0 means
+ * the event is documented but not part of the curriculum.
+ */
+export function sumAllottedMinutesByEvent(ctx: {
+    dateOf?: (dayId: GanttDayId) => string | undefined;
+    exceptions: Record<string, GanttEventRecurrenceException>;
+    linearDays: Array<GanttDayId>;
+    mappings: Record<string, GanttCurriculumModuleDayMapping>;
+    state: NormalizedStore;
+}): Map<string, number> {
+    const totals = new Map<string, number>();
+    const add = (_dayId: GanttDayId, eventId: string, minutes: number) =>
+        totals.set(eventId, (totals.get(eventId) ?? 0) + minutes);
+    for (const mapping of Object.values(ctx.mappings)) {
+        if (mapping.eventId) add(mapping.dayId, mapping.eventId, mapping.allottedMinutes ?? 0);
+    }
+    forEachRecurrenceOccurrence(ctx, add);
+    return totals;
+}
+
+/**
  * Lays out every mapped event (spillover by what its own students have left
  * on a day) and totals each day per student path. Recurring events count as
  * if materialized on every occurrence, and are placed before anything spills.

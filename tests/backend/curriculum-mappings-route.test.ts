@@ -31,10 +31,10 @@ function patch(newValues: unknown) {
 
 beforeEach(() => vi.clearAllMocks());
 
-describe("PATCH /api/gantt/curriculums/[id]/mappings weekSplitMinutes (#768)", () => {
-    it("forwards a valid week split", async () => {
+describe("PATCH /api/gantt/curriculums/[id]/mappings allottedMinutes", () => {
+    it("forwards valid allotted minutes", async () => {
         const response = await MappingsRoute.PATCH(
-            patch({ weekSplitMinutes: [ 180, 240 ] }),
+            patch({ allottedMinutes: 180 }),
             context,
         );
 
@@ -44,23 +44,23 @@ describe("PATCH /api/gantt/curriculums/[id]/mappings weekSplitMinutes (#768)", (
             "m1",
             "e1",
             { dayId: "d1" },
-            { weekSplitMinutes: [ 180, 240 ] },
+            { allottedMinutes: 180 },
         );
     });
 
-    it("accepts an empty split — that is how a split is cleared", async () => {
+    it("accepts 0 minutes", async () => {
         const response = await MappingsRoute.PATCH(
-            patch({ weekSplitMinutes: [] }),
+            patch({ allottedMinutes: 0 }),
             context,
         );
 
         expect(response.status).toBe(200);
     });
 
-    it("rejects non-positive, fractional or non-array splits", async () => {
-        for (const weekSplitMinutes of [ [ 0, 60 ], [ -1 ], [ 1.5 ], "60" ]) {
+    it("rejects negative, fractional or non-number minutes", async () => {
+        for (const allottedMinutes of [ -1, 1.5, "60", null, [ 60 ] ]) {
             const response = await MappingsRoute.PATCH(
-                patch({ weekSplitMinutes }),
+                patch({ allottedMinutes }),
                 context,
             );
             expect(response.status).toBe(400);

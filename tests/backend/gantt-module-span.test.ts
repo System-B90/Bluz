@@ -75,12 +75,12 @@ describe("getModuleSpanDayIds", () => {
         expect([ ...span({ moduleDayIds: [ "d1", "d2" ] }) ]).toEqual([ "d1", "d2" ]);
     });
 
-    it("extends to the last part of a week-split event", () => {
+    it("extends to the last day of a multi-day event", () => {
         const ids = span({
             eventIds: [ "e1" ],
             eventMappings: { e1: "d3" },
             eventSpans: {
-                e1: { dayIds: [ "d3", "d8" ], minutesPerDay: [ 300, 300 ], spillover: false, weekSplit: true },
+                e1: { dayIds: [ "d3", "d8" ], minutesPerDay: [ 300, 300 ], spillover: false, multiDay: true },
             },
         });
 

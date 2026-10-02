@@ -87,7 +87,7 @@ function placeAll(state: NormalizedStore, dayId = "d1") {
     return Object.fromEntries(
         Object.keys(state.events).map((eventId, sortOrder) => [
             eventId,
-            { curriculumId: "c", moduleId: state.events[ eventId ].moduleId, eventId, dayId, sortOrder },
+            { curriculumId: "c", moduleId: state.events[ eventId ].moduleId, eventId, dayId, sortOrder, allottedMinutes: state.events[ eventId ].minimumDuration ?? 0 },
         ]),
     );
 }

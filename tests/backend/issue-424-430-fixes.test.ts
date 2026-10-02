@@ -68,7 +68,6 @@ describe("cut planner meal windows past midnight (#430)", () => {
             title: MEAL_EVENT_TITLES.breakfastTime,
             recurrence: EventRecurrence.None,
             minimumDuration: 30,
-            allocatedDuration: 30,
             splitAcrossBreaks: false,
         };
         // A long day that stacks past 24:00: once the cursor wraps, a
@@ -78,7 +77,6 @@ describe("cut planner meal windows past midnight (#430)", () => {
             title: "marathon",
             recurrence: EventRecurrence.None,
             minimumDuration: 16 * 60,
-            allocatedDuration: 16 * 60,
             splitAcrossBreaks: false,
         };
         // Long enough that a time-of-day comparison would see its (wrapped)
@@ -88,7 +86,6 @@ describe("cut planner meal windows past midnight (#430)", () => {
             title: "after",
             recurrence: EventRecurrence.None,
             minimumDuration: 8 * 60,
-            allocatedDuration: 8 * 60,
             splitAcrossBreaks: false,
         };
 
@@ -96,9 +93,9 @@ describe("cut planner meal windows past midnight (#430)", () => {
             baseInput({
                 events: [breakfast, marathon, afterMidnight],
                 mappings: [
-                    { eventId: "breakfast", dayId: "d0", sortOrder: 0 },
-                    { eventId: "marathon", dayId: "d0", sortOrder: 1 },
-                    { eventId: "after", dayId: "d0", sortOrder: 2 },
+                    { eventId: "breakfast", dayId: "d0", sortOrder: 0, allottedMinutes: 30 },
+                    { eventId: "marathon", dayId: "d0", sortOrder: 1, allottedMinutes: 16 * 60 },
+                    { eventId: "after", dayId: "d0", sortOrder: 2, allottedMinutes: 8 * 60 },
                 ],
                 dayStartTime: "08:00",
                 breakfastTime: "07:00",

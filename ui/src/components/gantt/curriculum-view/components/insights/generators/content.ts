@@ -192,8 +192,21 @@ const zeroDuration: InsightGenerator = (ctx) => {
     };
 };
 
+const zeroAllotted: InsightGenerator = (ctx) => {
+    const zero = ctx.workEvents.filter((e) => e.isPlaced && e.allottedMinutes === 0);
+    if (zero.length === 0) return null;
+    return {
+        id: "zero-allotted",
+        category: "content",
+        severity: "warning",
+        title: `${pluralize(zero.length, "מופע אחד", "מופעים")} ללא זמן מוקצה`,
+        body: "הוקצו 0 שעות — הם מתועדים בגאנט אך לא ייכללו בגזירה.",
+        visual: { kind: "chips", chips: zero.slice(0, 6).map((e) => ({ label: e.event.title })) },
+    };
+};
+
 const allocationGap: InsightGenerator = (ctx) => {
-    const under = ctx.workEvents.filter((e) => e.event.allocatedDuration > 0 && e.event.allocatedDuration < e.event.minimumDuration);
+    const under = ctx.workEvents.filter((e) => e.allottedMinutes > 0 && e.allottedMinutes < e.totalMinutes);
     if (under.length === 0) return null;
     return {
         id: "allocation-gap",
@@ -203,7 +216,7 @@ const allocationGap: InsightGenerator = (ctx) => {
         body: `הזמן המוקצב שלהם קטן מהמינימום. הפער הגדול: ${under[0].event.title}.`,
         visual: {
             kind: "chips",
-            chips: under.slice(0, 5).map((e) => ({ label: `${e.event.title} (−${e.event.minimumDuration - e.event.allocatedDuration}′)` })),
+            chips: under.slice(0, 5).map((e) => ({ label: `${e.event.title} (−${e.totalMinutes - e.allottedMinutes}′)` })),
         },
     };
 };
@@ -299,6 +312,7 @@ export const CONTENT_INSIGHTS: Array<InsightGenerator> = [
     biggestModule,
     emptyContainers,
     zeroDuration,
+    zeroAllotted,
     allocationGap,
     recurring,
     critical,
