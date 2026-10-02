@@ -47,13 +47,13 @@ the host has no Python 3.10+, it says so before touching anything.
 
 ## What the installer asks you
 
-| Prompt                                   | What to enter                                                                                            |
-| ---------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Domain name                              | The hostname users will type, e.g. `bluz.school.example`. Becomes `NEXTAUTH_URL` and the certificate CN. |
-| Hive URL                                 | Base URL of your Hive server, e.g. `https://hive.example`.                                               |
-| Another web server already using 80/443? | `yes` only if this machine already serves those ports. See [Port conflicts](#port-conflicts).            |
-| Hive username / password                 | An account allowed to register SSO applications. Used once, not stored.                                  |
-| Override built-in Google OAuth?          | `no`. Calendar sync works with no setup; this exists only for custom consent-screen branding.            |
+| Prompt                                   | What to enter                                                                                                         |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Domain name                              | The hostname users will type, e.g. `bluz.school.example`. Becomes `NEXTAUTH_URL` and the certificate CN.              |
+| Hive URL                                 | Base URL of your Hive server, e.g. `https://hive.example`.                                                            |
+| Another web server already using 80/443? | `yes` only if this machine already serves those ports. See [Port conflicts](#port-conflicts).                         |
+| Hive username / password                 | An account allowed to register SSO applications. Used once, not stored.                                               |
+| Override built-in Google OAuth?          | `no`. Calendar sync works with no setup; this exists only for custom consent-screen branding.                         |
 | Issue the certificate from ACME?         | `yes` if your network runs its own Let's Encrypt-compatible ACME server. See [ACME certificates](#acme-certificates). |
 
 Everything else — database credentials, JWT and encryption keys — is generated
