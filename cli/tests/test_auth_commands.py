@@ -175,3 +175,27 @@ def test_login_redeems_a_pasted_handoff_code_when_automatic_login_fails(
     reloaded = load_config()
     assert reloaded.url == "https://bluz.example.com"
     assert reloaded.token == "pasted-token"
+
+
+def test_whoami_shows_the_session(stub_bluz, run_cli):
+    stub = stub_bluz()
+    stub.route(
+        "GET",
+        "/api/auth/session",
+        {"user": {"name": "Dana", "email": "d@x"}, "expires": "2099-01-01T00:00:00Z"},
+    )
+
+    result = run_cli(stub, "auth", "whoami")
+
+    assert result.exit_code == 0
+    assert '"name": "Dana"' in result.output
+    assert stub.last().path == "/api/auth/session"
+
+
+def test_whoami_exits_non_zero_when_signed_out(stub_bluz, run_cli):
+    stub = stub_bluz()
+    stub.route("GET", "/api/auth/session", {})
+
+    result = run_cli(stub, "auth", "whoami")
+
+    assert result.exit_code == 1

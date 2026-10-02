@@ -554,6 +554,23 @@ def show_config() -> None:
     show(data, title="Config")
 
 
+@app.command()
+def whoami() -> None:
+    """Show who the stored token signs in as, and when the session expires.
+
+    Exits non-zero when the token is missing or expired, so it doubles as a
+    shell check: `bluz auth whoami -q || bluz login`.
+    """
+    from bluz.commands._common import session, show
+
+    with session() as bz:
+        info = bz.whoami()
+    if not info.authenticated:
+        warn("Not signed in (token missing or expired). Run `bluz login`.")
+        raise typer.Exit(1)
+    show(info, title="Session")
+
+
 @app.command("hive-status")
 def hive_status() -> None:
     """Check whether the server can reach Hive (drives the SSO outage banner)."""

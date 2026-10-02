@@ -80,6 +80,29 @@ examples, `Curriculum??` shows the source, and models print as one line
 (`Curriculum(id='c1', title='Bis90', is_draft=False, children=7)`) rather than
 a field dump. `curriculum.tree()` renders the whole tree.
 
+Plain-text overviews, one item per line (no colour codes — fine for logs and
+screen readers):
+
+```python
+bz.help()                 # every namespace and method
+bz.gantt.modules.help()   # one namespace, with signatures
+Curriculum.help()         # a model's fields (with wire names), properties, methods
+```
+
+Every model's docstring also starts with a generated field table, so
+`help(Event)` and `Event?` list the attributes first.
+
+### Signing in
+
+```python
+bz = Bluz()                                # reuses `bluz login` / BLUZ_URL + BLUZ_TOKEN
+bz = Bluz.login("https://bluz.example")    # browser sign-in, saved for SDK and CLI
+bz.whoami()                                # SessionInfo(user=..., expires=...)
+bz.require_login()                         # fail fast before any write
+```
+
+`bluz auth whoami` is the CLI equivalent, and exits non-zero when signed out.
+
 ### Conventions
 
 - **Attributes are snake_case** (`event.start_time`); the wire is camelCase.
@@ -111,13 +134,25 @@ python -m bluz.examples                    # list them
 python -m bluz.examples walk_curriculum    # run one against your server
 ```
 
-| Example           | Shows                                              |
-| ----------------- | -------------------------------------------------- |
-| `walk_curriculum` | tree navigation, per-syllabus totals               |
-| `weekly_load`     | date-range queries, hours per course               |
-| `cut_dry_run`     | the plan-then-confirm cut flow, read-only          |
-| `safe_bulk_edit`  | snapshot → edit → roll back on failure             |
-| `build_syllabus`  | creating syllabuses/modules/events on a draft copy |
+| Example               | Shows                                                                               |
+| --------------------- | ----------------------------------------------------------------------------------- |
+| `script_template`     | boilerplate: flags, login check, dry-run switch, error exit codes                   |
+| `login_and_session`   | every way to get a session; whoami and expiry                                       |
+| `walk_curriculum`     | tree navigation, per-syllabus totals                                                |
+| `build_syllabus`      | creating syllabuses/modules/events on a draft copy                                  |
+| `excel_to_syllabus`   | flat Excel sheet (Hebrew or English headers) → syllabuses, create-or-reuse, dry run |
+| `excel_wide_syllabus` | hand-made workbook, one sheet per syllabus with module header rows                  |
+| `syllabus_to_excel`   | curriculum → Excel in the importer's layout (round trip)                            |
+| `weekly_load`         | date-range queries, hours per course                                                |
+| `course_tree`         | the course tree with linked syllabuses                                              |
+| `room_utilization`    | booked hours per room from events and reservations                                  |
+| `shuffle_audit`       | checks every shuffle of a syllabus gets equal time                                  |
+| `compare_iterations`  | reading a past iteration with `bz.scoped()`                                         |
+| `cut_dry_run`         | the plan-then-confirm cut flow, read-only                                           |
+| `safe_bulk_edit`      | snapshot → edit → roll back on failure                                              |
+| `export_calendar`     | ICS + CSV export on the Israel wall clock                                           |
+
+The Excel examples need `pip install "./cli[excel]"`.
 
 ## Interactive mode
 
