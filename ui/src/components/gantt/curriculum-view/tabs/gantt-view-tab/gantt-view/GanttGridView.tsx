@@ -20,7 +20,7 @@ import {
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { buildStudentPaths } from "@/components/gantt/curriculum-view/student-load";
 import { parseHoursInput } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-allotment";
-import { useGridAnimation, useGridVerticalLines } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-preferences";
+import { useGridAnimation, useGridIgnoreBreaks, useGridVerticalLines } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-preferences";
 import { buildGridRows, CoursePresence, GridRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-rows";
 import { initialSelection, isCellSelected, selectCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-selection";
 import { mergeRowTransitions, RowPhase, TransitionRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/row-transitions";
@@ -103,6 +103,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         eventSpans,
         isModuleExpanded,
         isSyllabusExpanded,
+        studentLoadByDay,
         timelineWeeks,
         toggleModule,
         toggleSyllabus,
@@ -141,6 +142,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
     const courseCount = courseColumns.columns.length;
     // Re-render on a decimal/clock switch from the page toolbar.
     useHoursFormat();
+    const ignoreBreaks = useGridIgnoreBreaks();
 
     const rows = useMemo(
         () => buildGridRows(
@@ -149,6 +151,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                 dateOf: dateOfDayId,
                 eventSpans,
                 exceptions,
+                ignoreBreaks,
                 linearDays: allLinearDays,
                 mappings: curriculumMappings,
                 state,
@@ -160,7 +163,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
             courseColumns.columns.map((c) => c.path),
         ),
         [ courseColumns,
-            allLinearDays, curriculum?.syllabuses, curriculumMappings, dateOfDayId, eventSpans, exceptions,
+            allLinearDays, curriculum?.syllabuses, ignoreBreaks, curriculumMappings, dateOfDayId, eventSpans, exceptions,
             isModuleExpanded, isSyllabusExpanded, state, timelineWeeks, weekIndexByDayId,
         ],
     );
@@ -211,7 +214,9 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         }
         return placed;
     }, [ curriculumMappings, weekIndexByDayId ]);
-    const availableByWeek = timelineWeeks.map((week) => getWeekTotalMinutes(week, state));
+    // Like the timeline, ignoring breaks also takes each day's break time out of the available hours.
+    const availableByWeek = timelineWeeks.map((week) => getWeekTotalMinutes(week, state)
+        - (ignoreBreaks ? week.days.reduce((sum, dayId) => sum + (studentLoadByDay[ dayId ]?.breakMinutes ?? 0), 0) : 0));
 
     const [ selection, setSelection ] = useState(initialSelection);
     const row = Math.min(selection.cursor.row, rows.length - 1);
@@ -481,6 +486,8 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                 <TableRow
                                     hover
                                     key={ rowId(r) }
+                                    // Anywhere on a summary row (name cell included) collapses or expands it.
+                                    onDoubleClick={ isSummary ? () => activate(r) : undefined }
                                     sx={ {
                                         ...phaseSx(phase),
                                         ...(isSummary && { bgcolor: r.kind === "module" ? "action.hover" : "action.selected" }),
@@ -511,7 +518,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                         aria-current={ ri === row && col === 0 ? "true" : undefined }
                                         aria-selected={ isCellSelected(selection, { row: ri, col: 0 }) }
                                         onClick={ (e) => select({ row: ri, col: 0 }, clickMode(e)) }
-                                        onDoubleClick={ () => activate(r) }
+                                        onDoubleClick={ isSummary ? undefined : () => activate(r) }
                                         ref={ ri === row && col === 0 ? selectedRef : undefined }
                                         sx={ cellSx(ri, 0, r.kind, r.depth) }
                                     >

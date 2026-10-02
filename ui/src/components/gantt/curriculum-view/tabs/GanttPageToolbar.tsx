@@ -1,4 +1,5 @@
 import AnimationIcon from "@mui/icons-material/Animation";
+import FreeBreakfastIcon from "@mui/icons-material/FreeBreakfast";
 import MenuIcon from "@mui/icons-material/Menu";
 import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import IconButton from "@mui/material/IconButton";
@@ -14,8 +15,10 @@ import { useState } from "react";
 import { HoursFormat, setHoursFormat } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import {
     setGridAnimation,
+    setGridIgnoreBreaks,
     setGridVerticalLines,
     useGridAnimation,
+    useGridIgnoreBreaks,
     useGridVerticalLines,
 } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-preferences";
 import { useHoursFormat } from "@/components/gantt/curriculum-view/use-hours-format";
@@ -57,6 +60,26 @@ function GridAnimationToggle()
     );
 }
 
+function GridIgnoreBreaksToggle()
+{
+    const ignored = useGridIgnoreBreaks();
+    return (
+        <Tooltip title="התעלמות מהפסקות בסכומי הזמן">
+            <ToggleButton
+                aria-label="התעלמות מהפסקות בסכומי הזמן בטבלה"
+                onChange={ () => setGridIgnoreBreaks(!ignored) }
+                selected={ ignored }
+                size="small"
+                sx={ { gap: 0.5 } }
+                value="breaks"
+            >
+                <FreeBreakfastIcon fontSize="small" />
+                ללא הפסקות
+            </ToggleButton>
+        </Tooltip>
+    );
+}
+
 function GridVerticalLinesToggle()
 {
     const lines = useGridVerticalLines();
@@ -87,6 +110,7 @@ export function GanttPageToolbar()
         <>
             <GridAnimationToggle />
             <GridVerticalLinesToggle />
+            <GridIgnoreBreaksToggle />
             <HoursFormatToggle />
         </>
     );
