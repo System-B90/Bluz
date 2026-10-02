@@ -8,16 +8,12 @@ import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
-import ToggleButton from "@mui/material/ToggleButton";
-import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import {
     formatHours,
     getWeekTotalMinutes,
-    HoursFormat,
-    setHoursFormat,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { buildGridRows, GridRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-rows";
 import { GanttViewProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
@@ -37,7 +33,15 @@ const WEEK_WIDTH = 88;
 /** Two digits so a quarter hour reads 0.75, not 0.8. */
 const hours = (minutes: number) => formatHours(minutes, 2);
 const hoursOrBlank = (minutes: number) => (minutes ? hours(minutes) : "");
-const errorTint = (theme: Theme) => alpha(theme.palette.error.main, 0.12);
+/** Opaque error tint: the tint layered over paper, so sticky cells hide what scrolls beneath. */
+const errorTint = {
+    bgcolor: "background.paper",
+    backgroundImage: (theme: Theme) =>
+    {
+        const tint = alpha(theme.palette.error.main, 0.12);
+        return `linear-gradient(${tint}, ${tint})`;
+    },
+};
 
 /**
  * Spreadsheet-style gantt: weeks as columns, events as rows, each cell the
@@ -65,7 +69,8 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         weekIndexByDayId,
     } = contextValue;
     const weekCount = timelineWeeks.length;
-    const hoursFormat = useHoursFormat();
+    // Re-render on a decimal/clock switch from the page toolbar.
+    useHoursFormat();
 
     const rows = useMemo(
         () => buildGridRows(
@@ -93,6 +98,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
     const usedByWeek = rows
         .filter((r) => r.kind === "syllabus")
         .reduce((sum, r) => sum.map((m, w) => m + r.weekMinutes[ w ]), new Array<number>(weekCount).fill(0));
+    const availableByWeek = timelineWeeks.map((week) => getWeekTotalMinutes(week, state));
 
     const [ cursor, setCursor ] = useState({ row: 0, col: 0 });
     const row = Math.min(cursor.row, rows.length - 1);
@@ -154,17 +160,6 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
 
     return (
         <Paper elevation={ 0 } sx={ { mt: 2, width: "100%", overflow: "hidden" } }>
-            <ToggleButtonGroup
-                aria-label="תצוגת שעות"
-                exclusive
-                onChange={ (_, value: HoursFormat | null) => value && setHoursFormat(value) }
-                size="small"
-                sx={ { mb: 1 } }
-                value={ hoursFormat }
-            >
-                <ToggleButton value="decimal">0.75</ToggleButton>
-                <ToggleButton value="clock">0:45</ToggleButton>
-            </ToggleButtonGroup>
             <TableContainer
                 aria-label="טבלת גאנט"
                 onKeyDown={ handleKeyDown }
@@ -174,7 +169,6 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
             >
                 <Table
                     size="small"
-                    stickyHeader
                     sx={ {
                         tableLayout: "fixed",
                         width: "100%",
@@ -188,28 +182,39 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                         )) }
                         { timelineWeeks.map((week) => <col key={ week.id } style={ { width: WEEK_WIDTH } } />) }
                     </colgroup>
-                    <TableHead>
+                    <TableHead
+                        sx={ {
+                            position: "sticky",
+                            top: 0,
+                            zIndex: 2,
+                            "& th": { bgcolor: "background.paper", fontWeight: "bold" },
+                        } }
+                    >
                         <TableRow>
                             <TableCell>שם</TableCell>
                             <TableCell align="center">נדרש</TableCell>
                             <TableCell align="center">שובץ</TableCell>
-                            { timelineWeeks.map((week, w) =>
-                            {
-                                const available = getWeekTotalMinutes(week, state);
-                                return (
+                            { timelineWeeks.map((week) => (
+                                <TableCell align="center" key={ week.id }>{ week.title }</TableCell>
+                            )) }
+                        </TableRow>
+                        { ([
+                            [ "זמן זמין", availableByWeek ],
+                            [ "זמן משובץ", usedByWeek ],
+                        ] as const).map(([ label, byWeek ]) => (
+                            <TableRow key={ label }>
+                                <TableCell colSpan={ LEAD_COLUMNS }>{ label }</TableCell>
+                                { timelineWeeks.map((week, w) => (
                                     <TableCell
                                         align="center"
                                         key={ week.id }
-                                        sx={ usedByWeek[ w ] > available ? { bgcolor: errorTint } : undefined }
+                                        sx={ usedByWeek[ w ] > availableByWeek[ w ] ? errorTint : undefined }
                                     >
-                                        { week.title }
-                                        <Typography component="div" variant="caption">
-                                            { `${hours(usedByWeek[ w ])} / ${hours(available)}` }
-                                        </Typography>
+                                        { hours(byWeek[ w ]) }
                                     </TableCell>
-                                );
-                            }) }
-                        </TableRow>
+                                )) }
+                            </TableRow>
+                        )) }
                     </TableHead>
                     <TableBody>
                         { rows.map((r, ri) =>
@@ -249,7 +254,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                             ref={ ri === row && col === vi + 1 ? selectedRef : undefined }
                                             sx={ {
                                                 ...cellSx(ri, vi + 1, r.kind),
-                                                ...(conflict && vi < LEAD_COLUMNS - 1 && { bgcolor: errorTint }),
+                                                ...(conflict && vi < LEAD_COLUMNS - 1 && errorTint),
                                             } }
                                             title={ conflict && vi < LEAD_COLUMNS - 1 ? "השיבוץ שונה מהנדרש" : undefined }
                                         >
