@@ -82,18 +82,23 @@ class Iteration(BluzModel):
         return self.bluz.events.list(start, end, iteration=self)
 
     def usage(self) -> IterationUsage:
+        """What still hangs off this iteration."""
         return self.bluz.iterations.usage(self)
 
     def set_current(self) -> Iteration:
+        """Make this the current (writable) iteration."""
         return self.bluz.iterations.set_current(self)
 
     def update(self, **fields: Any) -> Iteration:
+        """Patch fields (label, hive_url, dates, ...)."""
         return self.bluz.iterations.patch(self, **fields)
 
     def sync_hive(self) -> SyncHiveResult:
+        """Re-snapshot Hive module/subject/room names."""
         return self.bluz.iterations.sync_hive(self)
 
     def delete(self) -> None:
+        """Delete this iteration (only when orphaned)."""
         self.bluz.iterations.delete(self)
 
 

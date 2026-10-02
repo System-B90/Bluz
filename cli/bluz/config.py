@@ -63,6 +63,7 @@ class Config:
         return INSECURE_COOKIE_NAME if url.startswith("http://") else SECURE_COOKIE_NAME
 
     def require_url(self) -> str:
+        """The server URL without a trailing slash; raises ConfigError when unset."""
         if not self.url:
             raise ConfigError(
                 "No Bluz server URL configured. Run `bluz login` or pass --url / set BLUZ_URL."
