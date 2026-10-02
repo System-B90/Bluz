@@ -9,7 +9,7 @@ Author: Michael K. Steinberg
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from enum import IntEnum, StrEnum
 from typing import Annotated, Any, ClassVar
 
@@ -90,7 +90,10 @@ class Room(BluzModel):
         return RoomRef(id=self.id, source=self.source)
 
     def reservations(
-        self, *, start: datetime | str | None = None, end: datetime | str | None = None
+        self,
+        *,
+        start: datetime | date | str | None = None,
+        end: datetime | date | str | None = None,
     ) -> Collection[Reservation]:
         """Reservations of this room, optionally within a date range."""
         return self.bluz.reservations.list(room=self, start=start, end=end)
