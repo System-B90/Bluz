@@ -56,7 +56,10 @@ type Context = {
  * occurrence. Never touches the event's minimumDuration.
  */
 export function useGridAllotment(ctx: Context): {
-    commitWeek: (eventId: string, moduleId: string, week: number, minutes: number, shared?: SharedShuffles) => Promise<void>;
+    /** `zero` answers the keep-0 / remove question up front (the grid menu's explicit entries, #858). */
+    commitWeek: (eventId: string, moduleId: string, week: number, minutes: number, shared?: SharedShuffles, zero?: ZeroChoice) => Promise<void>;
+    /** Splits one event shared by every shuffle into one event per shuffle, keeping the placement (#858). */
+    splitShuffles: (eventId: string, moduleId: string, shuffles: Array<string>) => Promise<void>;
     dialog: ReactNode;
 }
 {
@@ -199,7 +202,26 @@ export function useGridAllotment(ctx: Context): {
         }
     }, [ ask, createMapping, ctx, enqueueSnackbar, materializeOccurrence, moveMapping, refreshMappings, removeMapping, setAllottedMinutes, updateEvent ]);
 
-    /** Splits a shared event into one per shuffle, each keeping the placement, then edits only `shared.shuffle`'s. */
+    /** Splits a shared event into one per shuffle, each copy keeping the original's placement. */
+    const splitShared = useCallback(async (eventId: string, moduleId: string, shuffles: Array<string>) =>
+    {
+        const original = Object.values(ctx.mappings).filter((m) => m.eventId === eventId);
+        const members = await applyEventShuffleGroup(eventId, moduleId, shuffles);
+        if (!members) return null;
+        for (const member of members.filter((m) => m.id !== eventId))
+        {
+            for (const m of original)
+                await createMapping({ moduleId, eventId: member.id, dayId: m.dayId, allottedMinutes: m.allottedMinutes ?? 0 });
+        }
+        return members;
+    }, [ applyEventShuffleGroup, createMapping, ctx.mappings ]);
+
+    const splitShuffles = useCallback(async (eventId: string, moduleId: string, shuffles: Array<string>) =>
+    {
+        await splitShared(eventId, moduleId, shuffles);
+    }, [ splitShared ]);
+
+    /** Splits a shared event into one per shuffle, then edits only `shared.shuffle`'s. */
     const splitAndApply = useCallback(async (
         eventId: string,
         moduleId: string,
@@ -210,17 +232,11 @@ export function useGridAllotment(ctx: Context): {
     {
         // Planned on the original's mappings, which every copy starts with.
         const plan = planFor(eventId, week, minutes);
-        const original = Object.values(ctx.mappings).filter((m) => m.eventId === eventId);
-        const members = await applyEventShuffleGroup(eventId, moduleId, shared.shuffles);
+        const members = await splitShared(eventId, moduleId, shared.shuffles);
         if (!members) return;
-        for (const member of members.filter((m) => m.id !== eventId))
-        {
-            for (const m of original)
-                await createMapping({ moduleId, eventId: member.id, dayId: m.dayId, allottedMinutes: m.allottedMinutes ?? 0 });
-        }
         const target = members.find((m) => m.shuffles?.[ 0 ] === shared.shuffle);
         if (target) await apply(target.id, moduleId, plan, true);
-    }, [ applyEventShuffleGroup, apply, createMapping, ctx.mappings, planFor ]);
+    }, [ apply, planFor, splitShared ]);
 
     const commitWeek = useCallback(async (
         eventId: string,
@@ -228,6 +244,7 @@ export function useGridAllotment(ctx: Context): {
         week: number,
         minutes: number,
         shared?: SharedShuffles,
+        zero?: ZeroChoice,
     ) =>
     {
         // An event with no shuffle of its own serves every shuffle: editing it changes them all.
@@ -244,7 +261,7 @@ export function useGridAllotment(ctx: Context): {
         // Read before the edit: only siblings that matched this event's week allotment qualify.
         const before = allottedInWeek(eventId, week);
         zeroChoiceRef.current = null;
-        const changed = await apply(eventId, moduleId, planFor(eventId, week, minutes), true);
+        const changed = await apply(eventId, moduleId, planFor(eventId, week, minutes), true, zero);
         const zeroChoice = zeroChoiceRef.current;
         const groupId = ctx.state.events[ eventId ]?.groupId;
         if (!changed || !groupId || before === 0) return;
@@ -346,5 +363,5 @@ export function useGridAllotment(ctx: Context): {
         </Dialog>
     );
 
-    return { commitWeek, dialog };
+    return { commitWeek, splitShuffles, dialog };
 }

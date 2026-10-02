@@ -176,3 +176,38 @@ describe("useGridAllotment sibling suggestion", () =>
         });
     });
 });
+
+describe("useGridAllotment right-click entries (#858)", () =>
+{
+    afterEach(cleanup);
+    beforeEach(() =>
+    {
+        enqueueSnackbar.mockClear();
+        setAllottedMinutes.mockClear();
+        removeMapping.mockClear();
+        createMapping.mockClear();
+        applyEventShuffleGroup.mockReset();
+        window.localStorage.clear();
+    });
+
+    it("a pre-answered zero skips the keep/remove question", async () =>
+    {
+        const { result } = setup([ map("a", "d1", 60) ], false);
+        await act(() => result.current.commitWeek("a", "m1", 0, 0, undefined, "remove"));
+        expect(removeMapping).toHaveBeenCalledWith({ moduleId: "m1", eventId: "a", dayId: "d1" });
+        expect(screen.queryByText("הקצאת 0 שעות")).toBeNull();
+
+        await act(() => result.current.commitWeek("a", "m1", 0, 0, undefined, "keep"));
+        expect(setAllottedMinutes).toHaveBeenCalledWith({ moduleId: "m1", eventId: "a", dayId: "d1", allottedMinutes: 0 });
+    });
+
+    it("splitShuffles makes one event per shuffle, each keeping the placement", async () =>
+    {
+        applyEventShuffleGroup.mockResolvedValue([ { id: "a", shuffles: [ "א" ] }, { id: "n", shuffles: [ "ב" ] } ]);
+        const { result } = setup([ map("a", "d1", 45) ], false);
+        await act(() => result.current.splitShuffles("a", "m1", [ "א", "ב" ]));
+        expect(applyEventShuffleGroup).toHaveBeenCalledWith("a", "m1", [ "א", "ב" ]);
+        expect(createMapping).toHaveBeenCalledWith({ moduleId: "m1", eventId: "n", dayId: "d1", allottedMinutes: 45 });
+        expect(setAllottedMinutes).not.toHaveBeenCalled();
+    });
+});
