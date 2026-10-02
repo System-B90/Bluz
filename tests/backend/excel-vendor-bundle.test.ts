@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import * as bundleExports from "@vendor/exceljs";
@@ -136,5 +139,27 @@ describe("vendored ExcelJS bundle", () => {
 
         expect(cell?.font?.bold).toBe(true);
         expect(cell?.alignment?.horizontal).toBe("center");
+    });
+});
+
+/**
+ * #777: the fs-only modules (directory extract, globbing, temp files) are
+ * stubbed out of the bundle. Their dynamic `path.resolve` / `fs` calls made
+ * Turbopack trace the whole project into the standalone output. A rebuild
+ * that drops the stub plugin brings them back; this catches it before
+ * `next build` warnings do.
+ */
+describe("vendored ExcelJS bundle stays free of fs-only modules (#777)", () => {
+    const source = readFileSync(
+        join(import.meta.dirname, "../../ui/vendor/exceljs/dist/exceljs.bundle.cjs"),
+        "utf8",
+    );
+
+    it.each([ "fstream", "readdir-glob", "mkdtemp", "tmpdir" ])("contains no %s code", (marker) => {
+        expect(source).not.toContain(marker);
+    });
+
+    it("keeps the no-op stub `tmp` is configured through", () => {
+        expect(source).toContain("setGracefulCleanup(){}");
     });
 });
