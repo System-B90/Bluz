@@ -1,6 +1,5 @@
 export const dynamic = "force-dynamic";
 
-import { getAiProvider } from "@/api-server/ai";
 import {
     getBenchmarkJob,
     startBenchmarkJob,
@@ -9,8 +8,8 @@ import {
     aiBenchmarkCooldownMs,
     allowAiBenchmark,
 } from "@/api-server/ai/rate-limit";
+import { loadUserAi } from "@/api-server/ai/user-ai";
 import { ApiErrorMaker, ApiSuccess, withApi } from "@/api-server/common";
-import { DbPersonalSettings } from "@/api-server/db-personal-settings";
 import { requireStaffSession } from "@/api-server/session-user";
 import { AiBenchmarkJobStatus } from "@/api-shared/types/ai-benchmark";
 
@@ -40,8 +39,7 @@ export const POST = withApi(async () => {
 
     // Built before the throttle so a misconfigured deployment does not burn
     // the user's one run per hour.
-    const personalSettings = await DbPersonalSettings.get(userId);
-    const provider = getAiProvider(personalSettings.aiApiToken || undefined);
+    const provider = (await loadUserAi(userId)).provider();
 
     if (!allowAiBenchmark(userId)) {
         const minutes = Math.ceil(aiBenchmarkCooldownMs(userId) / 60_000);
