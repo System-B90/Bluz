@@ -87,6 +87,11 @@ export type AiBenchmarkResult = {
     checksTotal: number;
     /** The approval gate held in every case. */
     gateHeld: boolean;
+    /**
+     * Set when the backend lists its models and `AI_MODEL` is not among them
+     * (#779): the typo that otherwise only shows up as a 404 at chat time.
+     */
+    modelWarning?: string;
     /** Total tokens the run spent, so the cost of testing is visible. */
     totalTokens?: number;
     durationMs: number;

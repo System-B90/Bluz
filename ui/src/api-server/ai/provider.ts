@@ -7,6 +7,7 @@
  */
 
 import { AiChatResult, AiMessage } from "@/api-shared/types/ai";
+import { AiModelInfo } from "@/api-shared/types/ai-models";
 
 /**
  * A tool offered to the model. `parameters` is a JSON Schema object; every
@@ -67,6 +68,12 @@ export type AiProvider = {
      * single `final` frame carrying tool calls and usage.
      */
     streamChat: (request: AiChatRequest) => AsyncIterable<AiProviderEvent>;
+
+    /**
+     * Models the backend offers (#779). Optional: a backend that cannot list
+     * them simply leaves the settings field free-text.
+     */
+    listModels?: (signal?: AbortSignal) => Promise<Array<AiModelInfo>>;
 }
 
 /**

@@ -14,6 +14,7 @@ const PERSONAL_SETTINGS_FIELDS = [
     "googleCalendarSyncAllEvents",
     "aiAssistantEnabled",
     "aiApiToken",
+    "aiModel",
 ] as const;
 
 async function getPersonalSettings(
@@ -31,6 +32,7 @@ async function getPersonalSettings(
         googleCalendarSyncAllEvents: doc.googleCalendarSyncAllEvents ?? false,
         aiAssistantEnabled: doc.aiAssistantEnabled ?? true,
         aiApiToken: decryptSecret(doc.aiApiToken ?? ""),
+        aiModel: doc.aiModel ?? "",
     };
 }
 
