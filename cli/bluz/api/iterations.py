@@ -23,7 +23,7 @@ _BASE = "/api/iterations"
 class IterationsAPI(Resource):
     """`bz.iterations` — the registry of course runs.
 
-    Example:
+    Examples:
         >>> bz.iterations.current()
         >>> bz.iterations["2026a"].usage()
     """

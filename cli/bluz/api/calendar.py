@@ -44,7 +44,7 @@ def _event_payload(event: Event | Mapping[str, Any], fields: dict[str, Any]) -> 
 class EventsAPI(Resource):
     """`bz.events` — calendar events.
 
-    Example:
+    Examples:
         >>> week = bz.events.list("2026-11-01", "2026-11-08")
         >>> lectures = week.where(type=EventType.LECTURE)
         >>> bz.events.export_ics("2026-11-01", "2026-12-01")[:100]

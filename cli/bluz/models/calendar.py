@@ -52,7 +52,7 @@ class Event(BluzModel):
     `start_time`/`end_time` are timezone-aware datetimes; `courses` holds
     course ids (shuffles), `rooms` holds `{id, source}` room refs.
 
-    Example:
+    Examples:
         >>> ev = bz.events.list("2026-11-01", "2026-11-02")[0]
         >>> ev.duration, ev.course_objects, ev.history()
         >>> ev.notes = "moved"; ev.save()

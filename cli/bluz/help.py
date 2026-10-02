@@ -134,7 +134,7 @@ def field_table(model: type[Any]) -> str:
 def describe(obj: Any) -> str:
     """A plain-text overview of a session, an API namespace, or a model.
 
-    Example:
+    Examples:
         >>> print(bluz.describe(bz))            # every namespace and method
         >>> print(bluz.describe(bz.gantt.curriculums))
         >>> print(bluz.describe(Curriculum))    # fields + methods

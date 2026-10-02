@@ -233,7 +233,7 @@ class EventCurriculumAllocation(BluzModel):
 class GanttEvent(GanttNode):
     """A lesson-type item inside a module (מופע). Durations are minutes.
 
-    Example:
+    Examples:
         >>> ev = curriculum["Math"]["Algebra"]["Intro"]
         >>> ev.allocated_duration, ev.module.title, ev.syllabus.title
     """
@@ -334,7 +334,7 @@ class _ModuleEventLink(BluzModel):
 class Module(_Container[GanttEvent]):
     """A group of events inside a syllabus (מערך). Iterate it for its events.
 
-    Example:
+    Examples:
         >>> for ev in module: print(ev.title, ev.minimum_duration)
         >>> module.create_event("Quiz", type=ModuleEventType.EXERCISE, minimum_duration=45)
     """
@@ -418,7 +418,7 @@ class _SyllabusModuleLink(BluzModel):
 class Syllabus(_Container[Module]):
     """A subject's plan inside a curriculum (סילבוס). Iterate it for modules.
 
-    Example:
+    Examples:
         >>> syl = curriculum["Mathematics"]
         >>> syl.shuffles, [c.name for c in syl.courses]
         >>> for module in syl: ...
@@ -629,7 +629,7 @@ class Curriculum(_Container[Syllabus]):
     A single `bz.gantt.curriculums.get(id)` fetches the entire tree, so
     walking it costs no further requests.
 
-    Example:
+    Examples:
         >>> cur = bz.gantt.curriculums["Bis90 2026"]
         >>> for syl in cur:
         ...     for module in syl:

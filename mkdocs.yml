@@ -44,6 +44,23 @@ plugins:
       options: typedoc.json
   - mkdocs-typer2:
       pretty: true
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: [cli]
+          options:
+            docstring_style: google
+            show_source: false
+            show_root_heading: true
+            show_root_full_path: false
+            show_signature_annotations: true
+            separate_signature: true
+            signature_crossrefs: true
+            members_order: source
+            filters: ["!^_"]
+            show_if_no_docstring: false
+            merge_init_into_class: true
 
 markdown_extensions:
   - pymdownx.emoji:
@@ -59,6 +76,9 @@ markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      base_path: ["."]
+      check_paths: true
   - pymdownx.tabbed:
       alternate_style: true
   - pymdownx.tasklist:
@@ -85,3 +105,10 @@ nav:
   - REST API: rest-api.md
   - API Reference: api/index.md
   - CLI Reference: cli/index.md
+  - Python SDK:
+      - Overview: python/index.md
+      - Session: python/session.md
+      - API namespaces: python/namespaces.md
+      - Models: python/models.md
+      - Examples: python/examples.md
+      - Errors: python/errors.md
