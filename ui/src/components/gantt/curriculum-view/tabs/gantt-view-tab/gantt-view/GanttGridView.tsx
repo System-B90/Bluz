@@ -2,7 +2,7 @@ import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import InputBase from "@mui/material/InputBase";
 import Paper from "@mui/material/Paper";
-import { alpha, Theme } from "@mui/material/styles";
+import { alpha, keyframes, Theme } from "@mui/material/styles";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -20,8 +20,10 @@ import {
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { buildStudentPaths } from "@/components/gantt/curriculum-view/student-load";
 import { parseHoursInput } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-allotment";
+import { useGridAnimation } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-animation";
 import { buildGridRows, CoursePresence, GridRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-rows";
 import { initialSelection, isCellSelected, selectCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-selection";
+import { mergeRowTransitions, RowPhase, TransitionRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/row-transitions";
 import { GanttViewProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { useGridAllotment } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-grid-allotment";
 import { useGanttView } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/UseGanttView";
@@ -37,6 +39,21 @@ const TITLE_MIN_WIDTH = 220;
 const HOURS_WIDTH = 64;
 const WEEK_WIDTH = 88;
 const COURSE_WIDTH = 48;
+
+const ROW_ANIMATION_MS = 180;
+const rowId = (row: GridRow) => `${row.kind}-${row.key}`;
+/** A row squeezed shut: no height, invisible. */
+const squeezed = { opacity: 0, paddingBlock: 0, lineHeight: 0, fontSize: 0, borderBottomWidth: 0 };
+const growIn = keyframes({ from: squeezed });
+const shrinkOut = keyframes({ to: squeezed });
+const phaseSx = (phase: RowPhase) =>
+    phase === "stay"
+        ? undefined
+        : {
+            pointerEvents: phase === "exit" ? "none" : undefined,
+            "& > td": { animation: `${phase === "enter" ? growIn : shrinkOut} ${ROW_ANIMATION_MS}ms ease-out forwards` },
+            "@media (prefers-reduced-motion: reduce)": { "& > td": { animation: "none" }, display: phase === "exit" ? "none" : undefined },
+        };
 
 /** Two digits so a quarter hour reads 0.75, not 0.8. */
 const hours = (minutes: number) => formatHours(minutes, 2);
@@ -147,6 +164,36 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
             isModuleExpanded, isSyllabusExpanded, state, timelineWeeks, weekIndexByDayId,
         ],
     );
+
+    // Collapse/expand: vanished rows linger as `exit` and new ones play `enter` for one animation.
+    // Compared by identity of the row list's content, since `rows` is rebuilt on every state change.
+    const animated = useGridAnimation();
+    const signature = rows.map(rowId).join("|");
+    const stay = (list: Array<GridRow>) => list.map((row) => ({ row, phase: "stay" as const }));
+    const [ shown, setShown ] = useState<{ signature: string; items: Array<TransitionRow> }>(
+        () => ({ signature, items: stay(rows) }),
+    );
+    if (shown.signature !== signature)
+    {
+        const previous = shown.items.filter((item) => item.phase !== "exit").map((item) => item.row);
+        const animate = animated && previous.length > 0 && rows.length > 0;
+        setShown({ signature, items: animate ? mergeRowTransitions(previous, rows) : stay(rows) });
+    }
+    const settling = shown.items.some((item) => item.phase !== "stay");
+    useEffect(() =>
+    {
+        if (!settling) return;
+        const timer = setTimeout(
+            () => setShown((prev) => ({ ...prev, items: prev.items.filter((i) => i.phase !== "exit").map((i) => ({ ...i, phase: "stay" as const })) })),
+            ROW_ANIMATION_MS + 20,
+        );
+        return () => clearTimeout(timer);
+    }, [ settling, shown.signature ]);
+    // Show current data for live rows; exiting ones keep their last snapshot.
+    const rowById = new Map(rows.map((r) => [ rowId(r), r ]));
+    const displayItems = shown.items.map((item) =>
+        (item.phase === "exit" ? item : { ...item, row: rowById.get(rowId(item.row)) ?? item.row }));
+    const rowIndex = new Map(rows.map((r, i) => [ rowId(r), i ]));
 
     // Syllabus rows are always present and sum everything under them (busiest shuffle, not every shuffle).
     const usedByWeek = rows
@@ -408,8 +455,9 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                         )) }
                     </TableHead>
                     <TableBody>
-                        { rows.map((r, ri) =>
+                        { displayItems.map(({ row: r, phase }) =>
                         {
+                            const ri = phase === "exit" ? -1 : rowIndex.get(rowId(r)) ?? -1;
                             const allocated = r.weekMinutes.reduce((sum, m) => sum + m, 0);
                             const isSummary = r.kind !== "event";
                             const expanded = r.kind === "module"
@@ -425,8 +473,9 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                             return (
                                 <TableRow
                                     hover
-                                    key={ `${r.kind}-${r.key}` }
+                                    key={ rowId(r) }
                                     sx={ {
+                                        ...phaseSx(phase),
                                         ...(isSummary && { bgcolor: r.kind === "module" ? "action.hover" : "action.selected" }),
                                         // Blue, not the theme's gray hover: gray is the module row's own fill.
                                         "&.MuiTableRow-hover:hover": { bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.14) },
