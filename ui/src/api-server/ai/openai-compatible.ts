@@ -17,6 +17,7 @@ import {
     AiProviderEvent,
     AiToolSpec,
 } from "@/api-server/ai/provider";
+import { aiConnectErrorMessage, aiFetch } from "@/api-server/ai/tls";
 import { readSseData } from "@/api-shared/sse";
 import {
     AiChatResult,
@@ -282,15 +283,13 @@ export class OpenAiCompatibleProvider implements AiProvider {
     async listModels(signal?: AbortSignal): Promise<Array<AiModelInfo>> {
         let response: Response;
         try {
-            response = await fetch(`${this.baseUrl}/models`, {
+            response = await aiFetch(`${this.baseUrl}/models`, {
                 headers: { Authorization: `Bearer ${this.apiKey}`, ...this.extraHeaders },
                 signal,
             });
         } catch (e) {
             if (signal?.aborted) throw e;
-            throw new AiProviderError(
-                `לא ניתן להתחבר לשירות ה-AI: ${e instanceof Error ? e.message : String(e)}`,
-            );
+            throw new AiProviderError(aiConnectErrorMessage(e));
         }
         if (!response.ok) {
             throw new AiProviderError(`רשימת המודלים לא זמינה (${response.status})`, response.status);
@@ -310,7 +309,7 @@ export class OpenAiCompatibleProvider implements AiProvider {
 
         let response: Response;
         try {
-            response = await fetch(`${this.baseUrl}/chat/completions`, {
+            response = await aiFetch(`${this.baseUrl}/chat/completions`, {
                 method: "POST",
                 headers,
                 signal: request.signal,
@@ -332,9 +331,7 @@ export class OpenAiCompatibleProvider implements AiProvider {
             });
         } catch (e) {
             if (request.signal?.aborted) throw e;
-            throw new AiProviderError(
-                `לא ניתן להתחבר לשירות ה-AI: ${e instanceof Error ? e.message : String(e)}`,
-            );
+            throw new AiProviderError(aiConnectErrorMessage(e));
         }
 
         if (!response.ok) {
