@@ -17,6 +17,10 @@ export type GridRow = {
     weekMinutes: Array<number>;
     /** Per course column: does that course attend all, some, or none of the row. */
     coursePresence: Array<CoursePresence>;
+    /** Event rows in a shuffle section: that section's shuffle. */
+    shuffle?: string;
+    /** Event rows: every shuffle section the same event appears in (several ⇒ one event shared by all). */
+    sharedShuffles?: Array<string>;
 };
 
 export type CoursePresence = "full" | "none" | "partial";
@@ -132,6 +136,9 @@ export function buildGridRows(
                 // An event's own shuffle tags override its module's.
                 const tags = event.shuffles?.length ? event.shuffles : mod.shuffles;
                 if (shuffle !== null && !appliesToShuffle(tags, shuffle)) return [];
+                const sharedShuffles = shuffle === null
+                    ? undefined
+                    : (state.syllabuses[ syllabusId ].shuffles ?? []).filter((name) => appliesToShuffle(tags, name));
                 return [ {
                     kind: "event" as const,
                     id: eventId,
@@ -139,6 +146,8 @@ export function buildGridRows(
                     syllabusId,
                     moduleId,
                     title: event.title,
+                    shuffle: shuffle ?? undefined,
+                    sharedShuffles,
                     depth: depth + 1,
                     requiredMinutes: (event.minimumDuration ?? 0)
                         * countRequiredOccurrences(event, eventId, state, placement),
