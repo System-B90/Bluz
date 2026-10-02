@@ -18,6 +18,7 @@ For the TypeScript client and server modules, see the online reference:
 | --- | --- |
 | GET, POST | `/api/ai/benchmark` |
 | POST | `/api/ai/chat` |
+| GET | `/api/ai/models` |
 | GET | `/api/ai/tools` |
 
 ## auth
