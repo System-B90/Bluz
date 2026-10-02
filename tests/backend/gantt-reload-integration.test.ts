@@ -226,7 +226,7 @@ function arrange(args: {
     curriculumOverrides?: Partial<ApiCurriculum>;
     history?: Array<Partial<EventHistoryEntry>>;
     iterationValue?: null | typeof iteration;
-    mappings?: Array<{ dayId: string; eventId: null | string; sortOrder: number }>;
+    mappings?: Array<{ allottedMinutes: number; dayId: string; eventId: null | string; sortOrder: number }>;
 }) {
     vi.mocked(DbCurriculum.getItem).mockResolvedValue(
         makeCurriculum(args.events, args.curriculumOverrides),
@@ -355,7 +355,7 @@ describe("reload — reconciliation", () => {
             ],
             events: [makeGanttEvent({ id: "g1" })],
             history: [cutRow("e1")],
-            mappings: [{ dayId: "w0d0", eventId: "g1", sortOrder: 0 }],
+            mappings: [{ dayId: "w0d0", eventId: "g1", sortOrder: 0, allottedMinutes: 60 }],
         });
 
         const outcome = await reloadCurriculumSchedule("c1");
@@ -385,8 +385,8 @@ describe("reload — reconciliation", () => {
             events: [makeGanttEvent({ id: "g1" }), makeGanttEvent({ id: "g2" })],
             history: [cutRow("e1")],
             mappings: [
-                { dayId: "w0d0", eventId: "g1", sortOrder: 0 },
-                { dayId: "w0d1", eventId: "g2", sortOrder: 0 },
+                { dayId: "w0d0", eventId: "g1", sortOrder: 0, allottedMinutes: 60 },
+                { dayId: "w0d1", eventId: "g2", sortOrder: 0, allottedMinutes: 60 },
             ],
         });
 
@@ -418,7 +418,7 @@ describe("reload — reconciliation", () => {
             ],
             events: [makeGanttEvent({ id: "g1" })],
             history: [cutRow("e1")],
-            mappings: [{ dayId: "w0d2", eventId: "g1", sortOrder: 0 }],
+            mappings: [{ dayId: "w0d2", eventId: "g1", sortOrder: 0, allottedMinutes: 60 }],
         });
 
         const outcome = await reloadCurriculumSchedule("c1");
@@ -455,7 +455,7 @@ describe("reload — reconciliation", () => {
             ],
             events: [makeGanttEvent({ id: "g1" })],
             history: [cutRow("e1")],
-            mappings: [{ dayId: "w0d0", eventId: "g1", sortOrder: 0 }],
+            mappings: [{ dayId: "w0d0", eventId: "g1", sortOrder: 0, allottedMinutes: 60 }],
         });
 
         await reloadCurriculumSchedule("c1");
@@ -488,7 +488,7 @@ describe("reload — reconciliation", () => {
             // g2 is gone from the curriculum entirely.
             events: [makeGanttEvent({ id: "g1" })],
             history: [cutRow("e1"), cutRow("e2")],
-            mappings: [{ dayId: "w0d0", eventId: "g1", sortOrder: 0 }],
+            mappings: [{ dayId: "w0d0", eventId: "g1", sortOrder: 0, allottedMinutes: 60 }],
         });
 
         const outcome = await reloadCurriculumSchedule("c1");
@@ -518,7 +518,7 @@ describe("reload — reconciliation", () => {
             ],
             events: [makeGanttEvent({ id: "g1" })],
             history: [cutRow("e1"), cutRow("orphan")],
-            mappings: [{ dayId: "w0d0", eventId: "g1", sortOrder: 0 }],
+            mappings: [{ dayId: "w0d0", eventId: "g1", sortOrder: 0, allottedMinutes: 60 }],
         });
 
         const outcome = await reloadCurriculumSchedule("c1");
@@ -543,7 +543,7 @@ describe("reload — reconciliation", () => {
             ],
             events: [makeGanttEvent({ id: "g1" })],
             history: [cutRow("e1")],
-            mappings: [{ dayId: "w0d0", eventId: "g1", sortOrder: 0 }],
+            mappings: [{ dayId: "w0d0", eventId: "g1", sortOrder: 0, allottedMinutes: 60 }],
         });
 
         await reloadCurriculumSchedule("c1");
@@ -577,7 +577,7 @@ describe("reload — unfinished gantt", () => {
             ],
             events: [makeGanttEvent({ id: "g1" }), makeGanttEvent({ id: "g2" })],
             history: [cutRow("e1")],
-            mappings: [{ dayId: "w0d0", eventId: "g1", sortOrder: 0 }],
+            mappings: [{ dayId: "w0d0", eventId: "g1", sortOrder: 0, allottedMinutes: 60 }],
         });
 
     it("refuses the reload and names the unmapped event", async () => {
@@ -636,7 +636,7 @@ describe("reload — unfinished gantt", () => {
             events: [makeGanttEvent({ id: "g1" }), makeGanttEvent({ id: "g2" })],
             history: [cutRow("e1"), cutRow("e2")],
             // g2 lost its mapping since the cut.
-            mappings: [{ dayId: "w0d0", eventId: "g1", sortOrder: 0 }],
+            mappings: [{ dayId: "w0d0", eventId: "g1", sortOrder: 0, allottedMinutes: 60 }],
         });
 
         const outcome = await reloadCurriculumSchedule("c1", { force: true });
@@ -669,7 +669,7 @@ describe("reload — manual-edit precedence", () => {
             ],
             events: [makeGanttEvent({ id: "g1" })],
             history,
-            mappings: [{ dayId: "w0d0", eventId: "g1", sortOrder: 0 }],
+            mappings: [{ dayId: "w0d0", eventId: "g1", sortOrder: 0, allottedMinutes: 60 }],
         });
 
     it("skips an event edited by a human and reports it as a conflict", async () => {
@@ -745,7 +745,7 @@ describe("reload — manual-edit precedence", () => {
                 manualRow("e2", EventChangeInitiator.EventDialog),
             ],
             // g2 is no longer mapped anywhere ⇒ its occurrence disappears.
-            mappings: [{ dayId: "w0d0", eventId: "g1", sortOrder: 0 }],
+            mappings: [{ dayId: "w0d0", eventId: "g1", sortOrder: 0, allottedMinutes: 60 }],
         });
 
         const outcome = await reloadCurriculumSchedule("c1", { force: true });
@@ -778,8 +778,8 @@ describe("reload — dry run", () => {
             events: [makeGanttEvent({ id: "g1" }), makeGanttEvent({ id: "g2" })],
             history: [cutRow("e1")],
             mappings: [
-                { dayId: "w0d0", eventId: "g1", sortOrder: 0 },
-                { dayId: "w0d1", eventId: "g2", sortOrder: 0 },
+                { dayId: "w0d0", eventId: "g1", sortOrder: 0, allottedMinutes: 60 },
+                { dayId: "w0d1", eventId: "g2", sortOrder: 0, allottedMinutes: 60 },
             ],
         });
 
@@ -812,7 +812,7 @@ describe("reload — dry run", () => {
             ],
             events: [makeGanttEvent({ id: "g1", shuffles: ["מחזור א"] })],
             history: [cutRow("e1")],
-            mappings: [{ dayId: "w0d0", eventId: "g1", sortOrder: 0 }],
+            mappings: [{ dayId: "w0d0", eventId: "g1", sortOrder: 0, allottedMinutes: 60 }],
         });
 
         await reloadCurriculumSchedule("c1", { dryRun: true });
@@ -846,8 +846,8 @@ describe("reload — change log and broadcasts", () => {
             ],
             history: [cutRow("e1"), cutRow("e3")],
             mappings: [
-                { dayId: "w0d0", eventId: "g1", sortOrder: 0 },
-                { dayId: "w0d1", eventId: "g2", sortOrder: 0 },
+                { dayId: "w0d0", eventId: "g1", sortOrder: 0, allottedMinutes: 60 },
+                { dayId: "w0d1", eventId: "g2", sortOrder: 0, allottedMinutes: 60 },
             ],
         });
 
@@ -888,7 +888,7 @@ describe("reload — change log and broadcasts", () => {
             ],
             events: [makeGanttEvent({ id: "g1" }), makeGanttEvent({ id: "g2" })],
             history: [cutRow("e2")],
-            mappings: [{ dayId: "w0d0", eventId: "g1", sortOrder: 0 }],
+            mappings: [{ dayId: "w0d0", eventId: "g1", sortOrder: 0, allottedMinutes: 60 }],
         });
 
         await reloadCurriculumSchedule("c1", { force: true });

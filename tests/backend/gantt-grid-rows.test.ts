@@ -41,11 +41,11 @@ function store(events: Record<string, EventInput>) {
     } as unknown as NormalizedStore;
 }
 
-function mappings(placed: Record<string, string>) {
+function mappings(state: NormalizedStore, placed: Record<string, string>) {
     return Object.fromEntries(
         Object.entries(placed).map(([ eventId, dayId ]) => [
             eventId,
-            { curriculumId: "c", moduleId: "m1", eventId, dayId, sortOrder: 0 },
+            { curriculumId: "c", moduleId: "m1", eventId, dayId, sortOrder: 0, allottedMinutes: state.events[ eventId ].minimumDuration ?? 0 },
         ]),
     );
 }
@@ -65,7 +65,7 @@ function placement(state: NormalizedStore, placed: Record<string, string>, skipp
         ),
         exceptions: exceptions(skipped),
         linearDays: LINEAR_DAYS,
-        mappings: mappings(placed),
+        mappings: mappings(state, placed),
         state,
         weekIndexByDayId: WEEK_INDEX,
         weeks: WEEKS,
