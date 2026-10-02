@@ -208,6 +208,39 @@ describe("buildGridRows with shuffles", () => {
     });
 });
 
+describe("buildGridRows course presence", () => {
+    // Apollo has a 3h midterm in Mathematics › Algebra; Mivtzar does not attend it.
+    const paths = [
+        { id: "apollo", courseIds: [ "root", "apollo" ], label: "אפולו" },
+        { id: "mivtzar", courseIds: [ "root", "mivtzar" ], label: "מבצר" },
+    ];
+    const grid = (moduleEvents: Array<string>) =>
+    {
+        const state = store({
+            midterm: { minimumDuration: 180 },
+            lesson: { minimumDuration: 60 },
+        });
+        Object.assign(state.events.midterm, { courseIds: [ "apollo" ] });
+        Object.assign(state.modules.m1, { events: moduleEvents });
+        Object.assign(state.syllabuses.s1, { courseIds: [ "apollo", "mivtzar" ] });
+        return buildGridRows([ "s1" ], placement(state, {}), () => true, () => true, paths);
+    };
+    const presence = (rows: ReturnType<typeof grid>, id: string) => rows.find((r) => r.id === id)?.coursePresence;
+
+    it("fills only the courses attending an event, defaulting to the syllabus' courses", () => {
+        const rows = grid([ "midterm", "lesson" ]);
+        expect(presence(rows, "midterm")).toEqual([ "full", "none" ]);
+        expect(presence(rows, "lesson")).toEqual([ "full", "full" ]);
+    });
+
+    it("marks a course that attends only some of a module or syllabus as partial", () => {
+        const rows = grid([ "midterm", "lesson" ]);
+        expect(presence(rows, "m1")).toEqual([ "full", "partial" ]);
+        expect(presence(rows, "s1")).toEqual([ "full", "partial" ]);
+        expect(presence(grid([ "midterm" ]), "m1")).toEqual([ "full", "none" ]);
+    });
+});
+
 describe("formatHours", () => {
     afterEach(() => setHoursFormat("decimal"));
 
