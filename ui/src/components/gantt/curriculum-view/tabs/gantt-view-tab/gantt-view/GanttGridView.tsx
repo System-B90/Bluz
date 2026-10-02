@@ -12,7 +12,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useCourses } from "@/components/base/CoursesProvider";
 import {
@@ -21,6 +21,7 @@ import {
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { buildStudentPaths } from "@/components/gantt/curriculum-view/student-load";
 import { parseHoursInput } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-allotment";
+import { onGridExpansionRequest, publishGridAllCollapsed } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-expansion-bus";
 import { useGridAnimation, useGridCompactHeader, useGridIgnoreBreaks, useGridVerticalLines } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-preferences";
 import { buildGridRows, CoursePresence, GridRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-rows";
 import { initialSelection, isCellSelected, selectCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-selection";
@@ -104,6 +105,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         eventSpans,
         isModuleExpanded,
         isSyllabusExpanded,
+        setAllRows,
         studentLoadByDay,
         timelineWeeks,
         toggleModule,
@@ -145,8 +147,8 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
     useHoursFormat();
     const ignoreBreaks = useGridIgnoreBreaks();
 
-    const rows = useMemo(
-        () => buildGridRows(
+    const build = useCallback(
+        (syllabusOpen: (key: string) => boolean, moduleOpen: (key: string) => boolean) => buildGridRows(
             curriculum?.syllabuses ?? [],
             {
                 dateOf: dateOfDayId,
@@ -159,15 +161,33 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                 weekIndexByDayId,
                 weeks: timelineWeeks.map((week) => week.days),
             },
-            isSyllabusExpanded,
-            isModuleExpanded,
+            syllabusOpen,
+            moduleOpen,
             courseColumns.columns.map((c) => c.path),
         ),
         [ courseColumns,
             allLinearDays, curriculum?.syllabuses, ignoreBreaks, curriculumMappings, dateOfDayId, eventSpans, exceptions,
-            isModuleExpanded, isSyllabusExpanded, state, timelineWeeks, weekIndexByDayId,
+            state, timelineWeeks, weekIndexByDayId,
         ],
     );
+    const rows = useMemo(
+        () => build(isSyllabusExpanded, isModuleExpanded),
+        [ build, isModuleExpanded, isSyllabusExpanded ],
+    );
+
+    // Toolbar "collapse/expand all": every key comes from a fully opened build of the tree.
+    useEffect(() => onGridExpansionRequest((command) =>
+    {
+        const all = build(() => true, () => true);
+        const keysOf = (...kinds: Array<GridRow["kind"]>) => all.filter((r) => kinds.includes(r.kind)).map((r) => r.key);
+        setAllRows(command === "expand", keysOf("syllabus", "shuffle"), keysOf("module"));
+    }), [ build, setAllRows ]);
+    // Nothing below the syllabus rows is showing: the button should offer to expand.
+    const nothingOpen = rows.length > 0 && rows.every((r) => r.kind === "syllabus");
+    useEffect(() =>
+    {
+        publishGridAllCollapsed(nothingOpen);
+    }, [ nothingOpen ]);
 
     // Collapse/expand: vanished rows linger as `exit` and new ones play `enter` for one animation.
     // Compared by identity of the row list's content, since `rows` is rebuilt on every state change.

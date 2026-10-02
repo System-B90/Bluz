@@ -1,8 +1,11 @@
 import AnimationIcon from "@mui/icons-material/Animation";
+import CompressIcon from "@mui/icons-material/Compress";
 import FreeBreakfastIcon from "@mui/icons-material/FreeBreakfast";
 import MenuIcon from "@mui/icons-material/Menu";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
+import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import ViewColumnIcon from "@mui/icons-material/ViewColumn";
+import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import Popover from "@mui/material/Popover";
 import Stack from "@mui/material/Stack";
@@ -14,6 +17,7 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import { useState } from "react";
 
 import { HoursFormat, setHoursFormat } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { requestGridExpansion, useGridAllCollapsed } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-expansion-bus";
 import {
     setGridAnimation,
     setGridCompactHeader,
@@ -63,6 +67,19 @@ function GridAnimationToggle()
     );
 }
 
+function GridExpandAllButton()
+{
+    const allCollapsed = useGridAllCollapsed();
+    const label = allCollapsed ? "להרחיב את כל השורות" : "לכווץ את כל השורות";
+    return (
+        <Tooltip title={ label }>
+            <IconButton aria-label={ label } onClick={ () => requestGridExpansion(allCollapsed ? "expand" : "collapse") } size="small">
+                { allCollapsed ? <UnfoldMoreIcon fontSize="small" /> : <UnfoldLessIcon fontSize="small" /> }
+            </IconButton>
+        </Tooltip>
+    );
+}
+
 function GridCompactHeaderToggle()
 {
     const compact = useGridCompactHeader();
@@ -75,7 +92,7 @@ function GridCompactHeaderToggle()
                 size="small"
                 value="compact"
             >
-                <UnfoldLessIcon fontSize="small" />
+                <CompressIcon fontSize="small" />
             </ToggleButton>
         </Tooltip>
     );
@@ -127,13 +144,19 @@ export function GanttPageToolbar()
 {
     const narrow = useMediaQuery(useTheme().breakpoints.down("md"));
     const [ anchor, setAnchor ] = useState<HTMLElement | null>(null);
+    const divider = <Divider flexItem orientation={ narrow ? "horizontal" : "vertical" } />;
     const items = (
         <>
-            <GridAnimationToggle />
-            <GridVerticalLinesToggle />
+            { /* Row tree, then table layout, then what the numbers count and how they read, then motion. */ }
+            <GridExpandAllButton />
+            { divider }
             <GridCompactHeaderToggle />
+            <GridVerticalLinesToggle />
+            { divider }
             <GridIgnoreBreaksToggle />
             <HoursFormatToggle />
+            { divider }
+            <GridAnimationToggle />
         </>
     );
 
