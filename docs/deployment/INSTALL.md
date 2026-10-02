@@ -54,6 +54,7 @@ the host has no Python 3.10+, it says so before touching anything.
 | Another web server already using 80/443? | `yes` only if this machine already serves those ports. See [Port conflicts](#port-conflicts).            |
 | Hive username / password                 | An account allowed to register SSO applications. Used once, not stored.                                  |
 | Override built-in Google OAuth?          | `no`. Calendar sync works with no setup; this exists only for custom consent-screen branding.            |
+| Issue the certificate from ACME?         | `yes` if your network runs its own Let's Encrypt-compatible ACME server. See [ACME certificates](#acme-certificates). |
 
 Everything else — database credentials, JWT and encryption keys — is generated
 for you and written to `.env`.
@@ -62,6 +63,28 @@ TLS: unless `nginx/ssl/cert.pem` already covers your domain (drop your own
 certificate there first to use it), the wizard issues one signed by a local
 "System-B90 Local Dev CA" (`nginx/ssl/ca.crt`). Trust that CA once on client
 machines to silence browser warnings; it is reused across re-issues.
+
+### ACME certificates
+
+Answer `yes` to the ACME prompt to have certificates issued and renewed
+automatically by an ACME server — e.g. the network's own Let's Encrypt (#803).
+
+```bash
+# Optional: the ACME server's own CA, when it is private
+mkdir -p acme/ca && cp /path/to/acme-server-ca.pem acme/ca/ca.pem
+python3 bootstrap.py setup     # answer yes, give the directory URL
+docker compose up -d           # COMPOSE_PROFILES=acme starts bluz-certbot
+docker logs -f bluz-certbot    # "acme: installed new certificate for <domain>"
+```
+
+- The ACME server validates over **HTTP-01**: it must reach this host on port
+  80 (`BLUZ_HTTP_PORT` must stay 80).
+- The self-signed certificate stays in place until the first issue succeeds,
+  so the proxy always starts.
+- `bluz-certbot` re-checks every 12 hours (`ACME_RENEW_HOURS`) and the proxy
+  reloads on its own when `nginx/ssl/cert.pem` changes.
+- Account and certificate state lives in `acme/letsencrypt/` and survives
+  upgrades.
 
 Re-run the wizard at any time with `python3 bootstrap.py setup` — existing
 secrets are kept, not rotated.
@@ -82,6 +105,8 @@ bluz/
 ├── .venv/                          # created on first run
 ├── backup/                         # bluz-backup / bluz-restore (.sh and .ps1)
 ├── nginx/ssl/                      # cert.pem + key.pem
+├── acme/                           # ACME only: renew script, account state, server CA
+├── ai-ca/                          # private CA for an internal AI gateway (optional)
 ├── VERSION                         # which release this is
 ├── images/                         # offline bundle only — image .tar archives
 ├── wheels/                         # offline bundle only — vendored Python wheels
