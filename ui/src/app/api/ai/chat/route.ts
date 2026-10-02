@@ -1,17 +1,16 @@
 export const dynamic = "force-dynamic";
 
-import { AiProvider, getAiProvider } from "@/api-server/ai";
+import { AiProvider } from "@/api-server/ai";
 import { runAiAgent } from "@/api-server/ai/agent";
-import { resolveChatModel } from "@/api-server/ai/models";
 import { AiProviderError } from "@/api-server/ai/provider";
 import { allowAiRequest } from "@/api-server/ai/rate-limit";
 import { AiToolContext } from "@/api-server/ai/tools";
+import { loadUserAi } from "@/api-server/ai/user-ai";
 import {
     ApiErrorMaker,
     catchHandler,
     requireJsonObjectBody,
 } from "@/api-server/common";
-import { DbPersonalSettings } from "@/api-server/db-personal-settings";
 import {
     resolveIterationDb,
     resolveWritableIterationDb,
@@ -111,16 +110,14 @@ export async function POST(request: Request): Promise<Response> {
     // code, so auth and validation happen here rather than inside the stream.
     let payload: ApiAiChatPayload;
     let context: AiToolContext;
-    let apiKeyOverride: string | undefined;
     let provider: AiProvider;
     let chatModel: string | undefined;
     try {
         const user = await requireStaffSession();
-        const personalSettings = await DbPersonalSettings.get(String(user.id));
-        apiKeyOverride = personalSettings.aiApiToken || undefined;
-        provider = getAiProvider(apiKeyOverride);
+        const ai = await loadUserAi(String(user.id));
+        provider = ai.provider();
         // The personal model, only where it is safe to honour (#779).
-        chatModel = await resolveChatModel(provider, personalSettings.aiModel, Boolean(apiKeyOverride));
+        chatModel = await ai.chatModel(provider);
         if (!allowAiRequest(String(user.id))) {
             return ApiErrorMaker(
                 {

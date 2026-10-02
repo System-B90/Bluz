@@ -1,10 +1,8 @@
 export const dynamic = "force-dynamic";
 
-import { getAiProvider, isAiConfigured } from "@/api-server/ai";
-import { resolveChatModel } from "@/api-server/ai/models";
 import { toolSummaries } from "@/api-server/ai/tools";
+import { loadUserAi } from "@/api-server/ai/user-ai";
 import { ApiSuccess, withApi } from "@/api-server/common";
-import { DbPersonalSettings } from "@/api-server/db-personal-settings";
 import { requireStaffSession } from "@/api-server/session-user";
 
 /**
@@ -16,16 +14,12 @@ import { requireStaffSession } from "@/api-server/session-user";
  */
 export const GET = withApi(async () => {
     const user = await requireStaffSession();
-    const personalSettings = await DbPersonalSettings.get(String(user.id));
-    const apiKeyOverride = personalSettings.aiApiToken || undefined;
-    const enabled = isAiConfigured(apiKeyOverride);
-    const provider = enabled ? getAiProvider(apiKeyOverride) : null;
+    const ai = await loadUserAi(String(user.id));
+    const provider = ai.configured ? ai.provider() : null;
     // The model that would really answer: the personal one when honoured.
-    const model = provider
-        ? (await resolveChatModel(provider, personalSettings.aiModel, Boolean(apiKeyOverride))) ?? provider.defaultModel
-        : null;
+    const model = provider ? (await ai.chatModel(provider)) ?? provider.defaultModel : null;
     return ApiSuccess({
-        enabled,
+        enabled: ai.configured,
         model,
         tools: toolSummaries(),
     });

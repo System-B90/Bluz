@@ -1,9 +1,8 @@
 export const dynamic = "force-dynamic";
 
-import { getAiProvider, isAiConfigured } from "@/api-server/ai";
 import { discoverModels } from "@/api-server/ai/models";
+import { loadUserAi } from "@/api-server/ai/user-ai";
 import { ApiSuccess, withApi } from "@/api-server/common";
-import { DbPersonalSettings } from "@/api-server/db-personal-settings";
 import { requireStaffSession } from "@/api-server/session-user";
 import { ApiAiModelsResponse } from "@/api-shared/types/ai-models";
 
@@ -14,10 +13,9 @@ import { ApiAiModelsResponse } from "@/api-shared/types/ai-models";
  */
 export const GET = withApi(async () => {
     const user = await requireStaffSession();
-    const personalSettings = await DbPersonalSettings.get(String(user.id));
-    const apiKeyOverride = personalSettings.aiApiToken || undefined;
-    if (!isAiConfigured(apiKeyOverride)) {
+    const ai = await loadUserAi(String(user.id));
+    if (!ai.configured) {
         return ApiSuccess<ApiAiModelsResponse>({ models: [], defaultModel: "", error: "AI אינו מוגדר" });
     }
-    return ApiSuccess(await discoverModels(getAiProvider(apiKeyOverride)));
+    return ApiSuccess(await discoverModels(ai.provider()));
 });

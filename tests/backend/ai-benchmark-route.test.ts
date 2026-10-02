@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/api-server/session-user", () => ({
     requireStaffSession: vi.fn(async () => ({ id: 7, display_name: "מיכאל" })),
 }));
-vi.mock("@/api-server/ai", () => ({ getAiProvider: mocks.getAiProvider }));
+vi.mock("@/api-server/ai", () => ({ getAiProvider: mocks.getAiProvider, isAiConfigured: () => true }));
 vi.mock("@/api-server/ai/benchmark/job", () => ({
     getBenchmarkJob: vi.fn(() => ({ status: "idle" })),
     startBenchmarkJob: mocks.startBenchmarkJob,
