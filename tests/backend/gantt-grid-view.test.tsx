@@ -83,7 +83,8 @@ const renderGrid = () => {
 const rowCells = (title: string) =>
     within(screen.getByText(title, { exact: false }).closest("tr") as HTMLElement).getAllByRole("cell");
 const selectedText = () =>
-    screen.getAllByRole("cell").find((c) => c.getAttribute("aria-selected") === "true")?.textContent?.trim();
+    screen.getAllByRole("cell").find((c) => c.getAttribute("aria-current") === "true")?.textContent?.trim();
+const selectedCount = () => screen.getAllByRole("cell").filter((c) => c.getAttribute("aria-selected") === "true").length;
 
 describe("GanttGridView", () => {
     it("shows required, allocated and per-week hours, blank for empty weeks", () => {
@@ -116,6 +117,24 @@ describe("GanttGridView", () => {
         fireEvent.keyDown(grid, { key: "ArrowDown" });
         fireEvent.keyDown(grid, { key: "Home" });
         expect(selectedText()).toContain("אירוע");
+    });
+
+    it("extends a range with Shift+arrows and Shift+click, adds cells with Ctrl+click", () => {
+        const grid = renderGrid();
+        fireEvent.keyDown(grid, { key: "ArrowDown", shiftKey: true });
+        fireEvent.keyDown(grid, { key: "ArrowLeft", shiftKey: true });
+        expect(selectedCount()).toBe(4);
+        fireEvent.keyDown(grid, { key: "ArrowDown" });
+        expect(selectedCount()).toBe(1);
+        const [ , required, , week1 ] = rowCells("סילבוס");
+        fireEvent.click(required);
+        fireEvent.click(rowCells("אירוע")[ 3 ], { shiftKey: true });
+        expect(selectedCount()).toBe(9);
+        fireEvent.click(week1, { ctrlKey: true });
+        expect(selectedCount()).toBe(8);
+        fireEvent.click(rowCells("אירוע")[ 4 ], { ctrlKey: true });
+        expect(selectedCount()).toBe(9);
+        expect(selectedText()).toBe("");
     });
 
     it("toggles a summary row and opens an event on Enter", () => {
