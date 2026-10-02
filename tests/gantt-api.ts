@@ -53,7 +53,12 @@ export async function createModule(request: APIRequestContext, syllabusId: strin
     return id;
 }
 
-export async function createEvent(request: APIRequestContext, moduleId: string, title: string): Promise<string> {
+export async function createEvent(
+    request: APIRequestContext,
+    moduleId: string,
+    title: string,
+    overrides: Json = {},
+): Promise<string> {
     const { id } = await apiJson<{ id: string }>(
         await request.post("/api/gantt/events", {
             data: {
@@ -73,6 +78,7 @@ export async function createEvent(request: APIRequestContext, moduleId: string, 
                 systemRequirements: [],
                 title,
                 type: "הרצאה",
+                ...overrides,
             },
         }),
     );
