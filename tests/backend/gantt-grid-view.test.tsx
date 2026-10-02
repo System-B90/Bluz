@@ -10,7 +10,11 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
  */
 
 const { ctx, actions } = vi.hoisted(() => ({
-    ctx: { expanded: new Set<string>(), placedDayIds: [ "a1" ] },
+    ctx: {
+        expanded: new Set<string>(),
+        placedDayIds: [ "a1" ],
+        courses: [] as Array<{ id: string; name: string; color: null | string; parentId: null | string }>,
+    },
     actions: { toggleSyllabus: vi.fn(), toggleModule: vi.fn(), openEventDialog: vi.fn() },
 }));
 
@@ -27,6 +31,10 @@ const state = {
 vi.mock("@/components/gantt/state/context", () => ({
     useCurriculumState: () => state,
     useCurriculumProviderActions: () => ({ openEventDialog: actions.openEventDialog }),
+}));
+
+vi.mock("@/components/base/CoursesProvider", () => ({
+    useCourses: () => ({ courses: ctx.courses }),
 }));
 
 vi.mock("@/components/gantt/state/recurrence-exceptions/hooks", () => ({
@@ -62,6 +70,7 @@ beforeAll(() => {
 beforeEach(() => {
     ctx.expanded = new Set([ "s1", "m1" ]);
     ctx.placedDayIds = [ "a1" ];
+    ctx.courses = [];
     setHoursFormat("decimal");
     vi.clearAllMocks();
 });
@@ -143,6 +152,28 @@ describe("GanttGridView", () => {
             "השיבוץ שונה מהנדרש",
         ]);
         expect(rowCells("אירוע")[ 3 ].getAttribute("title")).toBeNull();
+    });
+
+    it("shows a course column per leaf course, grouped under its parent, filled by attendance", () => {
+        ctx.courses = [
+            { id: "root", name: "ביס90", color: null, parentId: null },
+            { id: "apollo", name: "אפולו", color: "rgb(255, 0, 0)", parentId: "root" },
+            { id: "a1", name: "צוות א", color: null, parentId: "apollo" },
+            { id: "a2", name: "צוות ב", color: null, parentId: "apollo" },
+            { id: "mivtzar", name: "מבצר", color: "rgb(0, 0, 255)", parentId: "root" },
+        ];
+        renderGrid();
+        const [ top, sub ] = screen.getAllByRole("row");
+        const topCells = within(top).getAllByRole("columnheader");
+        expect(topCells.slice(0, 2).map((c) => [ c.textContent, c.getAttribute("colspan") ])).toEqual([
+            [ "אפולו", "2" ],
+            [ "מבצר", "1" ],
+        ]);
+        expect(within(sub).getAllByRole("columnheader").slice(0, 2).map((c) => c.textContent)).toEqual([ "צוות א", "צוות ב" ]);
+        // Whole-syllabus event: every course attends.
+        const eventRow = screen.getByText("אירוע", { exact: false }).closest("tr") as HTMLElement;
+        expect([ ...eventRow.querySelectorAll("[data-presence]") ].map((c) => c.getAttribute("data-presence")))
+            .toEqual([ "full", "full", "full" ]);
     });
 
     it("switches every hour value to clock format", () => {

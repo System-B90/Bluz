@@ -11,11 +11,13 @@ import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
+import { useCourses } from "@/components/base/CoursesProvider";
 import {
     formatHours,
     getWeekTotalMinutes,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
-import { buildGridRows, GridRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-rows";
+import { buildStudentPaths } from "@/components/gantt/curriculum-view/student-load";
+import { buildGridRows, CoursePresence, GridRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-rows";
 import { GanttViewProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { useGanttView } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/UseGanttView";
 import { useHoursFormat } from "@/components/gantt/curriculum-view/use-hours-format";
@@ -29,6 +31,7 @@ const LEAD_COLUMNS = 3;
 const TITLE_MIN_WIDTH = 220;
 const HOURS_WIDTH = 64;
 const WEEK_WIDTH = 88;
+const COURSE_WIDTH = 48;
 
 /** Two digits so a quarter hour reads 0.75, not 0.8. */
 const hours = (minutes: number) => formatHours(minutes, 2);
@@ -42,6 +45,14 @@ const errorTint = {
         return `linear-gradient(${tint}, ${tint})`;
     },
 };
+
+/** Course cell fill: solid when the course attends all of the row, stripes when only some. */
+const presenceSx = (presence: CoursePresence, color: string) =>
+    presence === "full"
+        ? { bgcolor: color }
+        : presence === "partial"
+            ? { backgroundImage: `repeating-linear-gradient(45deg, ${color} 0 4px, transparent 4px 8px)` }
+            : undefined;
 
 /**
  * Spreadsheet-style gantt: weeks as columns, events as rows, each cell the
@@ -69,6 +80,36 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         weekIndexByDayId,
     } = contextValue;
     const weekCount = timelineWeeks.length;
+    const { courses } = useCourses();
+
+    // One column per leaf course, grouped under its parent below the root (e.g. Apollo › team A).
+    const courseColumns = useMemo(() =>
+    {
+        const paths = buildStudentPaths(courses, courses.map((c) => c.id), true)
+            .filter((path) => path.courseIds.length > 0);
+        const byId = new Map(courses.map((c) => [ c.id, c ]));
+        const columns = paths.map((path) =>
+        {
+            const named = path.courseIds.length > 1 ? path.courseIds.slice(1) : path.courseIds;
+            const color = [ ...path.courseIds ].reverse().map((id) => byId.get(id)?.color).find(Boolean);
+            return {
+                path,
+                group: named.length > 1 ? named[ 0 ] : null,
+                name: byId.get(path.id)?.name ?? "",
+                color: color ?? "#9e9e9e",
+            };
+        });
+        // Header groups: consecutive columns sharing a parent.
+        const groups: Array<{ id: null | string; name: string; span: number }> = [];
+        for (const column of columns)
+        {
+            const last = groups.at(-1);
+            if (column.group && last?.id === column.group) last.span++;
+            else groups.push({ id: column.group, name: column.group ? byId.get(column.group)?.name ?? "" : column.name, span: 1 });
+        }
+        return { columns, groups };
+    }, [ courses ]);
+    const courseCount = courseColumns.columns.length;
     // Re-render on a decimal/clock switch from the page toolbar.
     useHoursFormat();
 
@@ -87,8 +128,9 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
             },
             isSyllabusExpanded,
             isModuleExpanded,
+            courseColumns.columns.map((c) => c.path),
         ),
-        [
+        [ courseColumns,
             allLinearDays, curriculum?.syllabuses, curriculumMappings, dateOfDayId, eventSpans, exceptions,
             isModuleExpanded, isSyllabusExpanded, state, timelineWeeks, weekIndexByDayId,
         ],
@@ -177,10 +219,11 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                         },
                         tableLayout: "fixed",
                         width: "100%",
-                        minWidth: TITLE_MIN_WIDTH + (LEAD_COLUMNS - 1) * HOURS_WIDTH + weekCount * WEEK_WIDTH,
+                        minWidth: courseCount * COURSE_WIDTH + TITLE_MIN_WIDTH + (LEAD_COLUMNS - 1) * HOURS_WIDTH + weekCount * WEEK_WIDTH,
                     } }
                 >
                     <colgroup>
+                        { courseColumns.columns.map((c) => <col key={ c.path.id } style={ { width: COURSE_WIDTH } } />) }
                         <col />
                         { Array.from({ length: LEAD_COLUMNS - 1 }, (_, i) => (
                             <col key={ i } style={ { width: HOURS_WIDTH } } />
@@ -196,6 +239,17 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                         } }
                     >
                         <TableRow>
+                            { courseColumns.groups.map((g, i) => (
+                                <TableCell
+                                    align="center"
+                                    colSpan={ g.span }
+                                    key={ `${g.id}-${i}` }
+                                    rowSpan={ g.id ? 1 : 3 }
+                                    sx={ { fontSize: "0.75rem", px: 0.5 } }
+                                >
+                                    { g.name }
+                                </TableCell>
+                            )) }
                             <TableCell>שם</TableCell>
                             <TableCell align="center">נדרש</TableCell>
                             <TableCell align="center">שובץ</TableCell>
@@ -208,6 +262,16 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                             [ "זמן משובץ", usedByWeek ],
                         ] as const).map(([ label, byWeek ]) => (
                             <TableRow key={ label }>
+                                { label === "זמן זמין" && courseColumns.columns.filter((c) => c.group).map((c) => (
+                                    <TableCell
+                                        align="center"
+                                        key={ c.path.id }
+                                        rowSpan={ 2 }
+                                        sx={ { fontSize: "0.75rem", fontWeight: "normal", px: 0.5 } }
+                                    >
+                                        { c.name }
+                                    </TableCell>
+                                )) }
                                 <TableCell colSpan={ LEAD_COLUMNS }>{ label }</TableCell>
                                 { timelineWeeks.map((week, w) => (
                                     <TableCell
@@ -241,6 +305,14 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                     key={ `${r.kind}-${r.key}` }
                                     sx={ isSummary ? { bgcolor: r.kind === "module" ? "action.hover" : "action.selected" } : undefined }
                                 >
+                                    { courseColumns.columns.map((c, ci) => (
+                                        <TableCell
+                                            data-presence={ r.coursePresence[ ci ] }
+                                            key={ c.path.id }
+                                            sx={ presenceSx(r.coursePresence[ ci ], c.color) }
+                                            title={ c.path.label }
+                                        />
+                                    )) }
                                     <TableCell
                                         aria-selected={ ri === row && col === 0 }
                                         onClick={ () => setCursor({ row: ri, col: 0 }) }
