@@ -14,7 +14,7 @@
         "root": "/var/backups/bluz",
         "root_windows": "%ProgramData%\\bluz\\backups"
     },
-    "state": ["nginx/ssl", "ai-ca"],
+    "state": ["nginx/ssl", "ai-ca", "acme/letsencrypt", "acme/ca"],
     "venv_packages": ["bluz"],
     "release": {
         "manifests": [
@@ -33,6 +33,7 @@
             "docker-compose.yml": "deploy/docker-compose.release.yml",
             "docker-compose.hive-local.yml": "deploy/docker-compose.hive-local.yml",
             "setup.py": "scripts/setup.py",
+            "acme/acme-renew.sh": "deploy/acme/acme-renew.sh",
             "backup/bluz-backup.sh": "deploy/backup/bluz-backup.sh",
             "backup/bluz-restore.sh": "deploy/backup/bluz-restore.sh",
             "backup/bluz-backup.ps1": "deploy/backup/bluz-backup.ps1",
