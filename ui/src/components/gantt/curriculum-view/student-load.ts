@@ -356,6 +356,54 @@ function assignedCourseIds(
 }
 
 /**
+ * Calls `visit` once per recurrence echo of every mapped recurring event (its
+ * start day excluded), with the event's minutes. Skipped and materialized
+ * occurrences are left out.
+ */
+export function forEachRecurrenceOccurrence(
+    {
+        dateOf,
+        exceptions,
+        linearDays,
+        mappings,
+        state,
+    }: {
+        dateOf?: (dayId: GanttDayId) => string | undefined;
+        exceptions: Record<string, GanttEventRecurrenceException>;
+        linearDays: Array<GanttDayId>;
+        mappings: Record<string, GanttCurriculumModuleDayMapping>;
+        state: NormalizedStore;
+    },
+    visit: (dayId: GanttDayId, eventId: string, minutes: number) => void,
+): void {
+    const excludedByEvent = new Map<string, Set<string>>();
+    for (const exception of Object.values(exceptions)) {
+        const excluded = excludedByEvent.get(exception.eventId) ?? new Set();
+        excluded.add(exception.dayId);
+        excludedByEvent.set(exception.eventId, excluded);
+    }
+    for (const mapping of Object.values(mappings)) {
+        if (!mapping.eventId) continue;
+        const event = state.events[mapping.eventId];
+        if (!event || event.recurrence === EventRecurrence.None) continue;
+        const occurrenceDayIds = getRecurrenceOccurrenceDayIds({
+            recurrence: event.recurrence,
+            startDayId: mapping.dayId,
+            linearDays,
+            dayIndexOf: (dayId) => state.days[dayId]?.dayIndex,
+            excludedDayIds: excludedByEvent.get(mapping.eventId),
+            recurrenceStartDate: event.recurrenceStartDate,
+            recurrenceEndDate: event.recurrenceEndDate,
+            dateOf,
+            allowedDayIndices: getAllowedDayIndices(event.constraints),
+        });
+        for (const dayId of occurrenceDayIds) {
+            visit(dayId, mapping.eventId, event.minimumDuration ?? 0);
+        }
+    }
+}
+
+/**
  * Lays out every mapped event (spillover by what its own students have left
  * on a day) and totals each day per student path. Recurring events count as
  * if materialized on every occurrence, and are placed before anything spills.
@@ -383,31 +431,9 @@ export function computeStudentSchedule({
     const paths = buildStudentPaths(tree, assigned.ids, assigned.includeRoots);
     const tracker = new StudentLoadTracker(resolveAudiences(state, syllabusIds, paths));
 
-    const excludedByEvent = new Map<string, Set<string>>();
-    for (const exception of Object.values(exceptions)) {
-        const excluded = excludedByEvent.get(exception.eventId) ?? new Set();
-        excluded.add(exception.dayId);
-        excludedByEvent.set(exception.eventId, excluded);
-    }
-    for (const mapping of Object.values(mappings)) {
-        if (!mapping.eventId) continue;
-        const event = state.events[mapping.eventId];
-        if (!event || event.recurrence === EventRecurrence.None) continue;
-        const occurrenceDayIds = getRecurrenceOccurrenceDayIds({
-            recurrence: event.recurrence,
-            startDayId: mapping.dayId,
-            linearDays,
-            dayIndexOf: (dayId) => state.days[dayId]?.dayIndex,
-            excludedDayIds: excludedByEvent.get(mapping.eventId),
-            recurrenceStartDate: event.recurrenceStartDate,
-            recurrenceEndDate: event.recurrenceEndDate,
-            dateOf,
-            allowedDayIndices: getAllowedDayIndices(event.constraints),
-        });
-        for (const dayId of occurrenceDayIds) {
-            tracker.consume(dayId, mapping.eventId, event.minimumDuration ?? 0);
-        }
-    }
+    forEachRecurrenceOccurrence({ dateOf, exceptions, linearDays, mappings, state }, (dayId, eventId, minutes) =>
+        tracker.consume(dayId, eventId, minutes),
+    );
 
     const spans = computeEventDaySpans({ mappings, state, linearDays, load: tracker });
     return { paths, spans, byDay: tracker.summarize(state, paths) };
