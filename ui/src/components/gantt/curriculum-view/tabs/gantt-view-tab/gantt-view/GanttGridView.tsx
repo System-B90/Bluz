@@ -170,6 +170,11 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                 <Table
                     size="small"
                     sx={ {
+                        // Theme divider is translucent; solid borders keep scrolled text from showing through.
+                        "& th, & td": {
+                            borderBottomColor: (theme: Theme) =>
+                                theme.palette.grey[ theme.palette.mode === "dark" ? 800 : 300 ],
+                        },
                         tableLayout: "fixed",
                         width: "100%",
                         minWidth: TITLE_MIN_WIDTH + (LEAD_COLUMNS - 1) * HOURS_WIDTH + weekCount * WEEK_WIDTH,
