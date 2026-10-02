@@ -8,10 +8,13 @@ import React from "react";
 
 import { GanttBlock } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttBlock";
 import { GanttHoursLabel } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttHoursLabel";
+import { EventNoteIndicator } from "@/components/gantt/EventNoteIndicator";
 
 type GanttEventLabelCellProps = {
     /** Execution drift (#121): the cut schedule diverged from the plan. */
     drifted?: boolean;
+    /** The event's note; shown as a hover icon when set (#773). */
+    eventComment?: null | string;
     eventId: string;
     eventTitle: string;
     isRemoveOver: boolean;
@@ -28,6 +31,7 @@ type GanttEventLabelCellProps = {
 
 export const GanttEventLabelCell: React.FC<GanttEventLabelCellProps> = ({
     drifted,
+    eventComment,
     eventId,
     eventTitle,
     isRemoveOver,
@@ -81,6 +85,8 @@ export const GanttEventLabelCell: React.FC<GanttEventLabelCellProps> = ({
             >
                 ↳ { eventTitle }
             </Typography>
+
+            <EventNoteIndicator comment={ eventComment } />
 
             { drifted ? (
                 <Tooltip title="ביצוע שונה מהתכנון">

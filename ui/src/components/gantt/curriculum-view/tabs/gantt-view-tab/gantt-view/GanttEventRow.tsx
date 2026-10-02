@@ -333,6 +333,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
         >
             <GanttEventLabelCell
                 drifted={ isDrifted }
+                eventComment={ event.comment }
                 eventId={ eventId }
                 eventTitle={ event.title }
                 isRemoveOver={ isRemoveOver }

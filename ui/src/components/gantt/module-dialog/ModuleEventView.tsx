@@ -29,6 +29,7 @@ import { NumberSpinner } from "@/components/base/NumberSpinner";
 import { useConfirmDialog } from "@/components/base/UseConfirmDialog";
 import { CourseChips } from "@/components/gantt/CourseChips";
 import { EVENT_ANCHOR_PREFIX } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
+import { EventNoteIndicator } from "@/components/gantt/EventNoteIndicator";
 import { ShuffleChip } from "@/components/gantt/ShuffleChip";
 import { useCurriculumProviderActions, useCurriculumState } from "@/components/gantt/state/context";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
@@ -189,6 +190,7 @@ export function ModuleEventView({
                         key={ `${moduleEvent?.title ?? "-title"}` }
                         moduleEvent={ moduleEvent }
                     />
+                    <EventNoteIndicator comment={ moduleEvent?.comment } />
                     <ShuffleChips
                         descriptions={ parentSyllabusId ? state.syllabuses[ parentSyllabusId ]?.shuffleDescriptions : undefined }
                         hiveGroups={ parentSyllabusId ? state.syllabuses[ parentSyllabusId ]?.shuffleHiveGroups : undefined }
