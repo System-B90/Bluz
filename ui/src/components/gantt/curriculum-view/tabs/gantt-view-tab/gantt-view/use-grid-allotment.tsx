@@ -231,7 +231,7 @@ export function useGridAllotment(ctx: Context): {
     ) =>
     {
         // An event with no shuffle of its own serves every shuffle: editing it changes them all.
-        if (shared && shared.shuffles.length > 1 && !ctx.state.events[ eventId ]?.groupId)
+        if (shared && shared.shuffles.length > 1 && !ctx.state.events[ eventId ]?.groupId && !ctx.state.events[ eventId ]?.courseIds?.length)
         {
             const choice = await ask({ kind: "shuffles", title: ctx.state.events[ eventId ]?.title ?? "" });
             if (choice === null) return;
