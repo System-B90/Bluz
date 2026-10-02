@@ -39,22 +39,15 @@ class FakeWizard:
         return self.set(key, self.answers.get(key, default))
 
 
-def test_profiles_with_adds_and_removes_only_acme() -> None:
-    assert setup._profiles_with("", "acme", True) == "acme"
-    assert setup._profiles_with("x, acme", "acme", True) == "x,acme"
-    assert setup._profiles_with("x,acme,y", "acme", False) == "x,y"
-    assert setup._profiles_with("acme", "acme", False) == ""
-
-
-def test_enabling_acme_turns_on_the_certbot_profile() -> None:
+def test_enabling_acme_sets_the_proxy_variables() -> None:
     w = FakeWizard(
         answers={"ACME_DIRECTORY_URL": "https://acme.lan/directory"},
         confirms=[True, False],
     )
     setup._ask_acme(w, "bluz.lan")  # type: ignore[arg-type]
-    assert w.values["COMPOSE_PROFILES"] == "acme"
     assert w.values["ACME_DOMAIN"] == "bluz.lan"
     assert w.values["ACME_DIRECTORY_URL"] == "https://acme.lan/directory"
+    assert w.values["ACME_CA_BUNDLE"] == ""
     assert "ACME_CA_BUNDLE" not in w.asked
 
 
@@ -64,9 +57,9 @@ def test_private_acme_ca_defaults_to_the_mounted_path() -> None:
     assert w.values["ACME_CA_BUNDLE"] == setup.ACME_CA_DEFAULT_PATH
 
 
-def test_declining_removes_the_profile_and_asks_nothing() -> None:
+def test_declining_turns_acme_off_and_asks_nothing() -> None:
     w = FakeWizard(answers={}, confirms=[False])
-    w.values["COMPOSE_PROFILES"] = "acme"
+    w.values["ACME_DIRECTORY_URL"] = "https://acme.lan/directory"
     setup._ask_acme(w, "bluz.lan")  # type: ignore[arg-type]
-    assert w.values["COMPOSE_PROFILES"] == ""
+    assert w.values["ACME_DIRECTORY_URL"] == ""
     assert w.asked == []
