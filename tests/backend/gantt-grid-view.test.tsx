@@ -15,7 +15,14 @@ const { ctx, actions } = vi.hoisted(() => ({
         placedDayIds: [ "a1" ],
         courses: [] as Array<{ id: string; name: string; color: null | string; parentId: null | string }>,
     },
-    actions: { toggleSyllabus: vi.fn(), toggleModule: vi.fn(), openEventDialog: vi.fn(), commitWeek: vi.fn() },
+    actions: {
+        toggleSyllabus: vi.fn(),
+        toggleModule: vi.fn(),
+        openEventDialog: vi.fn(),
+        openModuleDialog: vi.fn(),
+        openSyllabusDialog: vi.fn(),
+        commitWeek: vi.fn(),
+    },
 }));
 
 const state = {
@@ -30,7 +37,11 @@ const state = {
 
 vi.mock("@/components/gantt/state/context", () => ({
     useCurriculumState: () => state,
-    useCurriculumProviderActions: () => ({ openEventDialog: actions.openEventDialog }),
+    useCurriculumProviderActions: () => ({
+        openEventDialog: actions.openEventDialog,
+        openModuleDialog: actions.openModuleDialog,
+        openSyllabusDialog: actions.openSyllabusDialog,
+    }),
 }));
 
 vi.mock("@/components/base/CoursesProvider", () => ({
@@ -143,16 +154,31 @@ describe("GanttGridView", () => {
         expect(selectedText()).toBe("");
     });
 
-    it("toggles a summary row and opens an event on Enter", () => {
+    it("opens each row's dialog on Enter and toggles summary rows on Space", () => {
         const grid = renderGrid();
         fireEvent.keyDown(grid, { key: "Enter" });
+        expect(actions.openSyllabusDialog).toHaveBeenCalledWith("s1");
+        expect(actions.toggleSyllabus).not.toHaveBeenCalled();
+        fireEvent.keyDown(grid, { key: " " });
         expect(actions.toggleSyllabus).toHaveBeenCalledWith("s1");
         fireEvent.keyDown(grid, { key: "ArrowDown" });
+        fireEvent.keyDown(grid, { key: "Enter" });
+        expect(actions.openModuleDialog).toHaveBeenCalledWith("s1", "m1");
         fireEvent.keyDown(grid, { key: " " });
         expect(actions.toggleModule).toHaveBeenCalledWith("m1");
         fireEvent.keyDown(grid, { key: "ArrowDown" });
         fireEvent.keyDown(grid, { key: "Enter" });
         expect(actions.openEventDialog).toHaveBeenCalledWith("s1", "m1", "e1");
+    });
+
+    it("expands on + and collapses on -, only when the state differs", () => {
+        const grid = renderGrid();
+        const open = actions.toggleSyllabus.mock.calls.length;
+        // The syllabus starts expanded: + does nothing, - collapses it.
+        fireEvent.keyDown(grid, { key: "+" });
+        expect(actions.toggleSyllabus).toHaveBeenCalledTimes(open);
+        fireEvent.keyDown(grid, { key: "-" });
+        expect(actions.toggleSyllabus).toHaveBeenCalledTimes(open + 1);
     });
 
     it("shows available and allocated hours per week in labelled header rows", () => {

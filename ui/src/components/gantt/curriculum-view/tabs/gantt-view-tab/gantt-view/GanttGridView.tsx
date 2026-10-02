@@ -69,14 +69,14 @@ const presenceSx = (presence: CoursePresence, color: string) =>
  * hours the event takes that week (recurrence echoes and week splits
  * included). Syllabus/module summary rows sum their children and collapse.
  * Arrow keys move the selected cell; Shift+arrows/click select a range,
- * Ctrl+click adds or removes a cell. Enter toggles a summary row or opens an
- * event's dialog. An event's week cells are editable (type, Enter, F2 or
+ * Ctrl+click adds or removes a cell. Enter opens the row's dialog; Space
+ * toggles a summary row; + expands and - collapses it. An event's week cells are editable (type, Enter, F2 or
  * double-click; Delete clears): the value is allotted to that week on blur.
  */
 export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
 {
     const state = useCurriculumState();
-    const { openEventDialog } = useCurriculumProviderActions();
+    const { openEventDialog, openModuleDialog, openSyllabusDialog } = useCurriculumProviderActions();
     const { state: { exceptions } } = useGanttRecurrenceExceptions();
     const { curriculum, contextValue } = useGanttView(curriculumId);
     const {
@@ -226,11 +226,26 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         selectedRef.current?.scrollIntoView({ block: "nearest", inline: "nearest" });
     }, [ row, col ]);
 
+    /** Space/double-click: summary rows collapse or expand, events open their dialog. */
     const activate = (target: GridRow) =>
     {
         if (target.kind === "syllabus" || target.kind === "shuffle") toggleSyllabus(target.key);
         else if (target.kind === "module") toggleModule(target.key);
         else openEventDialog(target.syllabusId, target.moduleId, target.id);
+    };
+    /** Enter: every row opens its own dialog. */
+    const openDialog = (target: GridRow) =>
+    {
+        if (target.kind === "syllabus" || target.kind === "shuffle") openSyllabusDialog(target.syllabusId);
+        else if (target.kind === "module") openModuleDialog(target.syllabusId, target.moduleId);
+        else openEventDialog(target.syllabusId, target.moduleId, target.id);
+    };
+    /** +/-: set a summary row open or closed (a no-op when it already is). */
+    const setExpanded = (target: GridRow, open: boolean) =>
+    {
+        if (target.kind === "event") return;
+        const isOpen = target.kind === "module" ? isModuleExpanded(target.key) : isSyllabusExpanded(target.key);
+        if (isOpen !== open) activate(target);
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) =>
@@ -269,10 +284,20 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                 col: clamp(col + move[ 1 ], -courseCount, LEAD_COLUMNS + weekCount - 1),
             }, { shift: e.shiftKey });
         }
-        else if ((e.key === "Enter" || e.key === " ") && rows[ row ])
+        else if (e.key === "Enter" && rows[ row ])
+        {
+            e.preventDefault();
+            openDialog(rows[ row ]);
+        }
+        else if (e.key === " " && rows[ row ])
         {
             e.preventDefault();
             activate(rows[ row ]);
+        }
+        else if ((e.key === "+" || e.key === "=" || e.key === "-") && rows[ row ])
+        {
+            e.preventDefault();
+            setExpanded(rows[ row ], e.key !== "-");
         }
     };
 
