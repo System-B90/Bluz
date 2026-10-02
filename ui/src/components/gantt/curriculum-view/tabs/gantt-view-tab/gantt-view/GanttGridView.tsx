@@ -1,5 +1,6 @@
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
+import InputBase from "@mui/material/InputBase";
 import Paper from "@mui/material/Paper";
 import { alpha, Theme } from "@mui/material/styles";
 import Table from "@mui/material/Table";
@@ -9,6 +10,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
+import { useSnackbar } from "notistack";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import { useCourses } from "@/components/base/CoursesProvider";
@@ -17,9 +19,11 @@ import {
     getWeekTotalMinutes,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { buildStudentPaths } from "@/components/gantt/curriculum-view/student-load";
+import { parseHoursInput } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-allotment";
 import { buildGridRows, CoursePresence, GridRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-rows";
 import { initialSelection, isCellSelected, selectCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-selection";
 import { GanttViewProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
+import { useGridAllotment } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-grid-allotment";
 import { useGanttView } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/UseGanttView";
 import { useHoursFormat } from "@/components/gantt/curriculum-view/use-hours-format";
 import { useCurriculumProviderActions, useCurriculumState } from "@/components/gantt/state/context";
@@ -66,7 +70,8 @@ const presenceSx = (presence: CoursePresence, color: string) =>
  * included). Syllabus/module summary rows sum their children and collapse.
  * Arrow keys move the selected cell; Shift+arrows/click select a range,
  * Ctrl+click adds or removes a cell. Enter toggles a summary row or opens an
- * event's dialog.
+ * event's dialog. An event's week cells are editable (type, Enter, F2 or
+ * double-click; Delete clears): the value is allotted to that week on blur.
  */
 export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
 {
@@ -157,6 +162,50 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         setSelection((prev) => selectCell(prev, cell, mode));
     const clickMode = (e: React.MouseEvent) => ({ shift: e.shiftKey, ctrl: e.ctrlKey || e.metaKey });
     const selectedRef = useRef<HTMLTableCellElement>(null);
+    const gridRef = useRef<HTMLDivElement>(null);
+    const { enqueueSnackbar } = useSnackbar();
+
+    const { commitWeek, dialog } = useGridAllotment({
+        curriculumId,
+        dateOf: dateOfDayId,
+        exceptions,
+        linearDays: allLinearDays,
+        mappings: curriculumMappings,
+        state,
+        weeks: timelineWeeks.map((week) => week.days),
+    });
+    // Only an event's week cells hold editable time; sums, titles and headers don't.
+    const isEditable = (r: number, c: number) => rows[ r ]?.kind === "event" && c >= LEAD_COLUMNS;
+    const [ editing, setEditing ] = useState<{ row: number; col: number; text: string } | null>(null);
+    const startEdit = (r: number, c: number, text?: string) =>
+    {
+        if (!isEditable(r, c)) return;
+        const minutes = rows[ r ].weekMinutes[ c - LEAD_COLUMNS ];
+        setEditing({ row: r, col: c, text: text ?? hoursOrBlank(minutes) });
+    };
+    // Escape refocuses the grid, which blurs the input: that blur must not commit.
+    const cancelledRef = useRef(false);
+    const commitEdit = (text: string, target: { row: number; col: number }) =>
+    {
+        setEditing(null);
+        gridRef.current?.focus();
+        if (cancelledRef.current)
+        {
+            cancelledRef.current = false;
+            return;
+        }
+        const r = rows[ target.row ];
+        if (!r) return;
+        const week = target.col - LEAD_COLUMNS;
+        const minutes = parseHoursInput(text);
+        if (minutes === null)
+        {
+            enqueueSnackbar("ערך שעות לא תקין", { variant: "error" });
+            return;
+        }
+        if (minutes === r.weekMinutes[ week ]) return;
+        void commitWeek(r.id, r.moduleId, week, minutes);
+    };
 
     useEffect(() =>
     {
@@ -182,7 +231,22 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
             End: [ 0, Infinity ],
         };
         const move = moves[ e.key ];
-        if (move)
+        if (isEditable(row, col) && (e.key === "Enter" || e.key === "F2"))
+        {
+            e.preventDefault();
+            startEdit(row, col);
+        }
+        else if (isEditable(row, col) && (e.key === "Delete" || e.key === "Backspace"))
+        {
+            e.preventDefault();
+            commitEdit("", { row, col });
+        }
+        else if (isEditable(row, col) && !e.ctrlKey && !e.metaKey && /^[\d.:]$/.test(e.key))
+        {
+            e.preventDefault();
+            startEdit(row, col, e.key);
+        }
+        else if (move)
         {
             e.preventDefault();
             const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(v, max));
@@ -219,6 +283,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
             <TableContainer
                 aria-label="טבלת גאנט"
                 onKeyDown={ handleKeyDown }
+                ref={ gridRef }
                 role="grid"
                 sx={ { maxHeight: "calc(100vh - 180px)", "&:focus": { outline: "none" } } }
                 tabIndex={ 0 }
@@ -356,9 +421,11 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                     { values.map((value, vi) => (
                                         <TableCell
                                             aria-current={ ri === row && col === vi + 1 ? "true" : undefined }
+                                            aria-readonly={ isEditable(ri, vi + 1) ? undefined : true }
                                             aria-selected={ isCellSelected(selection, { row: ri, col: vi + 1 }) }
                                             key={ vi }
                                             onClick={ (e) => select({ row: ri, col: vi + 1 }, clickMode(e)) }
+                                            onDoubleClick={ () => startEdit(ri, vi + 1) }
                                             ref={ ri === row && col === vi + 1 ? selectedRef : undefined }
                                             sx={ {
                                                 ...cellSx(ri, vi + 1, r.kind),
@@ -366,7 +433,27 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                             } }
                                             title={ conflict && vi < LEAD_COLUMNS - 1 ? "השיבוץ שונה מהנדרש" : undefined }
                                         >
-                                            { value }
+                                            { editing?.row === ri && editing.col === vi + 1 ? (
+                                                <InputBase
+                                                    autoFocus
+                                                    inputProps={ { "aria-label": "שעות בשבוע", dir: "ltr", style: { textAlign: "center", padding: 0 } } }
+                                                    onBlur={ (e) => commitEdit(e.target.value, editing) }
+                                                    onChange={ (e) => setEditing({ ...editing, text: e.target.value }) }
+                                                    onFocus={ (e) => e.target.select() }
+                                                    onKeyDown={ (e) =>
+                                                    {
+                                                        e.stopPropagation();
+                                                        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                                                        else if (e.key === "Escape")
+                                                        {
+                                                            cancelledRef.current = true;
+                                                            (e.target as HTMLInputElement).blur();
+                                                        }
+                                                    } }
+                                                    sx={ { fontSize: "inherit", width: "100%" } }
+                                                    value={ editing.text }
+                                                />
+                                            ) : value }
                                         </TableCell>
                                     )) }
                                 </TableRow>
@@ -375,6 +462,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                     </TableBody>
                 </Table>
             </TableContainer>
+            { dialog }
         </Paper>
     );
 };

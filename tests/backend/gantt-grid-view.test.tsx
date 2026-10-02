@@ -15,7 +15,7 @@ const { ctx, actions } = vi.hoisted(() => ({
         placedDayIds: [ "a1" ],
         courses: [] as Array<{ id: string; name: string; color: null | string; parentId: null | string }>,
     },
-    actions: { toggleSyllabus: vi.fn(), toggleModule: vi.fn(), openEventDialog: vi.fn() },
+    actions: { toggleSyllabus: vi.fn(), toggleModule: vi.fn(), openEventDialog: vi.fn(), commitWeek: vi.fn() },
 }));
 
 const state = {
@@ -35,6 +35,12 @@ vi.mock("@/components/gantt/state/context", () => ({
 
 vi.mock("@/components/base/CoursesProvider", () => ({
     useCourses: () => ({ courses: ctx.courses }),
+}));
+
+vi.mock("notistack", () => ({ useSnackbar: () => ({ enqueueSnackbar: vi.fn() }) }));
+
+vi.mock("@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-grid-allotment", () => ({
+    useGridAllotment: () => ({ commitWeek: actions.commitWeek, dialog: null }),
 }));
 
 vi.mock("@/components/gantt/state/recurrence-exceptions/hooks", () => ({
@@ -202,6 +208,43 @@ describe("GanttGridView", () => {
         expect(selectedCount()).toBe(3);
         fireEvent.keyDown(grid, { key: "Home" });
         expect(screen.getAllByRole("cell")[ 0 ].getAttribute("aria-current")).toBe("true");
+    });
+
+    it("edits an event's week cell and commits the typed hours on blur", () => {
+        const grid = renderGrid();
+        fireEvent.keyDown(grid, { key: "ArrowDown" });
+        fireEvent.keyDown(grid, { key: "ArrowDown" });
+        for (let i = 0; i < 4; i++) fireEvent.keyDown(grid, { key: "ArrowLeft" });
+        fireEvent.keyDown(grid, { key: "2" });
+        const input = screen.getByLabelText("שעות בשבוע") as HTMLInputElement;
+        expect(input.value).toBe("2");
+        fireEvent.change(input, { target: { value: "2:30" } });
+        fireEvent.blur(input);
+        expect(actions.commitWeek).toHaveBeenCalledWith("e1", "m1", 1, 150);
+        expect(screen.queryByLabelText("שעות בשבוע")).toBeNull();
+    });
+
+    it("cancels on Escape, ignores unchanged values and leaves sums and totals read-only", () => {
+        const grid = renderGrid();
+        const week1 = rowCells("אירוע")[ 3 ];
+        fireEvent.doubleClick(week1);
+        const input = screen.getByLabelText("שעות בשבוע");
+        fireEvent.change(input, { target: { value: "5" } });
+        fireEvent.keyDown(input, { key: "Escape" });
+        fireEvent.doubleClick(week1);
+        fireEvent.blur(screen.getByLabelText("שעות בשבוע"));
+        expect(actions.commitWeek).not.toHaveBeenCalled();
+        // Summary week cell, the event's required/allocated cells, and the title don't edit.
+        fireEvent.doubleClick(rowCells("מודול")[ 3 ]);
+        fireEvent.doubleClick(rowCells("אירוע")[ 1 ]);
+        fireEvent.doubleClick(rowCells("אירוע")[ 2 ]);
+        expect(screen.queryByLabelText("שעות בשבוע")).toBeNull();
+        expect(rowCells("אירוע")[ 2 ].getAttribute("aria-readonly")).toBe("true");
+        expect(week1.getAttribute("aria-readonly")).toBeNull();
+        // Delete clears a week to 0.
+        fireEvent.click(week1);
+        fireEvent.keyDown(grid, { key: "Delete" });
+        expect(actions.commitWeek).toHaveBeenCalledWith("e1", "m1", 0, 0);
     });
 
     it("switches every hour value to clock format", () => {

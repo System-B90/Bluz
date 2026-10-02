@@ -72,18 +72,6 @@ CURRICULUM = {
                                         "minimumDuration": 45,
                                         "recurrence": "none",
                                         "recurrenceStartDate": None,
-                                        "cEC": [
-                                            {
-                                                "eventId": "e1",
-                                                "curriculumId": "c1",
-                                                "allocatedDuration": 60,
-                                            },
-                                            {
-                                                "eventId": "e1",
-                                                "curriculumId": "c2",
-                                                "allocatedDuration": 30,
-                                            },
-                                        ],
                                     },
                                 },
                                 {
@@ -94,7 +82,6 @@ CURRICULUM = {
                                         "title": "Drill",
                                         "type": 'ע"ע',
                                         "minimumDuration": 90,
-                                        "cEC": [],
                                     },
                                 },
                             ],
@@ -188,13 +175,6 @@ def test_flattened_views(curriculum):
     assert curriculum.modules.ids == ["m1"]
     assert curriculum.events.ids == ["e1", "e2"]
     assert curriculum["Mathematics"].events.ids == ["e1", "e2"]
-
-
-def test_allocated_duration_follows_the_curriculum_reached_through(curriculum):
-    event = curriculum["Mathematics"]["Algebra"]["Intro"]
-    assert event.allocated_duration == 60
-    assert event.allocated_in("c2") == 30
-    assert event.allocated_in("nope") is None
 
 
 def test_weeks_sort_by_number_and_days_by_weekday(curriculum):

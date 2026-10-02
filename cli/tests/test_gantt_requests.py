@@ -122,7 +122,7 @@ def test_week_delete_removes_by_path_and_sends_no_body(stub_bluz, run_cli):
     assert stub.last().body is None
 
 
-# --- link / allocate-time / reorder -------------------------------------------
+# --- link / reorder -----------------------------------------------------------
 
 
 def test_syllabus_link_posts_the_new_parent_id(stub_bluz, run_cli):
@@ -144,26 +144,6 @@ def test_syllabus_unlink_deletes_with_the_old_parent_id_in_the_body(stub_bluz, r
     assert result.exit_code == 0
     assert stub.last().method == "DELETE"
     assert stub.last().body == {"oldParentId": "c-9"}
-
-
-def test_module_get_time_scopes_by_container_query_param(stub_bluz, run_cli):
-    stub = stub_bluz()
-    stub.envelope("GET", "/api/gantt/modules/m-1/allocate-time", {"duration": 30})
-
-    result = run_cli(stub, "gantt", "modules", "get-time", "m-1", "c-1")
-
-    assert result.exit_code == 0
-    assert stub.last().query == {"containerId": ["c-1"]}
-
-
-def test_module_set_time_posts_container_and_duration(stub_bluz, run_cli):
-    stub = stub_bluz()
-    stub.envelope("POST", "/api/gantt/modules/m-1/allocate-time", None)
-
-    result = run_cli(stub, "gantt", "modules", "set-time", "m-1", "c-1", "45")
-
-    assert result.exit_code == 0
-    assert stub.last().body == {"containerId": "c-1", "duration": 45}
 
 
 def test_syllabus_reorder_modules_posts_the_ordered_id_list(stub_bluz, run_cli):

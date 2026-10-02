@@ -30,6 +30,8 @@ export type MoveMapping = ({
     eventId: GanttEventId | null;
     from: { d: GanttDayId };
     to: { d: GanttDayId };
+    /** Also re-allots the moved mapping. */
+    allottedMinutes?: number;
 }) => Promise<void>;
 export type RemoveMapping = ({
     moduleId,

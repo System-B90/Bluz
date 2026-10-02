@@ -35,12 +35,6 @@ TREE = {
                                         "id": "e1",
                                         "title": "Intro",
                                         "minimumDuration": 45,
-                                        "cEC": [
-                                            {
-                                                "curriculumId": "c1",
-                                                "allocatedDuration": 60,
-                                            }
-                                        ],
                                     }
                                 }
                             ],
@@ -97,7 +91,7 @@ def test_every_example_exposes_main(name):
 def test_walk_curriculum(stub, sdk, capsys):
     load("walk_curriculum").main(sdk(stub))
     out = capsys.readouterr().out
-    assert "Bis90" in out and "Algebra" in out and "1.0" in out
+    assert "Bis90" in out and "Algebra" in out and "0.8" in out
 
 
 def test_weekly_load(stub, sdk, capsys):

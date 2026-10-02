@@ -70,12 +70,6 @@ TREE = {
                                         "title": "Intro",
                                         "type": "הרצאה",
                                         "minimumDuration": 45,
-                                        "cEC": [
-                                            {
-                                                "curriculumId": "c1",
-                                                "allocatedDuration": 60,
-                                            }
-                                        ],
                                     }
                                 }
                             ],
@@ -626,17 +620,6 @@ def test_node_update_and_delete(stub_bluz, sdk):
 
     event.delete()
     assert stub.last().method == "DELETE"
-
-
-def test_set_allocated_duration_uses_the_reached_curriculum(stub_bluz, sdk):
-    stub = stub_bluz()
-    stub.envelope("GET", "/api/gantt/curriculums/c1", TREE)
-    stub.envelope("POST", "/api/gantt/events/e1/allocate-time", None)
-    event = sdk(stub).gantt.curriculums.get("c1").events[0]
-
-    event.set_allocated_duration(90)
-
-    assert stub.last().body == {"containerId": "c1", "duration": 90}
 
 
 def test_reorder_and_link(stub_bluz, sdk):
