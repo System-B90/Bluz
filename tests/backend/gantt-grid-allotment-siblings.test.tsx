@@ -2,8 +2,9 @@
 import { act, cleanup, render, renderHook, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { applyEventShuffleGroup, createMapping, enqueueSnackbar, removeMapping, setAllottedMinutes } = vi.hoisted(() => ({
+const { moveMapping, applyEventShuffleGroup, createMapping, enqueueSnackbar, removeMapping, setAllottedMinutes } = vi.hoisted(() => ({
     applyEventShuffleGroup: vi.fn(),
+    moveMapping: vi.fn(async () => undefined),
     createMapping: vi.fn(async () => undefined),
     removeMapping: vi.fn(async () => undefined),
     enqueueSnackbar: vi.fn(),
@@ -16,7 +17,7 @@ vi.mock("@/components/base/ApiErrorSnackbar", () => ({ enqueueApiErrorSnackbar: 
 vi.mock("@/components/gantt/state/mappings/hooks", () => ({
     useGanttMappings: () => ({
         createMapping,
-        moveMapping: vi.fn(),
+        moveMapping,
         refreshMappings: vi.fn(),
         removeMapping,
         setAllottedMinutes,
@@ -29,6 +30,7 @@ vi.mock("@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions", () =
     useModuleEventActions: () => ({ applyEventShuffleGroup, updateEvent: vi.fn() }),
 }));
 
+import { EventRecurrence } from "@/api-shared/types/gantt/models";
 import { saveZeroChoice } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-allotment";
 import { useGridAllotment } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-grid-allotment";
 
@@ -36,9 +38,9 @@ const map = (eventId: string, dayId: string, allottedMinutes: number) =>
     [ `${eventId}-${dayId}`, { eventId, dayId, allottedMinutes } ] as const;
 
 /** Three grouped shuffle events, all with a mapping on d1 (week 0); `overrides` tweak the mappings. */
-const setup = (mappings: Array<readonly [string, unknown]>, grouped = true) =>
+const setup = (mappings: Array<readonly [string, unknown]>, grouped = true, fields: object = {}) =>
 {
-    const event = (shuffle: string) => ({ groupId: grouped ? "g" : undefined, moduleId: "m1", shuffles: [ shuffle ] });
+    const event = (shuffle: string) => ({ groupId: grouped ? "g" : undefined, moduleId: "m1", shuffles: [ shuffle ], ...fields });
     const ctx = {
         curriculumId: "c1",
         dateOf: () => undefined,
@@ -65,6 +67,7 @@ describe("useGridAllotment sibling suggestion", () =>
         setAllottedMinutes.mockClear();
         removeMapping.mockClear();
         createMapping.mockClear();
+        moveMapping.mockClear();
         applyEventShuffleGroup.mockReset();
         window.localStorage.clear();
     });
@@ -150,6 +153,26 @@ describe("useGridAllotment sibling suggestion", () =>
             await vi.waitFor(() => expect(createMapping).toHaveBeenCalledTimes(1));
             expect(applyEventShuffleGroup).toHaveBeenCalledWith("a", "m1", [ "א", "ב" ]);
             expect(createMapping).toHaveBeenCalledWith({ moduleId: "m1", eventId: "n", dayId: "d1", allottedMinutes: 60 });
+        });
+    });
+
+    describe("moving an event to another week", () =>
+    {
+        const plain = { minimumDuration: 60, recurrence: EventRecurrence.None };
+
+        it("moves without asking when the event is a lone, unsplit occurrence worth exactly its duration", async () =>
+        {
+            const { result } = setup([ map("a", "d1", 60) ], false, plain);
+            await act(() => result.current.commitWeek("a", "m1", 1, 60));
+            expect(moveMapping).toHaveBeenCalledWith(expect.objectContaining({ eventId: "a", to: { d: "d2" } }));
+        });
+
+        it("still asks when the allotted time differs from the duration", async () =>
+        {
+            const { result } = setup([ map("a", "d1", 30) ], false, plain);
+            void result.current.commitWeek("a", "m1", 1, 60);
+            await new Promise((r) => setTimeout(r, 20));
+            expect(moveMapping).not.toHaveBeenCalled();
         });
     });
 });
