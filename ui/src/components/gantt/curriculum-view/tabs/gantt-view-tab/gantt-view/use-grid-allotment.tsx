@@ -102,6 +102,15 @@ export function useGridAllotment(ctx: Context): {
         });
     }, [ ctx ]);
 
+    /** Minutes the event's mappings allot inside the week. */
+    const allottedInWeek = useCallback((eventId: string, week: number): number =>
+    {
+        const weekDays = new Set(ctx.weeks[ week ] ?? []);
+        return Object.values(ctx.mappings)
+            .filter((m) => m.eventId === eventId && weekDays.has(m.dayId))
+            .reduce((sum, m) => sum + (m.allottedMinutes ?? 0), 0);
+    }, [ ctx.mappings, ctx.weeks ]);
+
     /** Runs a plan; `interactive` false skips anything that would need a question. Returns whether it changed something. */
     const apply = useCallback(async (
         eventId: string,
@@ -177,14 +186,21 @@ export function useGridAllotment(ctx: Context): {
 
     const commitWeek = useCallback(async (eventId: string, moduleId: string, week: number, minutes: number) =>
     {
+        // Read before the edit: only siblings that matched this event's week allotment qualify.
+        const before = allottedInWeek(eventId, week);
         const changed = await apply(eventId, moduleId, planFor(eventId, week, minutes), true);
         const groupId = ctx.state.events[ eventId ]?.groupId;
-        if (!changed || !groupId) return;
+        if (!changed || !groupId || before === 0) return;
         // Shuffle siblings may rightly differ: only suggest, never apply on our own.
         const siblings = Object.entries(ctx.state.events)
-            .filter(([ id, event ]) => id !== eventId && event.groupId === groupId);
+            .filter(([ id, event ]) => id !== eventId && event.groupId === groupId && allottedInWeek(id, week) === before);
         if (siblings.length === 0) return;
-        enqueueSnackbar(`להחיל ${formatHours(minutes, 2)} שעות גם על ${siblings.length} השאפלים האחרים?`, {
+        const names = siblings
+            .map(([ , event ]) => (event.shuffles ?? []).join(", "))
+            .filter(Boolean)
+            .join(", ");
+        const target = names ? `השאפלים ${names}` : `${siblings.length} השאפלים האחרים`;
+        enqueueSnackbar(`להחיל ${formatHours(minutes, 2)} שעות גם על ${target}?`, {
             variant: "info",
             action: (key) => (
                 <Button
@@ -204,7 +220,7 @@ export function useGridAllotment(ctx: Context): {
                 </Button>
             ),
         });
-    }, [ apply, closeSnackbar, ctx.state.events, enqueueSnackbar, planFor ]);
+    }, [ allottedInWeek, apply, closeSnackbar, ctx.state.events, enqueueSnackbar, planFor ]);
 
     const texts: Record<Question["kind"], { title: string; body: string; actions: Array<{ value: Answer; label: string; primary?: boolean }> }> = {
         zero: {
