@@ -15,6 +15,9 @@ services:
         networks:
             - bluz_net
             - hive_net
+        # Private CA for an internal AI gateway (#780); see docs/ai-assistant.md.
+        volumes:
+            - ../certificates/ai-ca:/etc/bluz/ai-ca:ro
         depends_on:
             curriculum-db:
                 condition: service_healthy

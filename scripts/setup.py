@@ -30,6 +30,10 @@ except ImportError:
     sys.exit(1)
 
 
+# Where docker-compose mounts ./ai-ca for a private AI gateway CA (#780).
+AI_CA_DEFAULT_PATH = "/etc/bluz/ai-ca/ca.pem"
+
+
 def _spec() -> AppSpec:
     """app.json sits beside setup.py in a bundle and under deploy/ in a checkout."""
     here = os.path.dirname(os.path.abspath(__file__))
@@ -40,6 +44,49 @@ def _spec() -> AppSpec:
         if os.path.isfile(candidate):
             return AppSpec.load(candidate)
     raise SystemExit("app.json not found next to setup.py or in deploy/")
+
+
+def _ask_ai(w: Wizard) -> None:
+    """AI assistant: optional; with no key the launcher is simply hidden."""
+    w.keep("AI_PROVIDER", "openrouter")
+    w.keep("AI_MODEL")
+    w.keep("OPENROUTER_API_KEY")
+    w.keep("OPENAI_BASE_URL")
+    w.keep("OPENAI_API_KEY")
+    w.keep("AI_CA_CERT_PATH")
+    if w.confirm(
+        "Enable the in-app AI assistant? (needs a model provider API key)",
+        default=bool(w.prev("OPENROUTER_API_KEY") or w.prev("OPENAI_API_KEY")),
+    ):
+        provider = w.ask(
+            "AI_PROVIDER",
+            "AI provider (AI_PROVIDER: openrouter / openai)",
+            "openrouter",
+        )
+        w.ask("AI_MODEL", "Model slug (AI_MODEL, blank = provider default)")
+        if provider == "openai":
+            w.ask(
+                "OPENAI_BASE_URL",
+                "OpenAI-compatible base URL (OPENAI_BASE_URL, Open WebUI: https://<host>/api)",
+            )
+            w.ask_secret("OPENAI_API_KEY", "Gateway API key (OPENAI_API_KEY)")
+        else:
+            w.ask_secret("OPENROUTER_API_KEY", "Provider API key (OPENROUTER_API_KEY)")
+        # Internal gateways often use a private CA (#780). Never disable
+        # validation: trust the CA for the AI client only.
+        if w.confirm(
+            "Does the AI gateway use a certificate from a private CA?",
+            default=bool(w.prev("AI_CA_CERT_PATH")),
+        ):
+            w.ask(
+                "AI_CA_CERT_PATH",
+                "CA bundle path inside the container (AI_CA_CERT_PATH)",
+                AI_CA_DEFAULT_PATH,
+            )
+            print(
+                "  Copy the CA certificate (PEM) to ai-ca/ca.pem beside "
+                "docker-compose.yml; it is mounted at /etc/bluz/ai-ca."
+            )
 
 
 def main() -> None:
@@ -118,17 +165,7 @@ def main() -> None:
             "GOOGLE_CLIENT_SECRET", "Google OAuth Client Secret (GOOGLE_CLIENT_SECRET)"
         )
 
-    # AI assistant: optional; with no key the launcher is simply hidden.
-    w.keep("AI_PROVIDER", "openrouter")
-    w.keep("AI_MODEL")
-    w.keep("OPENROUTER_API_KEY")
-    if w.confirm(
-        "Enable the in-app AI assistant? (needs a model provider API key)",
-        default=bool(w.prev("OPENROUTER_API_KEY")),
-    ):
-        w.ask("AI_PROVIDER", "AI provider (AI_PROVIDER)", "openrouter")
-        w.ask("AI_MODEL", "Model slug (AI_MODEL, blank = provider default)")
-        w.ask_secret("OPENROUTER_API_KEY", "Provider API key (OPENROUTER_API_KEY)")
+    _ask_ai(w)
 
     w.write()
 
