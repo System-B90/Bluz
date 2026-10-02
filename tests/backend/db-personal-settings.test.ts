@@ -6,6 +6,7 @@ vi.mock("@/api-server/mongo-db-controller", () => ({
 
 import { getMetaController } from "@/api-server/mongo-db-controller";
 import { DbPersonalSettings } from "@/api-server/db-personal-settings";
+import { EMPTY_PERSONAL_SETTINGS } from "@/api-shared/types/personal-settings";
 
 process.env.NEXTAUTH_SECRET ??= "test-secret-for-personal-settings-encryption";
 
@@ -38,6 +39,7 @@ describe("DbPersonalSettings", () => {
             googleCalendarSyncAllEvents: false,
             aiAssistantEnabled: true,
             aiApiToken: "",
+            aiModel: "",
         });
     });
 
@@ -58,6 +60,7 @@ describe("DbPersonalSettings", () => {
             googleCalendarSyncAllEvents: false,
             aiAssistantEnabled: true,
             aiApiToken: "",
+            aiModel: "",
         });
     });
 
@@ -146,5 +149,16 @@ describe("DbPersonalSettings", () => {
             },
             { upsert: true },
         );
+    });
+
+    it("defaults aiModel to the server model for settings saved before #779", async () => {
+        controller.personalSettings.findOne.mockResolvedValueOnce({ userId: "u1", aiApiToken: "" });
+        expect((await DbPersonalSettings.get("u1")).aiModel).toBe("");
+    });
+
+    it("persists aiModel through the field whitelist", async () => {
+        await DbPersonalSettings.set("u1", { ...EMPTY_PERSONAL_SETTINGS, aiModel: "qwen-3" });
+        const update = controller.personalSettings.updateOne.mock.calls.at(-1)?.[1] as { $set: { aiModel?: string } };
+        expect(update.$set.aiModel).toBe("qwen-3");
     });
 });
