@@ -151,7 +151,8 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
 
     const [ selection, setSelection ] = useState(initialSelection);
     const row = Math.min(selection.cursor.row, rows.length - 1);
-    const col = Math.min(selection.cursor.col, LEAD_COLUMNS + weekCount - 1);
+    // Course columns sit before the title at negative indexes, so the title stays column 0.
+    const col = Math.max(-courseCount, Math.min(selection.cursor.col, LEAD_COLUMNS + weekCount - 1));
     const select = (cell: { row: number; col: number }, mode: { shift?: boolean; ctrl?: boolean } = {}) =>
         setSelection((prev) => selectCell(prev, cell, mode));
     const clickMode = (e: React.MouseEvent) => ({ shift: e.shiftKey, ctrl: e.ctrlKey || e.metaKey });
@@ -184,10 +185,10 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         if (move)
         {
             e.preventDefault();
-            const clamp = (v: number, max: number) => Math.max(0, Math.min(v, max));
+            const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(v, max));
             select({
-                row: clamp(row + move[ 0 ], rows.length - 1),
-                col: clamp(col + move[ 1 ], LEAD_COLUMNS + weekCount - 1),
+                row: clamp(row + move[ 0 ], 0, rows.length - 1),
+                col: clamp(col + move[ 1 ], -courseCount, LEAD_COLUMNS + weekCount - 1),
             }, { shift: e.shiftKey });
         }
         else if ((e.key === "Enter" || e.key === " ") && rows[ row ])
@@ -322,14 +323,25 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                     key={ `${r.kind}-${r.key}` }
                                     sx={ isSummary ? { bgcolor: r.kind === "module" ? "action.hover" : "action.selected" } : undefined }
                                 >
-                                    { courseColumns.columns.map((c, ci) => (
-                                        <TableCell
-                                            data-presence={ r.coursePresence[ ci ] }
-                                            key={ c.path.id }
-                                            sx={ presenceSx(r.coursePresence[ ci ], c.color) }
-                                            title={ c.path.label }
-                                        />
-                                    )) }
+                                    { courseColumns.columns.map((c, ci) =>
+                                    {
+                                        const cc = ci - courseCount;
+                                        return (
+                                            <TableCell
+                                                aria-current={ ri === row && col === cc ? "true" : undefined }
+                                                aria-selected={ isCellSelected(selection, { row: ri, col: cc }) }
+                                                data-presence={ r.coursePresence[ ci ] }
+                                                key={ c.path.id }
+                                                onClick={ (e) => select({ row: ri, col: cc }, clickMode(e)) }
+                                                ref={ ri === row && col === cc ? selectedRef : undefined }
+                                                // The 1/0 value is data only: transparent text.
+                                                sx={ { ...cellSx(ri, cc, "event"), ...(presenceSx(r.coursePresence[ ci ], c.color) as object), color: "transparent" } }
+                                                title={ c.path.label }
+                                            >
+                                                { r.coursePresence[ ci ] === "none" ? 0 : 1 }
+                                            </TableCell>
+                                        );
+                                    }) }
                                     <TableCell
                                         aria-current={ ri === row && col === 0 ? "true" : undefined }
                                         aria-selected={ isCellSelected(selection, { row: ri, col: 0 }) }

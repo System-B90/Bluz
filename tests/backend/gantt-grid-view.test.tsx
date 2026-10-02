@@ -193,6 +193,15 @@ describe("GanttGridView", () => {
         const eventRow = screen.getByText("אירוע", { exact: false }).closest("tr") as HTMLElement;
         expect([ ...eventRow.querySelectorAll("[data-presence]") ].map((c) => c.getAttribute("data-presence")))
             .toEqual([ "full", "full", "full" ]);
+        expect([ ...eventRow.querySelectorAll("[data-presence]") ].map((c) => c.textContent)).toEqual([ "1", "1", "1" ]);
+        // RTL: ArrowRight walks from the title into the course columns, Shift extends over them.
+        const grid = screen.getByRole("grid");
+        fireEvent.keyDown(grid, { key: "ArrowRight" });
+        expect(selectedText()).toBe("1");
+        fireEvent.keyDown(grid, { key: "Home", shiftKey: true });
+        expect(selectedCount()).toBe(3);
+        fireEvent.keyDown(grid, { key: "Home" });
+        expect(screen.getAllByRole("cell")[ 0 ].getAttribute("aria-current")).toBe("true");
     });
 
     it("switches every hour value to clock format", () => {
