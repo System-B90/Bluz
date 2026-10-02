@@ -507,17 +507,6 @@ export const GANTT_EVENT_WRITE_TOOLS = ganttEntityTools({
         isCritical: { type: "boolean" },
         comment: { type: ["string", "null"] },
     },
-    // Not a column of the event row: it is per-curriculum config written
-    // separately, so it is accepted on create only and applied afterwards.
-    createOnlyFields: {
-        allocatedDuration: {
-            type: "integer",
-            minimum: 0,
-            description:
-                "זמן מוקצה בדקות בגאנט הנוכחי. נשמר בנפרד מהמופע (לפי גאנט).",
-        },
-        curriculumId: CURRICULUM_ID_PARAM,
-    },
     requiredOnCreate: ["title", "type"],
     labels: {
         title: "שם המופע ישונה",
@@ -530,45 +519,7 @@ export const GANTT_EVENT_WRITE_TOOLS = ganttEntityTools({
     },
     store: DbModuleEvent,
     deleteImpact: ["המופע יוסר מהמערך. אירועי לו\"ז שנגזרו ממנו יישארו."],
-    async afterCreate(created, args, context) {
-        if (args.allocatedDuration === undefined) return;
-        await DbModuleEvent.setAllocatedTime(
-            created.id,
-            requireCurriculumId(args, context),
-            args.allocatedDuration,
-        );
-    },
 });
-
-type SetAllocatedTimeArgs = { eventId: string; curriculumId?: string; minutes: number };
-
-export const setGanttEventTimeTool: AiTool<SetAllocatedTimeArgs> = {
-    name: "set_gantt_event_time",
-    title: "הקצאת זמן למופע",
-    danger: AiToolDanger.Caution,
-    kind: AiToolKind.Write,
-    description: "קובע את הזמן המוקצה (בדקות) למופע בגאנט מסוים.",
-    parameters: {
-        type: "object",
-        properties: {
-            eventId: idParam("מזהה המופע"),
-            curriculumId: CURRICULUM_ID_PARAM,
-            minutes: { type: "integer", minimum: 0 },
-        },
-        required: ["eventId", "minutes"],
-        additionalProperties: false,
-    },
-    describe: (args) => `הקצאת ${args.minutes} דקות למופע ${args.eventId}`,
-    impact: (args) => [`הזמן המוקצה למופע יהיה ${args.minutes} דקות בגאנט הזה.`],
-    async execute(args, context) {
-        await DbModuleEvent.setAllocatedTime(
-            args.eventId as GanttEventId,
-            requireCurriculumId(args, context),
-            args.minutes,
-        );
-        return { data: args, summary: `הוקצו ${args.minutes} דקות` };
-    },
-};
 
 type CreateConstraintArgs = OwnerArgs & {
     type: ConstraintType;
@@ -828,7 +779,6 @@ export const GANTT_AUTHORING_TOOLS = [
     ...SYLLABUS_WRITE_TOOLS,
     ...MODULE_WRITE_TOOLS,
     ...GANTT_EVENT_WRITE_TOOLS,
-    setGanttEventTimeTool,
     createConstraintTool,
     deleteConstraintTool,
     editWeekTool,
