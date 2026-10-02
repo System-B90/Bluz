@@ -121,10 +121,15 @@ describe("GanttGridView", () => {
         expect(actions.openEventDialog).toHaveBeenCalledWith("s1", "m1", "e1");
     });
 
-    it("shows each week's used / available hours in the header", () => {
+    it("shows available and allocated hours per week in labelled header rows", () => {
         renderGrid();
-        const headers = screen.getAllByRole("columnheader").slice(3).map((c) => c.textContent);
-        expect(headers).toEqual([ "שבוע 11.5 / 1", "שבוע 20 / 8" ]);
+        const header = screen.getAllByRole("row").slice(0, 3).map((row) =>
+            within(row).getAllByRole("columnheader").map((c) => c.textContent));
+        expect(header).toEqual([
+            [ "שם", "נדרש", "שובץ", "שבוע 1", "שבוע 2" ],
+            [ "זמן זמין", "1", "8" ],
+            [ "זמן משובץ", "1.5", "0" ],
+        ]);
     });
 
     it("tints required and allocated only when they differ", () => {
@@ -142,7 +147,7 @@ describe("GanttGridView", () => {
 
     it("switches every hour value to clock format", () => {
         renderGrid();
-        fireEvent.click(screen.getByRole("button", { name: "0:45" }));
+        act(() => setHoursFormat("clock"));
         expect(rowCells("אירוע").slice(1).map((c) => c.textContent)).toEqual([ "1:30", "1:30", "1:30", "" ]);
         act(() => setHoursFormat("decimal"));
         expect(rowCells("אירוע")[ 1 ].textContent).toBe("1.5");
