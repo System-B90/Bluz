@@ -12,6 +12,7 @@ import React, { ReactNode, useCallback, useRef, useState } from "react";
 import { ganttApi } from "@/api-client/gantt";
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
 import {
+    EventRecurrence,
     GanttCurriculumModuleDayMapping,
     GanttEventRecurrenceException,
 } from "@/api-shared/types/gantt/models";
@@ -148,8 +149,15 @@ export function useGridAllotment(ctx: Context): {
             return true;
         }
         case "outside": {
-            if (!interactive) return false;
-            const choice = await ask({ kind: "outside", title });
+            // A lone, unsplit, non-recurring event whose time is exactly its duration just moves: nothing to decide.
+            const event = ctx.state.events[ eventId ];
+            const own = Object.values(ctx.mappings).filter((m) => m.eventId === eventId);
+            const plainMove = event?.recurrence === EventRecurrence.None
+                && own.length === 1
+                && own[ 0 ].allottedMinutes === event.minimumDuration
+                && plan.minutes === event.minimumDuration;
+            if (!plainMove && !interactive) return false;
+            const choice = plainMove ? "move" : await ask({ kind: "outside", title });
             if (choice === "move")
             {
                 await moveMapping({
