@@ -46,6 +46,21 @@ def _spec() -> AppSpec:
     raise SystemExit("app.json not found next to setup.py or in deploy/")
 
 
+def _ask_private_ca(
+    w: Wizard, key: str, question: str, default_path: str, hint: str
+) -> None:
+    """Asks for a private CA's path inside the container, or clears it.
+
+    Shared by every client that may talk to a server signed by an internal
+    CA; validation is never disabled, the CA is trusted instead.
+    """
+    if w.confirm(question, default=bool(w.prev(key))):
+        w.ask(key, f"CA bundle path inside the container ({key})", default_path)
+        print(f"  {hint}")
+    else:
+        w.set(key, "")
+
+
 def _ask_ai(w: Wizard) -> None:
     """AI assistant: optional; with no key the launcher is simply hidden."""
     w.keep("AI_PROVIDER", "openrouter")
@@ -74,19 +89,14 @@ def _ask_ai(w: Wizard) -> None:
             w.ask_secret("OPENROUTER_API_KEY", "Provider API key (OPENROUTER_API_KEY)")
         # Internal gateways often use a private CA (#780). Never disable
         # validation: trust the CA for the AI client only.
-        if w.confirm(
+        _ask_private_ca(
+            w,
+            "AI_CA_CERT_PATH",
             "Does the AI gateway use a certificate from a private CA?",
-            default=bool(w.prev("AI_CA_CERT_PATH")),
-        ):
-            w.ask(
-                "AI_CA_CERT_PATH",
-                "CA bundle path inside the container (AI_CA_CERT_PATH)",
-                AI_CA_DEFAULT_PATH,
-            )
-            print(
-                "  Copy the CA certificate (PEM) to ai-ca/ca.pem beside "
-                "docker-compose.yml; it is mounted at /etc/bluz/ai-ca."
-            )
+            AI_CA_DEFAULT_PATH,
+            "Copy the CA certificate (PEM) to ai-ca/ca.pem beside "
+            "docker-compose.yml; it is mounted at /etc/bluz/ai-ca.",
+        )
 
 
 def main() -> None:
