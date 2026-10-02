@@ -2,11 +2,6 @@ import dayjs, { Dayjs } from "dayjs";
 
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
 import {
-    getEffectiveWeekSplit,
-    getWeekSplitDayIds,
-    WeekSplitWeek,
-} from "@/api-shared/gantt/week-split";
-import {
     GanttCurriculum,
     GanttCurriculumModuleDayMapping,
     GanttDay,
@@ -221,31 +216,11 @@ export type EventDaySpan = {
     /** True when the event overflows its start day onto subsequent day(s). */
     spillover: boolean;
     /**
-     * True when the event's hours are split over consecutive weeks (#768):
-     * `dayIds` are then one day per week, not a contiguous run.
+     * True when the event is mapped onto several days, each with its own
+     * allotted minutes: `dayIds` are then its mapped days, not a contiguous run.
      */
-    weekSplit?: boolean;
+    multiDay?: boolean;
 };
-
-/** Groups the ordered timeline days back into their weeks. */
-function groupDaysByWeek(
-    linearDays: Array<GanttDayId>,
-    state: NormalizedStore,
-): Array<WeekSplitWeek> {
-    const weekIdByDay = new Map<GanttDayId, string>();
-    for (const week of Object.values(state.weeks)) {
-        for (const dayId of week.days) weekIdByDay.set(dayId, week.id);
-    }
-    const weeks: Array<WeekSplitWeek> = [];
-    let lastWeekId: string | undefined;
-    for (const dayId of linearDays) {
-        const weekId = weekIdByDay.get(dayId);
-        if (weeks.length === 0 || weekId !== lastWeekId) weeks.push({ days: [] });
-        weeks[weeks.length - 1].days.push(dayId);
-        lastWeekId = weekId;
-    }
-    return weeks;
-}
 
 /** Per-day load tracker fed by each event placement. */
 export type DayHeadroom = {
@@ -254,8 +229,8 @@ export type DayHeadroom = {
 };
 
 /**
- * Computes, per mapped event, the days it actually occupies: its mapped day
- * only, or one day per week for a human-defined week split. Events never
+ * Computes, per mapped event, the days it occupies: one per mapping, in
+ * timeline order, each taking that mapping's allotted minutes. Events never
  * overflow onto later days here — an over-full day shows as over capacity;
  * spreading hours is the cut's job. With `load`, each placement is recorded.
  */
@@ -270,65 +245,24 @@ export function computeEventDaySpans({
     linearDays: Array<GanttDayId>;
     load?: DayHeadroom;
 }): Record<string, EventDaySpan> {
-    const spans: Record<string, EventDaySpan> = {};
-    let weeks: Array<WeekSplitWeek> | undefined;
     const dayOrder = buildDayIndexMap(linearDays);
-    const ordered = Object.values(mappings).sort(
-        (a, b) =>
-            (dayOrder.get(a.dayId) ?? 0) - (dayOrder.get(b.dayId) ?? 0) ||
-            a.sortOrder - b.sortOrder,
-    );
-    const record = (eventId: string, span: EventDaySpan) => {
-        spans[eventId] = span;
-        span.dayIds.forEach((dayId, i) =>
-            load?.consume(dayId, eventId, span.minutesPerDay[i]),
+    const ordered = Object.values(mappings)
+        .filter((mapping) => mapping.eventId && state.events[mapping.eventId] && dayOrder.has(mapping.dayId))
+        .sort(
+            (a, b) =>
+                (dayOrder.get(a.dayId) ?? 0) - (dayOrder.get(b.dayId) ?? 0) ||
+                a.sortOrder - b.sortOrder,
         );
-    };
 
+    const spans: Record<string, EventDaySpan> = {};
     for (const mapping of ordered) {
-        if (!mapping.eventId || spans[mapping.eventId]) continue;
-        const event = state.events[mapping.eventId];
-        if (!event) continue;
-        const startIdx = linearDays.indexOf(mapping.dayId);
-        if (startIdx === -1) continue;
-
-        // Human-defined split over consecutive weeks (#768): one part per
-        // week, no day-capacity overflow.
-        const split = getEffectiveWeekSplit(
-            event.splitAcrossWeeks,
-            mapping.weekSplitMinutes,
-            event.minimumDuration ?? 0,
-        );
-        if (split) {
-            weeks ??= groupDaysByWeek(linearDays, state);
-            const splitDayIds = getWeekSplitDayIds(mapping.dayId, split.length, weeks);
-            const minutesPerDay = split.slice(0, splitDayIds.length);
-            // Parts past the timeline's end are parked on its last week.
-            minutesPerDay[minutesPerDay.length - 1] += split
-                .slice(splitDayIds.length)
-                .reduce((sum, part) => sum + part, 0);
-            // A 0-hour part skips its week: no block and no time there.
-            const kept = splitDayIds
-                .map((dayId, i) => ({ dayId, minutes: minutesPerDay[i] }))
-                .filter((part, i) => i === 0 || part.minutes > 0);
-            record(mapping.eventId, {
-                dayIds: kept.map((part) => part.dayId),
-                minutesPerDay: kept.map((part) => part.minutes),
-                spillover: false,
-                weekSplit: true,
-            });
-            continue;
-        }
-
-        // Never spills: the whole event sits on its mapped day, and an
-        // over-full day surfaces as over capacity. Only the cut spreads hours.
-        record(mapping.eventId, {
-            dayIds: [ mapping.dayId ],
-            minutesPerDay: [ event.minimumDuration ?? 0 ],
-            spillover: false,
-        });
+        const eventId = mapping.eventId as string;
+        const span = (spans[eventId] ??= { dayIds: [], minutesPerDay: [], spillover: false });
+        span.dayIds.push(mapping.dayId);
+        span.minutesPerDay.push(mapping.allottedMinutes ?? 0);
+        span.multiDay = span.dayIds.length > 1 || undefined;
+        load?.consume(mapping.dayId, eventId, mapping.allottedMinutes ?? 0);
     }
-
     return spans;
 }
 

@@ -1,7 +1,7 @@
 import { useDroppable } from "@dnd-kit/core";
 import { useTheme } from "@mui/material/styles";
 import TableRow from "@mui/material/TableRow";
-import React, { memo, useCallback, useMemo, useState } from "react";
+import React, { memo, useCallback, useMemo } from "react";
 
 import
 {
@@ -21,15 +21,12 @@ import
 } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttEventCells";
 import { GanttEventLabelCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttEventLabelCell";
 import { GanttEventRowProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
-import { WeekSplitDialog } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/WeekSplitDialog";
 import
 {
     useCurriculumProviderActions,
     useCurriculumState,
 } from "@/components/gantt/state/context";
 import { useGanttExecution } from "@/components/gantt/state/execution/hooks";
-import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
-import { getGanttMappingKey } from "@/components/gantt/state/mappings/types";
 import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
 
 const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
@@ -69,18 +66,6 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
 
     const currentDayId = eventMappings[ eventId ] || null;
     const isEventUnmapped = !currentDayId;
-
-    // Week-split editor (#768): only for a mapped event that may split.
-    const { state: mappingState, setWeekSplit } = useGanttMappings();
-    const [ splitOpen, setSplitOpen ] = useState(false);
-    const splitMapping = currentDayId
-        ? mappingState.mappings[ getGanttMappingKey({ dayId: currentDayId, moduleId, eventId }) ]
-        : undefined;
-    const canSplit = Boolean(event?.splitAcrossWeeks && splitMapping);
-    const openSplit = useMemo(
-        () => (canSplit ? () => setSplitOpen(true) : undefined),
-        [ canSplit ],
-    );
 
     // Occurrence days this event no longer echoes onto — deleted or
     // materialized into their own standalone event.
@@ -122,30 +107,29 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
         [ eventId, violations ],
     );
 
-    // Split across weeks (#768): later parts by day, and the first part's
-    // minutes, which the mapped block shows instead of the whole duration.
-    const { splitPartMinutesByDay, firstPartMinutes } = useMemo(() =>
-    {
-        const span = eventSpans[ eventId ];
-        if (!span?.weekSplit) return { splitPartMinutesByDay: undefined, firstPartMinutes: undefined };
-        return {
-            splitPartMinutesByDay: new Map(
-                span.dayIds.slice(1).map((dayId, i) => [ dayId, span.minutesPerDay[ i + 1 ] ]),
-            ),
-            firstPartMinutes: span.minutesPerDay[ 0 ],
-        };
-    }, [ eventSpans, eventId ]);
+    // Mapped onto several days: the later mappings by day, each with its
+    // allotted minutes. The anchor block shows the first mapping's.
+    const span = eventSpans[ eventId ];
+    const splitPartMinutesByDay = useMemo(
+        () => span?.multiDay
+            ? new Map(span.dayIds.slice(1).map((dayId, i) => [ dayId, span.minutesPerDay[ i + 1 ] ]))
+            : undefined,
+        [ span ],
+    );
+    const anchorMinutes = span?.minutesPerDay[ 0 ];
+    // Allotted nothing at all: valid, but the event is left out of the cut.
+    const zeroAllotted = Boolean(span) && span!.minutesPerDay.every((minutes) => minutes === 0);
 
-    // Zoomed single-week day view: label the block with its required time.
-    // A split event's block always carries its part's hours (#768).
+    // Zoomed single-week day view, or a multi-day event: label the block
+    // with its allotted time.
     const timeLabel =
-        event && (singleWeekDayZoom || firstPartMinutes !== undefined)
-            ? formatHoursLabel(firstPartMinutes ?? event.minimumDuration ?? 0)
+        event && (singleWeekDayZoom || span?.multiDay || zeroAllotted)
+            ? formatHoursLabel(anchorMinutes ?? event.minimumDuration ?? 0)
             : undefined;
 
-    // Weekly columns are wide enough to always carry the required time.
+    // Weekly columns are wide enough to always carry the allotted time.
     const weeklyTimeLabel = event
-        ? formatHoursLabel(firstPartMinutes ?? event.minimumDuration ?? 0)
+        ? formatHoursLabel(anchorMinutes ?? event.minimumDuration ?? 0)
         : undefined;
 
     const recurrence = event?.recurrence ?? EventRecurrence.None;
@@ -287,7 +271,6 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
                 isDayInWindow,
                 weekIndexByDayId,
                 splitPartMinutesByDay,
-                onSplitPartDoubleClick: openSplit,
             })
             : buildDailyEventCells({
                 timelineWeeks,
@@ -305,11 +288,9 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
                 skippedRecurrenceDayIds,
                 firstDayId,
                 splitPartMinutesByDay,
-                onSplitPartDoubleClick: openSplit,
             });
     }, [
         splitPartMinutesByDay,
-        openSplit,
         event,
         weeklyView,
         relativeDaySizing,
@@ -358,10 +339,8 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
                 isUnmapped={
                     isEventUnmapped ? !isRecurring : null
                 }
-                isWeekSplit={ Boolean(eventSpans[ eventId ]?.weekSplit) }
                 minutes={ event.minimumDuration ?? 0 }
                 moduleId={ moduleId }
-                onSplitClick={ openSplit }
                 onTitleClick={ () =>
                 {
                     const syllabusId = state.modules[ moduleId ]?.syllabusId;
@@ -372,36 +351,11 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
                 } }
                 setRemoveNodeRef={ setRemoveNodeRef }
                 violations={ myViolations }
+                zeroAllotted={ zeroAllotted }
             />
 
             { cells }
 
-            { splitOpen && currentDayId ? (
-                <WeekSplitDialog
-                    eventTitle={ event.title }
-                    initialParts={ splitMapping?.weekSplitMinutes }
-                    onClose={ () => setSplitOpen(false) }
-                    onOpenEvent={ () =>
-                    {
-                        const syllabusId = state.modules[ moduleId ]?.syllabusId;
-                        if (!syllabusId) return;
-                        setSplitOpen(false);
-                        openEventDialog(syllabusId, moduleId, eventId);
-                    } }
-                    onSave={ (parts) =>
-                    {
-                        setSplitOpen(false);
-                        void setWeekSplit({
-                            moduleId,
-                            eventId,
-                            dayId: currentDayId,
-                            weekSplitMinutes: parts,
-                        });
-                    } }
-                    open
-                    totalMinutes={ event.minimumDuration ?? 0 }
-                />
-            ) : null }
         </TableRow>
     );
 };
