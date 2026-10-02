@@ -183,6 +183,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                     sx={ isSummary ? { bgcolor: r.kind === "syllabus" ? "action.selected" : "action.hover" } : undefined }
                                 >
                                     <TableCell
+                                        aria-selected={ ri === row && col === 0 }
                                         onClick={ () => setCursor({ row: ri, col: 0 }) }
                                         onDoubleClick={ () => activate(r) }
                                         ref={ ri === row && col === 0 ? selectedRef : undefined }
@@ -193,6 +194,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                     </TableCell>
                                     { values.map((value, vi) => (
                                         <TableCell
+                                            aria-selected={ ri === row && col === vi + 1 }
                                             key={ vi }
                                             onClick={ () => setCursor({ row: ri, col: vi + 1 }) }
                                             ref={ ri === row && col === vi + 1 ? selectedRef : undefined }
