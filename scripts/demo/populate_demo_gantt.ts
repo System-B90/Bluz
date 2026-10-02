@@ -163,18 +163,6 @@ async function main(): Promise<void> {
                     (${IDS.coreModule}, ${IDS.coreLecture}, 0)
             `;
 
-            // Durations are per curriculum, so the planner needs a row for the
-            // curriculum the events are actually cut from.
-            await tx`
-                INSERT INTO "cEC" (curriculum_id, event_id, allocated_duration)
-                VALUES
-                    (${IDS.curriculumA}, ${IDS.openingLecture}, 60),
-                    (${IDS.curriculumA}, ${IDS.openingExercise}, 90),
-                    (${IDS.curriculumA}, ${IDS.coreLecture}, 120),
-                    (${IDS.curriculumB}, ${IDS.openingLecture}, 60),
-                    (${IDS.curriculumB}, ${IDS.openingExercise}, 90)
-            `;
-
             // Two weeks per curriculum, each with its seven days — the same
             // shape `DbWeek.createNewItem` builds through the API.
             const dayIdsByWeek: Record<string, Array<string>> = {};
@@ -216,11 +204,11 @@ async function main(): Promise<void> {
             const weekOneMonday = dayIdsByWeek["w_demo_a1"][1];
             const weekTwoSunday = dayIdsByWeek["w_demo_a2"][0];
             await tx`
-                INSERT INTO "cMDA" (id, curriculum_id, module_id, event_id, day_id, s)
+                INSERT INTO "cMDA" (id, curriculum_id, module_id, event_id, day_id, s, allotted_minutes)
                 VALUES
-                    (${"map_demo_1"}, ${IDS.curriculumA}, ${IDS.openingModule}, ${IDS.openingLecture}, ${weekOneSunday}, 0),
-                    (${"map_demo_2"}, ${IDS.curriculumA}, ${IDS.openingModule}, ${IDS.openingExercise}, ${weekOneMonday}, 0),
-                    (${"map_demo_3"}, ${IDS.curriculumA}, ${IDS.coreModule}, ${IDS.coreLecture}, ${weekTwoSunday}, 0)
+                    (${"map_demo_1"}, ${IDS.curriculumA}, ${IDS.openingModule}, ${IDS.openingLecture}, ${weekOneSunday}, 0, 60),
+                    (${"map_demo_2"}, ${IDS.curriculumA}, ${IDS.openingModule}, ${IDS.openingExercise}, ${weekOneMonday}, 0, 90),
+                    (${"map_demo_3"}, ${IDS.curriculumA}, ${IDS.coreModule}, ${IDS.coreLecture}, ${weekTwoSunday}, 0, 120)
             `;
         });
 

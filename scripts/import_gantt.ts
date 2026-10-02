@@ -467,8 +467,6 @@ async function main() {
     await client.query(`DELETE FROM s2m`);
     // junction: curriculum → syllabus  (keep curricula, just unlink syllabuses)
     await client.query(`DELETE FROM c2s`);
-    // curriculum event configs
-    await client.query(`DELETE FROM "cEC"`);
     // curriculum event day mappings
     await client.query(`DELETE FROM "cMDA"`);
     // leaf tables

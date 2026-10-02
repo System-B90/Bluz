@@ -17,7 +17,6 @@ import {
 } from "./enums";
 import { ganttEventRecurrenceExceptionsSchema } from "./event-recurrence-exceptions";
 import { ganttModule2EventsSchema } from "./junctions";
-import { ganttCurriculumEventConfigurationsSchema } from "./mappings";
 
 export const ganttEventsSchema = pgTable("e", {
     id: text("id").primaryKey(),
@@ -75,7 +74,6 @@ export const ganttEventsRelationsSchema = relations(
     ganttEventsSchema,
     ({ many }) => ({
         m2e: many(ganttModule2EventsSchema),
-        cEC: many(ganttCurriculumEventConfigurationsSchema), // curriculumConfigs
         constraints: many(ganttConstraintsSchema, {
             relationName: "ownerEvent",
         }),
