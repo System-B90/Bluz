@@ -5,38 +5,8 @@ Created: 2026-10-02
 Author: Michael K. Steinberg
 """
 
-from dataclasses import dataclass, field
-
 import setup
-
-
-@dataclass
-class FakeWizard:
-    """Scripted stand-in for sb90_deploy's Wizard: answers by env key."""
-
-    answers: dict[str, str]
-    confirms: list[bool]
-    values: dict[str, str] = field(default_factory=dict)
-    asked: list[str] = field(default_factory=list)
-
-    def keep(self, key: str, default: str = "") -> None:
-        self.values.setdefault(key, default)
-
-    def prev(self, key: str, default: str = "") -> str:
-        return self.values.get(key, default)
-
-    def set(self, key: str, value: str) -> str:
-        self.values[key] = value
-        return value
-
-    def confirm(self, message: str, default: bool = False) -> bool:
-        return self.confirms.pop(0)
-
-    def ask(
-        self, key: str, message: str, default: str = "", required: bool = False
-    ) -> str:
-        self.asked.append(key)
-        return self.set(key, self.answers.get(key, default))
+from fake_wizard import FakeWizard
 
 
 def test_enabling_acme_sets_the_proxy_variables() -> None:
