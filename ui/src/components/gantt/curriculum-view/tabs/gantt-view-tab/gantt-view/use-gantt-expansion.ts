@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 // Copy of `prev` with `id` flipped, or forced in/out by `include`. Returns
 // `prev` itself when nothing changes, so React skips the re-render.
@@ -13,6 +13,8 @@ const toggled = (prev: Set<string>, id: string, include = !prev.has(id)) =>
 
 const without = (prev: Set<string>, id: string) => toggled(prev, id, false);
 
+const NONE: Set<string> = new Set();
+
 // Syllabus collapse/module expand state for the Gantt row tree, plus the
 // "collapse/expand all" toolbar actions (#225). While searching, every row
 // starts open so matches show (#323), but stays toggleable: toggles go to a
@@ -20,11 +22,19 @@ const without = (prev: Set<string>, id: string) => toggled(prev, id, false);
 export const useGanttExpansion = (
     syllabusIds: Array<string>,
     searchActive: boolean,
+    // Syllabuses open until the viewer touches anything; unset ⇒ all of them.
+    defaultExpanded?: Array<string>,
 ) =>
 {
-    const [ collapsedSyllabusIds, setCollapsedSyllabusIds ] = useState<
-        Set<string>
-    >(() => new Set());
+    const defaultCollapsed = useMemo(
+        () => (defaultExpanded
+            ? new Set(syllabusIds.filter((id) => !defaultExpanded.includes(id)))
+            : NONE),
+        [ defaultExpanded, syllabusIds ],
+    );
+    // Null until the first manual change, so a default that arrives late (user, courses) still applies.
+    const [ touchedCollapsed, setCollapsedSyllabusIds ] = useState<null | Set<string>>(null);
+    const collapsedSyllabusIds = touchedCollapsed ?? defaultCollapsed;
     const [ expandedModuleIds, setExpandedModuleIds ] = useState<Set<string>>(
         () => new Set(),
     );
@@ -52,8 +62,8 @@ export const useGanttExpansion = (
         if (searchActive)
             setSearchCollapsedIds((prev) => toggled(prev, syllabusId));
         else
-            setCollapsedSyllabusIds((prev) => toggled(prev, syllabusId));
-    }, [ searchActive ]);
+            setCollapsedSyllabusIds((prev) => toggled(prev ?? defaultCollapsed, syllabusId));
+    }, [ defaultCollapsed, searchActive ]);
 
     const collapseAllSyllabuses = useCallback(() =>
     {
@@ -65,6 +75,18 @@ export const useGanttExpansion = (
     {
         if (searchActive) setSearchCollapsedIds(new Set());
         else setCollapsedSyllabusIds(new Set());
+    }, [ searchActive ]);
+
+    // Every row at once: syllabuses (and shuffle sections) per `syllabusKeys`, modules per `moduleKeys`.
+    const setAllRows = useCallback((open: boolean, syllabusKeys: Array<string>, moduleKeys: Array<string>) =>
+    {
+        if (searchActive)
+        {
+            setSearchCollapsedIds(open ? new Set() : new Set([ ...syllabusKeys, ...moduleKeys ]));
+            return;
+        }
+        setCollapsedSyllabusIds(open ? new Set() : new Set(syllabusKeys));
+        setExpandedModuleIds(open ? new Set(moduleKeys) : new Set());
     }, [ searchActive ]);
 
     const allCollapsed =
@@ -91,6 +113,7 @@ export const useGanttExpansion = (
         allCollapsed,
         collapseAllSyllabuses,
         expandAllSyllabuses,
+        setAllRows,
         expandModuleFor: (moduleId: string) =>
         {
             setSearchCollapsedIds((prev) => without(prev, moduleId));
@@ -99,7 +122,7 @@ export const useGanttExpansion = (
         exposeSyllabusFor: (syllabusId: string) =>
         {
             setSearchCollapsedIds((prev) => without(prev, syllabusId));
-            setCollapsedSyllabusIds((prev) => without(prev, syllabusId));
+            setCollapsedSyllabusIds((prev) => without(prev ?? defaultCollapsed, syllabusId));
         },
         isModuleExpanded,
         isSyllabusExpanded,
