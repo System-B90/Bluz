@@ -282,3 +282,21 @@
 html[dir="rtl"] .snackbar-container-physical-right {
     align-items: flex-start;
 }
+
+/*
+ * notistack's action slot (the second child of its content) is spaced with
+ * physical `margin-left: auto` and `padding-left: 16px`. Under `dir="rtl"` the
+ * button lands at the physical left of the message with no gap on its text
+ * side, so it overlaps the text. Logical offsets put the gap and the
+ * push-to-the-end on the correct side in both directions. The `html` prefix
+ * outranks notistack's emotion classes, injected after this stylesheet.
+ */
+html .notistack-MuiContent > div:nth-child(2) {
+    margin-left: 0;
+    margin-right: 0;
+    margin-inline-start: auto;
+    margin-inline-end: -8px;
+    padding-left: 0;
+    padding-right: 0;
+    padding-inline-start: 16px;
+}

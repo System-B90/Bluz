@@ -1,5 +1,6 @@
 "use client";
 
+import Button from "@mui/material/Button";
 import { signOut, useSession } from "next-auth/react";
 import { useSnackbar } from "notistack";
 import React, {
@@ -57,7 +58,7 @@ export const AuthProvider = ({
         deregisterSyncObject,
         ws,
     } = useSessionWebSocketContext();
-    const { enqueueSnackbar } = useSnackbar();
+    const { closeSnackbar, enqueueSnackbar } = useSnackbar();
     const { data: session } = useSession();
 
     // next-auth v4 has no public client-side hook for CLIENT_FETCH_ERROR
@@ -115,10 +116,19 @@ export const AuthProvider = ({
         if (degraded) {
             enqueueSnackbar(
                 "הייב אינו זמין כרגע. פועלים במצב מוגבל עם ההתחברות האחרונה שנשמרה.",
-                { variant: "warning", persist: true, preventDuplicate: true },
+                {
+                    variant: "warning",
+                    persist: true,
+                    preventDuplicate: true,
+                    action: (key) => (
+                        <Button color="inherit" onClick={() => closeSnackbar(key)} size="small">
+                            סגירה
+                        </Button>
+                    ),
+                },
             );
         }
-    }, [degraded, enqueueSnackbar]);
+    }, [closeSnackbar, degraded, enqueueSnackbar]);
 
     useEffect(() => {
         const sessionData = session as AuthSessionData | null | undefined;
