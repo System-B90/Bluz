@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
 import { EventRecurrence } from "@/api-shared/types/gantt/models";
 import { buildGridRows, GridPlacement } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-rows";
+import { formatHours, setHoursFormat } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { countRequiredOccurrences } from "@/components/gantt/utils";
 
 /**
@@ -145,5 +146,16 @@ describe("buildGridRows", () => {
         const rows = grid(false);
         expect(rows.map((r) => r.id)).toEqual([ "s1" ]);
         expect(rows[ 0 ].weekMinutes).toEqual([ 180, 60, 60 ]);
+    });
+});
+
+describe("formatHours", () => {
+    afterEach(() => setHoursFormat("decimal"));
+
+    it("renders decimal or clock hours by the viewer's choice", () => {
+        expect(formatHours(45, 2)).toBe("0.75");
+        setHoursFormat("clock");
+        expect([ formatHours(45), formatHours(90), formatHours(605), formatHours(-30), formatHours(0) ])
+            .toEqual([ "0:45", "1:30", "10:05", "-0:30", "0:00" ]);
     });
 });
