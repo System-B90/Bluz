@@ -139,13 +139,16 @@ function GridVerticalLinesToggle()
 /**
  * Gantt page toolbar, inline with the tab names on the opposite side.
  * Folds into a burger menu when the viewport is too narrow.
+ * @param gridTools Show the table-only controls. They do nothing on the other
+ * tabs, so they are shown only while the table (טבלה) tab is open; the hours
+ * format applies to every tab and always stays.
  */
-export function GanttPageToolbar()
+export function GanttPageToolbar({ gridTools }: { gridTools: boolean })
 {
     const narrow = useMediaQuery(useTheme().breakpoints.down("md"));
     const [ anchor, setAnchor ] = useState<HTMLElement | null>(null);
     const divider = <Divider flexItem orientation={ narrow ? "horizontal" : "vertical" } />;
-    const items = (
+    const items = gridTools ? (
         <>
             { /* Row tree, then table layout, then what the numbers count and how they read, then motion. */ }
             <GridExpandAllButton />
@@ -158,7 +161,7 @@ export function GanttPageToolbar()
             { divider }
             <GridAnimationToggle />
         </>
-    );
+    ) : <HoursFormatToggle />;
 
     if (!narrow) return <Stack alignItems="center" direction="row" gap={ 1 }>{ items }</Stack>;
     return (

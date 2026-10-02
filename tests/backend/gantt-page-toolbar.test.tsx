@@ -22,7 +22,7 @@ afterEach(() => {
 describe("GanttPageToolbar", () => {
     it("switches the hour format inline when wide", () => {
         media.narrow = false;
-        render(<GanttPageToolbar />);
+        render(<GanttPageToolbar gridTools />);
         expect(screen.queryByRole("button", { name: "סרגל כלים" })).toBeNull();
         fireEvent.click(screen.getByRole("button", { name: "0:45" }));
         expect(getHoursFormat()).toBe("clock");
@@ -30,9 +30,27 @@ describe("GanttPageToolbar", () => {
 
     it("folds into a burger menu when narrow", () => {
         media.narrow = true;
-        render(<GanttPageToolbar />);
+        render(<GanttPageToolbar gridTools />);
         expect(screen.queryByRole("button", { name: "0:45" })).toBeNull();
         fireEvent.click(screen.getByRole("button", { name: "סרגל כלים" }));
+        fireEvent.click(screen.getByRole("button", { name: "0:45" }));
+        expect(getHoursFormat()).toBe("clock");
+    });
+
+    it("shows the table-only controls on the table tab", () => {
+        media.narrow = false;
+        render(<GanttPageToolbar gridTools />);
+        expect(screen.getByRole("button", { name: "קווים אנכיים בטבלה" })).toBeTruthy();
+        expect(screen.getByRole("button", { name: "התעלמות מהפסקות בסכומי הזמן בטבלה" })).toBeTruthy();
+    });
+
+    it("hides the table-only controls on other tabs but keeps the hour format", () => {
+        media.narrow = false;
+        render(<GanttPageToolbar gridTools={ false } />);
+        for (const name of [ "קווים אנכיים בטבלה", "התעלמות מהפסקות בסכומי הזמן בטבלה", "אנימציית פתיחה וסגירה בטבלה" ]) {
+            expect(screen.queryByRole("button", { name })).toBeNull();
+        }
+        expect(screen.queryByRole("button", { name: /כל השורות/ })).toBeNull();
         fireEvent.click(screen.getByRole("button", { name: "0:45" }));
         expect(getHoursFormat()).toBe("clock");
     });

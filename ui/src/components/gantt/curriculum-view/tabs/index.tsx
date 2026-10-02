@@ -30,6 +30,9 @@ type TabProps = {
 
 const MemoizedCurriculumGanttView = memo(CurriculumGanttView);
 
+/** The table (טבלה) tab: the only one the grid toolbar controls apply to. */
+export const GRID_TAB_INDEX = 3;
+
 export type CurriculumViewTabsProps = {
     curriculumId: GanttCurriculumId | null;
 } & BoxProps &
@@ -67,7 +70,7 @@ function TabLabels({ selectedTabIndex, setSelectedTabIndex }: TabProps) {
                 <Tab label="רצף זמן" />
                 <Tab label="טבלה" />
             </Tabs>
-            <GanttPageToolbar />
+            <GanttPageToolbar gridTools={selectedTabIndex === GRID_TAB_INDEX} />
         </Box>
     );
 }
@@ -106,7 +109,7 @@ function renderTabContent(tabIndex: number, curriculumId: GanttCurriculumId) {
         return <WeeksTab curriculumId={curriculumId} />;
     case 2:
         return <MemoizedCurriculumGanttView curriculumId={curriculumId} />;
-    case 3:
+    case GRID_TAB_INDEX:
         return <MemoizedCurriculumGanttView curriculumId={curriculumId} View={GanttGridView} />;
     default:
         return null;
