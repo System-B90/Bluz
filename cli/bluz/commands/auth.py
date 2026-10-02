@@ -22,7 +22,9 @@ from typing import Any
 import httpx
 import tqdm
 import typer
-from InquirerPy import inquirer
+from InquirerPy.prompts.confirm import ConfirmPrompt
+from InquirerPy.prompts.input import InputPrompt
+from InquirerPy.prompts.secret import SecretPrompt
 
 from bluz.client import BluzClient
 from bluz.config import (
@@ -176,7 +178,7 @@ def _redeem_handoff_code(url: str, handoff_code: str, *, insecure: bool) -> str:
     token = data.get("token") if isinstance(data, dict) else None
     if not token:
         raise BluzApiError("InvalidResponse", "Redeem response carried no token.")
-    return token
+    return str(token)
 
 
 def _shutdown_server(server: AuthHTTPServer, serve_thread: threading.Thread) -> None:
@@ -436,13 +438,13 @@ redeem_handoff_code = _redeem_handoff_code
 
 @app.command()
 def login(
-    url: str = typer.Option(
+    url: str | None = typer.Option(
         None, "--url", help="Bluz base URL, e.g. https://bluz.example.com."
     ),
-    token: str = typer.Option(
+    token: str | None = typer.Option(
         None, "--token", help="next-auth session token (skips the prompt)."
     ),
-    insecure: bool = typer.Option(
+    insecure: bool | None = typer.Option(
         None, "--insecure/--secure", help="Skip TLS verification (self-signed certs)."
     ),
 ) -> None:
@@ -468,7 +470,7 @@ def login(
         insecure = state.explicit_insecure
 
     if not url:
-        url = inquirer.text(
+        url = InputPrompt(
             message="Bluz server URL:",
             default=existing.url or "https://",
         ).execute()
@@ -477,7 +479,7 @@ def login(
     # HTTPS call, and asking only afterwards verified a self-signed cert anyway
     # and failed every automatic login against such a server.
     if insecure is None:
-        insecure = inquirer.confirm(
+        insecure = ConfirmPrompt(
             message="Skip TLS verification (self-signed cert)?",
             default=existing.insecure,
         ).execute()
@@ -497,7 +499,7 @@ def login(
         # What's pasted here is the handoff code shown in the browser tab,
         # not the raw session token -- it still has to be redeemed (#520).
         if not token:
-            handoff_code = inquirer.secret(
+            handoff_code = SecretPrompt(
                 message="Handoff code (leave blank to keep existing):",
             ).execute()
             if handoff_code:
