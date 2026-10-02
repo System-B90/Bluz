@@ -87,6 +87,27 @@ def test_login_saves_config_and_returns_a_session(stub_bluz, sdk, monkeypatch):
     bz.close()
 
 
+def test_instance_login_uses_the_session_url_and_refreshes_it(
+    stub_bluz, sdk, monkeypatch
+):
+    stub = stub_bluz()
+    seen = []
+
+    def fake_login(url, insecure):
+        seen.append(url)
+        return "fresh-token"
+
+    monkeypatch.setattr("bluz.commands.auth.browser_login", fake_login)
+    bz = Bluz(stub.url, "old-token")
+
+    assert bz.login(save=False) is bz
+
+    assert seen == [stub.url]
+    assert bz.url == stub.url
+    assert bz.config.token == "fresh-token"
+    bz.close()
+
+
 def test_login_falls_back_to_a_pasted_handoff_code(stub_bluz, sdk, monkeypatch):
     stub = stub_bluz()
     monkeypatch.setattr("bluz.commands.auth.browser_login", lambda url, insecure: None)
