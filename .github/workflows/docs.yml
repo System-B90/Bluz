@@ -50,8 +50,8 @@ jobs:
       - name: Install Python doc tools
         run: |
           pip install --upgrade pip
-          pip install mkdocs-material mkdocs-typedoc "mkdocs-typer2[mkdocs]"
-          pip install ./cli
+          pip install mkdocs-material mkdocs-typedoc "mkdocs-typer2[mkdocs]" "mkdocstrings[python]"
+          pip install "./cli[excel]"
 
       - name: Build documentation site
         env:

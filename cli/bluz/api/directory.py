@@ -45,7 +45,7 @@ _RESERVATIONS = "/api/reservations"
 class RoomsAPI(Resource):
     """`bz.rooms` — custom (Bluz) and Hive rooms.
 
-    Example:
+    Examples:
         >>> bz.rooms.list().where(source=RoomSource.CUSTOM)
         >>> bz.rooms["Lab 3"]                 # by id or name
         >>> bz.rooms.create("Lab 4", description="2nd floor")
@@ -121,7 +121,7 @@ class RoomsAPI(Resource):
 class CoursesAPI(Resource):
     """`bz.courses` — the course (מסלול / shuffle) tree of an iteration.
 
-    Example:
+    Examples:
         >>> roots = bz.courses.roots()
         >>> bz.courses["Apollo"].children
     """
@@ -316,7 +316,7 @@ class ColorsAPI(Resource):
 class ReservationsAPI(Resource):
     """`bz.reservations` — room bookings.
 
-    Example:
+    Examples:
         >>> bz.reservations.create(bz.rooms["Lab 3"], "2026-11-02T08:00",
         ...     "2026-11-02T10:00", reserver_type="outsider", reserver_id="outsider-1")
     """

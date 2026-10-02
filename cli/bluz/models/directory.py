@@ -66,7 +66,7 @@ class RoomExtendedInfo(BluzModel):
 class Room(BluzModel):
     """A room. `source` says whether it is a Bluz custom room or a Hive room.
 
-    Example:
+    Examples:
         >>> room = bz.rooms["Lab 3"]
         >>> room.reservations(start="2026-11-01", end="2026-11-08")
     """
@@ -114,7 +114,7 @@ class Room(BluzModel):
 class Course(BluzModel):
     """A course (מסלול). Courses form a tree; a leaf course is a shuffle.
 
-    Example:
+    Examples:
         >>> apollo = bz.courses["Apollo"]
         >>> [c.name for c in apollo.children]
     """

@@ -54,7 +54,7 @@ class Bluz:
         events/weeks/days), settings, personal, google, hive, ai,
         student_view, system.
 
-    Example:
+    Examples:
         >>> from bluz import Bluz
         >>> with Bluz() as bz:
         ...     cur = bz.gantt.curriculums["Bis90 2026"]
@@ -131,7 +131,7 @@ class Bluz:
         when prompted. With `save=True` the result is written to the user
         config file, so later `Bluz()` calls — and the CLI — reuse it.
 
-        Example:
+        Examples:
             >>> bz = Bluz.login("https://bluz.example")
             >>> bz.whoami().user
         """
@@ -213,7 +213,7 @@ class Bluz:
 
         Shares this session's connection.
 
-        Example:
+        Examples:
             >>> past = bz.scoped("2026a")
             >>> past.courses.list()
         """

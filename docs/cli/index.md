@@ -10,6 +10,9 @@ and [Rich](https://github.com/Textualize/rich).
 pip install ./cli
 ```
 
+The same `bluz` package is also a typed Python SDK — see
+[Python SDK](../python/index.md) for scripting the server from Python.
+
 ## Authentication
 
 ```bash
@@ -41,16 +44,16 @@ bluz --json events list --start 2026-01-01T00:00:00Z --end 2026-01-08T00:00:00Z
 
 ## Global Options
 
-| Option | Description |
-|---|---|
-| `--json` | Emit raw JSON instead of Rich tables |
-| `--url` | Override the Bluz base URL for one invocation |
-| `--token` | Override the session token for one invocation |
-| `--insecure / --secure` | Toggle TLS verification |
-| `--quiet` / `-q` | Suppress success/warning chatter — only data and errors |
-| `--version` | Print the CLI version |
+| Option                  | Description                                             |
+| ----------------------- | ------------------------------------------------------- |
+| `--json`                | Emit raw JSON instead of Rich tables                    |
+| `--url`                 | Override the Bluz base URL for one invocation           |
+| `--token`               | Override the session token for one invocation           |
+| `--insecure / --secure` | Toggle TLS verification                                 |
+| `--quiet` / `-q`        | Suppress success/warning chatter — only data and errors |
+| `--version`             | Print the CLI version                                   |
 
-Global flags are accepted before *or* after the subcommand, so
+Global flags are accepted before _or_ after the subcommand, so
 `bluz gantt curriculums list --json` and `bluz --json gantt curriculums list`
 are equivalent.
 
@@ -58,7 +61,9 @@ are equivalent.
 
 The following reference is auto-generated from the CLI source code.
 
+<!-- prettier-ignore-start -->
 ::: mkdocs-typer2
     :module: bluz.main
     :name: bluz
     :pretty: true
+<!-- prettier-ignore-end -->

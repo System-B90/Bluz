@@ -74,7 +74,7 @@ def _body(value: Any) -> Any:
 class SettingsAPI(Resource):
     """`bz.settings` — application-wide keyed settings.
 
-    Example:
+    Examples:
         >>> bz.settings.schedule().day_start_time
         >>> bz.settings.set("mealTimes", {"breakfastTime": "07:15", ...})
     """

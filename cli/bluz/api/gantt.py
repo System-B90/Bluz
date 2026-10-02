@@ -182,7 +182,7 @@ class _ReorderMixin(GanttEntityAPI[N]):
 class CurriculumsAPI(GanttEntityAPI[Curriculum]):
     """`bz.gantt.curriculums`.
 
-    Example:
+    Examples:
         >>> cur = bz.gantt.curriculums["Bis90 2026"]
         >>> copy = cur.duplicate(title="Bis90 2026 (draft)")
         >>> plan = bz.gantt.curriculums.cut_plan(cur)
@@ -578,7 +578,7 @@ class DaysAPI(GanttEntityAPI[Day]):
 class GanttAPI:
     """`bz.gantt` — namespaces for every Gantt entity.
 
-    Example:
+    Examples:
         >>> for cur in bz.gantt.curriculums: print(cur.title, len(cur))
     """
 

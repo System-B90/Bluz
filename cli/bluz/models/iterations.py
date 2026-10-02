@@ -46,7 +46,7 @@ class Iteration(BluzModel):
     Exactly one iteration is current — the writable one. Past iterations are
     read-only history.
 
-    Example:
+    Examples:
         >>> it = bz.iterations.current()
         >>> it.curriculum.title
         >>> old = bz.scoped(bz.iterations["2026a"])   # a session reading 2026a
