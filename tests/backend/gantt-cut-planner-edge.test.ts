@@ -45,7 +45,6 @@ function makeEvent(
         title: overrides.id,
         recurrence: EventRecurrence.None,
         minimumDuration: 60,
-        allocatedDuration: 60,
         splitAcrossBreaks: false,
         ...overrides,
     };
@@ -82,7 +81,7 @@ describe("planCut — date anchoring", () => {
                 days,
                 weeks,
                 events: [makeEvent({ id: "e1" })],
-                mappings: [{ eventId: "e1", dayId: "w3d4", sortOrder: 0 }],
+                mappings: [{ eventId: "e1", dayId: "w3d4", sortOrder: 0, allottedMinutes: 60 }],
             }),
         );
         const [occ] = occurrencesOf(plan);
@@ -95,7 +94,7 @@ describe("planCut — date anchoring", () => {
             baseInput({
                 startDate: "2024-01-28", // Sunday
                 events: [makeEvent({ id: "e1" })],
-                mappings: [{ eventId: "e1", dayId: "w1d2", sortOrder: 0 }],
+                mappings: [{ eventId: "e1", dayId: "w1d2", sortOrder: 0, allottedMinutes: 60 }],
             }),
         );
         const [occ] = occurrencesOf(plan);
@@ -111,7 +110,7 @@ describe("planCut — date anchoring", () => {
                 days,
                 weeks,
                 events: [makeEvent({ id: "e1" })],
-                mappings: [{ eventId: "e1", dayId: "w1d4", sortOrder: 0 }],
+                mappings: [{ eventId: "e1", dayId: "w1d4", sortOrder: 0, allottedMinutes: 60 }],
             }),
         );
         const [occ] = occurrencesOf(plan);
@@ -125,8 +124,8 @@ describe("planCut — stacking & durations", () => {
         const plan = planCut(
             baseInput({
                 dayStartTime: "10:45",
-                events: [makeEvent({ id: "e1", allocatedDuration: 30 })],
-                mappings: [{ eventId: "e1", dayId: "w0d0", sortOrder: 0 }],
+                events: [makeEvent({ id: "e1" })],
+                mappings: [{ eventId: "e1", dayId: "w0d0", sortOrder: 0, allottedMinutes: 30 }],
             }),
         );
         const [occ] = occurrencesOf(plan);
@@ -137,7 +136,7 @@ describe("planCut — stacking & durations", () => {
     it("stacks many events back-to-back with mixed durations, no gaps or overlaps", () => {
         const durations = [45, 90, 30, 120];
         const events = durations.map((minutes, i) =>
-            makeEvent({ id: `e${i}`, allocatedDuration: minutes }),
+            makeEvent({ id: `e${i}` }),
         );
         const plan = planCut(
             baseInput({
@@ -146,6 +145,7 @@ describe("planCut — stacking & durations", () => {
                     eventId: e.id,
                     dayId: "w0d0",
                     sortOrder: i,
+                    allottedMinutes: durations[i],
                 })),
             }),
         );
@@ -167,12 +167,12 @@ describe("planCut — stacking & durations", () => {
         const plan = planCut(
             baseInput({
                 events: [
-                    makeEvent({ id: "a", allocatedDuration: 600 }),
-                    makeEvent({ id: "b", allocatedDuration: 60 }),
+                    makeEvent({ id: "a" }),
+                    makeEvent({ id: "b" }),
                 ],
                 mappings: [
-                    { eventId: "a", dayId: "w0d0", sortOrder: 0 },
-                    { eventId: "b", dayId: "w0d1", sortOrder: 0 },
+                    { eventId: "a", dayId: "w0d0", sortOrder: 0, allottedMinutes: 600 },
+                    { eventId: "b", dayId: "w0d1", sortOrder: 0, allottedMinutes: 60 },
                 ],
             }),
         );
@@ -183,16 +183,16 @@ describe("planCut — stacking & durations", () => {
         expect(byId.b.occurrenceDate).toBe("2024-01-08");
     });
 
-    it("uses minimumDuration when allocatedDuration is 0 and allocated when set", () => {
+    it("runs each mapping for its allotted minutes, regardless of minimumDuration", () => {
         const plan = planCut(
             baseInput({
                 events: [
-                    makeEvent({ id: "fallback", allocatedDuration: 0, minimumDuration: 25 }),
-                    makeEvent({ id: "allocated", allocatedDuration: 200, minimumDuration: 25 }),
+                    makeEvent({ id: "short", minimumDuration: 25 }),
+                    makeEvent({ id: "allocated", minimumDuration: 25 }),
                 ],
                 mappings: [
-                    { eventId: "fallback", dayId: "w0d0", sortOrder: 0 },
-                    { eventId: "allocated", dayId: "w0d1", sortOrder: 0 },
+                    { eventId: "short", dayId: "w0d0", sortOrder: 0, allottedMinutes: 10 },
+                    { eventId: "allocated", dayId: "w0d1", sortOrder: 0, allottedMinutes: 200 },
                 ],
             }),
         );
@@ -202,7 +202,7 @@ describe("planCut — stacking & durations", () => {
                 (o.endTime.getTime() - o.startTime.getTime()) / 60_000,
             ]),
         );
-        expect(byId.fallback).toBe(25);
+        expect(byId.short).toBe(10);
         expect(byId.allocated).toBe(200);
     });
 });
@@ -213,9 +213,9 @@ describe("planCut — multiple mappings per event", () => {
             baseInput({
                 events: [makeEvent({ id: "e1" })],
                 mappings: [
-                    { eventId: "e1", dayId: "w0d0", sortOrder: 0 },
-                    { eventId: "e1", dayId: "w0d3", sortOrder: 1 },
-                    { eventId: "e1", dayId: "w1d1", sortOrder: 2 },
+                    { eventId: "e1", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 },
+                    { eventId: "e1", dayId: "w0d3", sortOrder: 1, allottedMinutes: 60 },
+                    { eventId: "e1", dayId: "w1d1", sortOrder: 2, allottedMinutes: 60 },
                 ],
             }),
         );
@@ -237,7 +237,7 @@ describe("planCut — recurrence", () => {
                 events: [
                     makeEvent({ id: "daily", recurrence: EventRecurrence.Daily }),
                 ],
-                mappings: [{ eventId: "daily", dayId: "w0d0", sortOrder: 0 }],
+                mappings: [{ eventId: "daily", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 }],
             }),
         );
         const occurrences = occurrencesOf(plan);
@@ -257,7 +257,7 @@ describe("planCut — recurrence", () => {
                 events: [
                     makeEvent({ id: "weekly", recurrence: EventRecurrence.Weekly }),
                 ],
-                mappings: [{ eventId: "weekly", dayId: "w0d2", sortOrder: 0 }],
+                mappings: [{ eventId: "weekly", dayId: "w0d2", sortOrder: 0, allottedMinutes: 60 }],
             }),
         );
         const occurrences = occurrencesOf(plan);
@@ -275,7 +275,7 @@ describe("planCut — recurrence", () => {
                 events: [
                     makeEvent({ id: "daily", recurrence: EventRecurrence.Daily }),
                 ],
-                mappings: [{ eventId: "daily", dayId: "w0d0", sortOrder: 0 }],
+                mappings: [{ eventId: "daily", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 }],
                 recurrenceExceptions: [
                     { eventId: "daily", dayId: "w0d3" },
                     { eventId: "daily", dayId: "w1d5" },
@@ -296,8 +296,8 @@ describe("planCut — recurrence", () => {
                     makeEvent({ id: "b", recurrence: EventRecurrence.Daily }),
                 ],
                 mappings: [
-                    { eventId: "a", dayId: "w0d0", sortOrder: 0 },
-                    { eventId: "b", dayId: "w0d0", sortOrder: 1 },
+                    { eventId: "a", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 },
+                    { eventId: "b", dayId: "w0d0", sortOrder: 1, allottedMinutes: 60 },
                 ],
                 recurrenceExceptions: [{ eventId: "a", dayId: "w0d1" }],
             }),
@@ -313,12 +313,12 @@ describe("planCut — recurrence", () => {
         const plan = planCut(
             baseInput({
                 events: [
-                    makeEvent({ id: "daily", recurrence: EventRecurrence.Daily, allocatedDuration: 30 }),
-                    makeEvent({ id: "own", allocatedDuration: 45 }),
+                    makeEvent({ id: "daily", recurrence: EventRecurrence.Daily }),
+                    makeEvent({ id: "own" }),
                 ],
                 mappings: [
-                    { eventId: "daily", dayId: "w0d0", sortOrder: 0 },
-                    { eventId: "own", dayId: "w0d1", sortOrder: 0 },
+                    { eventId: "daily", dayId: "w0d0", sortOrder: 0, allottedMinutes: 30 },
+                    { eventId: "own", dayId: "w0d1", sortOrder: 0, allottedMinutes: 45 },
                 ],
             }),
         );
@@ -347,9 +347,9 @@ describe("planCut — recurrence", () => {
                 makeEvent({ id: "own" }),
             ],
             mappings: [
-                { eventId: "b-daily", dayId: "w0d0", sortOrder: 0 },
-                { eventId: "a-daily", dayId: "w0d0", sortOrder: 1 },
-                { eventId: "own", dayId: "w0d2", sortOrder: 0 },
+                { eventId: "b-daily", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 },
+                { eventId: "a-daily", dayId: "w0d0", sortOrder: 1, allottedMinutes: 60 },
+                { eventId: "own", dayId: "w0d2", sortOrder: 0, allottedMinutes: 60 },
             ],
         });
         const first = occurrencesOf(planCut(input));
@@ -374,7 +374,7 @@ describe("planCut — recurrence", () => {
                         recurrenceStartDate: "2024-01-14",
                     }),
                 ],
-                mappings: [{ eventId: "weekly", dayId: "w1d0", sortOrder: 0 }],
+                mappings: [{ eventId: "weekly", dayId: "w1d0", sortOrder: 0, allottedMinutes: 60 }],
             }),
         );
         expect(plan.ok).toBe(true);
@@ -391,7 +391,7 @@ describe("planCut — recurrence", () => {
                         recurrenceStartDate: "2024-01-07",
                     }),
                 ],
-                mappings: [{ eventId: "daily", dayId: "w1d0", sortOrder: 0 }],
+                mappings: [{ eventId: "daily", dayId: "w1d0", sortOrder: 0, allottedMinutes: 60 }],
             }),
         );
         expect(plan.ok).toBe(false);
@@ -410,7 +410,7 @@ describe("planCut — validation & robustness", () => {
         const plan = planCut(
             baseInput({
                 events: [makeEvent({ id: "e1", title: "מנותק" })],
-                mappings: [{ eventId: "e1", dayId: "ghost-day", sortOrder: 0 }],
+                mappings: [{ eventId: "e1", dayId: "ghost-day", sortOrder: 0, allottedMinutes: 60 }],
             }),
         );
         expect(plan.ok).toBe(false);
@@ -425,7 +425,7 @@ describe("planCut — validation & robustness", () => {
             baseInput({
                 events: [makeEvent({ id: "e1" })],
                 mappings: [
-                    { eventId: "e1", dayId: "w0d0", sortOrder: 0 },
+                    { eventId: "e1", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 },
                     { eventId: "ghost-event", dayId: "w0d1", sortOrder: 0 },
                 ],
             }),
@@ -458,7 +458,7 @@ describe("planCut — validation & robustness", () => {
                 events: [
                     makeEvent({ id: "late", title: "מאחר", recurrence: EventRecurrence.Weekly }),
                 ],
-                mappings: [{ eventId: "late", dayId: "w1d0", sortOrder: 0 }],
+                mappings: [{ eventId: "late", dayId: "w1d0", sortOrder: 0, allottedMinutes: 60 }],
             }),
         );
         expect(plan.ok).toBe(false);

@@ -83,7 +83,6 @@ function makeEvent(
         title: overrides.id,
         recurrence: EventRecurrence.None,
         minimumDuration: 60,
-        allocatedDuration: 60,
         splitAcrossBreaks: false,
         type: ModuleEventType.Lecture,
         ...overrides,
@@ -168,13 +167,13 @@ describe("cut — day capacity", () => {
                     makeEvent({
                         id: `e${n}`,
                         minimumDuration: 120,
-                        allocatedDuration: 120,
                     }),
                 ),
                 mappings: [1, 2, 3].map((n) => ({
                     eventId: `e${n}`,
                     dayId: "w0d0",
                     sortOrder: n,
+                    allottedMinutes: 120,
                 })),
             }),
             { insertBreaks: false },
@@ -204,10 +203,9 @@ describe("cut — day capacity", () => {
                     makeEvent({
                         id: "long",
                         minimumDuration: 360,
-                        allocatedDuration: 360,
                     }),
                 ],
-                mappings: [{ eventId: "long", dayId: "w0d0", sortOrder: 0 }],
+                mappings: [{ eventId: "long", dayId: "w0d0", sortOrder: 0, allottedMinutes: 360 }],
             }),
             { insertBreaks: false },
         );
@@ -230,13 +228,13 @@ describe("cut — day capacity", () => {
                     makeEvent({
                         id: `e${n}`,
                         minimumDuration: 300,
-                        allocatedDuration: 300,
                     }),
                 ),
                 mappings: [1, 2, 3].map((n) => ({
                     eventId: `e${n}`,
                     dayId: "w0d0",
                     sortOrder: n,
+                    allottedMinutes: 300,
                 })),
             }),
         );
@@ -477,13 +475,13 @@ describe("cut — auto spillover", () => {
                 makeEvent({
                     id: `e${n}`,
                     minimumDuration: 120,
-                    allocatedDuration: 120,
                 }),
             ),
             mappings: [1, 2, 3, 4].map((n) => ({
                 eventId: `e${n}`,
                 dayId: "w0d0",
                 sortOrder: n,
+                allottedMinutes: 120,
             })),
             ...extra,
         });
@@ -547,13 +545,13 @@ describe("cut — auto spillover", () => {
                     makeEvent({
                         id: `e${n}`,
                         minimumDuration: 120,
-                        allocatedDuration: 120,
                     }),
                 ),
                 mappings: [1, 2, 3, 4].map((n) => ({
                     eventId: `e${n}`,
                     dayId: "w0d0",
                     sortOrder: n,
+                    allottedMinutes: 120,
                 })),
             }),
             { insertBreaks: false },
@@ -583,19 +581,16 @@ describe("cut — auto spillover", () => {
                         id: "lunch",
                         title: MEAL_EVENT_TITLES.lunchTime,
                         minimumDuration: 30,
-                        allocatedDuration: 30,
                     }),
-                    makeEvent({ id: "e1", minimumDuration: 90, allocatedDuration: 90 }),
+                    makeEvent({ id: "e1", minimumDuration: 90 }),
                     makeEvent({
                         id: "e2",
                         minimumDuration: 120,
-                        allocatedDuration: 120,
                         splitAcrossBreaks: true,
                     }),
                     makeEvent({
                         id: "e3",
                         minimumDuration: 120,
-                        allocatedDuration: 120,
                         splitAcrossBreaks: true,
                     }),
                 ],
@@ -603,6 +598,7 @@ describe("cut — auto spillover", () => {
                     eventId: id,
                     dayId: "w0d0",
                     sortOrder: n,
+                    allottedMinutes: [30, 90, 120, 120][n],
                 })),
             }),
             { insertBreaks: false, autoSpillover: false },
@@ -634,15 +630,15 @@ describe("cut — auto spillover", () => {
                         id: "breakfast",
                         title: MEAL_EVENT_TITLES.breakfastTime,
                         minimumDuration: 30,
-                        allocatedDuration: 30,
                     }),
-                    makeEvent({ id: "e1", minimumDuration: 120, allocatedDuration: 120 }),
-                    makeEvent({ id: "e2", minimumDuration: 120, allocatedDuration: 120 }),
+                    makeEvent({ id: "e1", minimumDuration: 120 }),
+                    makeEvent({ id: "e2", minimumDuration: 120 }),
                 ],
                 mappings: ["breakfast", "e1", "e2"].map((id, n) => ({
                     eventId: id,
                     dayId: "w0d0",
                     sortOrder: n,
+                    allottedMinutes: [30, 120, 120][n],
                 })),
             }),
             { insertBreaks: false, autoSpillover: false },
@@ -662,13 +658,13 @@ describe("cut — auto spillover", () => {
                 makeEvent({
                     id: `e${n}`,
                     minimumDuration: 120,
-                    allocatedDuration: 120,
                 }),
             ),
             mappings: [1, 2, 3].map((n) => ({
                 eventId: `e${n}`,
                 dayId: "w0d0",
                 sortOrder: n,
+                allottedMinutes: 120,
             })),
         });
 
@@ -695,17 +691,15 @@ describe("cut — auto spillover", () => {
                         id: "daily",
                         recurrence: EventRecurrence.Daily,
                         minimumDuration: 60,
-                        allocatedDuration: 60,
                     }),
                     makeEvent({
                         id: "filler",
                         minimumDuration: 120,
-                        allocatedDuration: 120,
                     }),
                 ],
                 mappings: [
-                    { eventId: "daily", dayId: "w0d0", sortOrder: 0 },
-                    { eventId: "filler", dayId: "w0d0", sortOrder: 1 },
+                    { eventId: "daily", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 },
+                    { eventId: "filler", dayId: "w0d0", sortOrder: 1, allottedMinutes: 120 },
                 ],
             }),
             { insertBreaks: false },
@@ -735,22 +729,21 @@ describe("cut — auto spillover", () => {
                         id: "lunch",
                         title: MEAL_EVENT_TITLES.lunchTime,
                         minimumDuration: 90,
-                        allocatedDuration: 90,
                     }),
                     ...[1, 2, 3].map((n) =>
                         makeEvent({
                             id: `e${n}`,
                             minimumDuration: 120,
-                            allocatedDuration: 120,
                         }),
                     ),
                 ],
                 mappings: [
-                    { eventId: "lunch", dayId: "w0d0", sortOrder: 0 },
+                    { eventId: "lunch", dayId: "w0d0", sortOrder: 0, allottedMinutes: 90 },
                     ...[1, 2, 3].map((n) => ({
                         eventId: `e${n}`,
                         dayId: "w0d0",
                         sortOrder: n,
+                        allottedMinutes: 120,
                     })),
                 ],
             }),
@@ -776,13 +769,13 @@ describe("cut — auto spillover", () => {
                     makeEvent({
                         id: `e${n}`,
                         minimumDuration: 120,
-                        allocatedDuration: 120,
                     }),
                 ),
                 mappings: [1, 2, 3].map((n) => ({
                     eventId: `e${n}`,
                     dayId: "w0d0",
                     sortOrder: n,
+                    allottedMinutes: 120,
                 })),
             }),
             { insertBreaks: false },
@@ -1068,7 +1061,6 @@ describe("cut — break post-pass end to end", () => {
                 makeEvent({
                     id: `e${n}`,
                     minimumDuration: 60,
-                    allocatedDuration: 60,
                     syllabusId: `s${n}`,
                 }),
             ),
@@ -1076,6 +1068,7 @@ describe("cut — break post-pass end to end", () => {
                 eventId: `e${n}`,
                 dayId: "w0d0",
                 sortOrder: n,
+                allottedMinutes: 60,
             })),
         });
     };
@@ -1420,8 +1413,8 @@ describe("cut — constraints end to end", () => {
                 makeEvent({ id: "e2" }),
             ],
             mappings: [
-                { eventId: "e1", dayId: "w0d0", sortOrder: 0 },
-                { eventId: "e2", dayId: "w0d0", sortOrder: 1 },
+                { eventId: "e1", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 },
+                { eventId: "e2", dayId: "w0d0", sortOrder: 1, allottedMinutes: 60 },
             ],
         });
     };
@@ -1491,7 +1484,7 @@ describe("cut — decisions", () => {
                 days,
                 weeks,
                 events: [makeEvent({ id: "e1" })],
-                mappings: [{ eventId: "e1", dayId: "w0d0", sortOrder: 0 }],
+                mappings: [{ eventId: "e1", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 }],
             }),
         );
 
@@ -1513,13 +1506,13 @@ describe("cut — decisions", () => {
                     makeEvent({
                         id: `e${n}`,
                         minimumDuration: 60,
-                        allocatedDuration: 60,
                     }),
                 ),
                 mappings: [1, 2, 3].map((n) => ({
                     eventId: `e${n}`,
                     dayId: "w1d0",
                     sortOrder: n,
+                    allottedMinutes: 60,
                 })),
             }),
             { insertBreaks: false },

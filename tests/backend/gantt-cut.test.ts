@@ -245,7 +245,7 @@ describe("buildCutPlanInput", () => {
             curriculum,
             mappings: [
                 { eventId: null, dayId: "w0d0", sortOrder: 0 }, // module-only → dropped
-                { eventId: "e1", dayId: "w0d0", sortOrder: 3 },
+                { eventId: "e1", dayId: "w0d0", sortOrder: 3, allottedMinutes: 90 },
             ],
             exceptions: [{ eventId: "e1", dayId: "w1d1" }],
             dayStartTime: "09:30",
@@ -253,8 +253,7 @@ describe("buildCutPlanInput", () => {
 
         expect(input.weeks.map((w) => w.id)).toEqual(["w0", "w1"]);
         expect(input.weeks[0].dayIds).toEqual(["w0d0", "w0d1", "w0d2", "w0d3", "w0d4", "w0d5", "w0d6"]);
-        expect(input.mappings).toEqual([{ eventId: "e1", dayId: "w0d0", sortOrder: 3, weekSplitMinutes: [] }]);
-        expect(input.events[0].allocatedDuration).toBe(90);
+        expect(input.mappings).toEqual([{ eventId: "e1", dayId: "w0d0", sortOrder: 3, allottedMinutes: 90 }]);
         expect(input.recurrenceExceptions).toEqual([{ eventId: "e1", dayId: "w1d1" }]);
         expect(input.dayStartTime).toBe("09:30");
         expect(input.startDate).toBe("2024-01-07");
@@ -485,7 +484,7 @@ describe("cutCurriculumToSchedule", () => {
         vi.mocked(DbCurriculum.getItem).mockResolvedValue(makeCurriculum([makeEvent({ id: "e1" })]));
         vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(makeIteration());
         vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([
-            { dayId: "w0d0", eventId: "e1", sortOrder: 0 },
+            { dayId: "w0d0", eventId: "e1", sortOrder: 0, allottedMinutes: 60 },
         ] as any);
 
         const outcome = await cutCurriculumToSchedule("c1");
@@ -521,7 +520,7 @@ describe("cutCurriculumToSchedule", () => {
             makeCurriculum([makeEvent({ id: "e1", allocatedDuration: 0, cEC: [{ eventId: "e1", curriculumId: "c1", allocatedDuration: 60 }] })]),
         );
         vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(makeIteration());
-        vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([{ eventId: "e1", dayId: "w0d0", sortOrder: 0 }]);
+        vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([{ eventId: "e1", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 }]);
 
         const outcome = await cutCurriculumToSchedule("c1");
         expect(outcome.ok).toBe(true);
@@ -540,7 +539,7 @@ describe("cutCurriculumToSchedule", () => {
             makeCurriculum([makeEvent({ id: "e1", shuffles: ["מחלקה א"], cEC: [{ eventId: "e1", curriculumId: "c1", allocatedDuration: 60 }] })]),
         );
         vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(makeIteration());
-        vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([{ eventId: "e1", dayId: "w0d0", sortOrder: 0 }]);
+        vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([{ eventId: "e1", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 }]);
         vi.mocked(DbCourses.get).mockResolvedValue([]);
 
         const outcome = await cutCurriculumToSchedule("c1");
@@ -570,7 +569,7 @@ describe("cutCurriculumToSchedule", () => {
             (curriculum.c2s![0].syllabus as any).courseIds = courseIds;
             vi.mocked(DbCurriculum.getItem).mockResolvedValue(curriculum);
             vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(makeIteration());
-            vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([{ eventId: "e1", dayId: "w0d0", sortOrder: 0 }]);
+            vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([{ eventId: "e1", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 }]);
             vi.mocked(DbCourses.get).mockResolvedValue(hierarchy);
 
             const outcome = await cutCurriculumToSchedule("c1");
@@ -606,7 +605,7 @@ describe("cutCurriculumToSchedule", () => {
             syllabus.s2m[0].module.shuffles = chain.moduleShuffles;
             vi.mocked(DbCurriculum.getItem).mockResolvedValue(curriculum);
             vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(makeIteration());
-            vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([{ eventId: "e1", dayId: "w0d0", sortOrder: 0 }]);
+            vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([{ eventId: "e1", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 }]);
             vi.mocked(DbCourses.get).mockResolvedValue([
                 { id: "course-a", name: "A", color: null },
                 { id: "course-b", name: "B", color: null },
@@ -705,7 +704,7 @@ describe("cut — Hive subject fallback", () => {
         vi.mocked(DbCurriculum.getItem).mockResolvedValue(moduleLinkedCurriculum());
         vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(makeIteration());
         vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([
-            { dayId: "w0d0", eventId: "e1", sortOrder: 0 },
+            { dayId: "w0d0", eventId: "e1", sortOrder: 0, allottedMinutes: 60 },
         ] as any);
     };
 
@@ -762,7 +761,7 @@ describe("cut — Hive subject fallback", () => {
         );
         vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(makeIteration());
         vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([
-            { dayId: "w0d0", eventId: "e1", sortOrder: 0 },
+            { dayId: "w0d0", eventId: "e1", sortOrder: 0, allottedMinutes: 60 },
         ] as any);
         getModules.mockRejectedValue(new Error("hive down"));
 
