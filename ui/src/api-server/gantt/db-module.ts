@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 
 import { postgresDb } from "@/api-server/gantt";
 import {
@@ -13,18 +13,11 @@ import {
     ganttModulesSchema,
     ganttSyllabus2ModulesSchema,
 } from "@/api-server/gantt/schema";
-import { ganttCurriculumEventConfigurationsSchema } from "@/api-server/gantt/schema/mappings";
 import { M2E_ORDER, nextModuleSortOrder } from "@/api-server/gantt/sort-order";
 import { ClientApiError } from "@/api-shared/errors";
-import {
-    AllocateTimeToEventCallback,
-    allocateTimeToModule,
-    AllocateTimeToModuleCallbackModuleEvents,
-} from "@/api-shared/gantt/allocate-time";
 import { ApiModule } from "@/api-shared/types/gantt/api-layer";
 import { CreateGanttModulePayload } from "@/api-shared/types/gantt/create-payloads";
 import {
-    GanttCurriculumId,
     GanttEventId,
     GanttModule,
     GanttModuleId,
@@ -61,11 +54,7 @@ async function getFullModule(id: GanttModuleId): Promise<ApiModule> {
             m2e: {
                 orderBy: M2E_ORDER,
                 with: {
-                    event: {
-                        with: {
-                            cEC: true,
-                        },
-                    },
+                    event: true,
                 },
             },
         },
@@ -131,107 +120,6 @@ async function removeModuleFromSyllabus(
     }
 }
 
-async function setAllocatedTime(
-    moduleId: GanttModuleId,
-    curriculumId: GanttCurriculumId,
-    duration: number,
-): Promise<void> {
-    // One module's allocation is one decision spread over an upsert per event.
-    // Untransacted, a failure partway left the module's events holding a
-    // half-applied split that adds up to the wrong total (#538 item 3). The
-    // read joins the transaction too, so the split is computed from the rows
-    // it is about to write.
-    await postgresDb.transaction(async (tx) => {
-        const moduleToEventsData =
-            await tx.query.ganttModule2EventsSchema.findMany({
-                where: eq(ganttModule2EventsSchema.moduleId, moduleId),
-                with: {
-                    event: { columns: { id: true, minimumDuration: true } },
-                },
-                orderBy: [asc(ganttModule2EventsSchema.eventId)],
-            });
-
-        const callback: AllocateTimeToEventCallback = async ({
-            eventId,
-            curriculumId,
-            duration,
-        }) => {
-            await tx
-                .insert(ganttCurriculumEventConfigurationsSchema)
-                .values({
-                    curriculumId,
-                    eventId: eventId,
-                    allocatedDuration: duration,
-                    updatedAt: new Date(),
-                })
-                .onConflictDoUpdate({
-                    target: [
-                        ganttCurriculumEventConfigurationsSchema.curriculumId,
-                        ganttCurriculumEventConfigurationsSchema.eventId,
-                    ],
-                    set: {
-                        allocatedDuration: duration,
-                        updatedAt: new Date(),
-                    },
-                });
-        };
-
-        const moduleEvents = moduleToEventsData.reduce(
-            (prev, curr) => ({ ...prev, [curr.event.id]: curr.event }),
-            {} as AllocateTimeToModuleCallbackModuleEvents,
-        );
-
-        await allocateTimeToModule({
-            module: {
-                id: moduleId,
-                events: moduleToEventsData.map((e) => e.eventId),
-            },
-            totalDuration: duration,
-            curriculumId,
-            allocateToEventCallback: callback,
-            moduleEvents,
-        });
-    });
-}
-
-async function getAllocatedTime(
-    moduleId: GanttModuleId,
-    curriculumId: GanttCurriculumId,
-): Promise<number> {
-    const moduleData = await postgresDb.query.ganttModulesSchema.findFirst({
-        where: eq(ganttModulesSchema.id, moduleId),
-        with: {
-            m2e: {
-                with: {
-                    event: {
-                        with: {
-                            cEC: {
-                                where: eq(
-                                    ganttCurriculumEventConfigurationsSchema.curriculumId,
-                                    curriculumId,
-                                ),
-                            },
-                        },
-                    },
-                },
-            },
-        },
-    });
-
-    if (!moduleData) {
-        return 0;
-    }
-
-    const total = moduleData.m2e.reduce((acc, link) => {
-        const config = link.event.cEC[0];
-        const duration = config?.allocatedDuration ?? 0;
-
-        return acc + duration;
-    }, 0);
-
-    return total;
-}
-
 async function reorderEvents(
     moduleId: GanttModuleId,
     eventIds: Array<GanttEventId>,
@@ -264,7 +152,5 @@ export const DbModule = {
     ...basicOperations,
     linkItem: addModuleToSyllabus,
     unlinkItem: removeModuleFromSyllabus,
-    setAllocatedTime,
-    getAllocatedTime,
     reorderEvents,
 } as const;

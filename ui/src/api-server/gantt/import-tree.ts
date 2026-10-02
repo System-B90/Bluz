@@ -5,7 +5,6 @@ import { sanitizeCreatePayload } from "@/api-server/gantt/db-base";
 import {
     ganttConstraintsSchema,
     ganttCurriculum2SyllabusesSchema,
-    ganttCurriculumEventConfigurationsSchema,
     ganttEventsSchema,
     ganttModule2EventsSchema,
     ganttModulesSchema,
@@ -46,7 +45,7 @@ export function junctionSortOrder(link: unknown): number {
 /**
  * Builds an insert row for an exported entity: every real column of the
  * target table is carried over (recurrence, shuffles, lecturers, room
- * requirements, …), relational/junction fields (`s2m`, `m2e`, `cEC`) are
+ * requirements, …), relational/junction fields (`s2m`, `m2e`) are
  * dropped by the column filter, enums are validated (bad value → 400), and the
  * server-owned id/timestamps are replaced.
  */
@@ -84,21 +83,19 @@ export function countSyllabusNodes(syllabus: ApiSyllabus | undefined): number {
 
 /**
  * Copies `source` (an exported syllabus tree) under `curriculumId` with fresh
- * ids. Allocated durations come from the config the export held for
- * `sourceCurriculumId`. Returns the new syllabus id.
+ * ids. Returns the new syllabus id.
  */
 export async function importSyllabusTree(
     tx: ImportTx,
     source: ApiSyllabus,
     options: {
         curriculumId: string;
-        sourceCurriculumId: string | undefined;
         now: Date;
         maps: ImportIdMaps;
         titleSuffix?: string;
     },
 ): Promise<string> {
-    const { curriculumId, sourceCurriculumId, now, maps, titleSuffix } = options;
+    const { curriculumId, now, maps, titleSuffix } = options;
     const newSyllabusId = `s_${crypto.randomUUID()}`;
     const row = importRow(ganttSyllabusesSchema, source, "סילבוס", newSyllabusId, now);
     if (titleSuffix) row.title = `${source.title}${titleSuffix}`;
@@ -164,19 +161,6 @@ export async function importSyllabusTree(
                 moduleId: newModuleId,
                 eventId: newEventId,
                 sortOrder: junctionSortOrder(m2eItem),
-            });
-
-            if (!Array.isArray(oldEvent.cEC)) continue;
-            const originalConfig = oldEvent.cEC.find(
-                (cfg: { curriculumId: string }) =>
-                    cfg.curriculumId === sourceCurriculumId,
-            );
-            if (!originalConfig) continue;
-            await tx.insert(ganttCurriculumEventConfigurationsSchema).values({
-                curriculumId,
-                eventId: newEventId,
-                allocatedDuration: originalConfig.allocatedDuration || 0,
-                updatedAt: now,
             });
         }
     }

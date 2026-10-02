@@ -6,9 +6,6 @@ vi.mock("@/api-server/gantt", () => ({
             ganttEventsSchema: {
                 findFirst: vi.fn(),
             },
-            ganttCurriculumEventConfigurationsSchema: {
-                findFirst: vi.fn(),
-            },
         },
         insert: vi.fn(),
         delete: vi.fn(),
@@ -105,13 +102,10 @@ describe("Gantt DB Module Event - Failure Paths", () => {
             );
         });
 
-        it("returns event with related configurations", async () => {
+        it("returns the event", async () => {
             const mockEvent = {
                 id: "e1",
                 title: "Event 1",
-                cEC: [
-                    { eventId: "e1", curriculumId: "curr1", allocatedDuration: 100 },
-                ],
             };
 
             vi.mocked(postgresDb.query.ganttEventsSchema.findFirst).mockResolvedValueOnce(
@@ -121,7 +115,7 @@ describe("Gantt DB Module Event - Failure Paths", () => {
             const result = await DbModuleEvent.getItem("e1");
 
             expect(result.id).toBe("e1");
-            expect(result.cEC).toBeDefined();
+            expect(result.title).toBe("Event 1");
         });
 
         it("throws ClientApiError for an empty event ID (not found)", async () => {
@@ -244,104 +238,4 @@ describe("Gantt DB Module Event - Failure Paths", () => {
         });
     });
 
-    describe("getAllocatedTime", () => {
-        it("returns 0 when no allocation found", async () => {
-            vi.mocked(
-                postgresDb.query.ganttCurriculumEventConfigurationsSchema.findFirst
-            ).mockResolvedValueOnce(null);
-
-            const result = await DbModuleEvent.getAllocatedTime("e1", "curr1");
-
-            expect(result).toBe(0);
-        });
-
-        it("throws error when database query fails", async () => {
-            const dbError = new Error("Query failed");
-            vi.mocked(
-                postgresDb.query.ganttCurriculumEventConfigurationsSchema.findFirst
-            ).mockRejectedValueOnce(dbError);
-
-            await expect(
-                DbModuleEvent.getAllocatedTime("e1", "curr1")
-            ).rejects.toThrow("Query failed");
-        });
-
-        it("returns allocated duration when found", async () => {
-            vi.mocked(
-                postgresDb.query.ganttCurriculumEventConfigurationsSchema.findFirst
-            ).mockResolvedValueOnce({
-                allocatedDuration: 250,
-            });
-
-            const result = await DbModuleEvent.getAllocatedTime("e1", "curr1");
-
-            expect(result).toBe(250);
-        });
-
-        it("handles null allocated duration", async () => {
-            vi.mocked(
-                postgresDb.query.ganttCurriculumEventConfigurationsSchema.findFirst
-            ).mockResolvedValueOnce({
-                allocatedDuration: null,
-            });
-
-            const result = await DbModuleEvent.getAllocatedTime("e1", "curr1");
-
-            expect(result).toBe(0);
-        });
-    });
-
-    describe("setAllocatedTime", () => {
-        it("throws error when database insert fails", async () => {
-            const dbError = new Error("Insert failed");
-            vi.mocked(postgresDb.insert).mockReturnValue(createChain(dbError, true));
-
-            await expect(
-                DbModuleEvent.setAllocatedTime("e1", "curr1", 100)
-            ).rejects.toThrow("Insert failed");
-        });
-
-        it("sets allocated duration successfully", async () => {
-            vi.mocked(postgresDb.insert).mockReturnValue(createChain(undefined));
-
-            await expect(
-                DbModuleEvent.setAllocatedTime("e1", "curr1", 200)
-            ).resolves.toBeUndefined();
-        });
-
-        it("handles zero duration", async () => {
-            vi.mocked(postgresDb.insert).mockReturnValue(createChain(undefined));
-
-            await expect(
-                DbModuleEvent.setAllocatedTime("e1", "curr1", 0)
-            ).resolves.toBeUndefined();
-        });
-
-        it("handles negative duration", async () => {
-            vi.mocked(postgresDb.insert).mockReturnValue(createChain(undefined));
-
-            await expect(
-                DbModuleEvent.setAllocatedTime("e1", "curr1", -100)
-            ).resolves.toBeUndefined();
-        });
-
-        it("updates allocated time on conflict", async () => {
-            const chain = createChain(undefined);
-            vi.mocked(postgresDb.insert).mockReturnValue(chain);
-
-            await DbModuleEvent.setAllocatedTime("e1", "curr1", 300);
-
-            expect(chain.onConflictDoUpdate).toHaveBeenCalled();
-        });
-    });
-
-    describe("Edge Cases", () => {
-        it("handles very long allocated duration", async () => {
-            vi.mocked(postgresDb.insert).mockReturnValue(createChain(undefined));
-
-            await expect(
-                DbModuleEvent.setAllocatedTime("e1", "curr1", Number.MAX_SAFE_INTEGER)
-            ).resolves.toBeUndefined();
-        });
-    });
 });

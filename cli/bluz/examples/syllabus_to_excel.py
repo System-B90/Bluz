@@ -23,7 +23,6 @@ COLUMNS = [
     "Event",
     "Type",
     "Minutes",
-    "Allocated",
     "Shuffles",
     "Critical",
 ]
@@ -58,12 +57,11 @@ def export_outline(curriculum: Curriculum, path: str | Path) -> Path:
                         event.title,
                         str(event.type or ""),
                         event.minimum_duration,
-                        event.allocated_duration,
                         ",".join(event.shuffles),
                         "yes" if event.is_critical else "",
                     ]
                 )
-    for column, width in zip("ABCDEFGH", (24, 24, 36, 10, 9, 10, 14, 9), strict=True):
+    for column, width in zip("ABCDEFG", (24, 24, 36, 10, 9, 14, 9), strict=True):
         sheet.column_dimensions[column].width = width
     target = Path(path)
     workbook.save(target)

@@ -40,7 +40,6 @@ export const POST = withApi(
             title: newTitle,
             type: originalEvent.type,
             minimumDuration: originalEvent.minimumDuration,
-            allocatedDuration: 0,
             orchestratorId: originalEvent.orchestratorId,
             recommendedLecturerIds: originalEvent.recommendedLecturerIds,
             systemRequirements: originalEvent.systemRequirements,

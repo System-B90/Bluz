@@ -1,5 +1,4 @@
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
-import { planModuleAllocation } from "@/api-shared/gantt/allocate-time";
 import { Action } from "@/components/gantt/state/reducers/actions";
 import { injectDocumentTimes } from "@/components/gantt/state/reducers/inject-document-times";
 
@@ -10,7 +9,6 @@ export function moduleDomainReducer(
         {
             type:
                 | "ADD_MODULE"
-                | "ALLOCATE_TIME_TO_MODULE"
                 | "MOVE_EVENT"
                 | "REMOVE_MODULE"
                 | "REORDER_EVENTS"
@@ -32,30 +30,6 @@ export function moduleDomainReducer(
                 },
             },
         };
-    }
-
-    case "ALLOCATE_TIME_TO_MODULE": {
-        const moduleDoc = state.modules[action.payload.moduleId];
-        if (!moduleDoc) return state;
-
-        const updatedEvents = { ...state.events };
-
-        // Synchronous planner: the async `allocateTimeToModule` only applied
-        // its first iteration before this reducer returned.
-        for (const { eventId, duration } of planModuleAllocation({
-            module: moduleDoc,
-            totalDuration: action.payload.duration,
-            moduleEvents: state.events,
-        })) {
-            const eventDoc = state.events[eventId];
-            if (!eventDoc) continue;
-            updatedEvents[eventId] = {
-                ...eventDoc,
-                allocatedDuration: duration,
-            };
-        }
-
-        return { ...state, events: updatedEvents };
     }
 
     case "ADD_MODULE": {

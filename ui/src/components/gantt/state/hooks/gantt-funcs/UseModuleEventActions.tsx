@@ -35,13 +35,6 @@ export function useModuleEventActions() {
             stateRef.current.events[id],
         [],
     );
-    // `ALLOCATE_TIME` writes a single field, so a prior value is enough to
-    // roll back — which makes event time allocation optimistic (#328).
-    const getAllocatedTime = useCallback(
-        (id: GanttEventId): number | undefined =>
-            stateRef.current.events[id]?.allocatedDuration,
-        [],
-    );
 
     const actions = useMemo(
         () =>
@@ -55,7 +48,6 @@ export function useModuleEventActions() {
                 label: "event",
                 containerLabel: "module",
                 getEntity,
-                getAllocatedTime,
                 builders: {
                     add: (event, moduleId) => ({
                         type: "ADD_EVENT",
@@ -73,13 +65,9 @@ export function useModuleEventActions() {
                         type: "PURGE_ENTITY",
                         payload: { collection: "events", id: eventId },
                     }),
-                    allocateTime: (eventId, curriculumId, duration) => ({
-                        type: "ALLOCATE_TIME",
-                        payload: { eventId, curriculumId, duration },
-                    }),
                 },
             }),
-        [dispatch, getEntity, getAllocatedTime],
+        [dispatch, getEntity],
     );
 
     // Scroll-to + flash a freshly created/duplicated event in the timeline,
@@ -125,7 +113,6 @@ export function useModuleEventActions() {
             moduleId: GanttModuleId,
             type: ModuleEventType = ModuleEventType.Lecture,
             minimumDuration: number = 0,
-            allocatedDuration: number = 0,
             hiveSubjectId: null | number = null,
             hiveModuleId: null | number = null,
             hiveLessonId: null | number = null,
@@ -143,7 +130,6 @@ export function useModuleEventActions() {
                         moduleId,
                         type,
                         minimumDuration,
-                        allocatedDuration,
                         orchestratorId,
                         recommendedLecturerIds: [],
                         systemRequirements: [],
@@ -169,7 +155,6 @@ export function useModuleEventActions() {
                         title,
                         type,
                         minimumDuration,
-                        allocatedDuration,
                         orchestratorId,
                         recommendedLecturerIds: [],
                         systemRequirements: [],
@@ -289,7 +274,6 @@ export function useModuleEventActions() {
         deleteEvent: actions.remove,
         linkEventToModule: actions.link,
         unlinkEventFromModule: actions.unlink,
-        allocateTimeToModuleEvent: actions.allocateTime,
         duplicateEvent,
         moveEvent,
         applyEventShuffleGroup,

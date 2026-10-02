@@ -5,7 +5,7 @@ Created: 2026-10-02
 Author: Michael K. Steinberg
 
 Shows: lookup by title, iterating Curriculum → Syllabus → Module → GanttEvent,
-and the per-curriculum `allocated_duration` of an event. One request in total —
+and each event's `minimum_duration`. One request in total —
 `curriculums.get()` returns the whole tree.
 """
 
@@ -15,12 +15,11 @@ from bluz import Bluz, Curriculum
 
 
 def syllabus_minutes(curriculum: Curriculum) -> dict[str, int]:
-    """Allocated minutes per syllabus title (falls back to the minimum)."""
+    """Required minutes per syllabus title."""
     totals: dict[str, int] = {}
     for syllabus in curriculum:
         totals[syllabus.title] = sum(
-            event.allocated_duration or event.minimum_duration
-            for event in syllabus.events
+            event.minimum_duration for event in syllabus.events
         )
     return totals
 
@@ -40,7 +39,7 @@ def main(bz: Bluz) -> None:
                 f"  {module.title:<40} {len(module):>3} events  {minutes / 60:>6.1f} h"
             )
 
-    print("\nAllocated hours per syllabus:")
+    print("\nRequired hours per syllabus:")
     for title, minutes in sorted(
         syllabus_minutes(curriculum).items(), key=lambda kv: -kv[1]
     ):

@@ -2,7 +2,7 @@
 Name: gantt.py
 Purpose: `bz.gantt` — the curriculum engine. One generic entity API gives
          every Gantt collection the same CRUD surface (DRY); each subclass
-         adds what only its entity has (linking, time allocation, reordering,
+         adds what only its entity has (linking, reordering,
          and the curriculum's export / mapping / cut pipeline).
          Mirrors ui/src/api-client/gantt/*.
 Created: 2026-10-02
@@ -146,24 +146,6 @@ class _LinkMixin(GanttEntityAPI[N]):
         self._http.delete(
             f"{_BASE}/{self.entity}/{ref(item)}/link",
             json={"oldParentId": ref(old_parent)},
-        )
-
-
-class _AllocateMixin(GanttEntityAPI[N]):
-    def get_time(self, item: N | str, curriculum: Curriculum | str) -> Any:
-        """Allocated minutes within a curriculum."""
-        return self._http.get(
-            f"{_BASE}/{self.entity}/{ref(item)}/allocate-time",
-            params={"containerId": ref(curriculum)},
-        )
-
-    def set_time(
-        self, item: N | str, curriculum: Curriculum | str, duration: int
-    ) -> None:
-        """Set allocated minutes within a curriculum."""
-        self._http.post(
-            f"{_BASE}/{self.entity}/{ref(item)}/allocate-time",
-            json={"containerId": ref(curriculum), "duration": duration},
         )
 
 
@@ -501,7 +483,7 @@ class SyllabusesAPI(_LinkMixin[Syllabus], _ReorderMixin[Syllabus]):
         return self.update(syllabus, payload)
 
 
-class ModulesAPI(_LinkMixin[Module], _AllocateMixin[Module], _ReorderMixin[Module]):
+class ModulesAPI(_LinkMixin[Module], _ReorderMixin[Module]):
     """`bz.gantt.modules`."""
 
     entity = "modules"
@@ -510,7 +492,7 @@ class ModulesAPI(_LinkMixin[Module], _AllocateMixin[Module], _ReorderMixin[Modul
     reorder_key = "eventIds"
 
 
-class GanttEventsAPI(_LinkMixin[GanttEvent], _AllocateMixin[GanttEvent]):
+class GanttEventsAPI(_LinkMixin[GanttEvent]):
     """`bz.gantt.events`."""
 
     entity = "events"

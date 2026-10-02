@@ -29,7 +29,6 @@ import {
 } from "@/api-server/gantt/schema";
 import { buildGantCollectionRoutes } from "@/app/api/gantt/base-collection";
 import { buildGantItemRoutes } from "@/app/api/gantt/base-item";
-import { buildGantAllocateTimeRoutes } from "@/app/api/gantt/base-allocate-time";
 import { buildGantLinkRoutes } from "@/app/api/gantt/base-link";
 
 describe("Base Gantt Collection Routes", () => {
@@ -157,37 +156,6 @@ describe("Base Gantt Item Routes", () => {
         const data = await response.json();
         expect(response.status).toBe(200);
         expect(data.data).toEqual({ deleted: true, id: "1" });
-    });
-});
-
-describe("Base Gantt Allocate Time Routes", () => {
-    const mockDbSet = {
-        getAllocatedTime: vi.fn(),
-        setAllocatedTime: vi.fn(),
-    };
-
-    const routes = buildGantAllocateTimeRoutes({ dbSet: mockDbSet });
-
-    it("GET - get allocated time", async () => {
-        mockDbSet.getAllocatedTime.mockResolvedValueOnce(5);
-        const request = new NextRequest("http://localhost/api/gantt/1/allocate-time?containerId=c1");
-        const context = { params: Promise.resolve({ id: "1" }) };
-        const response = await routes.GET(request, context);
-        const data = await response.json();
-        expect(response.status).toBe(200);
-        expect(data.data).toBe(5);
-    });
-
-    it("POST - set allocated time", async () => {
-        const request = new NextRequest("http://localhost/api/gantt/1/allocate-time", {
-            method: "POST",
-            body: JSON.stringify({ containerId: "c1", duration: 8 }),
-        });
-        const context = { params: Promise.resolve({ id: "1" }) };
-        const response = await routes.POST(request, context);
-        const data = await response.json();
-        expect(response.status).toBe(200);
-        expect(data.data).toEqual({ success: true });
     });
 });
 

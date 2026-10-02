@@ -31,7 +31,6 @@ export function curriculumReducer(
     case "ADD_MODULE":
     case "UPDATE_MODULE":
     case "REMOVE_MODULE":
-    case "ALLOCATE_TIME_TO_MODULE":
     case "REORDER_EVENTS":
     case "MOVE_EVENT":
         return moduleDomainReducer(state, action);
@@ -39,7 +38,6 @@ export function curriculumReducer(
     case "ADD_EVENT":
     case "UPDATE_EVENT":
     case "REMOVE_EVENT":
-    case "ALLOCATE_TIME":
         return eventDomainReducer(state, action);
 
     case "ADD_WEEK":

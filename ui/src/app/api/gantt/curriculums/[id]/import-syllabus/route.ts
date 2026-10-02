@@ -30,7 +30,7 @@ export const POST = withApi(
         const { id: curriculumId } = await context.params;
         if (!curriculumId) throw new ClientApiError("Curriculum ID is required.");
 
-        const { kind, syllabus, sourceCurriculumId, constraints } =
+        const { kind, syllabus, constraints } =
             await requireJsonObjectBody<Partial<SyllabusExportDocument>>(request);
 
         if (kind !== SYLLABUS_EXPORT_KIND || !syllabus || !syllabus.title) {
@@ -46,7 +46,6 @@ export const POST = withApi(
             const maps: ImportIdMaps = { moduleIdMap: {}, eventIdMap: {} };
             const syllabusId = await importSyllabusTree(tx, syllabus, {
                 curriculumId,
-                sourceCurriculumId,
                 now,
                 maps,
                 titleSuffix: " (מיובא)",

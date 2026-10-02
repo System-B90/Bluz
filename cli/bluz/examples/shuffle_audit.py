@@ -25,7 +25,7 @@ def shuffle_minutes(syllabus: Syllabus) -> dict[str, int]:
     for event in syllabus.events:
         if event.course_ids:
             continue
-        minutes = event.allocated_duration or event.minimum_duration
+        minutes = event.minimum_duration
         for name in event.shuffles or names:
             totals[name] += minutes
     return dict(totals)

@@ -34,7 +34,6 @@ function buildFixture() {
                                             title: "Event 1",
                                             type: "הרצאה",
                                             minimumDuration: 60,
-                                            allocatedDuration: 60,
                                             orchestratorId: 1,
                                             roomRequirement: "בחוץ",
                                             recurrence: "weekly",
@@ -42,7 +41,6 @@ function buildFixture() {
                                             isPaWindow: false,
                                             systemRequirements: ["מקרן"],
                                             comment: "הערה 1",
-                                            cEC: [{ curriculumId: "c1", eventId: "e1", allocatedDuration: 90 }],
                                         },
                                     },
                                 ],
@@ -59,7 +57,6 @@ function buildFixture() {
                                             title: "Event 2",
                                             type: "תרגול",
                                             minimumDuration: 30,
-                                            allocatedDuration: 30,
                                             orchestratorId: null,
                                             roomRequirement: null,
                                             recurrence: "none",
@@ -67,7 +64,6 @@ function buildFixture() {
                                             isPaWindow: true,
                                             systemRequirements: [],
                                             comment: "",
-                                            cEC: [],
                                         },
                                     },
                                     {
@@ -76,7 +72,6 @@ function buildFixture() {
                                             title: "Event 3",
                                             type: "אחר",
                                             minimumDuration: 45,
-                                            allocatedDuration: 45,
                                             orchestratorId: null,
                                             roomRequirement: null,
                                             recurrence: "daily",
@@ -84,7 +79,6 @@ function buildFixture() {
                                             isPaWindow: false,
                                             systemRequirements: [],
                                             comment: "",
-                                            cEC: [],
                                         },
                                     },
                                 ],
@@ -119,11 +113,11 @@ function buildFixture() {
 
     const mappings = [
         // modFull: placeholder + its one event, both on day d1 -> placeholder should be omitted.
-        { dayId: "d1", moduleId: "modFull", eventId: null, sortOrder: 0 },
-        { dayId: "d1", moduleId: "modFull", eventId: "e1", sortOrder: 1 },
+        { dayId: "d1", moduleId: "modFull", eventId: null, sortOrder: 0, allottedMinutes: 0 },
+        { dayId: "d1", moduleId: "modFull", eventId: "e1", sortOrder: 1, allottedMinutes: 90 },
         // modPartial: placeholder + only e2 allocated (e3 stays unallocated) -> placeholder kept.
-        { dayId: "d1", moduleId: "modPartial", eventId: null, sortOrder: 2 },
-        { dayId: "d1", moduleId: "modPartial", eventId: "e2", sortOrder: 3 },
+        { dayId: "d1", moduleId: "modPartial", eventId: null, sortOrder: 2, allottedMinutes: 0 },
+        { dayId: "d1", moduleId: "modPartial", eventId: "e2", sortOrder: 3, allottedMinutes: 30 },
     ];
 
     return { curriculum, mappings };
@@ -295,7 +289,7 @@ describe("buildGanttExcelWorkbook", () => {
 
             // Week 1 header row is the first data row (row 2).
             const weekHeaderRow = timeline.getRow(2);
-            // e1 allocated=90min=1.5h, e2 allocated=30min=0.5h -> total 2h
+            // e1 mapping allotted 90min=1.5h, e2 mapping allotted 30min=0.5h -> total 2h
             expect(weekHeaderRow.getCell(8).value).toBe(2);
         });
     });
@@ -318,7 +312,7 @@ describe("buildGanttExcelWorkbook", () => {
             expect(eventRow[3]).toBe("הרצאה"); // type
             expect(eventRow[4]).toBe(BOOL_ICON.yes); // isAllocated (e1 is mapped)
             expect(eventRow[5]).toBe(1); // minHours (60min)
-            expect(eventRow[6]).toBe(1.5); // requiredHours (allocated 90min via cEC)
+            expect(eventRow[6]).toBe(1); // requiredHours (minimumDuration 60min)
             // No name map supplied: the raw id still prints rather than
             // vanishing.
             expect(eventRow[7]).toBe("1"); // orchestrator
@@ -392,17 +386,17 @@ describe("buildGanttExcelWorkbook", () => {
                 rows.push(cells);
             });
 
-            // Module Full: only e1 = 1.5h.
+            // Module Full: only e1 (minimum 60min) = 1h.
             const modFullRow = rows.find((r) => r[1] === "Module Full")!;
-            expect(modFullRow[6]).toBe(1.5);
+            expect(modFullRow[6]).toBe(1);
 
             // Module Partial: e2 (0.5h) + e3 (0.75h) = 1.25h.
             const modPartialRow = rows.find((r) => r[1] === "Module Partial")!;
             expect(modPartialRow[6]).toBe(1.25);
 
-            // Syllabus total: 1.5 + 1.25 = 2.75h.
+            // Syllabus total: 1 + 1.25 = 2.25h.
             const syllabusRow = rows.find((r) => r[0] === "Syllabus 1")!;
-            expect(syllabusRow[6]).toBe(2.75);
+            expect(syllabusRow[6]).toBe(2.25);
         });
 
         it("merges the syllabus column across the syllabus row and all its module/event rows", async () => {

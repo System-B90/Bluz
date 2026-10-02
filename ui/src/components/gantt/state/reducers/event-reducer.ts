@@ -6,7 +6,7 @@ export function eventDomainReducer(
     state: NormalizedStore,
     action: Extract<
         Action,
-        { type: "ADD_EVENT" | "ALLOCATE_TIME" | "REMOVE_EVENT" | "UPDATE_EVENT" }
+        { type: "ADD_EVENT" | "REMOVE_EVENT" | "UPDATE_EVENT" }
     >,
 ): NormalizedStore {
     switch (action.type) {
@@ -20,21 +20,6 @@ export function eventDomainReducer(
                 [action.payload.id]: {
                     ...existing,
                     ...action.payload.updates,
-                },
-            },
-        };
-    }
-
-    case "ALLOCATE_TIME": {
-        const existing = state.events[action.payload.eventId];
-        if (!existing) return state;
-        return {
-            ...state,
-            events: {
-                ...state.events,
-                [action.payload.eventId]: {
-                    ...existing,
-                    allocatedDuration: action.payload.duration,
                 },
             },
         };

@@ -117,7 +117,6 @@ function makeEvent(overrides: Partial<ApiModuleEvent> & { id: string }): ApiModu
         title: overrides.id,
         type: ModuleEventType.Lecture,
         minimumDuration: 60,
-        allocatedDuration: 0,
         orchestratorId: null,
         recommendedLecturerIds: [],
         systemRequirements: [],
@@ -130,7 +129,6 @@ function makeEvent(overrides: Partial<ApiModuleEvent> & { id: string }): ApiModu
         hiveSubjectId: null,
         hiveModuleId: null,
         hiveLessonId: null,
-        cEC: [{ eventId: overrides.id, curriculumId: "c1", allocatedDuration: 0 }],
         createdAt: "2024-01-01T00:00:00.000Z",
         updatedAt: "2024-01-01T00:00:00.000Z",
         ...overrides,
@@ -239,7 +237,7 @@ describe("indexCurriculumEvents", () => {
 describe("buildCutPlanInput", () => {
     it("orders weeks by number, days by dayIndex, and filters module-only mappings", () => {
         const curriculum = makeCurriculum([
-            makeEvent({ id: "e1", cEC: [{ eventId: "e1", curriculumId: "c1", allocatedDuration: 90 }] }),
+            makeEvent({ id: "e1" }),
         ]);
         const input = buildCutPlanInput({
             curriculum,
@@ -517,7 +515,7 @@ describe("cutCurriculumToSchedule", () => {
 
     it("cuts a mapped event, inserts documents and broadcasts once", async () => {
         vi.mocked(DbCurriculum.getItem).mockResolvedValue(
-            makeCurriculum([makeEvent({ id: "e1", allocatedDuration: 0, cEC: [{ eventId: "e1", curriculumId: "c1", allocatedDuration: 60 }] })]),
+            makeCurriculum([makeEvent({ id: "e1" })]),
         );
         vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(makeIteration());
         vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([{ eventId: "e1", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 }]);
@@ -536,7 +534,7 @@ describe("cutCurriculumToSchedule", () => {
 
     it("creates a course per shuffle with provenance and assigns it to the event", async () => {
         vi.mocked(DbCurriculum.getItem).mockResolvedValue(
-            makeCurriculum([makeEvent({ id: "e1", shuffles: ["מחלקה א"], cEC: [{ eventId: "e1", curriculumId: "c1", allocatedDuration: 60 }] })]),
+            makeCurriculum([makeEvent({ id: "e1", shuffles: ["מחלקה א"] })]),
         );
         vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(makeIteration());
         vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([{ eventId: "e1", dayId: "w0d0", sortOrder: 0, allottedMinutes: 60 }]);
@@ -564,7 +562,7 @@ describe("cutCurriculumToSchedule", () => {
 
         const cutWithSyllabusCourses = async (courseIds: Array<string>) => {
             const curriculum = makeCurriculum([
-                makeEvent({ id: "e1", shuffles: ["תפפ 1", "תפפ 2"], cEC: [{ eventId: "e1", curriculumId: "c1", allocatedDuration: 60 }] }),
+                makeEvent({ id: "e1", shuffles: ["תפפ 1", "תפפ 2"] }),
             ]);
             (curriculum.c2s![0].syllabus as any).courseIds = courseIds;
             vi.mocked(DbCurriculum.getItem).mockResolvedValue(curriculum);
@@ -598,7 +596,7 @@ describe("cutCurriculumToSchedule", () => {
             syllabusShuffles?: Array<string>;
             syllabusCourseIds?: Array<string>;
         }) => {
-            const curriculum = makeCurriculum([makeEvent({ id: "e1", shuffles: [], cEC: [{ eventId: "e1", curriculumId: "c1", allocatedDuration: 60 }] })]);
+            const curriculum = makeCurriculum([makeEvent({ id: "e1", shuffles: [] })]);
             const syllabus = curriculum.c2s![0].syllabus as any;
             syllabus.shuffles = chain.syllabusShuffles;
             syllabus.courseIds = chain.syllabusCourseIds;

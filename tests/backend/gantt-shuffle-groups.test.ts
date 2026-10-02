@@ -24,7 +24,6 @@ function event(
         id,
         title: "שיעור",
         minimumDuration,
-        allocatedDuration: 0,
         recurrence: "none",
         constraints: [],
         shuffles: [],

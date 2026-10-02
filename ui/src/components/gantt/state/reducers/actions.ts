@@ -53,22 +53,6 @@ export type Action =
 
     // Adds
     | {
-          type: "ALLOCATE_TIME_TO_MODULE";
-          payload: {
-              curriculumId: GanttCurriculumId;
-              moduleId: GanttModuleId;
-              duration: number;
-          };
-      }
-    | {
-          type: "ALLOCATE_TIME";
-          payload: {
-              curriculumId: GanttCurriculumId;
-              eventId: GanttEventId;
-              duration: number;
-          };
-      }
-    | {
           type: "MERGE_SYLLABUS";
           payload: {
               curriculumId: GanttCurriculumId;

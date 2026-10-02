@@ -98,7 +98,6 @@ async function buildFixture(
     const event = await apiJson<{ id: string }>(
         await request.post("/api/gantt/events", {
             data: {
-                allocatedDuration: 60,
                 comment: null,
                 hiveLessonId: null,
                 hiveModuleId: null,
@@ -119,13 +118,8 @@ async function buildFixture(
         }),
     );
     await apiJson(
-        await request.post(`/api/gantt/events/${event.id}/allocate-time`, {
-            data: { containerId: curriculum.id, duration: 60 },
-        }),
-    );
-    await apiJson(
         await request.post(`/api/gantt/curriculums/${curriculum.id}/mappings`, {
-            data: { dayId: dayIds[sourceDay], eventId: event.id, moduleId: module.id, sortOrder: 0 },
+            data: { allottedMinutes: 60, dayId: dayIds[sourceDay], eventId: event.id, moduleId: module.id, sortOrder: 0 },
         }),
     );
     await apiJson(

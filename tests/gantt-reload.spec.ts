@@ -102,7 +102,6 @@ async function buildCurriculum(
         const event = await apiJson<{ id: string }>(
             await request.post("/api/gantt/events", {
                 data: {
-                    allocatedDuration: 60,
                     comment: null,
                     hiveLessonId: null,
                     hiveModuleId: null,
@@ -123,14 +122,6 @@ async function buildCurriculum(
             }),
         );
         eventIds.push(event.id);
-
-        // The planner reads the duration allocated *for this curriculum*.
-        await apiJson(
-            await request.post(
-                `/api/gantt/events/${event.id}/allocate-time`,
-                { data: { containerId: curriculum.id, duration: 60 } },
-            ),
-        );
     }
 
     const tree = await apiJson<{
@@ -146,6 +137,7 @@ async function buildCurriculum(
                 `/api/gantt/curriculums/${curriculum.id}/mappings`,
                 {
                     data: {
+                        allottedMinutes: 60,
                         dayId: dayIds[index],
                         eventId,
                         moduleId: module.id,
@@ -309,7 +301,6 @@ test.describe("Gantt → schedule reload", () => {
             const newEvent = await apiJson<{ id: string }>(
                 await request.post("/api/gantt/events", {
                     data: {
-                        allocatedDuration: 60,
                         comment: null,
                         hiveLessonId: null,
                         hiveModuleId: null,
@@ -331,15 +322,10 @@ test.describe("Gantt → schedule reload", () => {
             );
             await apiJson(
                 await request.post(
-                    `/api/gantt/events/${newEvent.id}/allocate-time`,
-                    { data: { containerId: fixture.curriculumId, duration: 60 } },
-                ),
-            );
-            await apiJson(
-                await request.post(
                     `/api/gantt/curriculums/${fixture.curriculumId}/mappings`,
                     {
                         data: {
+                            allottedMinutes: 60,
                             dayId: fixture.dayIds[2],
                             eventId: newEvent.id,
                             moduleId: fixture.moduleId,
@@ -399,7 +385,6 @@ test.describe("Gantt → schedule reload", () => {
             const unmapped = await apiJson<{ id: string }>(
                 await request.post("/api/gantt/events", {
                     data: {
-                        allocatedDuration: 60,
                         comment: null,
                         hiveLessonId: null,
                         hiveModuleId: null,
@@ -418,12 +403,6 @@ test.describe("Gantt → schedule reload", () => {
                         type: "הרצאה",
                     },
                 }),
-            );
-            await apiJson(
-                await request.post(
-                    `/api/gantt/events/${unmapped.id}/allocate-time`,
-                    { data: { containerId: fixture.curriculumId, duration: 60 } },
-                ),
             );
 
             const blocked = await request.patch(

@@ -113,13 +113,6 @@ const curriculum = {
                             m2e: [
                                 {
                                     event: {
-                                        cEC: [
-                                            {
-                                                allocatedDuration: 60,
-                                                curriculumId: "c1",
-                                                eventId: "g1",
-                                            },
-                                        ],
                                         comment: null,
                                         hiveLessonId: null,
                                         hiveModuleId: null,

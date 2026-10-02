@@ -36,7 +36,7 @@ cur = bz.gantt.curriculums["Bis90 2026"]  # by title or id — one request, whol
 for syllabus in cur:  # Curriculum → Syllabus → Module → GanttEvent
     for module in syllabus:
         print(syllabus.title, module.title, sum(e.minimum_duration for e in module))
-cur["Mathematics"]["Algebra"]["Intro"].allocated_duration
+cur["Mathematics"]["Algebra"]["Intro"].minimum_duration
 
 week = bz.events.list(today(), today() + timedelta(days=7))
 week.where(type=EventType.LECTURE)  # Collection: list + lookup/filter helpers
@@ -220,7 +220,7 @@ A local `.env` is loaded automatically, so `BLUZ_*` vars there are honoured.
 | `bluz integrations google` | status / connect / disconnect / sync / calendars / select-calendar / purge                                                                                                                                                                                                                                                         |
 | `bluz student-view`        | `schedule` (one day of the student board), `report-engagement`                                                                                                                                                                                                                                                                     |
 | `bluz ai`                  | `tools` (capabilities + whether AI is configured), `chat` (streaming), `benchmark`                                                                                                                                                                                                                                                 |
-| `bluz gantt`               | `curriculums`, `syllabuses`, `modules`, `events`, `days`, `weeks` (CRUD + link/allocate/reorder), curriculum export/import/constraints/mappings/duplicate/execution, the cut pipeline (`cut-preview`, `cut-plan`, `cut`, `cut-status`, `pull-back`), `execution` / `recreate-occurrence`, shuffle groups and recurrence exceptions |
+| `bluz gantt`               | `curriculums`, `syllabuses`, `modules`, `events`, `days`, `weeks` (CRUD + link/reorder), curriculum export/import/constraints/mappings/duplicate/execution, the cut pipeline (`cut-preview`, `cut-plan`, `cut`, `cut-status`, `pull-back`), `execution` / `recreate-occurrence`, shuffle groups and recurrence exceptions |
 
 ### The cut pipeline
 
