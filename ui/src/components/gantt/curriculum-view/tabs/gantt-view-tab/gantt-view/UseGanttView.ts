@@ -1,6 +1,9 @@
 import { useCallback, useMemo, useState } from "react";
 
+import { useAuth } from "@/components/auth/AuthProvider";
+import { useCourses } from "@/components/base/CoursesProvider";
 import { getDayDate } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { defaultExpandedSyllabusIds } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/default-expansion";
 import { useGanttDrag } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-drag";
 import { useGanttExpansion } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-expansion";
 import { useGanttMappingsMerge } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-mappings-merge";
@@ -104,6 +107,15 @@ export const useGanttView = (curriculumId: string) =>
         syllabuses: state.syllabuses,
     });
 
+    const { userData } = useAuth();
+    const { courses } = useCourses();
+    const syllabusIds = curriculum?.syllabuses;
+    const hiveUserId = userData?.id ? Number(userData.id) : null;
+    const defaultExpanded = useMemo(
+        () => defaultExpandedSyllabusIds(syllabusIds ?? [], state, courses, hiveUserId),
+        [ syllabusIds, state, courses, hiveUserId ],
+    );
+
     const {
         allCollapsed,
         collapseAllSyllabuses,
@@ -112,9 +124,10 @@ export const useGanttView = (curriculumId: string) =>
         exposeSyllabusFor,
         isModuleExpanded,
         isSyllabusExpanded,
+        setAllRows,
         toggleModule,
         toggleSyllabus,
-    } = useGanttExpansion(curriculum?.syllabuses ?? [], searchActive);
+    } = useGanttExpansion(syllabusIds ?? [], searchActive, defaultExpanded);
 
     const { revealItem } = useGanttReveal({
         exposeSyllabusFor,
@@ -217,6 +230,7 @@ export const useGanttView = (curriculumId: string) =>
             toggleSyllabus,
             isModuleExpanded,
             toggleModule,
+            setAllRows,
             searchActive,
             isSyllabusVisible,
             isModuleVisible,
@@ -256,6 +270,7 @@ export const useGanttView = (curriculumId: string) =>
             toggleSyllabus,
             isModuleExpanded,
             toggleModule,
+            setAllRows,
             searchActive,
             isSyllabusVisible,
             isModuleVisible,
