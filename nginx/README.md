@@ -10,6 +10,7 @@ This directory houses the **Nginx reverse proxy configurations**. Nginx serves a
 
 - **`nginx.conf`**: The main routing rules, proxy headers, upstream channels, and WebSocket gateway configurations.
 - **`Dockerfile.proxy`**: Docker configuration to containerize the Nginx reverse proxy service.
+- **`bluz/`**: TLS snippets `nginx.conf` includes. Static by default; **`40-bluz-acme.sh`** rewrites them at container start for ACME certificates when `ACME_DIRECTORY_URL` is set (#803).
 
 ---
 

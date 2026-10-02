@@ -152,8 +152,19 @@ services:
             - "${BLUZ_BIND_IP:-0.0.0.0}:${BLUZ_HTTPS_PORT:-443}:443"
         volumes:
             - ./nginx/ssl:/etc/nginx/ssl:ro
-            # ACME HTTP-01 tokens written by the certbot service (#803).
-            - ./acme/webroot:/var/www/acme:ro
+            # nginx's built-in ACME client (#803): account and issued
+            # certificate, plus the ACME server's own CA when it is private.
+            - ./acme/state:/var/cache/nginx/acme-bluz
+            - ./acme/ca:/etc/nginx/acme-ca:ro
+        # Optional ACME certificates (#803), e.g. the network's own Let's
+        # Encrypt. Unset ACME_DIRECTORY_URL keeps the static nginx/ssl pair,
+        # which also serves until the first issue succeeds. The ACME server
+        # must reach this host on port 80 (HTTP-01).
+        environment:
+            ACME_DIRECTORY_URL: ${ACME_DIRECTORY_URL:-}
+            ACME_DOMAIN: ${ACME_DOMAIN:-}
+            ACME_EMAIL: ${ACME_EMAIL:-}
+            ACME_CA_BUNDLE: ${ACME_CA_BUNDLE:-}
         depends_on:
             - ui
             - sessions
@@ -161,32 +172,6 @@ services:
             - bluz_net
         extra_hosts:
             - "host.docker.internal:host-gateway"
-
-    # Optional: certificates from an ACME server (#803), e.g. the network's
-    # own Let's Encrypt-compatible CA. Enabled with COMPOSE_PROFILES=acme in
-    # .env (setup.py writes it). Issues and renews into ./nginx/ssl; the proxy
-    # reloads on change. The ACME server must reach this host on port 80.
-    certbot:
-        image: certbot/certbot:v3.3.0
-        container_name: bluz-certbot
-        profiles: ["acme"]
-        restart: unless-stopped
-        entrypoint: ["/bin/sh", "/acme/acme-renew.sh"]
-        env_file:
-            - .env
-        environment:
-            # The ACME server's own private CA, when it has one.
-            REQUESTS_CA_BUNDLE: ${ACME_CA_BUNDLE:-}
-        volumes:
-            - ./acme/acme-renew.sh:/acme/acme-renew.sh:ro
-            - ./acme/letsencrypt:/etc/letsencrypt
-            - ./acme/webroot:/var/www/acme
-            - ./acme/ca:/etc/bluz/acme-ca:ro
-            - ./nginx/ssl:/etc/nginx/ssl
-        depends_on:
-            - proxy
-        networks:
-            - bluz_net
 
 volumes:
     pgdata:

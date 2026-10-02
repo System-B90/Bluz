@@ -68,23 +68,26 @@ machines to silence browser warnings; it is reused across re-issues.
 
 Answer `yes` to the ACME prompt to have certificates issued and renewed
 automatically by an ACME server — e.g. the network's own Let's Encrypt (#803).
+The proxy does it itself with nginx's built-in ACME client
+(`ngx_http_acme_module`); there is no extra container.
 
 ```bash
 # Optional: the ACME server's own CA, when it is private
 mkdir -p acme/ca && cp /path/to/acme-server-ca.pem acme/ca/ca.pem
 python3 bootstrap.py setup     # answer yes, give the directory URL
-docker compose up -d           # COMPOSE_PROFILES=acme starts bluz-certbot
-docker logs -f bluz-certbot    # "acme: installed new certificate for <domain>"
+docker compose up -d proxy
+docker logs bluz-proxy         # "40-bluz-acme.sh: ACME on for <domain> ..."
 ```
 
 - The ACME server validates over **HTTP-01**: it must reach this host on port
   80 (`BLUZ_HTTP_PORT` must stay 80).
-- The self-signed certificate stays in place until the first issue succeeds,
-  so the proxy always starts.
-- `bluz-certbot` re-checks every 12 hours (`ACME_RENEW_HOURS`) and the proxy
-  reloads on its own when `nginx/ssl/cert.pem` changes.
-- Account and certificate state lives in `acme/letsencrypt/` and survives
-  upgrades.
+- The self-signed certificate in `nginx/ssl/` keeps serving until the first
+  issue succeeds, so HTTPS never goes down. A failed attempt is retried
+  within about a minute; renewal is automatic, with no reload needed.
+- Account key and issued certificate live in `acme/state/` and survive
+  upgrades. Treat it like `nginx/ssl/`: it holds private keys.
+- Turn it off by answering `no` (clears `ACME_DIRECTORY_URL`) and
+  `docker compose up -d proxy`.
 
 Re-run the wizard at any time with `python3 bootstrap.py setup` — existing
 secrets are kept, not rotated.
@@ -105,7 +108,7 @@ bluz/
 ├── .venv/                          # created on first run
 ├── backup/                         # bluz-backup / bluz-restore (.sh and .ps1)
 ├── nginx/ssl/                      # cert.pem + key.pem
-├── acme/                           # ACME only: renew script, account state, server CA
+├── acme/                           # ACME only: account/cert state, ACME server CA
 ├── ai-ca/                          # private CA for an internal AI gateway (optional)
 ├── VERSION                         # which release this is
 ├── images/                         # offline bundle only — image .tar archives
