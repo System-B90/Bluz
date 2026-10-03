@@ -169,9 +169,9 @@ async function getTimelineEventRow(
         .filter({ hasText: eventTitle });
 
     if ((await eventRow.count()) === 0) {
-        // Module rows start collapsed; the "▶"/"▼" toggle has no accessible
-        // name, so it's targeted structurally within the module row.
-        await moduleRow.locator("span").filter({ hasText: "▶" }).first().click();
+        // Module rows start collapsed; the toggle is a button named
+        // "הרחבת <module>" (#816).
+        await moduleRow.getByRole("button", { name: /^הרחבת / }).click();
     }
 
     return eventRow;
