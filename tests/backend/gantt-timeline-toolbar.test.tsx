@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { cleanup, render as rtlRender, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render as rtlRender, screen } from "@testing-library/react";
 import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -71,6 +71,15 @@ describe("GanttToolbar", () => {
         render(<GanttToolbar { ...baseProps } />);
         const breaks = screen.getByRole("button", { name: "ללא הפסקות" });
         expect(breaks.getAttribute("aria-label")).toBeNull();
+    });
+
+    it("explains the timeline marks in a legend (#812, #822)", () => {
+        render(<GanttToolbar { ...baseProps } />);
+        fireEvent.click(screen.getByRole("button", { name: "מקרא" }));
+        const legend = screen.getByRole("dialog", { name: "מקרא" });
+        expect(legend.textContent).toContain("שעות משובצות / שעות זמינות");
+        expect(legend.textContent).toContain("השבוע כולו חורג");
+        expect(legend.textContent).toContain("יום שחורג");
     });
 
     it("keeps the block-sizing group in the daily view, disabled (#820)", () => {

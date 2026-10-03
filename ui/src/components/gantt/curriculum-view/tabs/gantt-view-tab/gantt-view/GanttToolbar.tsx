@@ -27,6 +27,7 @@ import React, { useMemo, useState } from "react";
 
 import { COMMAND_GROUPS } from "@/components/app-commands/labels";
 import { GanttFilterButton } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box/GanttFilterButton";
+import { GanttLegend } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttLegend";
 
 const TOGGLE_SX = { gap: 0.5, px: 1.5 } as const;
 
@@ -354,6 +355,8 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({
                         לפי יום
                     </ToggleButton>
                 </ToggleButtonGroup>
+
+                <GanttLegend />
 
                 <Divider flexItem orientation="vertical" />
 
