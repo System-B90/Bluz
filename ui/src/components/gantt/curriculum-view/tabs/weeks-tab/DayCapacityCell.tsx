@@ -303,7 +303,7 @@ export function DayCapacityCell({
         if (status === "ok") return alpha(theme.palette.primary.main, 0.08);
 
         return undefined;
-    }, [isMuted, status, theme]);
+    }, [status, theme]);
 
     if (!day) {
         return <TableCell sx={{ minWidth: 154 }} />;
