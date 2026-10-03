@@ -10,6 +10,7 @@ import PauseRounded from "@mui/icons-material/PauseRounded";
 import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
 import PlayArrowRounded from "@mui/icons-material/PlayArrowRounded";
 import SchemaOutlined from "@mui/icons-material/SchemaOutlined";
+import WarningAmberRounded from "@mui/icons-material/WarningAmberRounded";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Fade from "@mui/material/Fade";
@@ -17,13 +18,15 @@ import IconButton from "@mui/material/IconButton";
 import { alpha, useTheme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
 import {
     dismissInsights,
     readInsightsDismissedUntil,
 } from "@/components/gantt/curriculum-view/components/insights/dismiss";
+import { partitionInsights } from "@/components/gantt/curriculum-view/components/insights/generators";
+import { insightsAutoRotate, insightsShowFun } from "@/components/gantt/curriculum-view/components/insights/preferences";
 import {
     Insight,
     InsightCategory,
@@ -74,9 +77,16 @@ function useRotation(insights: Array<Insight>, paused: boolean) {
 
 export function InsightsCard({ curriculum }: { curriculum: GanttCurriculumDocument | undefined }) {
     const theme = useTheme();
-    const insights = useInsights(curriculum);
+    const allInsights = useInsights(curriculum);
+    // Off by default (#851): warnings shouldn't rotate away before they are read.
+    const autoRotate = insightsAutoRotate.use();
+    const showFun = insightsShowFun.use();
+    const { pinned, deck: insights } = useMemo(
+        () => partitionInsights(allInsights, { includeFun: showFun }),
+        [ allInsights, showFun ],
+    );
     const [ hovered, setHovered ] = useState(false);
-    const [ userPaused, setUserPaused ] = useState(false);
+    const userPaused = !autoRotate;
     // Lazy read is SSR-safe: the helper returns null without `window`, and the
     // card renders nothing on the server anyway (no curriculum loaded yet).
     const [ dismissedUntil, setDismissedUntil ] = useState(() => readInsightsDismissedUntil());
@@ -88,11 +98,11 @@ export function InsightsCard({ curriculum }: { curriculum: GanttCurriculumDocume
         return () => clearTimeout(timer);
     }, [ dismissedUntil ]);
 
-    if (!curriculum || insights.length === 0 || dismissedUntil !== null) return null;
+    if (!curriculum || (insights.length === 0 && pinned.length === 0) || dismissedUntil !== null) return null;
 
-    const insight = insights[ index ];
-    const color = theme.palette[ SEVERITY_COLOR[ insight.severity ] ].main;
-    const Icon = CATEGORY_ICON[ insight.category ];
+    const insight = insights[ index ] as Insight | undefined;
+    const color = theme.palette[ pinned.length > 0 ? "warning" : SEVERITY_COLOR[ insight?.severity ?? "info" ] ].main;
+    const Icon = insight ? CATEGORY_ICON[ insight.category ] : CategoryOutlined;
 
     return (
         <Card
@@ -114,8 +124,23 @@ export function InsightsCard({ curriculum }: { curriculum: GanttCurriculumDocume
             <Box sx={ { display: "flex", alignItems: "center", gap: 0.5, mb: 1 } }>
                 <AutoAwesomeOutlined color="primary" sx={ { fontSize: 18 } } />
                 <Typography sx={ { flex: 1 } } variant="subtitle1">תובנות</Typography>
-                <Tooltip title={ userPaused ? "המשך החלפה" : "עצירת החלפה" }>
-                    <IconButton onClick={ () => setUserPaused((p) => !p) } size="small">
+                <Tooltip title={ showFun ? "הסתרת תובנות משעשעות" : "הצגת תובנות משעשעות" }>
+                    <IconButton
+                        aria-label="תובנות משעשעות"
+                        aria-pressed={ showFun }
+                        color={ showFun ? "primary" : "default" }
+                        onClick={ () => insightsShowFun.set(!showFun) }
+                        size="small"
+                    >
+                        <EmojiEmotionsOutlined fontSize="small" />
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title={ userPaused ? "החלפה אוטומטית" : "עצירת החלפה" }>
+                    <IconButton
+                        aria-label={ userPaused ? "החלפה אוטומטית" : "עצירת החלפה" }
+                        onClick={ () => insightsAutoRotate.set(userPaused) }
+                        size="small"
+                    >
                         { userPaused ? <PlayArrowRounded fontSize="small" /> : <PauseRounded fontSize="small" /> }
                     </IconButton>
                 </Tooltip>
@@ -135,44 +160,67 @@ export function InsightsCard({ curriculum }: { curriculum: GanttCurriculumDocume
                 </Tooltip>
             </Box>
 
-            <Fade in key={ insight.id } timeout={ 450 }>
-                <Box aria-live="polite" onClick={ () => go(1) } sx={ { minHeight: 170, cursor: "pointer" } }>
-                    <Box sx={ { display: "flex", alignItems: "flex-start", gap: 1, mb: 0.5 } }>
-                        <Box
-                            sx={ {
-                                p: 0.5,
-                                borderRadius: 1,
-                                display: "flex",
-                                color,
-                                bgcolor: alpha(color, 0.12),
-                            } }
-                        >
-                            <Icon sx={ { fontSize: 18 } } />
-                        </Box>
-                        <Typography fontWeight={ 600 } sx={ { lineHeight: 1.35 } } variant="body2">
-                            { insight.title }
-                        </Typography>
-                    </Box>
-                    <Typography color="text.secondary" sx={ { mb: insight.visual ? 1.5 : 0 } } variant="body2">
-                        { insight.body }
-                    </Typography>
-                    { insight.visual ? <InsightVisualView visual={ insight.visual } /> : null }
-                </Box>
-            </Fade>
-
-            <Box sx={ { mt: 1, height: 2, borderRadius: 1, overflow: "hidden", bgcolor: alpha(theme.palette.text.primary, 0.06) } }>
+            { pinned.length > 0 ? (
                 <Box
-                    key={ `${insight.id}-${hovered || userPaused}` }
-                    sx={ {
-                        height: "100%",
-                        bgcolor: color,
-                        opacity: 0.6,
-                        width: hovered || userPaused ? "0%" : "100%",
-                        animation: hovered || userPaused ? "none" : `insight-progress ${ROTATE_MS}ms linear`,
-                        "@keyframes insight-progress": { from: { width: "0%" }, to: { width: "100%" } },
-                    } }
-                />
-            </Box>
+                    aria-label="דורש טיפול"
+                    component="ul"
+                    data-testid="insights-pinned"
+                    sx={ { listStyle: "none", m: 0, mb: insight ? 1.5 : 0, p: 0, display: "flex", flexDirection: "column", gap: 0.75 } }
+                >
+                    { pinned.map((warning) => (
+                        <Box component="li" key={ warning.id } sx={ { display: "flex", gap: 0.75, alignItems: "flex-start" } }>
+                            <WarningAmberRounded color="warning" sx={ { fontSize: 18, mt: 0.125 } } />
+                            <Box>
+                                <Typography fontWeight={ 600 } variant="body2">{ warning.title }</Typography>
+                                <Typography color="text.secondary" variant="caption">{ warning.body }</Typography>
+                            </Box>
+                        </Box>
+                    )) }
+                </Box>
+            ) : null }
+
+            { insight ? (
+                <Fade in key={ insight.id } timeout={ 450 }>
+                    <Box aria-live="polite" onClick={ () => go(1) } sx={ { minHeight: 170, cursor: "pointer" } }>
+                        <Box sx={ { display: "flex", alignItems: "flex-start", gap: 1, mb: 0.5 } }>
+                            <Box
+                                sx={ {
+                                    p: 0.5,
+                                    borderRadius: 1,
+                                    display: "flex",
+                                    color,
+                                    bgcolor: alpha(color, 0.12),
+                                } }
+                            >
+                                <Icon sx={ { fontSize: 18 } } />
+                            </Box>
+                            <Typography fontWeight={ 600 } sx={ { lineHeight: 1.35 } } variant="body2">
+                                { insight.title }
+                            </Typography>
+                        </Box>
+                        <Typography color="text.secondary" sx={ { mb: insight.visual ? 1.5 : 0 } } variant="body2">
+                            { insight.body }
+                        </Typography>
+                        { insight.visual ? <InsightVisualView visual={ insight.visual } /> : null }
+                    </Box>
+                </Fade>
+            ) : null }
+
+            { insight && !userPaused ? (
+                <Box sx={ { mt: 1, height: 2, borderRadius: 1, overflow: "hidden", bgcolor: alpha(theme.palette.text.primary, 0.06) } }>
+                    <Box
+                        key={ `${insight.id}-${hovered || userPaused}` }
+                        sx={ {
+                            height: "100%",
+                            bgcolor: color,
+                            opacity: 0.6,
+                            width: hovered || userPaused ? "0%" : "100%",
+                            animation: hovered || userPaused ? "none" : `insight-progress ${ROTATE_MS}ms linear`,
+                            "@keyframes insight-progress": { from: { width: "0%" }, to: { width: "100%" } },
+                        } }
+                    />
+                </Box>
+            ) : null }
         </Card>
     );
 }
