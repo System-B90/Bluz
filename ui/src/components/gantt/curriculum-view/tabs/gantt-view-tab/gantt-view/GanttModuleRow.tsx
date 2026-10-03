@@ -19,6 +19,7 @@ import { canDragModule } from "@/components/gantt/curriculum-view/tabs/gantt-vie
 import { getModuleSpanDayIds } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/module-span";
 import { RowExpandButton } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/RowExpandButton";
 import { GanttModuleRowProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
+import { eventDisplayOrder } from "@/components/gantt/event-display-order";
 import { useCurriculumState } from "@/components/gantt/state/context";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
@@ -63,6 +64,11 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
     const hasEvents = useMemo(
         () => ganttModule?.events && ganttModule?.events.length > 0,
         [ganttModule?.events],
+    );
+    // The module dialog's order, groups gathered (#850).
+    const orderedEventIds = useMemo(
+        () => eventDisplayOrder(ganttModule?.events ?? [], state.events),
+        [ganttModule?.events, state.events],
     );
     const mappedDays = useMemo(
         () => moduleMappings[moduleId] || [],
@@ -372,8 +378,8 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
             </TableRow>
 
             {isExpanded && hasEvents
-                ? ganttModule?.events
-                    ?.filter((eventId) => isEventVisible(eventId))
+                ? orderedEventIds
+                    .filter((eventId) => isEventVisible(eventId))
                     .filter((eventId) => {
                         if (!singleWeekDayZoom) return true;
                         const mappedDayId = eventMappings[eventId];
