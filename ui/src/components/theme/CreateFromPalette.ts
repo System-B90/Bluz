@@ -1,4 +1,38 @@
-import { ThemeOptions } from "@mui/material/styles";
+import { createTheme, ThemeOptions } from "@mui/material/styles";
+
+declare module "@mui/material/styles" {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- MUI module augmentation requires interface for declaration merging
+    interface ColorSchemeOverrides
+    {
+        pink: true;
+    }
+}
+
+/** Soft "princess" pink (#765): a light scheme, so `mode` stays light. */
+export const PINK_PALETTE = {
+    mode: "light",
+    primary: {
+        main: "#E48AB0", // Aurora rose
+        light: "#F6C4D9",
+        dark: "#B8607F",
+        contrastText: "#3A0F22",
+    },
+    secondary: {
+        main: "#9C4F79", // Deep rosewood for headings and accents
+        light: "#C47FA4",
+        dark: "#6E2E52",
+        contrastText: "#FFFFFF",
+    },
+    background: {
+        default: "#FFF3F8", // Blush, not neon
+        paper: "#FFFBFD",
+    },
+    text: {
+        primary: "#3D1A2C",
+        secondary: "#7E5168",
+    },
+    divider: "rgba(184, 96, 127, 0.2)",
+} as const;
 
 declare module "@mui/material/Chip" {
     // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- MUI module augmentation requires interface for declaration merging
@@ -66,6 +100,9 @@ export function createThemeOptions(): ThemeOptions
                     },
                 },
             },
+            // MUI only expands light/dark from partial input; a custom
+            // scheme must arrive as a complete palette.
+            pink: { palette: createTheme({ palette: PINK_PALETTE }).palette },
         },
         typography: {
             fontFamily: [ '"Assistant"', "sans-serif" ].join(","),

@@ -34,6 +34,8 @@ export type GridInteraction = "duplicate" | "move" | "resize";
  * @param handleDeleteEvent - Callback when deleting an event.
  * @param setSelectedEvent - State setter to select an event.
  * @param setOpenEventDialog - State setter to open/close the event dialog.
+ * @param confirmLockedEdit - Asks before a keyboard Delete/Ctrl+X touches an
+ * event another user has open (#775). Omitted → no check.
  * @returns State and event handlers for the calendar.
  */
 export function useCalendarHandlers(
@@ -48,6 +50,7 @@ export function useCalendarHandlers(
     ) => void,
     setSelectedEvent: (event: Partial<Event> | undefined) => void,
     setOpenEventDialog: (open: boolean) => void,
+    confirmLockedEdit?: (eventIds: Array<Event["id"]>) => Promise<boolean>,
 ) {
     const { filteredInstructors, filteredCourses } = useCalendarFilters();
 
@@ -288,14 +291,23 @@ export function useCalendarHandlers(
             } = copyPasteData.current;
             const isCmdOrCtrl = e.ctrlKey || e.metaKey;
 
+            // Delete and Ctrl+X skip the event dialog and its "being edited
+            // by" banner, so they ask first when someone else has it open.
+            const guarded = (event: Event, run: () => void) => {
+                if (!confirmLockedEdit) return run();
+                void confirmLockedEdit([ event.id ]).then((ok) => {
+                    if (ok) run();
+                });
+            };
+
             if (e.key === "Delete" && currentActive?.id) {
-                handleDeleteEvent(
-                    currentActive.id,
-                    EventChangeInitiator.Keyboard,
-                );
-                // The event is gone; a second Delete must not fire another
+                const { id } = currentActive;
+                // Cleared up front: a second Delete must not fire another
                 // (failing) delete for the same id.
                 setActiveEvent(null);
+                guarded(currentActive, () =>
+                    handleDeleteEvent(id, EventChangeInitiator.Keyboard),
+                );
             }
 
             if (isCmdOrCtrl && e.key === "c" && currentActive) {
@@ -303,14 +315,15 @@ export function useCalendarHandlers(
             }
 
             if (isCmdOrCtrl && e.key === "x" && currentActive) {
-                cutEvent(currentActive);
+                guarded(currentActive, () => cutEvent(currentActive));
             }
 
             if (isCmdOrCtrl && e.key === "v" && currentCopied) {
                 e.preventDefault();
                 pasteAt(currentSlot);
             }
-        },        [handleDeleteEvent, copyEvent, cutEvent, pasteAt],
+        },
+        [handleDeleteEvent, copyEvent, cutEvent, pasteAt, confirmLockedEdit],
     );
 
     useEffect(() => {

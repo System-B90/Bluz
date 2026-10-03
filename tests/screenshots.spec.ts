@@ -73,4 +73,12 @@ test.describe("Release screenshots", () => {
         await page.getByRole("menu").waitFor();
         await shoot(page, "04-gantt-grid-menu");
     });
+
+    test("schedule in pink mode", async ({ page }) => {
+        // next-themes reads its choice from localStorage before first paint (#765).
+        await page.addInitScript(() => localStorage.setItem("theme", "pink"));
+        await open(page, "/");
+        await waitForAppLoad(page);
+        await shoot(page, "05-schedule-pink");
+    });
 });

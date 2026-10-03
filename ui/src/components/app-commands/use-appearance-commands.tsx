@@ -1,6 +1,7 @@
 "use client";
 import BrightnessAutoIcon from "@mui/icons-material/BrightnessAuto";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
+import FavoriteIcon from "@mui/icons-material/Favorite";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import { useCommands } from "@system-b90/command-palette";
 import { useMemo } from "react";
@@ -49,6 +50,16 @@ export function useAppearanceCommands(): void {
                 keywords: ["light mode", "day"],
                 enabled: theme !== "light",
                 run: () => setTheme("light"),
+            },
+            {
+                id: "appearance.pink",
+                title: "מצב ורוד",
+                group: COMMAND_GROUPS.appearance,
+                kind: "command" as const,
+                icon: <FavoriteIcon />,
+                keywords: ["pink mode", "pink", "princess", "ורוד"],
+                enabled: theme !== "pink",
+                run: () => setTheme("pink"),
             },
             {
                 id: "appearance.system",

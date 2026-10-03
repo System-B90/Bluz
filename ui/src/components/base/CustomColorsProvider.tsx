@@ -8,6 +8,7 @@ import
     useEffect,
     useMemo,
     useReducer,
+    useRef,
 } from "react";
 
 import
@@ -132,12 +133,24 @@ export const CustomColorsProvider = ({
         [ state.customColors ],
     );
 
+    /**
+     * Bumped by every load and every optimistic edit. A list response is
+     * applied only if nothing newer started while it was in flight: an older
+     * GET resolving late would otherwise resurrect a just-deleted colour
+     * ("I deleted it and it came back", #404).
+     */
+    const epoch = useRef(0);
+    const bumpEpoch = useCallback(() => ++epoch.current, []);
+
     const loadCustomColors = useCallback(() =>
     {
+        const issuedAt = bumpEpoch();
+        const isCurrent = () => epoch.current === issuedAt;
         dispatch({ type: "SET_LOADING", payload: true });
         apiGetCustomColors()
             .then((fetched) =>
             {
+                if (!isCurrent()) return;
                 const map: Record<string, CustomColor> = {};
                 fetched.forEach((c) =>
                 {
@@ -150,6 +163,7 @@ export const CustomColorsProvider = ({
             })
             .catch((error) =>
             {
+                if (!isCurrent()) return;
                 dispatch({ type: "SET_LOADING", payload: false });
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
@@ -157,7 +171,7 @@ export const CustomColorsProvider = ({
                     error,
                 );
             });
-    }, []);
+    }, [ bumpEpoch ]);
 
     /**
      * Undo an optimistic edit whose request failed, then reconcile with the
@@ -190,6 +204,7 @@ export const CustomColorsProvider = ({
             };
             const previous = { ...state.customColors };
 
+            bumpEpoch();
             dispatch({ type: "ADD_COLOR", payload: color });
 
             try
@@ -214,7 +229,7 @@ export const CustomColorsProvider = ({
                 return false;
             }
         },
-        [ state.customColors, loadCustomColors, rollbackAndResync ],
+        [ state.customColors, loadCustomColors, rollbackAndResync, bumpEpoch ],
     );
 
     const updateCustomColor = useCallback(
@@ -222,6 +237,7 @@ export const CustomColorsProvider = ({
         {
             const previous = { ...state.customColors };
 
+            bumpEpoch();
             dispatch({ type: "UPDATE_COLOR", payload: color });
 
             try
@@ -245,7 +261,7 @@ export const CustomColorsProvider = ({
                 return false;
             }
         },
-        [ state.customColors, loadCustomColors, rollbackAndResync ],
+        [ state.customColors, loadCustomColors, rollbackAndResync, bumpEpoch ],
     );
 
     const deleteCustomColor = useCallback(
@@ -254,6 +270,7 @@ export const CustomColorsProvider = ({
             const previous = { ...state.customColors };
             const name = state.customColors[ colorId ]?.name || colorId;
 
+            bumpEpoch();
             dispatch({ type: "DELETE_COLOR", payload: colorId });
 
             try
@@ -275,7 +292,7 @@ export const CustomColorsProvider = ({
                 return false;
             }
         },
-        [ state.customColors, loadCustomColors, rollbackAndResync ],
+        [ state.customColors, loadCustomColors, rollbackAndResync, bumpEpoch ],
     );
 
     useEffect(() =>
