@@ -81,6 +81,7 @@ export function ScheduleAppBar({
                     <CurriculumIcon />
 
                     <IconButton
+                        aria-label="הגדרות"
                         className="hover-rotate-subtle transition-all duration-200 hover:scale-110 active:scale-95"
                         color="inherit"
                         onClick={() => openSettingsDialog()}
