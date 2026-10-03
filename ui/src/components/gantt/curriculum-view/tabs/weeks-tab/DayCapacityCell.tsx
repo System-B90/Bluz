@@ -26,7 +26,6 @@ import { StudentLoadTooltip } from "@/components/gantt/curriculum-view/component
 import
 {
     CapacityStatus,
-    formatHoursLabel,
     formatMinutesAsTimeInput,
     formatShortDate,
     getCapacityStatus,
@@ -34,6 +33,7 @@ import
     parseTimeInputToMinutes,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { DayStudentLoad, StudentPath } from "@/components/gantt/curriculum-view/student-load";
+import { getDayChipLabel } from "@/components/gantt/curriculum-view/tabs/weeks-tab/day-chip-label";
 import { useDaySelection } from "@/components/gantt/curriculum-view/tabs/weeks-tab/DaySelectionContext";
 import { useCurriculumState } from "@/components/gantt/state/context";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
@@ -208,18 +208,10 @@ export function DayCapacityCell({
         return date ? formatShortDate(date) : "";
     }, [day, startDate, weekIndex]);
 
-    const statusLabel = useMemo(() => {
-        const availableMinutes = day?.totalWorkingMinutes ?? 0;
-        const remainingMinutes = availableMinutes - scheduledMinutes;
-
-        if (scheduledMinutes === 0 && availableMinutes === 0) return "סגור";
-        if (scheduledMinutes === 0) return "פנוי";
-        if (remainingMinutes < 0) {
-            return `חריגה ${formatHoursLabel(Math.abs(remainingMinutes))}`;
-        }
-
-        return `נותרו ${formatHoursLabel(remainingMinutes)}`;
-    }, [day?.totalWorkingMinutes, scheduledMinutes]);
+    const chipLabel = useMemo(
+        () => getDayChipLabel(day?.totalWorkingMinutes ?? 0, scheduledMinutes),
+        [day?.totalWorkingMinutes, scheduledMinutes],
+    );
 
     const commitTime = useCallback(() => {
         if (!day) return;
@@ -510,10 +502,15 @@ export function DayCapacityCell({
                         title={`${dayName}${dateLabel ? ` ${dateLabel}` : ""}`}
                     >
                         <Chip
+                            aria-label={chipLabel.full}
                             color={getStatusColor(status)}
                             data-testid="day-capacity-chip"
-                            icon={hasLoadIssues ? <WarningAmberIcon color="warning" /> : undefined}
-                            label={`${formatHoursLabel(scheduledMinutes)} משובץ | ${statusLabel}`}
+                            icon={
+                                chipLabel.over || hasLoadIssues
+                                    ? <WarningAmberIcon color={chipLabel.over ? "error" : "warning"} />
+                                    : undefined
+                            }
+                            label={chipLabel.short}
                             size="smaller"
                             sx={{
                                 maxWidth: "100%",
