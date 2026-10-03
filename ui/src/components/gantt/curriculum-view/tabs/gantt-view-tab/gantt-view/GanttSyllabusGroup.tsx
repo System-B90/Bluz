@@ -10,6 +10,7 @@ import { calculateStudentSyllabusMinutes } from "@/components/gantt/curriculum-v
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
 import { GanttHoursLabel } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttHoursLabel";
 import { GanttModuleRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttModuleRow";
+import { RowExpandButton } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/RowExpandButton";
 import {
     GanttSyllabusGroupProps,
     SpanVariant,
@@ -232,12 +233,11 @@ const GanttSyllabusGroupComponent: React.FC<GanttSyllabusGroupProps> = ({
                         sx={{ display: "flex", alignItems: "center", gap: 1 }}
                         variant="subtitle2"
                     >
-                        <Box
-                            component="span"
-                            sx={{ fontSize: "0.8rem", width: 16 }}
-                        >
-                            {isExpanded ? "▼" : "▶"}
-                        </Box>
+                        <RowExpandButton
+                            expanded={isExpanded}
+                            name={syllabusTitle ?? syllabus.title}
+                            onToggle={() => toggleSyllabus(syllabusId)}
+                        />
                         <Box component="span" sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {syllabusTitle ?? syllabus.title}
                         </Box>
