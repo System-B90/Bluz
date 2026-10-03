@@ -70,10 +70,10 @@ test.describe("Release screenshots", () => {
         await waitForAppLoad(page);
         await page.getByRole("tab", { name: "רצף זמן" }).click();
         await page.getByRole("group", { name: "מצב תצוגה" }).waitFor({ timeout: 30_000 });
-        await shoot(page, "05-gantt-timeline");
+        await shoot(page, "06-gantt-timeline");
         await page.getByRole("button", { name: "מקרא" }).click();
         await page.getByRole("dialog", { name: "מקרא" }).waitFor();
-        await shoot(page, "06-gantt-timeline-legend");
+        await shoot(page, "07-gantt-timeline-legend");
     });
 
     test("gantt grid context menu", async ({ page }) => {
