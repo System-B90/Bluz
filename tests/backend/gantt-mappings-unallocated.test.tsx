@@ -118,6 +118,8 @@ describe("useGanttUnallocated", () => {
         expect(group.syllabusTitle).toBe("סילבוס");
         expect(group.events.map((e) => e.id)).toEqual([ "e1", "e2" ]);
         expect(group.events[ 0 ].moduleId).toBe("m1");
+        // Shown as the chip's path tooltip (#818).
+        expect(group.events[ 0 ].moduleTitle).toBe("מודול");
         expect(result.current.unallocatedCount).toBe(3);
     });
 
