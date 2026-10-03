@@ -1,17 +1,20 @@
 import { DragEndEvent } from "@dnd-kit/core";
+import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
 import { GanttDayId, GanttEventId, GanttModuleId } from "@/api-shared/types/gantt/models";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
+import { DragLabels, dropMessages } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/drag-labels";
 import {
     ModuleMapping,
     moduleMappingsOf,
     planModuleMap,
     planModuleShift,
 } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/module-drag";
-import { useGanttUndo } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-undo";
+import { UndoEntry, useGanttUndo } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-undo";
 import { CreateMapping, MoveMapping, RemoveMapping } from "@/components/gantt/state/mappings/context";
-import { DeleteOccurrence } from "@/components/gantt/state/recurrence-exceptions/context";
+import { DeleteOccurrence, RestoreOccurrence } from "@/components/gantt/state/recurrence-exceptions/context";
 
 type UseGanttDragArgs = {
     linearDays: Array<GanttDayId>;
@@ -22,11 +25,18 @@ type UseGanttDragArgs = {
     moveMapping: MoveMapping;
     removeMapping: RemoveMapping;
     deleteOccurrence: DeleteOccurrence;
+    /** Undoes a dragged-off occurrence. Without it that drop can't be undone. */
+    restoreOccurrence?: RestoreOccurrence;
+    labels: DragLabels;
 }
+type Move = { eventId: GanttEventId | null; from: GanttDayId; to: GanttDayId };
 
-// Drag-and-drop measuring/committing for the gantt timeline: map, move, and
-// shift handlers plus the dnd-kit onDragEnd dispatcher, each paired with its
-// undo inverse (#142). Extracted from UseGanttView.ts (#225).
+const allOk = (results: Array<boolean>) => results.every(Boolean);
+
+// Drag-and-drop committing for the gantt timeline: map, move, and shift
+// handlers plus the dnd-kit onDragEnd dispatcher. Every drop becomes an
+// UndoEntry (#142, #809), confirmed with a snackbar or explained when
+// refused (#810). Extracted from UseGanttView.ts (#225).
 export const useGanttDrag = ({
     linearDays,
     modulesById,
@@ -36,9 +46,12 @@ export const useGanttDrag = ({
     moveMapping,
     removeMapping,
     deleteOccurrence,
+    restoreOccurrence,
+    labels,
 }: UseGanttDragArgs) =>
 {
-    const { pushUndo } = useGanttUndo();
+    const { commit } = useGanttUndo();
+    const { enqueueSnackbar } = useSnackbar();
 
     const placementOf = useCallback(
         (moduleId: GanttModuleId) => ({
@@ -46,6 +59,39 @@ export const useGanttDrag = ({
             eventMappings,
         }),
         [ modulesById, eventMappings ],
+    );
+
+    // createMapping resolves undefined when the server refused (and said why).
+    const create = useCallback(
+        async (moduleId: GanttModuleId, eventId: GanttEventId | null, dayId: GanttDayId) =>
+            (await createMapping({ moduleId, eventId, dayId })) !== undefined,
+        [ createMapping ],
+    );
+
+    const remove = useCallback(
+        (moduleId: GanttModuleId, eventId: GanttEventId | null, dayId: GanttDayId) =>
+            removeMapping({ moduleId, eventId, dayId }),
+        [ removeMapping ],
+    );
+
+    // One at a time, in order: the server's (module, event, day) uniqueness
+    // would otherwise reject a move onto a day a sibling still occupies.
+    const runMoves = useCallback(
+        async (moduleId: GanttModuleId, moves: Array<Move>) =>
+        {
+            for (const move of moves)
+            {
+                const ok = await moveMapping({
+                    moduleId,
+                    eventId: move.eventId,
+                    from: { d: move.from },
+                    to: { d: move.to },
+                });
+                if (!ok) return false;
+            }
+            return true;
+        },
+        [ moveMapping ],
     );
 
     // Maps a module to a day: every unallocated event lands there. An
@@ -58,31 +104,26 @@ export const useGanttDrag = ({
             const eventIds: Array<GanttEventId | null> = placement.eventIds.length > 0
                 ? planModuleMap(placement)
                 : [ null ];
-            for (const eventId of eventIds) await createMapping({ moduleId, eventId, dayId });
+            for (const eventId of eventIds) await create(moduleId, eventId, dayId);
             return eventIds;
         },
-        [ placementOf, createMapping ],
+        [ placementOf, create ],
     );
 
     const handleMapEvent = useCallback(
         async (moduleId: GanttModuleId, eventId: GanttEventId, dayId: GanttDayId) =>
         {
-            await createMapping({ moduleId, eventId, dayId });
+            await create(moduleId, eventId, dayId);
         },
-        [ createMapping ],
+        [ create ],
     );
 
     const handleMoveModule = useCallback(
         async (moduleId: GanttModuleId, sourceDayId: GanttDayId, targetDayId: GanttDayId) =>
         {
-            await moveMapping({
-                moduleId,
-                eventId: null,
-                from: { d: sourceDayId },
-                to: { d: targetDayId },
-            });
+            await runMoves(moduleId, [ { eventId: null, from: sourceDayId, to: targetDayId } ]);
         },
-        [ moveMapping ],
+        [ runMoves ],
     );
 
     const handleMoveEvent = useCallback(
@@ -93,14 +134,18 @@ export const useGanttDrag = ({
             targetDayId: GanttDayId,
         ) =>
         {
-            await moveMapping({
-                moduleId,
-                eventId,
-                from: { d: sourceDayId },
-                to: { d: targetDayId },
-            });
+            await runMoves(moduleId, [ { eventId, from: sourceDayId, to: targetDayId } ]);
         },
-        [ moveMapping ],
+        [ runMoves ],
+    );
+
+    const planShift = useCallback(
+        (moduleId: GanttModuleId, deltaDays: number) => planModuleShift(
+            moduleMappingsOf(placementOf(moduleId), moduleMappings[ moduleId ] ?? []),
+            linearDays,
+            deltaDays,
+        ),
+        [ placementOf, moduleMappings, linearDays ],
     );
 
     // Moves a module's allocated events relatively. All-or-nothing: returns
@@ -109,212 +154,176 @@ export const useGanttDrag = ({
         async (moduleId: GanttModuleId, deltaDays: number): Promise<boolean> =>
         {
             if (deltaDays === 0) return false;
-            const moves = planModuleShift(
-                moduleMappingsOf(placementOf(moduleId), moduleMappings[ moduleId ] ?? []),
-                linearDays,
-                deltaDays,
-            );
+            const moves = planShift(moduleId, deltaDays);
             if (!moves || moves.length === 0) return false;
-
-            // One at a time, leading edge first: the server's (module, event,
-            // day) uniqueness would otherwise reject a move onto a day a
-            // sibling still occupies, leaving the module torn.
-            for (const move of moves)
-            {
-                await moveMapping({
-                    moduleId,
-                    eventId: move.eventId,
-                    from: { d: move.from },
-                    to: { d: move.to },
-                });
-            }
-            return true;
+            return await runMoves(moduleId, moves);
         },
-        [ placementOf, linearDays, moduleMappings, moveMapping ],
+        [ planShift, runMoves ],
+    );
+
+    /**
+     * The drop as an undoable action, a refusal to explain, or null when
+     * the drop is a no-op. Undo and redo replay explicit days captured here,
+     * never a re-plan against mappings that have since changed.
+     */
+    const planDrop = useCallback(
+        (event: DragEndEvent): { refused: string } | null | UndoEntry =>
+        {
+            const payload = event.active.data.current;
+            const target = event.over?.data.current;
+            if (!payload || !target) return null;
+
+            const name = labels.itemName(payload);
+
+            if (target.targetType === "remove")
+            {
+                if (payload.type === "module-move" || payload.type === "module-shift")
+                {
+                    const moduleId: GanttModuleId = payload.moduleId;
+                    const removed: Array<ModuleMapping> = [
+                        ...moduleMappingsOf(placementOf(moduleId), []),
+                        ...(moduleMappings[ moduleId ] ?? [])
+                            .map((dayId) => ({ eventId: null, dayId })),
+                    ];
+                    if (removed.length === 0) return null;
+                    const removeAll = async () => allOk(await Promise.all(
+                        removed.map((r) => remove(moduleId, r.eventId, r.dayId)),
+                    ));
+                    return {
+                        label: dropMessages.removed(name),
+                        redo: removeAll,
+                        undo: async () => allOk(await Promise.all(
+                            removed.map((r) => create(moduleId, r.eventId, r.dayId)),
+                        )),
+                    };
+                }
+                if (payload.type === "event-move")
+                {
+                    const { moduleId, eventId, sourceDayId } = payload;
+                    return {
+                        label: dropMessages.removed(name),
+                        redo: () => remove(moduleId, eventId, sourceDayId),
+                        undo: () => create(moduleId, eventId, sourceDayId),
+                    };
+                }
+                if (payload.type === "event-occurrence")
+                {
+                    const { eventId, dayId } = payload;
+                    return {
+                        label: dropMessages.occurrenceRemoved(name, labels.dayLabel(dayId)),
+                        redo: async () => (await deleteOccurrence({ eventId, dayId })) !== undefined,
+                        undo: async () => restoreOccurrence
+                            ? await restoreOccurrence({ eventId, dayId })
+                            : false,
+                    };
+                }
+                return null;
+            }
+
+            const dayId: GanttDayId = target.dayId;
+            const day = labels.dayLabel(dayId);
+
+            if (payload.type === "module-map" && target.targetType === "module")
+            {
+                const moduleId: GanttModuleId = payload.moduleId;
+                const placement = placementOf(moduleId);
+                const eventIds: Array<GanttEventId | null> = placement.eventIds.length > 0
+                    ? planModuleMap(placement)
+                    : [ null ];
+                return {
+                    label: dropMessages.placed(name, day),
+                    redo: async () =>
+                    {
+                        const results: Array<boolean> = [];
+                        for (const eventId of eventIds) results.push(await create(moduleId, eventId, dayId));
+                        return allOk(results);
+                    },
+                    undo: async () => allOk(await Promise.all(
+                        eventIds.map((eventId) => remove(moduleId, eventId, dayId)),
+                    )),
+                };
+            }
+            if (payload.type === "event-map" && target.targetType === "event")
+            {
+                const { moduleId, eventId } = payload;
+                return {
+                    label: dropMessages.placed(name, day),
+                    redo: () => create(moduleId, eventId, dayId),
+                    undo: () => remove(moduleId, eventId, dayId),
+                };
+            }
+            if (
+                (payload.type === "module-move" && target.targetType === "module") ||
+                (payload.type === "event-move" && target.targetType === "event")
+            )
+            {
+                if (payload.sourceDayId === dayId) return null;
+                const move: Move = {
+                    eventId: payload.type === "event-move" ? payload.eventId : null,
+                    from: payload.sourceDayId,
+                    to: dayId,
+                };
+                const back: Move = { ...move, from: move.to, to: move.from };
+                return {
+                    label: dropMessages.moved(name, day),
+                    redo: () => runMoves(payload.moduleId, [ move ]),
+                    undo: () => runMoves(payload.moduleId, [ back ]),
+                };
+            }
+            if (payload.type === "module-shift" && target.targetType === "module")
+            {
+                const deltaDays = linearDays.indexOf(dayId) - linearDays.indexOf(payload.sourceDayId);
+                if (deltaDays === 0) return null;
+                const moves = planShift(payload.moduleId, deltaDays);
+                if (!moves) return { refused: dropMessages.shiftRefused(name) };
+                if (moves.length === 0) return null;
+                // Reversed: the other edge leads on the way back.
+                const backMoves = moves
+                    .map((m) => ({ eventId: m.eventId, from: m.to, to: m.from }))
+                    .reverse();
+                return {
+                    label: dropMessages.moved(name, day),
+                    redo: () => runMoves(payload.moduleId, moves),
+                    undo: () => runMoves(payload.moduleId, backMoves),
+                };
+            }
+            return null;
+        },
+        [
+            labels,
+            placementOf,
+            moduleMappings,
+            linearDays,
+            planShift,
+            create,
+            remove,
+            runMoves,
+            deleteOccurrence,
+            restoreOccurrence,
+        ],
     );
 
     const handleDragEnd = useCallback(
         async (event: DragEndEvent) =>
         {
-            const { active, over } = event;
-            if (!over) return;
-
-            const payload = active.data.current;
-            const target = over.data.current;
-
-            if (!payload || !target) return;
-
-            if (target.targetType === "remove")
+            const plan = planDrop(event);
+            if (!plan) return;
+            if ("refused" in plan)
             {
-                if (
-                    payload.type === "module-move" ||
-                    payload.type === "module-shift"
-                )
-                {
-                    // Every event leaves the timeline, plus any module-level
-                    // mapping. Snapshot for undo (#142).
-                    const removed: Array<ModuleMapping> = [
-                        ...moduleMappingsOf(placementOf(payload.moduleId), []),
-                        ...(moduleMappings[ payload.moduleId ] ?? [])
-                            .map((dayId) => ({ eventId: null, dayId })),
-                    ];
-                    await Promise.all(
-                        removed.map((r) =>
-                            removeMapping({ moduleId: payload.moduleId, ...r }),
-                        ),
-                    );
-                    if (removed.length > 0)
-                    {
-                        pushUndo(async () =>
-                        {
-                            await Promise.all(
-                                removed.map((r) =>
-                                    createMapping({
-                                        moduleId: payload.moduleId,
-                                        eventId: r.eventId,
-                                        dayId: r.dayId,
-                                    }),
-                                ),
-                            );
-                        });
-                    }
-                } else if (payload.type === "event-move")
-                {
-                    await removeMapping({
-                        moduleId: payload.moduleId,
-                        eventId: payload.eventId,
-                        dayId: payload.sourceDayId,
-                    });
-                    pushUndo(async () =>
-                    {
-                        await createMapping({
-                            moduleId: payload.moduleId,
-                            eventId: payload.eventId,
-                            dayId: payload.sourceDayId,
-                        });
-                    });
-                } else if (payload.type === "event-occurrence")
-                {
-                    await deleteOccurrence({
-                        eventId: payload.eventId,
-                        dayId: payload.dayId,
-                    });
-                }
+                enqueueSnackbar(plan.refused, { variant: "warning" });
                 return;
             }
-
-            if (
-                payload.type === "module-map" &&
-                target.targetType === "module"
-            )
+            try
             {
-                const mapped = await handleMapModule(payload.moduleId, target.dayId);
-                pushUndo(async () =>
-                {
-                    await Promise.all(
-                        mapped.map((eventId) =>
-                            removeMapping({
-                                moduleId: payload.moduleId,
-                                eventId,
-                                dayId: target.dayId,
-                            }),
-                        ),
-                    );
-                });
-            } else if (
-                payload.type === "event-map" &&
-                target.targetType === "event"
-            )
+                // A false step already reported its own error (the mapping
+                // provider shows the server's reason) — just don't confirm it.
+                if ((await plan.redo()) !== false) commit(plan);
+            } catch (e)
             {
-                await handleMapEvent(
-                    payload.moduleId,
-                    payload.eventId,
-                    target.dayId,
-                );
-                pushUndo(async () =>
-                {
-                    await removeMapping({
-                        moduleId: payload.moduleId,
-                        eventId: payload.eventId,
-                        dayId: target.dayId,
-                    });
-                });
-            } else if (
-                payload.type === "module-move" &&
-                target.targetType === "module"
-            )
-            {
-                if (payload.sourceDayId !== target.dayId)
-                {
-                    await handleMoveModule(
-                        payload.moduleId,
-                        payload.sourceDayId,
-                        target.dayId,
-                    );
-                    pushUndo(async () =>
-                    {
-                        await handleMoveModule(
-                            payload.moduleId,
-                            target.dayId,
-                            payload.sourceDayId,
-                        );
-                    });
-                }
-            } else if (
-                payload.type === "module-shift" &&
-                target.targetType === "module"
-            )
-            {
-                const sourceIdx = linearDays.indexOf(payload.sourceDayId);
-                const targetIdx = linearDays.indexOf(target.dayId);
-                const deltaDays = targetIdx - sourceIdx;
-
-                if (await handleShiftModule(payload.moduleId, deltaDays))
-                {
-                    pushUndo(async () =>
-                    {
-                        await handleShiftModule(payload.moduleId, -deltaDays);
-                    });
-                }
-            } else if (
-                payload.type === "event-move" &&
-                target.targetType === "event"
-            )
-            {
-                if (payload.sourceDayId !== target.dayId)
-                {
-                    await handleMoveEvent(
-                        payload.moduleId,
-                        payload.eventId,
-                        payload.sourceDayId,
-                        target.dayId,
-                    );
-                    pushUndo(async () =>
-                    {
-                        await handleMoveEvent(
-                            payload.moduleId,
-                            payload.eventId,
-                            target.dayId,
-                            payload.sourceDayId,
-                        );
-                    });
-                }
+                enqueueApiErrorSnackbar(enqueueSnackbar, dropMessages.failed, e);
             }
         },
-        [
-            handleMapModule,
-            handleMapEvent,
-            handleMoveModule,
-            handleMoveEvent,
-            handleShiftModule,
-            linearDays,
-            moduleMappings,
-            placementOf,
-            removeMapping,
-            createMapping,
-            pushUndo,
-            deleteOccurrence,
-        ],
+        [ planDrop, enqueueSnackbar, commit ],
     );
 
     return {
@@ -324,5 +333,6 @@ export const useGanttDrag = ({
         handleMoveModule,
         handleMoveEvent,
         handleShiftModule,
+        planShift,
     };
 };

@@ -1,13 +1,38 @@
 import { useMemo } from "react";
 
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
-import { GanttEvent, GanttModule } from "@/api-shared/types/gantt/models";
+import { GanttDayIndex, GanttEvent, GanttModule } from "@/api-shared/types/gantt/models";
 import {
     ConstraintType,
     GanttConstraint,
     hasConflictingTemporalConstraints,
 } from "@/api-shared/types/gantt/models/constraint";
 import { ConstraintLink } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
+
+/**
+ * The temporal rules a placement on `dayIndex` would break. Shared by the
+ * after-the-fact flags below and the pre-drop warning (#811).
+ */
+export function temporalViolationsAt(
+    constraints: ReadonlyArray<GanttConstraint | undefined>,
+    dayIndex: GanttDayIndex,
+): Array<string>
+{
+    const broken: Array<string> = [];
+    for (const c of constraints)
+    {
+        if (c?.type !== ConstraintType.Temporal) continue;
+        if (c.allowedDays && !c.allowedDays.includes(dayIndex))
+        {
+            broken.push("מפר ימי עבודה מותרים");
+        }
+        if (c.forbiddenDays && c.forbiddenDays.includes(dayIndex))
+        {
+            broken.push("מפר ימי עבודה אסורים");
+        }
+    }
+    return broken;
+}
 
 // Flags constraint violations (temporal + relational) for the constraints
 // overlay/indicators, and builds the relational-constraint link list for
@@ -84,21 +109,11 @@ export const useGanttViolations = ({
 
             if (c.type === ConstraintType.Temporal)
             {
-                if (
-                    c.allowedDays &&
-                    !c.allowedDays.includes(myDay.dayIndex)
-                )
+                const broken = temporalViolationsAt([ c ], myDay.dayIndex);
+                if (broken.length > 0)
                 {
                     if (!v[ entityId ]) v[ entityId ] = [];
-                    v[ entityId ].push("מפר ימי עבודה מותרים");
-                }
-                if (
-                    c.forbiddenDays &&
-                    c.forbiddenDays.includes(myDay.dayIndex)
-                )
-                {
-                    if (!v[ entityId ]) v[ entityId ] = [];
-                    v[ entityId ].push("מפר ימי עבודה אסורים");
+                    v[ entityId ].push(...broken);
                 }
             } else if (c.type === ConstraintType.Relational)
             {

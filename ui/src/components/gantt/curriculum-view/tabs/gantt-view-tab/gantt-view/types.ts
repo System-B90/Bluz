@@ -91,6 +91,14 @@ export type GanttContextType = {
     ) => Promise<void>;
     /** Resolves false when nothing moved (the shift would leave the timeline). */
     onShiftModule: (moduleId: string, deltaDays: number) => Promise<boolean>;
+    /**
+     * While dragging: why dropping the dragged item (dnd `active.data`) on a
+     * cell (its droppable data) would be a problem, or null (#811).
+     */
+    getDropWarning: (
+        payload: Record<string, unknown> | undefined,
+        target: Record<string, unknown> | undefined,
+    ) => null | string;
 };
 
 export type GanttViewProps = {
@@ -140,6 +148,8 @@ export type GanttBlockProps = {
     isAbsolute?: boolean;
     elementId?: string;
     violations?: Array<string>;
+    /** Hours named in the tooltip (#828). Events default to their duration. */
+    minutes?: number;
     /** Percentage (of the anchor cell's own width) offset/width for multi-week spans (#118). */
     blockLeftPercent?: number;
     blockWidthPercent?: number;
@@ -169,6 +179,8 @@ export type GanttCellProps = {
     blockId?: string;
     blockPayload?: GanttBlockPayload;
     blockTitle?: string;
+    /** Hours named in the block's tooltip (#828). */
+    blockMinutes?: number;
     /** Required-time label shown on the block (zoomed single-week day view). */
     blockTimeLabel?: string;
     spanLength?: number;

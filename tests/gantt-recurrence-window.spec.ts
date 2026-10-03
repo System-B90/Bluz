@@ -132,7 +132,7 @@ async function getTimelineEventRow(
         .filter({ hasText: eventTitle });
 
     if ((await eventRow.count()) === 0) {
-        await moduleRow.locator("span").filter({ hasText: "▶" }).first().click();
+        await moduleRow.getByRole("button", { name: /^הרחבת / }).click();
     }
 
     return eventRow;

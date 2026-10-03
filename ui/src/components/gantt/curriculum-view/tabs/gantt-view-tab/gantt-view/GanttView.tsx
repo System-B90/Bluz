@@ -1,6 +1,7 @@
 import
 {
     DndContext,
+    KeyboardSensor,
     MeasuringStrategy,
     PointerSensor,
     useSensor,
@@ -12,7 +13,7 @@ import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableContainer from "@mui/material/TableContainer";
 import Typography from "@mui/material/Typography";
-import React from "react";
+import React, { useMemo } from "react";
 
 import { ConstraintLines } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/ConstraintLines";
 import { GanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
@@ -20,6 +21,12 @@ import { GanttHeader } from "@/components/gantt/curriculum-view/tabs/gantt-view-
 import { GanttSyllabusGroup } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttSyllabusGroup";
 import { GanttToolbar } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttToolbar";
 import { GanttUnallocatedPanel } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttUnallocatedPanel";
+import {
+    buildGanttAnnouncements,
+    GANTT_KEYBOARD_CODES,
+    ganttKeyboardCoordinates,
+    ganttScreenReaderInstructions,
+} from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/keyboard-drag";
 import { GanttViewProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { useGanttView } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/UseGanttView";
 
@@ -30,6 +37,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         containerRef,
         contextValue,
         handleDragEnd,
+        dragLabels,
         showConstraints,
         setShowConstraints,
         weeklyView,
@@ -57,7 +65,17 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
     // (day-view) droppable measurement cost and drags feel intentional (#88).
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+        // Scheduling without a mouse (#808): Space, arrows, Space.
+        useSensor(KeyboardSensor, {
+            coordinateGetter: ganttKeyboardCoordinates,
+            keyboardCodes: GANTT_KEYBOARD_CODES,
+        }),
     );
+    const { getDropWarning } = contextValue;
+    const accessibility = useMemo(() => ({
+        announcements: buildGanttAnnouncements(dragLabels, getDropWarning),
+        screenReaderInstructions: ganttScreenReaderInstructions,
+    }), [ dragLabels, getDropWarning ]);
 
     if (!curriculum)
     {
@@ -66,6 +84,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
 
     return (
         <DndContext
+            accessibility={ accessibility }
             measuring={ {
                 droppable: { strategy: MeasuringStrategy.WhileDragging },
             } }

@@ -51,6 +51,7 @@ export const useGanttUnallocated = ({
                             id: e.id,
                             title: e.title,
                             moduleId: m.id,
+                            moduleTitle: m.title,
                         })),
                 );
 

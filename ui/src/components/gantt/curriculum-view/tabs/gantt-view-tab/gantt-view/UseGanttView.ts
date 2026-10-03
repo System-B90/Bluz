@@ -4,12 +4,15 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { getDayDate } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { defaultExpandedSyllabusIds } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/default-expansion";
+import { buildDragLabels } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/drag-labels";
+import { dropWarningFor } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/drop-warning";
 import {
     timelineIgnoreBreaks,
     timelineRelativeDaySizing,
     timelineShowConstraints,
     timelineShowUnallocated,
 } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/timeline-preferences";
+import { GanttContextType } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { useGanttDrag } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-drag";
 import { useGanttExpansion } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-expansion";
 import { useGanttMappingsMerge } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-mappings-merge";
@@ -41,7 +44,7 @@ export const useGanttView = (curriculumId: string) =>
         moveMapping,
         removeMapping,
     } = useGanttMappings();
-    const { deleteOccurrence } = useGanttRecurrenceExceptions();
+    const { deleteOccurrence, restoreOccurrence } = useGanttRecurrenceExceptions();
     const {
         state: { constraints },
     } = useGanttConstraints();
@@ -191,6 +194,14 @@ export const useGanttView = (curriculumId: string) =>
         [ createMapping, state.events ],
     );
 
+    // Names and days for drop snackbars, undo and drag announcements.
+    const dragLabels = useMemo(() => buildDragLabels({
+        modules: state.modules,
+        events: state.events,
+        days: state.days,
+        dateOfDayId,
+    }), [ state.modules, state.events, state.days, dateOfDayId ]);
+
     const {
         handleDragEnd,
         handleMapModule,
@@ -198,6 +209,7 @@ export const useGanttView = (curriculumId: string) =>
         handleMoveModule,
         handleMoveEvent,
         handleShiftModule,
+        planShift,
     } = useGanttDrag({
         linearDays,
         modulesById: state.modules,
@@ -207,7 +219,22 @@ export const useGanttView = (curriculumId: string) =>
         moveMapping,
         removeMapping,
         deleteOccurrence,
+        restoreOccurrence,
+        labels: dragLabels,
     });
+
+    const getDropWarning = useCallback<GanttContextType[ "getDropWarning" ]>(
+        (payload, target) => dropWarningFor(payload, target, {
+            constraints,
+            modules: state.modules,
+            events: state.events,
+            days: state.days,
+            eventMappings,
+            linearDays,
+            planShift,
+        }),
+        [ constraints, state.modules, state.events, state.days, eventMappings, linearDays, planShift ],
+    );
 
     // Memoized so context consumers (every day cell) don't re-render on unrelated
     // parent renders (#88).
@@ -251,6 +278,7 @@ export const useGanttView = (curriculumId: string) =>
             onMoveModule: handleMoveModule,
             onMoveEvent: handleMoveEvent,
             onShiftModule: handleShiftModule,
+            getDropWarning,
         }),
         [
             weeklyView,
@@ -291,6 +319,7 @@ export const useGanttView = (curriculumId: string) =>
             handleMoveModule,
             handleMoveEvent,
             handleShiftModule,
+            getDropWarning,
         ],
     );
 
@@ -299,6 +328,7 @@ export const useGanttView = (curriculumId: string) =>
         containerRef,
         contextValue,
         handleDragEnd,
+        dragLabels,
         showConstraints,
         setShowConstraints,
         weeklyView,

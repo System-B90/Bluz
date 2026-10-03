@@ -1,11 +1,13 @@
 // @vitest-environment jsdom
 
 import { act, renderHook } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
+const { commit, enqueueSnackbar } = vi.hoisted(() => ({ commit: vi.fn(), enqueueSnackbar: vi.fn() }));
 vi.mock("@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-undo", () => ({
-    useGanttUndo: () => ({ pushUndo: vi.fn() }),
+    useGanttUndo: () => ({ commit }),
 }));
+vi.mock("notistack", () => ({ useSnackbar: () => ({ enqueueSnackbar }) }));
 
 import {
     canDragModule,
@@ -76,10 +78,21 @@ describe("planModuleShift", () => {
     });
 });
 
-function setup(eventMappings: Record<string, string>, moduleMappings: Record<string, Array<string>> = {}) {
-    const createMapping = vi.fn(async () => {});
-    const moveMapping = vi.fn(async () => {});
-    const removeMapping = vi.fn(async () => {});
+afterEach(() => vi.clearAllMocks());
+
+const labels = {
+    itemName: (item?: { eventId?: null | string; moduleId?: string }) => `"${item?.eventId ?? item?.moduleId}"`,
+    dayLabel: (dayId: string) => `יום ${dayId}`,
+};
+
+function setup(
+    eventMappings: Record<string, string>,
+    moduleMappings: Record<string, Array<string>> = {},
+    { ok = true } = {},
+) {
+    const createMapping = vi.fn(async () => (ok ? { id: "mapping" } : undefined));
+    const moveMapping = vi.fn(async () => ok);
+    const removeMapping = vi.fn(async () => ok);
     const { result } = renderHook(() =>
         useGanttDrag({
             linearDays,
@@ -90,6 +103,7 @@ function setup(eventMappings: Record<string, string>, moduleMappings: Record<str
             moveMapping: moveMapping as never,
             removeMapping: removeMapping as never,
             deleteOccurrence: vi.fn() as never,
+            labels,
         }),
     );
     const drop = (payload: object, target: object) =>
@@ -145,6 +159,70 @@ describe("useGanttDrag module drops", () => {
             { moduleId: "m1", eventId: "e1", dayId: "d0" },
             { moduleId: "m1", eventId: "e3", dayId: "d4" },
             { moduleId: "m1", eventId: null, dayId: "d1" },
+        ]);
+    });
+});
+
+describe("useGanttDrag drop feedback (#810)", () => {
+    it("confirms a drop with what moved where", async () => {
+        const { drop } = setup({ e1: "d0" });
+
+        await drop(
+            { type: "event-move", moduleId: "m1", eventId: "e1", sourceDayId: "d0" },
+            { targetType: "event", dayId: "d2" },
+        );
+
+        expect(commit).toHaveBeenCalledTimes(1);
+        expect(commit.mock.calls[ 0 ][ 0 ].label).toBe("\"e1\" הועבר ליום d2");
+    });
+
+    it("explains a refused shift instead of doing nothing silently", async () => {
+        const { moveMapping, drop } = setup({ e1: "d0", e2: "d4" });
+
+        await drop(
+            { type: "module-shift", moduleId: "m1", sourceDayId: "d0" },
+            { targetType: "module", dayId: "d2" },
+        );
+
+        expect(moveMapping).not.toHaveBeenCalled();
+        expect(commit).not.toHaveBeenCalled();
+        expect(enqueueSnackbar).toHaveBeenCalledWith(
+            "לא ניתן להזיז את \"m1\" — מופעים יחרגו מסוף הציר",
+            { variant: "warning" },
+        );
+    });
+
+    it("doesn't confirm (or offer to undo) a drop the server refused", async () => {
+        const { drop } = setup({}, {}, { ok: false });
+
+        await drop({ type: "event-map", moduleId: "m1", eventId: "e1" }, { targetType: "event", dayId: "d1" });
+
+        expect(commit).not.toHaveBeenCalled();
+    });
+
+    it("reports an unexpected failure through the API error snackbar", async () => {
+        const { createMapping, drop } = setup({});
+        createMapping.mockRejectedValueOnce(new Error("boom"));
+
+        await drop({ type: "event-map", moduleId: "m1", eventId: "e1" }, { targetType: "event", dayId: "d1" });
+
+        expect(commit).not.toHaveBeenCalled();
+        expect(enqueueSnackbar).toHaveBeenCalled();
+    });
+
+    it("regression: undoing a shift replays the captured days in reverse, not a stale re-plan", async () => {
+        const { moveMapping, drop } = setup({ e1: "d0", e2: "d2" });
+        await drop(
+            { type: "module-shift", moduleId: "m1", sourceDayId: "d0" },
+            { targetType: "module", dayId: "d1" },
+        );
+        moveMapping.mockClear();
+
+        await act(() => commit.mock.calls[ 0 ][ 0 ].undo());
+
+        expect(moveMapping.mock.calls.map(([ arg ]) => arg)).toEqual([
+            { moduleId: "m1", eventId: "e1", from: { d: "d1" }, to: { d: "d0" } },
+            { moduleId: "m1", eventId: "e2", from: { d: "d3" }, to: { d: "d2" } },
         ]);
     });
 });

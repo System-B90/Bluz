@@ -33,6 +33,7 @@ import {
     EVENT_ANCHOR_PREFIX,
     HIGHLIGHT_DURATION_MS,
 } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
+import { groupEventBlocks } from "@/components/gantt/event-display-order";
 import {
     groupSortableId,
     ModuleEventGroupRow,
@@ -165,28 +166,15 @@ export function ModuleEventsView({
     );
 
     // Top-level rows: a lone event, or a whole group (members in order).
-    const blocks = useMemo(() => {
-        const result: Array<{
-            id: string;
-            groupId?: string;
-            ids: Array<GanttEventId>;
-        }> = [];
-        for (const eventId of eventIds) {
-            const groupId = state.events[eventId]?.groupId;
-            const existing = groupId
-                ? result.find((b) => b.groupId === groupId)
-                : undefined;
-            if (existing) existing.ids.push(eventId);
-            else if (groupId)
-                result.push({
-                    id: groupSortableId(groupId),
-                    groupId,
-                    ids: [eventId],
-                });
-            else result.push({ id: eventId, ids: [eventId] });
-        }
-        return result;
-    }, [eventIds, state.events]);
+    // Shared with the timeline, which lists events in this same order (#850).
+    const blocks = useMemo(
+        () =>
+            groupEventBlocks(eventIds, state.events).map((block) => ({
+                ...block,
+                id: block.groupId ? groupSortableId(block.groupId) : block.ids[0],
+            })),
+        [eventIds, state.events],
+    );
 
     const handleDragEnd = useCallback(
         (event: DragEndEvent) => {
