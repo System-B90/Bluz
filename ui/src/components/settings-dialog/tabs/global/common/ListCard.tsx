@@ -62,18 +62,12 @@ export function SettingsListCardContent({ items, isLoading = false, headerProps,
                     variant="filtered"
                 />
             ) : (
-                <EmptyState
-                    // Deliberately not addButtonLabel: the add button below is
-                    // always on screen, and two buttons sharing an accessible
-                    // name make every getByRole("button", { name }) ambiguous —
-                    // it broke three outsiders specs on strict-mode violations.
-                    actionLabel="התחילו כאן"
-                    message={ searchMessages.noEntries }
-                    onAction={ handleStartCreate }
-                />
+                // No CTA of its own: the add button below is always on screen,
+                // and a second button for the same action was redundant (#847).
+                <EmptyState message={ searchMessages.noEntries } />
             )
         ) : <List disablePadding>{ items }</List>
-    ), [ isLoading, items, searchQuery, searchMessages, setSearchQuery, handleStartCreate ]);
+    ), [ isLoading, items, searchQuery, searchMessages, setSearchQuery ]);
 
     return (
         <Box sx={ (theme) => ({ ...settingsCardSx(theme), flex: 1.4 }) }>
