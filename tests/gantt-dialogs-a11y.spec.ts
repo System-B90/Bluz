@@ -49,6 +49,20 @@ test.describe("Gantt dialogs a11y", () => {
         await expect(page.getByRole("button", { name: "מחיקת המערך", exact: true })).toBeVisible();
     });
 
+    test("syllabus dialog: autosave status and the unlink button's name (#836, #837)", async ({ page, request }) => {
+        const f = await buildFixture(request);
+        await gotoGantt(page, `gc=${f.curriculumId}&gs=${f.syllabusId}`);
+
+        const unlink = page.getByRole("button", { name: "הסרה מהגאנט", exact: true });
+        await expect(unlink).toBeVisible({ timeout: 30_000 });
+        await expect(unlink).toHaveAccessibleDescription(/הסילבוס יישאר במערכת/);
+
+        const title = page.getByRole("textbox", { name: "שם הסילבוס" });
+        await title.fill(`${TAG}-renamed-${Date.now()}`);
+        await title.blur();
+        await expect(page.getByTestId("save-status")).toHaveText("נשמר", { timeout: 15_000 });
+    });
+
     test("event rows in the module dialog have Hebrew, per-event names (#835)", async ({ page, request }) => {
         const f = await buildFixture(request);
         await gotoGantt(page, `gc=${f.curriculumId}&gs=${f.syllabusId}&gm=${f.moduleId}`);

@@ -29,6 +29,8 @@ import { SyllabusImportExportButton } from "@/components/gantt/syllabus-dialog/S
 import { SyllabusLinksSection } from "@/components/gantt/syllabus-dialog/SyllabusLinksSection";
 import { ColorPickerField } from "@/components/schedule/event-dialog/ColorPickerField";
 
+export const UNLINK_HINT = "הסילבוס יישאר במערכת, אך לא יהיה משויך עוד לתוכנית הלימודים";
+
 export type SyllabusDialogProps = {
     open: boolean;
     setOpen: Dispatch<SetStateAction<boolean>>;
@@ -273,7 +275,9 @@ export function SyllabusDialog({
 
             <DialogActions>
                 {covered ? null : (
-                    <Tooltip title="הסילבוס יישאר במערכת, אך לא יהיה משויך עוד לתוכנית הלימודים">
+                    // describeChild: the visible text stays the name; the hint
+                    // becomes the description (#837, WCAG 2.5.3).
+                    <Tooltip describeChild title={UNLINK_HINT}>
                         <Button
                             color="warning"
                             onClick={() => void unlinkHandler()}
