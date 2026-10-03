@@ -7,6 +7,8 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import React, { memo } from "react";
 
+import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { buildBlockTooltip } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/block-tooltip";
 import { GanttBlockProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import {
     useCurriculumProviderActions,
@@ -24,6 +26,7 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
     isAbsolute = true,
     elementId,
     violations = [],
+    minutes,
     blockLeftPercent,
     blockWidthPercent,
     isSpillover = false,
@@ -254,13 +257,29 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
     const skippedNote = isSkipped
         ? "מופע חוזר שדולג — לחיצה כפולה תחזיר אותו"
         : "";
-    const tooltipContent = [title ?? "", recurrenceNote, skippedNote, spilloverNote, ...violations]
-        .filter(Boolean)
-        .join("\n")
-        .trim();
+    // Full name (the bar truncates it), tree path and hours (#828).
+    const moduleObj = payload?.moduleId ? state.modules[payload.moduleId] : undefined;
+    const eventObj = payload && "eventId" in payload && payload.eventId
+        ? state.events[payload.eventId]
+        : undefined;
+    const syllabusTitle = moduleObj?.syllabusId
+        ? state.syllabuses[moduleObj.syllabusId]?.title
+        : undefined;
+    const tooltipMinutes = minutes ?? eventObj?.minimumDuration;
+    const tooltipContent = buildBlockTooltip({
+        title,
+        path: eventObj ? [syllabusTitle, moduleObj?.title] : [syllabusTitle],
+        hoursLabel: tooltipMinutes ? formatHoursLabel(tooltipMinutes) : undefined,
+        notes: [recurrenceNote, skippedNote, spilloverNote, ...violations],
+    });
 
     return tooltipContent ? (
-        <Tooltip arrow placement="top" title={tooltipContent}>
+        <Tooltip
+            arrow
+            placement="top"
+            slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}
+            title={tooltipContent}
+        >
             {block}
         </Tooltip>
     ) : (

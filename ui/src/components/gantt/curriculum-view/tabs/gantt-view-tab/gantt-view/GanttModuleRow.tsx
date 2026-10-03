@@ -239,6 +239,7 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
                     <GanttCell
                         blockId={`drag-module-shift-${moduleId}-${firstDayId}`}
                         blockLeftPercent={isSpanStart ? blockLeftPercent : undefined}
+                        blockMinutes={requiredMinutes}
                         blockPayload={{
                             type: "module-shift",
                             moduleId,
@@ -277,6 +278,7 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
                 return (
                     <GanttCell
                         blockId={`drag-module-shift-${moduleId}-${dayId}`}
+                        blockMinutes={requiredMinutes}
                         blockPayload={{
                             type: "module-shift",
                             moduleId,
@@ -308,6 +310,7 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
         dayIndexMap,
         moduleId,
         ganttModule?.title,
+        requiredMinutes,
         hasEvents,
         isExpanded,
         spanIndices,

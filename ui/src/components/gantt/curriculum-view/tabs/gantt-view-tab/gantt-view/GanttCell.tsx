@@ -25,6 +25,7 @@ const GanttCellComponent: React.FC<GanttCellProps> = ({
     blockId,
     blockPayload,
     blockTitle,
+    blockMinutes,
     blockTimeLabel,
     spanLength = 1,
     isOpaque = false,
@@ -81,6 +82,7 @@ const GanttCellComponent: React.FC<GanttCellProps> = ({
                         isRecurrence={isRecurrence}
                         isSkipped={isSkipped}
                         isSpillover={isSpillover}
+                        minutes={blockMinutes}
                         onDoubleClick={onDoubleClick}
                         payload={blockPayload}
                         spanLength={spanLength}

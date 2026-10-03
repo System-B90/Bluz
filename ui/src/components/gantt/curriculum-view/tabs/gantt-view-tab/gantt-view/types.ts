@@ -140,6 +140,8 @@ export type GanttBlockProps = {
     isAbsolute?: boolean;
     elementId?: string;
     violations?: Array<string>;
+    /** Hours named in the tooltip (#828). Events default to their duration. */
+    minutes?: number;
     /** Percentage (of the anchor cell's own width) offset/width for multi-week spans (#118). */
     blockLeftPercent?: number;
     blockWidthPercent?: number;
@@ -169,6 +171,8 @@ export type GanttCellProps = {
     blockId?: string;
     blockPayload?: GanttBlockPayload;
     blockTitle?: string;
+    /** Hours named in the block's tooltip (#828). */
+    blockMinutes?: number;
     /** Required-time label shown on the block (zoomed single-week day view). */
     blockTimeLabel?: string;
     spanLength?: number;
