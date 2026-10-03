@@ -28,14 +28,6 @@ export function formatMinutesAsTimeInput(minutes: number): string {
         .padStart(2, "0")}`;
 }
 
-export function formatMinutesAsDuration(minutes: number): string {
-    const total = Number.isFinite(minutes) ? Math.max(0, Math.round(minutes)) : 0;
-    const hours = Math.floor(total / 60);
-    const remainderMinutes = total % 60;
-
-    return `${hours}:${remainderMinutes.toString().padStart(2, "0")}`;
-}
-
 export function parseTimeInputToMinutes(value: string): null | number {
     const trimmed = value.trim();
     if (!trimmed) return 0;
@@ -107,6 +99,10 @@ export function formatHours(
     }).format(minutes / 60);
 }
 
+/**
+ * The one way a duration is shown in the gantt (#813): the viewer's decimal or
+ * clock hours, always with the `ש׳` unit so it never reads as a clock time.
+ */
 export function formatHoursLabel(minutes: number): string {
     return `${formatHours(minutes)} ש׳`;
 }
