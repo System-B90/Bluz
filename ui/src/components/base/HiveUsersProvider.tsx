@@ -1,5 +1,4 @@
 "use client";
-import { enqueueSnackbar } from "notistack";
 import {
     createContext,
     useCallback,
@@ -11,7 +10,7 @@ import {
 
 import { getHiveUsers } from "@/api-client/hive";
 import { Clearance, CourseUser } from "@/api-shared/types/hive";
-import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
+import { reportHiveLoadFailure } from "@/components/base/hive-load-failure";
 
 export type HiveUsersContextState = {
     default: boolean;
@@ -49,6 +48,9 @@ export const HiveUsersProvider = ({
         [users],
     );
 
+    // Bumped by the failure toast's retry action to load again (#823).
+    const [reloadToken, setReloadToken] = useState(0);
+
     const loadUsers = useCallback(() => {
         getHiveUsers()
             .then((fetchedUsers) => {
@@ -58,18 +60,12 @@ export const HiveUsersProvider = ({
                 });
                 setUsers(usersMap);
             })
-            .catch((error) =>
-                enqueueApiErrorSnackbar(
-                    enqueueSnackbar,
-                    "טעינת משתמשים נכשלה.",
-                    error,
-                ),
-            );
+            .catch((error) => reportHiveLoadFailure("users", error, () => setReloadToken((token) => token + 1)));
     }, [setUsers]);
 
     useEffect(() => {
         loadUsers();
-    }, [loadUsers]);
+    }, [loadUsers, reloadToken]);
 
     // A fresh object literal here re-renders every consumer app-wide on
     // every render of this provider, including event tiles that read
