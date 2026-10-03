@@ -2,7 +2,6 @@ import DensitySmallIcon from "@mui/icons-material/DensitySmall";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Box from "@mui/material/Box";
-import CircularProgress from "@mui/material/CircularProgress";
 import Collapse from "@mui/material/Collapse";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import IconButton from "@mui/material/IconButton";
@@ -23,6 +22,7 @@ import { CourseStartDateControl } from "@/components/gantt/curriculum-view/tabs/
 import { WeekLengthMenu } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeekLengthMenu";
 import { WeeksCapacityGrid } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeeksCapacityGrid";
 import { WeeksSummaryBar } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeeksSummaryBar";
+import { WeeksTableSkeleton } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeeksTableSkeleton";
 import { useCurriculumState } from "@/components/gantt/state/context";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
@@ -261,18 +261,7 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
         ],
     );
 
-    if (!curriculum) {
-        return (
-            <Box
-                alignItems="center"
-                display="flex"
-                flex={1}
-                justifyContent="center"
-            >
-                <CircularProgress size={28} />
-            </Box>
-        );
-    }
+    if (!curriculum) return <WeeksTableSkeleton />;
 
     return (
         <Box
