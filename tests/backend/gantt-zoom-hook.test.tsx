@@ -3,6 +3,7 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { GanttCurriculum, GanttWeek } from "@/api-shared/types/gantt/models";
+import { timelineWeeklyView } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/timeline-preferences";
 import { useGanttZoom } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-zoom";
 
 /**
@@ -33,7 +34,11 @@ function pressCtrlArrow(key: "ArrowLeft" | "ArrowRight") {
     });
 }
 
-afterEach(cleanup);
+afterEach(() => {
+    cleanup();
+    // Weekly/daily is a remembered per-viewer flag (#821): reset between cases.
+    timelineWeeklyView.set(true);
+});
 
 describe("useGanttZoom", () => {
     it("starts in weekly view showing every week", () => {
