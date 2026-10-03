@@ -33,6 +33,8 @@ export type SyllabusDialogProps = {
     setOpen: Dispatch<SetStateAction<boolean>>;
     curriculumId: GanttCurriculumId;
     syllabusId: GanttSyllabusId | null;
+    /** A module/event dialog is open on top; hide this layer's destructive action (#834). */
+    covered?: boolean;
 };
 
 /**
@@ -49,6 +51,7 @@ export function SyllabusDialog({
     setOpen,
     curriculumId,
     syllabusId,
+    covered = false,
 }: SyllabusDialogProps) {
     const { enqueueSnackbar } = useSnackbar();
     const syllabus = useSyllabus(syllabusId as GanttSyllabusId);
@@ -264,15 +267,17 @@ export function SyllabusDialog({
             </DialogContent>
 
             <DialogActions>
-                <Tooltip title="הסילבוס יישאר במערכת, אך לא יהיה משויך עוד לתוכנית הלימודים">
-                    <Button
-                        color="warning"
-                        onClick={() => void unlinkHandler()}
-                        startIcon={<LinkOffIcon fontSize="small" />}
-                    >
-                        הסרה מהגאנט
-                    </Button>
-                </Tooltip>
+                {covered ? null : (
+                    <Tooltip title="הסילבוס יישאר במערכת, אך לא יהיה משויך עוד לתוכנית הלימודים">
+                        <Button
+                            color="warning"
+                            onClick={() => void unlinkHandler()}
+                            startIcon={<LinkOffIcon fontSize="small" />}
+                        >
+                            הסרה מהגאנט
+                        </Button>
+                    </Tooltip>
+                )}
                 <Button
                     color="primary"
                     onClick={closeHandler}
