@@ -10,14 +10,18 @@ import { useMemo, useState } from "react";
 import { CourseUser } from "@/api-shared/types/hive";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { HiveAvatar } from "@/components/header/HiveAvatarImage";
+import { AssignToCourseButton } from "@/components/settings-dialog/tabs/global/course-settings/AssignToCourseButton";
 import { DraggedInstructorData } from "@/components/settings-dialog/tabs/global/course-settings/dnd-types";
 
 export function InstructorCard({
     instructor,
     isOverlay = false,
+    action,
 }: {
     instructor: CourseUser;
     isOverlay?: boolean;
+    /** Trailing control, e.g. the non-drag "assign to course" menu (#848). */
+    action?: React.ReactNode;
 }) {
     return (
         <Card
@@ -80,6 +84,7 @@ export function InstructorCard({
             >
                 {instructor.display_name}
             </Typography>
+            {action}
         </Card>
     );
 }
@@ -103,7 +108,10 @@ function DraggableInstructorItem({ instructor }: { instructor: CourseUser }) {
                 touchAction: "none",
             }}
         >
-            <InstructorCard instructor={instructor} />
+            <InstructorCard
+                action={<AssignToCourseButton instructor={instructor} />}
+                instructor={instructor}
+            />
         </Box>
     );
 }
@@ -155,7 +163,7 @@ export function InstructorSourceList() {
                         color: "text.secondary",
                     }}
                 >
-                    גרור מדריך לתוך מסלול כדי לשייכו
+                    גרור מדריך לתוך מסלול, או בחר מסלול מהתפריט שליד שמו
                 </Typography>
             </Box>
 
