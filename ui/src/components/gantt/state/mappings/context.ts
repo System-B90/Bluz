@@ -32,7 +32,7 @@ export type MoveMapping = ({
     to: { d: GanttDayId };
     /** Also re-allots the moved mapping. */
     allottedMinutes?: number;
-}) => Promise<void>;
+}) => Promise<boolean>; // false: nothing moved (error already reported)
 export type RemoveMapping = ({
     moduleId,
     eventId,
@@ -41,7 +41,7 @@ export type RemoveMapping = ({
     moduleId: GanttModuleId;
     eventId: GanttEventId | null;
     dayId: GanttDayId;
-}) => Promise<void>;
+}) => Promise<boolean>; // false: the server refused (error already reported)
 
 /** Sets the minutes an event is allotted on one of its mapped days. */
 export type SetAllottedMinutes = ({

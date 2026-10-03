@@ -138,7 +138,7 @@ export function GanttMappingProvider({
             });
             const originalMapping = mappingsRef.current[ oldKey ];
 
-            if (!originalMapping) return;
+            if (!originalMapping) return false;
 
             const updatedMapping = {
                 ...originalMapping,
@@ -161,6 +161,7 @@ export function GanttMappingProvider({
                     { dayId: from.d },
                     { dayId: to.d, ...(allottedMinutes !== undefined && { allottedMinutes }) },
                 );
+                return true;
             } catch (e)
             {
                 // Rollback on failure
@@ -175,6 +176,7 @@ export function GanttMappingProvider({
                     "עדכון המיפוי נכשל!",
                     e,
                 );
+                return false;
             }
         },
         [ curriculumId, dispatch, enqueueSnackbar ],
@@ -248,6 +250,7 @@ export function GanttMappingProvider({
                     eventId,
                     dayId,
                 );
+                return true;
             } catch (e)
             {
                 await refreshMappings(); // Re-sync on failure
@@ -256,6 +259,7 @@ export function GanttMappingProvider({
                     "מחיקת המיפוי נכשלה!",
                     e,
                 );
+                return false;
             }
         },
         [ refreshMappings, dispatch, curriculumId, enqueueSnackbar ],

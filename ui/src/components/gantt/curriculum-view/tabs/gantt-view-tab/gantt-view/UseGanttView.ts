@@ -10,6 +10,7 @@ import {
     timelineShowConstraints,
     timelineShowUnallocated,
 } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/timeline-preferences";
+import { buildDragLabels } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/drag-labels";
 import { useGanttDrag } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-drag";
 import { useGanttExpansion } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-expansion";
 import { useGanttMappingsMerge } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-mappings-merge";
@@ -41,7 +42,7 @@ export const useGanttView = (curriculumId: string) =>
         moveMapping,
         removeMapping,
     } = useGanttMappings();
-    const { deleteOccurrence } = useGanttRecurrenceExceptions();
+    const { deleteOccurrence, restoreOccurrence } = useGanttRecurrenceExceptions();
     const {
         state: { constraints },
     } = useGanttConstraints();
@@ -191,6 +192,14 @@ export const useGanttView = (curriculumId: string) =>
         [ createMapping, state.events ],
     );
 
+    // Names and days for drop snackbars, undo and drag announcements.
+    const dragLabels = useMemo(() => buildDragLabels({
+        modules: state.modules,
+        events: state.events,
+        days: state.days,
+        dateOfDayId,
+    }), [ state.modules, state.events, state.days, dateOfDayId ]);
+
     const {
         handleDragEnd,
         handleMapModule,
@@ -207,6 +216,8 @@ export const useGanttView = (curriculumId: string) =>
         moveMapping,
         removeMapping,
         deleteOccurrence,
+        restoreOccurrence,
+        labels: dragLabels,
     });
 
     // Memoized so context consumers (every day cell) don't re-render on unrelated
@@ -299,6 +310,7 @@ export const useGanttView = (curriculumId: string) =>
         containerRef,
         contextValue,
         handleDragEnd,
+        dragLabels,
         showConstraints,
         setShowConstraints,
         weeklyView,

@@ -3,7 +3,7 @@ import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const { enqueueSnackbar } = vi.hoisted(() => ({ enqueueSnackbar: vi.fn() }));
-vi.mock("notistack", () => ({ useSnackbar: () => ({ enqueueSnackbar }) }));
+vi.mock("notistack", () => ({ useSnackbar: () => ({ enqueueSnackbar, closeSnackbar: vi.fn() }) }));
 
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
 import { GanttDayIndex } from "@/api-shared/types/gantt/models";
@@ -259,26 +259,89 @@ describe("useGanttUndo", () => {
         });
     }
 
+    const entry = (
+        undo: () => Promise<boolean | void> = async () => undefined,
+        redo: () => Promise<boolean | void> = async () => undefined,
+        label = "פעולה",
+    ) => ({ label, undo, redo });
+
     it("pops the most recent action first", async () => {
         const first = vi.fn(async () => undefined);
         const second = vi.fn(async () => undefined);
         const result = renderHook(() => useGanttUndo()).result;
 
-        act(() => result.current.pushUndo(first));
-        act(() => result.current.pushUndo(second));
+        act(() => result.current.pushUndo(entry(first)));
+        act(() => result.current.pushUndo(entry(second)));
         press();
 
         await waitFor(() => expect(second).toHaveBeenCalled());
         expect(first).not.toHaveBeenCalled();
     });
 
+    it("regression: undoes with the Hebrew layout, where Ctrl+Z types 'ז' (#809)", async () => {
+        const undo = vi.fn(async () => undefined);
+        const result = renderHook(() => useGanttUndo()).result;
+        act(() => result.current.pushUndo(entry(undo)));
+
+        press("ז", { code: "KeyZ" });
+
+        await waitFor(() => expect(undo).toHaveBeenCalled());
+    });
+
+    it("says what was undone (#809)", async () => {
+        const result = renderHook(() => useGanttUndo()).result;
+        act(() => result.current.pushUndo(entry(undefined, undefined, "\"שיעור\" הועבר ליום שני")));
+
+        press();
+
+        await waitFor(() =>
+            expect(enqueueSnackbar).toHaveBeenCalledWith(
+                "בוטל: \"שיעור\" הועבר ליום שני",
+                { variant: "info" },
+            ),
+        );
+    });
+
+    it("redoes with Ctrl+Shift+Z and Ctrl+Y (#809)", async () => {
+        const redo = vi.fn(async () => undefined);
+        const result = renderHook(() => useGanttUndo()).result;
+        act(() => result.current.pushUndo(entry(undefined, redo)));
+
+        press("z", { code: "KeyZ" });
+        await waitFor(() => expect(enqueueSnackbar).toHaveBeenCalledTimes(1));
+        press("Z", { code: "KeyZ", shiftKey: true });
+        await waitFor(() => expect(redo).toHaveBeenCalledTimes(1));
+
+        // Redone → back on the undo stack; undo, then redo via Ctrl+Y.
+        press("z", { code: "KeyZ" });
+        await waitFor(() => expect(enqueueSnackbar).toHaveBeenCalledTimes(3));
+        press("ט", { code: "KeyY" });
+        await waitFor(() => expect(redo).toHaveBeenCalledTimes(2));
+    });
+
+    it("forgets the redo history once a new action is made", async () => {
+        const redo = vi.fn(async () => undefined);
+        const result = renderHook(() => useGanttUndo()).result;
+        act(() => result.current.pushUndo(entry(undefined, redo)));
+        await act(async () => {
+            await result.current.handleUndo();
+        });
+
+        act(() => result.current.pushUndo(entry()));
+        await act(async () => {
+            await result.current.handleRedo();
+        });
+
+        expect(redo).not.toHaveBeenCalled();
+    });
+
     it("reports a failed undo instead of swallowing it", async () => {
         const result = renderHook(() => useGanttUndo()).result;
 
         act(() =>
-            result.current.pushUndo(async () => {
+            result.current.pushUndo(entry(async () => {
                 throw new Error("server said no");
-            }),
+            })),
         );
         press();
 
@@ -287,6 +350,28 @@ describe("useGanttUndo", () => {
                 "ביטול הפעולה נכשל!",
                 { variant: "error" },
             ),
+        );
+    });
+
+    it("treats an undo step resolving false as failed", async () => {
+        const result = renderHook(() => useGanttUndo()).result;
+        act(() => result.current.pushUndo(entry(async () => false)));
+
+        press();
+
+        await waitFor(() =>
+            expect(enqueueSnackbar).toHaveBeenCalledWith("ביטול הפעולה נכשל!", { variant: "error" }),
+        );
+    });
+
+    it("confirms a committed action with an undo button (#810)", () => {
+        const result = renderHook(() => useGanttUndo()).result;
+
+        act(() => result.current.commit(entry(undefined, undefined, "\"שיעור\" שובץ ליום שני")));
+
+        expect(enqueueSnackbar).toHaveBeenCalledWith(
+            "\"שיעור\" שובץ ליום שני",
+            expect.objectContaining({ variant: "success", action: expect.any(Function) }),
         );
     });
 
@@ -299,13 +384,13 @@ describe("useGanttUndo", () => {
         expect(enqueueSnackbar).not.toHaveBeenCalled();
     });
 
-    it("ignores Ctrl+Shift+Z and other keys", async () => {
+    it("ignores Alt chords and other keys", async () => {
         const undo = vi.fn(async () => undefined);
         const result = renderHook(() => useGanttUndo()).result;
-        act(() => result.current.pushUndo(undo));
+        act(() => result.current.pushUndo(entry(undo)));
 
-        press("z", { shiftKey: true });
-        press("y");
+        press("z", { altKey: true });
+        press("x");
 
         await Promise.resolve();
         expect(undo).not.toHaveBeenCalled();
@@ -314,7 +399,7 @@ describe("useGanttUndo", () => {
     it("never steals Ctrl+Z from a text field", async () => {
         const undo = vi.fn(async () => undefined);
         const result = renderHook(() => useGanttUndo()).result;
-        act(() => result.current.pushUndo(undo));
+        act(() => result.current.pushUndo(entry(undo)));
 
         const input = document.createElement("textarea");
         document.body.appendChild(input);
@@ -339,9 +424,9 @@ describe("useGanttUndo", () => {
 
         for (let i = 0; i < 51; i++) {
             act(() =>
-                result.current.pushUndo(async () => {
+                result.current.pushUndo(entry(async () => {
                     calls.push(i);
-                }),
+                })),
             );
         }
         // Drain the whole stack; the first push must have been evicted.
