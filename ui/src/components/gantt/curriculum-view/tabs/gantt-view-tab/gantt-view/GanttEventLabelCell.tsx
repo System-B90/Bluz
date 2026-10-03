@@ -83,7 +83,16 @@ export const GanttEventLabelCell: React.FC<GanttEventLabelCellProps> = ({
                 title="עריכת המופע"
                 variant="caption"
             >
-                ↳ { eventTitle }
+                { /* Hooks from the parent row into this one: mirrored in RTL (#849). */ }
+                <Box
+                    aria-hidden
+                    component="span"
+                    data-testid="event-row-connector"
+                    sx={ { marginInlineEnd: 0.5 } }
+                >
+                    { theme.direction === "rtl" ? "↲" : "↳" }
+                </Box>
+                { eventTitle }
             </Typography>
 
             <EventNoteIndicator comment={ eventComment } />
