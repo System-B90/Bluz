@@ -184,7 +184,7 @@ export function GanttFilterButton({
                     <Typography color="text.secondary" variant="body2">
                         {hasActiveFilters
                             ? description
-                            : "לא פעיל סינון — מוצגים כל המקצועות בגאנט."}
+                            : "לא פעיל סינון — מוצגים כל הסילבוסים בגאנט."}
                     </Typography>
 
                     {hasActiveFilters ? (

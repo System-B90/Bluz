@@ -6,6 +6,9 @@ import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import React from "react";
 
+/** Never more than ~a fifth of the viewport, and never above the old 200px. */
+export const UNALLOCATED_PANEL_MAX_HEIGHT = "min(200px, 22vh)";
+
 export type GanttUnallocatedGroup = {
     syllabusId: string;
     syllabusTitle: string;
@@ -87,7 +90,10 @@ export const GanttUnallocatedPanel: React.FC<GanttUnallocatedPanelProps> = ({
                 backgroundColor:
                     theme.vars.palette.background.paper,
                 flexShrink: 0,
-                maxHeight: 200,
+                // Viewport-relative so a ~735px laptop screen keeps most of the
+                // timeline in view; the user can drag it taller (#819).
+                maxHeight: UNALLOCATED_PANEL_MAX_HEIGHT,
+                resize: "vertical",
                 overflow: "auto",
             } }
         >
@@ -96,7 +102,7 @@ export const GanttUnallocatedPanel: React.FC<GanttUnallocatedPanelProps> = ({
                     color="text.secondary"
                     variant="body2"
                 >
-                    כל המערכים והמפגשים משובצים 🎉
+                    כל המערכים והמופעים משובצים 🎉
                 </Typography>
             ) : (
                 <Stack spacing={ 1 }>

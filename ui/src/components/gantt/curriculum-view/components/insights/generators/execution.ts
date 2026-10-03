@@ -15,6 +15,7 @@ import {
     InsightContext,
     InsightGenerator,
 } from "@/components/gantt/curriculum-view/components/insights/types";
+import { formatShortDate } from "@/components/gantt/curriculum-view/gantt-time-utils";
 
 type TaggedOccurrence = OccurrenceExecution & { ganttEventId: string };
 
@@ -66,7 +67,7 @@ const deletedOccurrences: InsightGenerator = (ctx) => {
         body: "הם קיימים בגאנט אבל לא בלו\"ז. אפשר ליצור אותם מחדש מחלון המופע.",
         visual: {
             kind: "chips",
-            chips: deleted.slice(0, 6).map((o) => ({ label: `${titleOf(ctx, o.ganttEventId)} (${dayjs(o.occurrenceDate).format("D.M")})` })),
+            chips: deleted.slice(0, 6).map((o) => ({ label: `${titleOf(ctx, o.ganttEventId)} (${formatShortDate(dayjs(o.occurrenceDate))})` })),
         },
     };
 };

@@ -43,7 +43,7 @@ const { Provider, useCollection } = createCollectionProvider<
         ...data,
     }),
     messages: {
-        loadFailed: "טעינת קורסים נכשלה.",
+        loadFailed: "טעינת מסלולים נכשלה.",
         createSuccess: (name) => `יצירת מסלול ${name} הסתיימה בהצלחה.`,
         createFailure: (name) => `יצירת המסלול ${name} נכשלה!`,
         updateSuccess: (name) => `עדכון מסלול ${name} הסתיים בהצלחה.`,

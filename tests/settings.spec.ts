@@ -58,7 +58,7 @@ test.describe("Settings Dialog", () => {
         const tabs = [
             { label: "אישי", marker: "קבוצות שלי" },
             { label: "העדפות זמן", marker: "זמני תפילות" },
-            { label: "בניית קורסים", marker: "היררכיית מסלולים ומדריכים" },
+            { label: "בניית מסלולים", marker: "היררכיית מסלולים ומדריכים" },
             { label: "חדרים", marker: "חדרים" },
             { label: "אנשי חוץ", marker: "אנשי חוץ" },
         ];
@@ -159,11 +159,11 @@ test.describe("Settings Dialog", () => {
         await expect(dialog.getByText("ארוחת ערב").first()).toBeVisible();
     });
 
-    // ─── Course Builder Settings (בניית קורסים) ─────────────────────────────
+    // ─── Course Builder Settings (בניית מסלולים) ─────────────────────────────
 
     test("course builder tab displays the course hierarchy panel", async ({ page }) => {
         await openSettingsDialog(page);
-        await navigateToSettingsTab(page, "בניית קורסים");
+        await navigateToSettingsTab(page, "בניית מסלולים");
 
         const dialog = page.locator(SELECTORS.settingsDialog).first();
 

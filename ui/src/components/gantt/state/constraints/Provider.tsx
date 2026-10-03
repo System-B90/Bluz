@@ -188,7 +188,7 @@ export function GanttConstraintProvider({
 
             if (!canModify(originalConstraint)) {
                 enqueueSnackbar(
-                    "אינך יכול לערוך אילוץ המוגדר על ידי מודול אחר.",
+                    "אינך יכול לערוך אילוץ המוגדר על ידי מערך אחר.",
                     {
                         variant: "warning",
                     },
@@ -234,7 +234,7 @@ export function GanttConstraintProvider({
 
             if (!canModify(originalConstraint)) {
                 enqueueSnackbar(
-                    "אינך יכול למחוק אילוץ המוגדר על ידי מודול אחר.",
+                    "אינך יכול למחוק אילוץ המוגדר על ידי מערך אחר.",
                     {
                         variant: "error",
                     },

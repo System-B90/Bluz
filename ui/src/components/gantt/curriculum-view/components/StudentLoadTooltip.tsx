@@ -157,7 +157,7 @@ function IssueCard({
                 <Typography fontWeight={700} variant="subtitle2">{syllabusTitle(issue.syllabusId)}</Typography>
             </Stack>
             <Typography color="text.secondary" sx={{ display: "block", mt: 0.25, mb: 1 }} variant="caption">
-                לשאפלים זמן שונה במקצוע ביום הזה — הם צריכים ללמוד אותו באותו בלוק.
+                לשאפלים זמן שונה בסילבוס ביום הזה — הם צריכים ללמוד אותו באותו בלוק.
             </Typography>
             <Stack spacing={0.75}>
                 {rows.map((row) => (

@@ -227,8 +227,8 @@ const courseTimeline: InsightGenerator = (ctx) => {
     const elapsed = ctx.now.startOf("day").diff(start, "day");
     const visual: InsightVisual = {
         kind: "timeline",
-        startLabel: start.format("D.M.YY"),
-        endLabel: end.format("D.M.YY"),
+        startLabel: start.format("DD/MM/YY"),
+        endLabel: end.format("DD/MM/YY"),
         progress: elapsed >= 0 && elapsed <= totalDays ? elapsed / totalDays : null,
     };
     if (elapsed < 0) {

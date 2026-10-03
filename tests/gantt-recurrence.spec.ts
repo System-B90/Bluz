@@ -496,7 +496,7 @@ test.describe("Gantt Recurring Events (#111)", () => {
         ).toHaveCount(0);
 
         // Back to weekly view, then zoom into week 2: the opposite holds.
-        await page.getByRole("button", { name: "תצוגה שבועית" }).click();
+        await page.getByRole("button", { name: "שבועי", exact: true }).click();
         await page.waitForTimeout(300);
         await zoomIntoWeek(page, 1);
 

@@ -41,9 +41,9 @@ const TABS: Array<TabCommand> = [
     },
     {
         tab: "courses",
-        title: "בניית קורסים",
+        title: "בניית מסלולים",
         icon: <MenuBookIcon />,
-        keywords: ["courses", "course builder", "קורסים"],
+        keywords: ["courses", "course builder", "קורסים", "מסלולים"],
     },
     {
         tab: "colors",

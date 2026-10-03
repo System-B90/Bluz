@@ -1,17 +1,16 @@
 "use client";
 import Box, { BoxProps } from "@mui/material/Box";
-import { usePathname, useSearchParams } from "next/navigation";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, SetStateAction } from "react";
 
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { GanttContentCommands } from "@/components/app-commands/GanttContentCommands";
 import { useGanttTabCommands } from "@/components/app-commands/use-gantt-tab-commands";
 import { GanttOnboarding } from "@/components/app-onboarding/gantt/GanttOnboarding";
-import { GANTT_TAB_COUNT } from "@/components/app-onboarding/gantt/tabs";
 import { GanttCreationDeletionCallbackProps } from "@/components/gantt/curriculum-fab/CurriculumActionItems";
 import { CurriculumViewSidebar } from "@/components/gantt/curriculum-view/components/sidebars";
 import { GanttSearchNavProvider } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
 import { CurriculumViewTabs } from "@/components/gantt/curriculum-view/tabs";
+import { useGanttTabUrl } from "@/components/gantt/curriculum-view/use-gantt-tab-url";
 import { GanttFiltersProvider } from "@/components/gantt/state/filters/Provider";
 import { useCurriculumStatusSync } from "@/components/gantt/state/hooks/UseCurriculumStatusSync";
 
@@ -27,50 +26,10 @@ export function CurriculumView({
     ...props
 }: CurriculumViewProps)
 {
-    const pathname = usePathname();
-    const searchParams = useSearchParams();
-
-    const [ selectedTabIndex, setSelectedTabIndex ] = useState<number>(() =>
-    {
-        const viewIndexFromUrl = searchParams.get("v");
-        const parsedViewIndex = viewIndexFromUrl
-            ? parseInt(viewIndexFromUrl, 10)
-            : 0;
-
-        // Old links can carry the index of a since-removed tab.
-        return Number.isFinite(parsedViewIndex)
-            && parsedViewIndex >= 0
-            && parsedViewIndex < GANTT_TAB_COUNT
-            ? parsedViewIndex
-            : 0;
-    });
+    const [ selectedTabIndex, setSelectedTabIndex ] = useGanttTabUrl();
 
     useCurriculumStatusSync(curriculumId);
     useGanttTabCommands({ selectedTabIndex, setSelectedTabIndex });
-
-    useEffect(() =>
-    {
-        if (typeof window === "undefined")
-        {
-            return;
-        }
-
-        const currentViewIndex = selectedTabIndex.toString();
-        const nextParams = new URLSearchParams(window.location.search);
-
-        if (nextParams.get("v") === currentViewIndex)
-        {
-            return;
-        }
-
-        nextParams.set("v", currentViewIndex);
-
-        const hash = window.location.hash;
-        const nextSearch = nextParams.toString();
-        const nextUrl = `${pathname}${nextSearch ? `?${nextSearch}` : ""}${hash}`;
-
-        window.history.replaceState(window.history.state, "", nextUrl);
-    }, [ selectedTabIndex, pathname ]);
 
     return (
         <GanttSearchNavProvider>

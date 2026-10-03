@@ -53,7 +53,7 @@ export function SyllabusLinksSection({
             updateSyllabus(syllabusId, updates).catch((error) =>
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
-                    "עדכון שיוך המקצוע נכשל!",
+                    "עדכון שיוך הסילבוס נכשל!",
                     error,
                 ),
             );
@@ -104,7 +104,7 @@ export function SyllabusLinksSection({
                                 component="span"
                                 variant="body2"
                             >
-                                למקצוע אין מסלול משויך. שיוך לפחות מסלול אחד
+                                לסילבוס אין מסלול משויך. שיוך לפחות מסלול אחד
                                 מאפשר לסנן את הגאנט לפי מסלול.
                             </Typography>
                         ) : (

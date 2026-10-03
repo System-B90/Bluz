@@ -5,6 +5,7 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
 import { alpha, useTheme } from "@mui/material/styles";
 import Switch from "@mui/material/Switch";
 import TableCell from "@mui/material/TableCell";
@@ -439,7 +440,19 @@ export function DayCapacityCell({
                             onKeyDown={handleTimeKeyDown}
                             size="small"
                             slotProps={{
+                                // A bare "10:00" read as a clock time; the unit
+                                // marks it as a duration (#813).
+                                input: {
+                                    endAdornment: (
+                                        <InputAdornment position="end" sx={{ marginInlineStart: 0, marginInlineEnd: 0.5 }}>
+                                            <Typography color="text.secondary" variant="caption">
+                                                ש׳
+                                            </Typography>
+                                        </InputAdornment>
+                                    ),
+                                },
                                 htmlInput: {
+                                    "aria-label": "שעות זמינות ביום",
                                     inputMode: "numeric",
                                     style: {
                                         fontFamily: "monospace",

@@ -11,7 +11,7 @@ import {
 } from "./fixtures";
 
 /**
- * Course Builder settings tab (בניית קורסים).
+ * Course Builder settings tab (בניית מסלולים).
  *
  * Covers the drag-and-drop course hierarchy UI: rendering the tree, creating
  * a root course via the UI button, dragging a course onto another to nest it,
@@ -63,7 +63,7 @@ async function deleteCourses(
 
 async function openCourseBuilderTab(page: Page): Promise<void> {
     await openSettingsDialog(page);
-    await navigateToSettingsTab(page, "בניית קורסים");
+    await navigateToSettingsTab(page, "בניית מסלולים");
 }
 
 function getCourseCard(page: Page, name: string) {
