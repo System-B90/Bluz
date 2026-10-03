@@ -91,6 +91,14 @@ export type GanttContextType = {
     ) => Promise<void>;
     /** Resolves false when nothing moved (the shift would leave the timeline). */
     onShiftModule: (moduleId: string, deltaDays: number) => Promise<boolean>;
+    /**
+     * While dragging: why dropping the dragged item (dnd `active.data`) on a
+     * cell (its droppable data) would be a problem, or null (#811).
+     */
+    getDropWarning: (
+        payload: Record<string, unknown> | undefined,
+        target: Record<string, unknown> | undefined,
+    ) => null | string;
 };
 
 export type GanttViewProps = {
