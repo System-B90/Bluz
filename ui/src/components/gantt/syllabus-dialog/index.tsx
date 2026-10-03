@@ -19,6 +19,7 @@ import {
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
+import { SaveStatusIndicator, useSaveStatus } from "@/components/base/SaveStatus";
 import { useConfirmDialog } from "@/components/base/UseConfirmDialog";
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
@@ -28,11 +29,15 @@ import { SyllabusImportExportButton } from "@/components/gantt/syllabus-dialog/S
 import { SyllabusLinksSection } from "@/components/gantt/syllabus-dialog/SyllabusLinksSection";
 import { ColorPickerField } from "@/components/schedule/event-dialog/ColorPickerField";
 
+export const UNLINK_HINT = "הסילבוס יישאר במערכת, אך לא יהיה משויך עוד לתוכנית הלימודים";
+
 export type SyllabusDialogProps = {
     open: boolean;
     setOpen: Dispatch<SetStateAction<boolean>>;
     curriculumId: GanttCurriculumId;
     syllabusId: GanttSyllabusId | null;
+    /** A module/event dialog is open on top; hide this layer's destructive action (#834). */
+    covered?: boolean;
 };
 
 /**
@@ -49,12 +54,14 @@ export function SyllabusDialog({
     setOpen,
     curriculumId,
     syllabusId,
+    covered = false,
 }: SyllabusDialogProps) {
     const { enqueueSnackbar } = useSnackbar();
     const syllabus = useSyllabus(syllabusId as GanttSyllabusId);
     const { updateSyllabus, unlinkSyllabusFromCurriculum } =
         useSyllabusActions();
     const { confirm, confirmDialog } = useConfirmDialog();
+    const { status: saveStatus, track: trackSave, reset: resetSaveStatus } = useSaveStatus();
 
     const [localTitle, setLocalTitle] = useState(syllabus?.title ?? "");
     const [localDescription, setLocalDescription] = useState(
@@ -74,6 +81,7 @@ export function SyllabusDialog({
         if (open) {
             setLocalTitle(syllabus?.title ?? "");
             setLocalDescription(syllabus?.description ?? "");
+            resetSaveStatus();
         }
     }
 
@@ -91,7 +99,8 @@ export function SyllabusDialog({
             );
             if (!changed) return;
 
-            updateSyllabus(syllabusId, updates).catch((error) =>
+            // Fields save on blur; the title-row status says so (#836).
+            trackSave(updateSyllabus(syllabusId, updates)).catch((error) =>
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     "שמירת הסילבוס נכשלה!",
@@ -99,7 +108,7 @@ export function SyllabusDialog({
                 ),
             );
         },
-        [syllabusId, syllabus, updateSyllabus, enqueueSnackbar],
+        [syllabusId, syllabus, updateSyllabus, enqueueSnackbar, trackSave],
     );
 
     // Unlinking drops the syllabus off this gantt — one stray click on an
@@ -152,6 +161,7 @@ export function SyllabusDialog({
                     >
                         עריכת סילבוס: {syllabus?.title}
                     </Typography>
+                    <SaveStatusIndicator status={saveStatus} />
                     <Typography
                         component="span"
                         sx={{ color: "text.secondary" }}
@@ -264,15 +274,19 @@ export function SyllabusDialog({
             </DialogContent>
 
             <DialogActions>
-                <Tooltip title="הסילבוס יישאר במערכת, אך לא יהיה משויך עוד לתוכנית הלימודים">
-                    <Button
-                        color="warning"
-                        onClick={() => void unlinkHandler()}
-                        startIcon={<LinkOffIcon fontSize="small" />}
-                    >
-                        הסרה מהגאנט
-                    </Button>
-                </Tooltip>
+                {covered ? null : (
+                    // describeChild: the visible text stays the name; the hint
+                    // becomes the description (#837, WCAG 2.5.3).
+                    <Tooltip describeChild title={UNLINK_HINT}>
+                        <Button
+                            color="warning"
+                            onClick={() => void unlinkHandler()}
+                            startIcon={<LinkOffIcon fontSize="small" />}
+                        >
+                            הסרה מהגאנט
+                        </Button>
+                    </Tooltip>
+                )}
                 <Button
                     color="primary"
                     onClick={closeHandler}

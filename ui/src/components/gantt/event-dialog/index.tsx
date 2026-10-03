@@ -131,7 +131,7 @@ function EventDialogInner({
                     disabled={ isActionLoading }
                     onClick={ () => void handleDelete() }
                 >
-                    מחיקה
+                    מחיקת המופע
                 </Button>
                 <Button
                     disabled={ isActionLoading }

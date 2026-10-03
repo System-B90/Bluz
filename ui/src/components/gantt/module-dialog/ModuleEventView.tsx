@@ -52,12 +52,25 @@ function ModuleEventTitle({
             onBlur={ () => handleCommit({ title: localTitle }) }
             onChange={ (e) => setLocalTitle(e.target.value) }
             size="small"
+            slotProps={ { htmlInput: { "aria-label": eventFieldLabel("שם", moduleEvent?.title) } } }
             value={ localTitle }
         />
     );
 }
 
 const EMPTY_LEADS: Array<number> = [];
+
+/** "<field> — <event title>", so a screen reader can tell rows apart (#835). */
+export function eventFieldLabel(field: string, title: string | undefined): string
+{
+    return title ? `${field} — ${title}` : field;
+}
+
+/** "<verb> <event title>" for a row action, e.g. "מחיקת הרצאה" (#835). */
+export function eventActionLabel(verb: string, title: string | undefined): string
+{
+    return `${verb} ${title ? `"${title}"` : "המופע"}`;
+}
 
 /** Shuffle tags shown inline beside an event title. */
 export function ShuffleChips({
@@ -131,6 +144,7 @@ export function ModuleEventView({
     );
 
     const { confirm, confirmDialog } = useConfirmDialog();
+    const title = moduleEvent?.title || undefined;
 
     // No undo on a gantt delete: the trash icon sits a few pixels from
     // duplicate and move, so a mis-click used to cost the event outright.
@@ -180,7 +194,12 @@ export function ModuleEventView({
                 }),
             } }
         >
-            <TableCell sx={ { width: "1rem", pr: 0, cursor: "grab" } } { ...attributes } { ...listeners }>
+            <TableCell
+                sx={ { width: "1rem", pr: 0, cursor: "grab" } }
+                { ...attributes }
+                { ...listeners }
+                aria-label={ eventActionLabel("גרירת", title) }
+            >
                 <DragIndicatorIcon fontSize="small" sx={ { color: "text.disabled", display: "block" } } />
             </TableCell>
             <TableCell>
@@ -202,6 +221,7 @@ export function ModuleEventView({
             <TableCell>
                 <FormControl disabled={ !moduleEvent } fullWidth size="small">
                     <Select
+                        inputProps={ { "aria-label": eventFieldLabel("סוג", title) } }
                         onChange={ (e) =>
                             handleCommit({
                                 type: e.target.value as ModuleEventType,
@@ -229,6 +249,7 @@ export function ModuleEventView({
                     sx={ { m: 0, p: 0 } }
                 >
                     <NumberSpinner
+                        ariaLabel={ eventFieldLabel("משך מינימלי", title) }
                         onValueChange={ (v) =>
                             v ? handleCommit({ minimumDuration: v }) : {}
                         }
@@ -241,6 +262,7 @@ export function ModuleEventView({
                 <FormControl disabled={ !moduleEvent } fullWidth size="small" sx={ { minWidth: '6rem' } }>
                     <InstructorSelect<"" | number>
                         excludeTeachers
+                        inputProps={ { "aria-label": eventFieldLabel("אחראי", title) } }
                         onChange={ (e) =>
                             handleCommit({
                                 orchestratorId:
@@ -259,13 +281,13 @@ export function ModuleEventView({
                 </FormControl>
             </TableCell>
             <TableCell>
-                <IconButton onClick={ handleEditClick } size="small" title="עריכת המופע">
+                <IconButton aria-label={ eventActionLabel("עריכת", title) } onClick={ handleEditClick } size="small" title="עריכת המופע">
                     <EditIcon color="primary" fontSize="small" />
                 </IconButton>
-                <IconButton onClick={ handleDuplicateClick } size="small" title="שכפול המופע">
+                <IconButton aria-label={ eventActionLabel("שכפול", title) } onClick={ handleDuplicateClick } size="small" title="שכפול המופע">
                     <FileCopyIcon color="info" fontSize="small" />
                 </IconButton>
-                <IconButton onClick={ () => void handleDeleteClick() } size="small" title="מחיקת המופע">
+                <IconButton aria-label={ eventActionLabel("מחיקת", title) } onClick={ () => void handleDeleteClick() } size="small" title="מחיקת המופע">
                     <DeleteIcon color="error" fontSize="small" />
                 </IconButton>
             </TableCell>

@@ -250,6 +250,12 @@ export function CourseItem({
             {/* Main Course Card Container */ }
             <Box
                 className="course-card-container"
+                // Keyboard users reach the quick actions too (#848).
+                onBlur={ (event) =>
+                {
+                    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setIsHovered(false);
+                } }
+                onFocus={ () => setIsHovered(true) }
                 onMouseEnter={ () => setIsHovered(true) }
                 onMouseLeave={ () => setIsHovered(false) }
                 ref={ setDropRef }
@@ -512,6 +518,7 @@ export function CourseItem({
                             if (!inst) return null;
                             return (
                                 <Chip
+                                    aria-label={ `${inst.display_name} — Delete מסיר מהמסלול` }
                                     avatar={
                                         <HiveAvatar
                                             alt={ inst.display_name ?? "" }

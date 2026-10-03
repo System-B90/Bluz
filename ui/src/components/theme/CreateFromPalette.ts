@@ -1,4 +1,4 @@
-import { createTheme, ThemeOptions } from "@mui/material/styles";
+import { createTheme, Theme, ThemeOptions } from "@mui/material/styles";
 
 declare module "@mui/material/styles" {
     // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- MUI module augmentation requires interface for declaration merging
@@ -43,6 +43,49 @@ declare module "@mui/material/Chip" {
     }
 }
 
+declare module "@mui/material/styles" {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- MUI module augmentation requires interface for declaration merging
+    interface Palette
+    {
+        /** The brand colour as a *text* colour — readable on the page background (#807). */
+        primaryText: { main: string };
+    }
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- MUI module augmentation requires interface for declaration merging
+    interface PaletteOptions
+    {
+        primaryText?: { main: string };
+    }
+}
+
+/**
+ * WCAG AA text colours, checked by `tests/backend/theme-contrast.test.ts`.
+ *
+ * - The brand turquoise `#67C8DD` is 1.93:1 on white, so it stays a *fill*; in
+ *   light mode text that would have been turquoise uses a darker teal (#807).
+ * - Orange `#ED6C02` is 3.11:1 against white either way round (#827).
+ * - Red `#F44336` is 4.39:1 on the dark paper (#826).
+ */
+export const CONTRAST_COLORS = {
+    lightPrimaryText: "#1B6F80",
+    darkPrimaryText: "#67C8DD",
+    lightWarning: "#B85300",
+    darkError: "#FF6B5E",
+} as const;
+
+/** The focus ring every focusable control shows on keyboard focus (#824). */
+export function focusRing(theme: Theme)
+{
+    return {
+        outline: `2px solid ${theme.vars?.palette.primaryText.main ?? theme.palette.primaryText.main}`,
+        outlineOffset: 2,
+    };
+}
+
+const primaryTextColor = ({ theme }: { theme: Theme }) => ({
+    color: theme.vars?.palette.primaryText.main ?? theme.palette.primaryText.main,
+});
+
 export function createThemeOptions(): ThemeOptions
 {
     return {
@@ -74,6 +117,11 @@ export function createThemeOptions(): ThemeOptions
                         primary: "#0D2336", // Soft black (deep blue-gray)
                         secondary: "#587389",
                     },
+                    primaryText: { main: CONTRAST_COLORS.lightPrimaryText },
+                    warning: {
+                        main: CONTRAST_COLORS.lightWarning,
+                        contrastText: "#ffffff",
+                    },
                 },
             },
             dark: {
@@ -98,6 +146,8 @@ export function createThemeOptions(): ThemeOptions
                         primary: "#EBF7FA", // Off-white with slight cyan tint
                         secondary: "#8DA6B5",
                     },
+                    primaryText: { main: CONTRAST_COLORS.darkPrimaryText },
+                    error: { main: CONTRAST_COLORS.darkError },
                 },
             },
             // MUI only expands light/dark from partial input; a custom
@@ -112,8 +162,35 @@ export function createThemeOptions(): ThemeOptions
             button: { fontWeight: 600 },
         },
         components: {
+            MuiButtonBase: {
+                styleOverrides: {
+                    root: ({ theme }) => ({
+                        "&.Mui-focusVisible": focusRing(theme),
+                    }),
+                },
+            },
+            MuiTab: {
+                styleOverrides: {
+                    root: ({ theme }) => ({
+                        "&.Mui-selected": primaryTextColor({ theme }),
+                    }),
+                },
+            },
+            MuiTypography: {
+                variants: [ { props: { color: "primary" }, style: primaryTextColor } ],
+            },
+            MuiLink: {
+                variants: [ { props: { color: "primary" }, style: primaryTextColor } ],
+            },
+            MuiSvgIcon: {
+                variants: [ { props: { color: "primary" }, style: primaryTextColor } ],
+            },
+            MuiIconButton: {
+                variants: [ { props: { color: "primary" }, style: primaryTextColor } ],
+            },
             MuiChip: {
                 variants: [
+                    { props: { variant: "outlined", color: "primary" }, style: primaryTextColor },
                     {
                         props: { size: "smaller" },
                         style: {
@@ -151,6 +228,10 @@ export function createThemeOptions(): ThemeOptions
                 ],
             },
             MuiButton: {
+                variants: [
+                    { props: { variant: "text", color: "primary" }, style: primaryTextColor },
+                    { props: { variant: "outlined", color: "primary" }, style: primaryTextColor },
+                ],
                 styleOverrides: {
                     root: {
                         textTransform: "none", // Modern look

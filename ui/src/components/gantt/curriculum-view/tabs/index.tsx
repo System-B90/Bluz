@@ -22,6 +22,7 @@ import { GanttGridView } from "@/components/gantt/curriculum-view/tabs/gantt-vie
 import { GanttPageToolbar } from "@/components/gantt/curriculum-view/tabs/GanttPageToolbar";
 import { SyllabusesTab } from "@/components/gantt/curriculum-view/tabs/syllabuses-tab";
 import { WeeksTab } from "@/components/gantt/curriculum-view/tabs/weeks-tab";
+import { WeeksTableSkeleton } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeeksTableSkeleton";
 
 type TabProps = {
     selectedTabIndex: number;
@@ -87,7 +88,9 @@ function scheduleTabContentMount(callback: () => void) {
     return () => window.cancelAnimationFrame(frameId);
 }
 
-function TabContentFallback() {
+function TabContentFallback({ tabIndex }: { tabIndex: number }) {
+    // The weeks tab is the slow one to mount; show its table's shape (#839).
+    if (tabIndex === WEEKS_TAB_INDEX) return <WeeksTableSkeleton />;
     return (
         <Box
             alignItems="center"
@@ -101,11 +104,13 @@ function TabContentFallback() {
     );
 }
 
+const WEEKS_TAB_INDEX = 1;
+
 function renderTabContent(tabIndex: number, curriculumId: GanttCurriculumId) {
     switch (tabIndex) {
     case 0:
         return <SyllabusesTab curriculumId={curriculumId} />;
-    case 1:
+    case WEEKS_TAB_INDEX:
         return <WeeksTab curriculumId={curriculumId} />;
     case 2:
         return <MemoizedCurriculumGanttView curriculumId={curriculumId} />;
@@ -154,7 +159,7 @@ function DeferredTabContent({
 
     return (
         <Fragment>
-            {!isActiveMounted ? <TabContentFallback /> : null}
+            {!isActiveMounted ? <TabContentFallback tabIndex={selectedTabIndex} /> : null}
             {Array.from(visitedTabIndices).map((tabIndex) => (
                 <Box
                     key={tabIndex}

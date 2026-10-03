@@ -6,7 +6,7 @@ import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
-import { alpha, useTheme } from "@mui/material/styles";
+import { alpha, Theme, useTheme } from "@mui/material/styles";
 import Switch from "@mui/material/Switch";
 import TableCell from "@mui/material/TableCell";
 import TextField from "@mui/material/TextField";
@@ -26,7 +26,6 @@ import { StudentLoadTooltip } from "@/components/gantt/curriculum-view/component
 import
 {
     CapacityStatus,
-    formatHoursLabel,
     formatMinutesAsTimeInput,
     formatShortDate,
     getCapacityStatus,
@@ -34,6 +33,8 @@ import
     parseTimeInputToMinutes,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { DayStudentLoad, StudentPath } from "@/components/gantt/curriculum-view/student-load";
+import { dayHoursInputLabel, dayHoursStepLabel, REVEAL_ON_HOVER_OR_FOCUS } from "@/components/gantt/curriculum-view/tabs/weeks-tab/day-cell-labels";
+import { getDayChipLabel } from "@/components/gantt/curriculum-view/tabs/weeks-tab/day-chip-label";
 import { useDaySelection } from "@/components/gantt/curriculum-view/tabs/weeks-tab/DaySelectionContext";
 import { useCurriculumState } from "@/components/gantt/state/context";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
@@ -49,6 +50,19 @@ export type DayCapacityCellProps = {
     startDate: null | string;
     weekIndex: number;
 };
+
+/**
+ * The home-leave Saturday cell (#840): a light hatch on the normal paper with
+ * full-opacity text. It used to be 72% opacity on a grey fill, which left its
+ * text at ~1.3:1.
+ */
+export function mutedDayCellBackground(theme: Theme): string {
+    // Per-scheme via the CSS variable, so the hatch follows dark mode.
+    const line = theme.vars
+        ? `rgba(${theme.vars.palette.text.secondaryChannel} / 0.14)`
+        : alpha(theme.palette.text.secondary, 0.14);
+    return `repeating-linear-gradient(135deg, transparent 0 6px, ${line} 6px 7px)`;
+}
 
 function getStatusColor(
     status: CapacityStatus,
@@ -208,18 +222,10 @@ export function DayCapacityCell({
         return date ? formatShortDate(date) : "";
     }, [day, startDate, weekIndex]);
 
-    const statusLabel = useMemo(() => {
-        const availableMinutes = day?.totalWorkingMinutes ?? 0;
-        const remainingMinutes = availableMinutes - scheduledMinutes;
-
-        if (scheduledMinutes === 0 && availableMinutes === 0) return "סגור";
-        if (scheduledMinutes === 0) return "פנוי";
-        if (remainingMinutes < 0) {
-            return `חריגה ${formatHoursLabel(Math.abs(remainingMinutes))}`;
-        }
-
-        return `נותרו ${formatHoursLabel(remainingMinutes)}`;
-    }, [day?.totalWorkingMinutes, scheduledMinutes]);
+    const chipLabel = useMemo(
+        () => getDayChipLabel(day?.totalWorkingMinutes ?? 0, scheduledMinutes),
+        [day?.totalWorkingMinutes, scheduledMinutes],
+    );
 
     const commitTime = useCallback(() => {
         if (!day) return;
@@ -291,15 +297,13 @@ export function DayCapacityCell({
     );
 
     const backgroundColor = useMemo(() => {
-        if (isMuted)
-            return alpha(theme.palette.action.disabledBackground, 0.45);
         if (status === "error") return alpha(theme.palette.error.main, 0.08);
         if (status === "warning")
             return alpha(theme.palette.warning.main, 0.12);
         if (status === "ok") return alpha(theme.palette.primary.main, 0.08);
 
         return undefined;
-    }, [isMuted, status, theme]);
+    }, [status, theme]);
 
     if (!day) {
         return <TableCell sx={{ minWidth: 154 }} />;
@@ -342,7 +346,12 @@ export function DayCapacityCell({
         return (
             <TableCell
                 className="day-capacity-cell"
-                sx={{ ...cellSx, opacity: 0.72 }}
+                data-testid="muted-day-cell"
+                sx={{
+                    ...cellSx,
+                    bgcolor: "background.paper",
+                    backgroundImage: mutedDayCellBackground(theme),
+                }}
             >
                 <Box sx={cellBoxStyles}>
                     {header}
@@ -410,6 +419,7 @@ export function DayCapacityCell({
                         sx={{ position: "relative" }}
                     >
                         <IconButton
+                            aria-label={dayHoursStepLabel("down", dayName, dateLabel)}
                             className="cell-control-btn"
                             onClick={() => adjustMinutes(-60)}
                             size="small"
@@ -420,7 +430,7 @@ export function DayCapacityCell({
                                     : "scale(0.8)",
                                 transition:
                                     "all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
-                                ".group\\/cell:hover &": {
+                                [REVEAL_ON_HOVER_OR_FOCUS]: {
                                     opacity: 1,
                                     transform: "scale(1)",
                                 },
@@ -452,7 +462,7 @@ export function DayCapacityCell({
                                     ),
                                 },
                                 htmlInput: {
-                                    "aria-label": "שעות זמינות ביום",
+                                    "aria-label": dayHoursInputLabel(dayName, dateLabel),
                                     inputMode: "numeric",
                                     style: {
                                         fontFamily: "monospace",
@@ -484,6 +494,7 @@ export function DayCapacityCell({
                             value={localTime}
                         />
                         <IconButton
+                            aria-label={dayHoursStepLabel("up", dayName, dateLabel)}
                             className="cell-control-btn"
                             onClick={() => adjustMinutes(60)}
                             size="small"
@@ -494,7 +505,7 @@ export function DayCapacityCell({
                                     : "scale(0.8)",
                                 transition:
                                     "all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
-                                ".group\\/cell:hover &": {
+                                [REVEAL_ON_HOVER_OR_FOCUS]: {
                                     opacity: 1,
                                     transform: "scale(1)",
                                 },
@@ -510,10 +521,15 @@ export function DayCapacityCell({
                         title={`${dayName}${dateLabel ? ` ${dateLabel}` : ""}`}
                     >
                         <Chip
+                            aria-label={chipLabel.full}
                             color={getStatusColor(status)}
                             data-testid="day-capacity-chip"
-                            icon={hasLoadIssues ? <WarningAmberIcon color="warning" /> : undefined}
-                            label={`${formatHoursLabel(scheduledMinutes)} משובץ | ${statusLabel}`}
+                            icon={
+                                chipLabel.over || hasLoadIssues
+                                    ? <WarningAmberIcon color={chipLabel.over ? "error" : "warning"} />
+                                    : undefined
+                            }
+                            label={chipLabel.short}
                             size="smaller"
                             sx={{
                                 maxWidth: "100%",

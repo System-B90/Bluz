@@ -1,5 +1,6 @@
 import ClearIcon from "@mui/icons-material/Clear";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
@@ -19,6 +20,9 @@ import {
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useCurriculumActions } from "@/components/gantt/state/hooks/gantt-funcs/UseCurriculumActions";
 
+export const CLEAR_START_DATE_LABEL = "ניקוי תאריך התחלה";
+export const START_DATE_CLEARED_MESSAGE = "תאריך ההתחלה נוקה";
+
 export type CourseStartDateControlProps = {
     curriculum: GanttCurriculum;
     curriculumId: GanttCurriculumId;
@@ -28,7 +32,7 @@ export function CourseStartDateControl({
     curriculum,
     curriculumId,
 }: CourseStartDateControlProps) {
-    const { enqueueSnackbar } = useSnackbar();
+    const { closeSnackbar, enqueueSnackbar } = useSnackbar();
     const { updateCurriculum } = useCurriculumActions();
 
     const selectedDate = useMemo(
@@ -57,32 +61,58 @@ export function CourseStartDateControl({
                     : null;
 
             if (nextStartDate === curriculum.startDate) {
-                return;
+                return Promise.resolve(false);
             }
 
-            void updateCurriculum(curriculumId, {
+            return updateCurriculum(curriculumId, {
                 startDate: nextStartDate,
-            }).catch((error) =>
-                enqueueApiErrorSnackbar(
-                    enqueueSnackbar,
-                    "שמירת תאריך תחילת הגאנט נכשלה!",
-                    error,
-                ),
+            }).then(
+                () => true,
+                (error) => {
+                    enqueueApiErrorSnackbar(
+                        enqueueSnackbar,
+                        "שמירת תאריך תחילת הגאנט נכשלה!",
+                        error,
+                    );
+                    return false;
+                },
             );
         },
         [curriculum.startDate, curriculumId, enqueueSnackbar, updateCurriculum],
     );
 
+    // The start date anchors the whole timeline, so a one-click clear offers
+    // an undo instead of silently dropping it (#843).
     const clearStartDate = useCallback(() => {
-        saveStartDate(null);
-    }, [saveStartDate]);
+        const previous = curriculum.startDate;
+        if (!previous) return;
+        void saveStartDate(null).then((saved) =>
+            saved && enqueueSnackbar(START_DATE_CLEARED_MESSAGE, {
+                variant: "info",
+                action: (key) => (
+                    <Button
+                        color="inherit"
+                        onClick={() => {
+                            closeSnackbar(key);
+                            void updateCurriculum(curriculumId, { startDate: previous }).catch((error) =>
+                                enqueueApiErrorSnackbar(enqueueSnackbar, "שחזור תאריך ההתחלה נכשל!", error),
+                            );
+                        }}
+                        size="small"
+                    >
+                        ביטול
+                    </Button>
+                ),
+            }),
+        );
+    }, [closeSnackbar, curriculum.startDate, curriculumId, enqueueSnackbar, saveStartDate, updateCurriculum]);
 
     return (
         <Box alignItems="center" display="flex" flexWrap="wrap" gap={1.5}>
             <DatePicker
                 format="DD/MM/YYYY"
                 label="יום ראשון של שבוע 1"
-                onChange={saveStartDate}
+                onChange={(value) => void saveStartDate(value)}
                 shouldDisableDate={(date: Dayjs) => date.day() !== 0}
                 slotProps={{
                     textField: {
@@ -92,9 +122,10 @@ export function CourseStartDateControl({
                 }}
                 value={selectedDate}
             />
-            <Tooltip title="ניקוי תאריך התחלה">
+            <Tooltip title={CLEAR_START_DATE_LABEL}>
                 <span>
                     <IconButton
+                        aria-label={CLEAR_START_DATE_LABEL}
                         disabled={!curriculum.startDate}
                         onClick={clearStartDate}
                         size="small"

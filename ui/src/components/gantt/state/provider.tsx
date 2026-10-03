@@ -245,6 +245,7 @@ function ModuleDialogManager({
             {/* Render order is stacking order on restore: syllabus, then
                 module, then event on top. */}
             <SyllabusDialog
+                covered={ moduleDialogOpen || eventDialogOpen }
                 curriculumId={ curriculumId }
                 open={ syllabusDialogOpen }
                 setOpen={ setSyllabusDialogOpen }
@@ -254,6 +255,7 @@ function ModuleDialogManager({
                 the user navigate between sibling modules without the dialog
                 unmounting/remounting (which caused a close→reopen flicker). */}
             <ModuleDialog
+                covered={ eventDialogOpen }
                 curriculumId={ curriculumId }
                 focusEventId={ currentEventId }
                 moduleId={ currentModuleId }

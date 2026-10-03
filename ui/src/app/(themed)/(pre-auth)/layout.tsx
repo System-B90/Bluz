@@ -45,6 +45,7 @@ export default function PreAuthLayout({ children }: { children: ReactNode }) {
 
                         <IconButton
                             aria-disabled={true}
+                            aria-label="הגדרות"
                             color="inherit"
                             disabled={true}
                         >

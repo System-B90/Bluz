@@ -56,6 +56,11 @@ const useSessionUnit = () =>
  * `label` sits in the top border, like an outlined TextField.
  * `min` defaults to 0: durations are never negative.
  */
+/** Hebrew stepper names, scoped to the field when it has a name (#835). */
+export function stepLabel(action: "הגדלה" | "הקטנה", fieldLabel?: string): string {
+    return fieldLabel ? `${action} — ${fieldLabel}` : action;
+}
+
 export function NumberSpinner({
     id: idProp,
     label,
@@ -66,9 +71,12 @@ export function NumberSpinner({
     step,
     largeStep,
     unitToggle = true,
+    ariaLabel,
     ...other
 }: Omit<BaseNumberField.Root.Props, "onValueChange"> & {
     label?: React.ReactNode;
+    /** Accessible name for the input when there is no visible label (#835). */
+    ariaLabel?: string;
     size?: "medium" | "small";
     error?: boolean;
     unitToggle?: boolean;
@@ -156,7 +164,7 @@ export function NumberSpinner({
             value={value == null ? value : value / factor}
         >
             <BaseNumberField.Decrement
-                render={<IconButton aria-label="Decrease" size={size} />}
+                render={<IconButton aria-label={stepLabel("הקטנה", ariaLabel)} size={size} />}
             >
                 <RemoveIcon fontSize={size} />
             </BaseNumberField.Decrement>
@@ -170,6 +178,7 @@ export function NumberSpinner({
                 }}
             >
                 <BaseNumberField.Input
+                    aria-label={ariaLabel}
                     id={id}
                     render={(props, state) => (
                         <Box
@@ -179,6 +188,9 @@ export function NumberSpinner({
                                 // Size to the value: a native input defaults
                                 // to ~20 characters wide.
                                 width: `${Math.max(state.inputValue.length, 3) + 1}ch`,
+                                // A comfortable target even for a 1-digit value (#835).
+                                minWidth: 40,
+                                minHeight: 24,
                                 border: 0,
                                 outline: 0,
                                 p: 0,
@@ -223,7 +235,7 @@ export function NumberSpinner({
             </Box>
 
             <BaseNumberField.Increment
-                render={<IconButton aria-label="Increase" size={size} />}
+                render={<IconButton aria-label={stepLabel("הגדלה", ariaLabel)} size={size} />}
             >
                 <AddIcon fontSize={size} />
             </BaseNumberField.Increment>

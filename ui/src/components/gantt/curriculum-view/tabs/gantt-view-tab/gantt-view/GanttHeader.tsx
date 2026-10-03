@@ -28,7 +28,7 @@ import { useCurriculumState } from "@/components/gantt/state/context";
 function getCapacityColor(status: CapacityStatus): string {
     if (status === "error") return "error.main";
     if (status === "warning") return "warning.main";
-    if (status === "ok") return "primary.main";
+    if (status === "ok") return "primaryText.main";
 
     return "text.secondary";
 }
