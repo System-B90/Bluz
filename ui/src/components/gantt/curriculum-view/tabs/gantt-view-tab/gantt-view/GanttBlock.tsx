@@ -2,10 +2,13 @@ import { useDraggable } from "@dnd-kit/core";
 import EventBusyIcon from "@mui/icons-material/EventBusy";
 import RepeatIcon from "@mui/icons-material/Repeat";
 import Box from "@mui/material/Box";
+import ListItemText from "@mui/material/ListItemText";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import { alpha, useTheme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import React, { memo } from "react";
+import React, { memo, useState } from "react";
 
 import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { buildBlockTooltip } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/block-tooltip";
@@ -65,11 +68,32 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
             ? {}
             : { ...listeners, ...attributes };
 
-    const handleDoubleClick = async (e: React.MouseEvent) => {
-        if (!payload || !payload.moduleId) return;
+    // Opening a bar must never change data (#833): an occurrence of a
+    // recurring event asks first, since editing just this one materializes
+    // it into a standalone event.
+    const [ occurrenceMenu, setOccurrenceMenu ] = useState<HTMLElement | null>(null);
 
-        e.stopPropagation();
-        e.preventDefault();
+    const openSeries = () => {
+        const syllabusId = payload?.moduleId ? state.modules[payload.moduleId]?.syllabusId : undefined;
+        if (!syllabusId || !payload || !("eventId" in payload) || !payload.eventId) return;
+        openEventDialog(syllabusId, payload.moduleId, payload.eventId);
+    };
+
+    const editThisOccurrence = async () => {
+        if (payload?.type !== "event-occurrence") return;
+        const syllabusId = state.modules[payload.moduleId]?.syllabusId;
+        if (!syllabusId) return;
+        const result = await materializeOccurrence({
+            moduleId: payload.moduleId,
+            eventId: payload.eventId,
+            dayId: payload.dayId,
+        });
+        if (result) openEventDialog(syllabusId, payload.moduleId, result.event.id);
+    };
+
+    // Double-click and Enter (#833) both land here.
+    const activate = async (anchor: HTMLElement) => {
+        if (!payload || !payload.moduleId) return;
 
         if (onDoubleClick) {
             onDoubleClick();
@@ -88,18 +112,7 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
         if (!moduleObj?.syllabusId) return;
 
         if (isOccurrence) {
-            const result = await materializeOccurrence({
-                moduleId: payload.moduleId,
-                eventId: payload.eventId,
-                dayId: payload.dayId,
-            });
-            if (result) {
-                openEventDialog(
-                    moduleObj.syllabusId,
-                    payload.moduleId,
-                    result.event.id,
-                );
-            }
+            setOccurrenceMenu(anchor);
             return;
         }
 
@@ -109,6 +122,32 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
             openModuleDialog(moduleObj.syllabusId, payload.moduleId);
         }
     };
+
+    const handleDoubleClick = (e: React.MouseEvent<HTMLElement>) => {
+        if (!payload || !payload.moduleId) return;
+        e.stopPropagation();
+        e.preventDefault();
+        void activate(e.currentTarget);
+    };
+
+    // Enter opens; every other key (Space picks the bar up, #808) goes on
+    // to dnd-kit.
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+        if (e.key === "Enter" && payload?.moduleId) {
+            e.preventDefault();
+            e.stopPropagation();
+            void activate(e.currentTarget);
+            return;
+        }
+        (dragProps as { onKeyDown?: (event: React.KeyboardEvent) => void }).onKeyDown?.(e);
+    };
+
+    // Bars dnd-kit doesn't manage still open with Enter, so they need a
+    // Tab stop of their own. The reminder marker opens nothing.
+    const isActivatable = Boolean(payload?.moduleId) && !(isRecurrence && !isOccurrence && !isSkippedOccurrence);
+    const focusProps = isActivatable && !("tabIndex" in dragProps)
+        ? { role: "button", tabIndex: 0 }
+        : {};
 
     const style = transform
         ? {
@@ -144,7 +183,9 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
             id={elementId}
             ref={setNodeRef}
             {...dragProps}
+            {...focusProps}
             onDoubleClick={handleDoubleClick}
+            onKeyDown={handleKeyDown}
             sx={{
                 position: isAbsolute ? "absolute" : "relative",
                 top: isAbsolute ? "5px" : "auto",
@@ -273,7 +314,38 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
         notes: [recurrenceNote, skippedNote, spilloverNote, ...violations],
     });
 
-    return tooltipContent ? (
+    const occurrenceChoice = occurrenceMenu ? (
+        <Menu
+            anchorEl={occurrenceMenu}
+            onClose={() => setOccurrenceMenu(null)}
+            open
+        >
+            <MenuItem
+                onClick={() => {
+                    setOccurrenceMenu(null);
+                    openSeries();
+                }}
+            >
+                <ListItemText
+                    primary="פתיחת האירוע החוזר"
+                    secondary="צפייה ועריכה של כל המופעים, בלי לשנות דבר"
+                />
+            </MenuItem>
+            <MenuItem
+                onClick={() => {
+                    setOccurrenceMenu(null);
+                    void editThisOccurrence();
+                }}
+            >
+                <ListItemText
+                    primary="עריכת מופע זה בלבד"
+                    secondary="יוצר ממנו מפגש נפרד"
+                />
+            </MenuItem>
+        </Menu>
+    ) : null;
+
+    const withTooltip = tooltipContent ? (
         <Tooltip
             arrow
             placement="top"
@@ -284,6 +356,13 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
         </Tooltip>
     ) : (
         block
+    );
+
+    return (
+        <>
+            {withTooltip}
+            {occurrenceChoice}
+        </>
     );
 };
 

@@ -94,3 +94,66 @@ describe("GanttBlock tooltip (#828)", () => {
         expect(tip.textContent).toMatch(/2/);
     });
 });
+
+describe("GanttBlock opening (#833)", () => {
+    const occurrence = {
+        id: "drag-occ-e1-d3",
+        payload: { type: "event-occurrence", moduleId: "m1", eventId: "e1", dayId: "d3" } as const,
+        isRecurrence: true,
+    };
+
+    it("opens a bar's dialog with Enter", () => {
+        const block = renderBlock();
+
+        fireEvent.keyDown(block, { key: "Enter" });
+
+        expect(actions.openEventDialog).toHaveBeenCalledWith("s1", "m1", "e1");
+    });
+
+    it("opens a module bar with Enter", () => {
+        const block = renderBlock({
+            id: "drag-module-shift-m1-d1",
+            payload: { type: "module-shift", moduleId: "m1", sourceDayId: "d1" },
+        });
+
+        fireEvent.keyDown(block, { key: "Enter" });
+
+        expect(actions.openModuleDialog).toHaveBeenCalledWith("s1", "m1");
+    });
+
+    it("regression: double-clicking an occurrence changes nothing, it asks", async () => {
+        const block = renderBlock(occurrence);
+
+        fireEvent.doubleClick(block);
+
+        expect(await screen.findByRole("menu")).toBeTruthy();
+        expect(exceptions.materializeOccurrence).not.toHaveBeenCalled();
+        expect(actions.openEventDialog).not.toHaveBeenCalled();
+    });
+
+    it("opens the recurring series without materializing", async () => {
+        const block = renderBlock(occurrence);
+        fireEvent.keyDown(block, { key: "Enter" });
+
+        fireEvent.click(await screen.findByText("פתיחת האירוע החוזר"));
+
+        expect(exceptions.materializeOccurrence).not.toHaveBeenCalled();
+        expect(actions.openEventDialog).toHaveBeenCalledWith("s1", "m1", "e1");
+    });
+
+    it("materializes only when asked to edit just this occurrence", async () => {
+        const block = renderBlock(occurrence);
+        fireEvent.doubleClick(block);
+
+        fireEvent.click(await screen.findByText("עריכת מופע זה בלבד"));
+
+        await vi.waitFor(() =>
+            expect(actions.openEventDialog).toHaveBeenCalledWith("s1", "m1", "e9"),
+        );
+        expect(exceptions.materializeOccurrence).toHaveBeenCalledWith({
+            moduleId: "m1",
+            eventId: "e1",
+            dayId: "d3",
+        });
+    });
+});
