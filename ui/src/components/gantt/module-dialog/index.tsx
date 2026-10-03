@@ -60,6 +60,11 @@ export type ModuleDialogProps = {
     curriculumId: GanttCurriculumId | null;
     /** When set, the matching event row is scrolled into view and highlighted. */
     focusEventId?: GanttEventId | null;
+    /**
+     * Another gantt dialog (the event dialog) is open on top. Its delete is
+     * hidden so only the top layer's delete is ever on screen (#834).
+     */
+    covered?: boolean;
 } & DialogProps;
 
 type ModuleDialogHeaderProps = {
@@ -315,6 +320,7 @@ function ModuleDialogInner({
     syllabusId,
     moduleId,
     focusEventId,
+    covered = false,
     ...props
 }: Omit<ModuleDialogProps, "curriculumId">) {
     const { enqueueSnackbar } = useSnackbar();
@@ -539,14 +545,16 @@ function ModuleDialogInner({
             </DialogContent>
 
             <DialogActions>
-                <Button
-                    color="error"
-                    disabled={isActionLoading}
-                    onClick={() => void handleDelete()}
-                    sx={{ marginInlineEnd: "auto" }}
-                >
-                    מחיקה
-                </Button>
+                {covered ? null : (
+                    <Button
+                        color="error"
+                        disabled={isActionLoading}
+                        onClick={() => void handleDelete()}
+                        sx={{ marginInlineEnd: "auto" }}
+                    >
+                        מחיקת המערך
+                    </Button>
+                )}
                 <Button color="primary" disabled={isActionLoading} onClick={handleClose} variant="contained">
                     סגירה
                 </Button>
