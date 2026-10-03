@@ -158,8 +158,14 @@ export function getWeekDateRange(
     return { start, end: start.add(6, "day") };
 }
 
+/**
+ * The app-wide short date: `DD/MM`, as the calendar writes it (#814). The old
+ * `D.M` read like a decimal (`3.10`).
+ */
+export const SHORT_DATE_FORMAT = "DD/MM";
+
 export function formatShortDate(date: Dayjs): string {
-    return date.format("D.M");
+    return date.format(SHORT_DATE_FORMAT);
 }
 
 export function formatWeekDateRange(
@@ -167,7 +173,7 @@ export function formatWeekDateRange(
 ): string {
     if (!range) return "";
 
-    return `${formatShortDate(range.start)}-${formatShortDate(range.end)}`;
+    return `${formatShortDate(range.start)}–${formatShortDate(range.end)}`;
 }
 
 export function getCourseEndDate(
