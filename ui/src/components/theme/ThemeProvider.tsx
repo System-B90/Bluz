@@ -26,9 +26,13 @@ import { createThemeOptions } from "@/components/theme/CreateFromPalette";
 // "class" selector switch the active palette without any JS re-render.
 const muiTheme = createTheme({ ...createThemeOptions(), direction: "rtl" });
 
-export type ThemeMode = "dark" | "light" | "system";
+export type ThemeMode = "dark" | "light" | "pink" | "system";
+
+/** Every theme next-themes may set as the `<html>` class (#765). */
+export const THEMES = [ "light", "dark", "pink" ] as const;
 
 export type ThemeContextState = {
+    /** Brightness only: pink is a light theme. */
     resolvedTheme: "dark" | "light";
     theme: ThemeMode;
     setTheme: (theme: ThemeMode) => void;
@@ -48,6 +52,7 @@ export function BluzThemeProvider({
             defaultTheme="system"
             disableTransitionOnChange={ false }
             enableSystem
+            themes={ [ ...THEMES ] }
         >
             <InnerThemeProvider>
                 <CssBaseline />
@@ -93,7 +98,7 @@ function InnerThemeProvider({ children }: { children: ReactNode; })
 
     const contextValue = useMemo(
         () => ({
-            resolvedTheme: (resolvedTheme ?? "light") as "dark" | "light",
+            resolvedTheme: resolvedTheme === "dark" ? "dark" as const : "light" as const,
             theme: (theme as ThemeMode) ?? "system",
             setTheme: setTheme as (theme: ThemeMode) => void,
         }),

@@ -66,6 +66,30 @@ test.describe("Command palette", () => {
         }).toPass({ timeout: 20_000 });
     });
 
+    test("switches to pink mode and back (#765)", async ({ page }) => {
+        const html = page.locator("html");
+        const runCommand = async (title: string) => {
+            const palette = await openPalette(page);
+            await palette.getByRole("combobox").fill(title);
+            await palette.getByRole("option").filter({ hasText: title }).first().click();
+            await expect(palette).not.toBeVisible();
+        };
+
+        await runCommand("מצב ורוד");
+        await expect(html).toHaveClass(/\bpink\b/);
+        // The blush background, not light mode's turquoise tint.
+        await expect(page.locator("body")).toHaveCSS("background-color", "rgb(255, 243, 248)");
+        await expect.poll(() => page.evaluate(() => localStorage.getItem("theme"))).toBe("pink");
+
+        // Survives a reload.
+        await page.reload();
+        await expect(html).toHaveClass(/\bpink\b/);
+
+        await runCommand("מצב בהיר");
+        await expect(html).not.toHaveClass(/\bpink\b/);
+        await expect(page.locator("body")).toHaveCSS("background-color", "rgb(244, 250, 252)");
+    });
+
     test("accepts typed input and filters results", async ({ page }) => {
         const palette = await openPalette(page);
 

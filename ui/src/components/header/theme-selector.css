@@ -171,3 +171,9 @@
     opacity: 0;
     transform: rotate(90deg);
 }
+
+/* Pink mode (#765): a light theme, so the slider keeps the sun side. */
+.pink .theme-slider .sunny-bg {
+    background: #f6c4d9;
+}
+
