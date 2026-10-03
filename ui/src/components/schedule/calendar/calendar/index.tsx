@@ -138,6 +138,12 @@ export function BluzCalendar({
             window.removeEventListener("keydown", swallowScheduleHotkeys, true);
     }, []);
 
+    const { confirm, confirmDialog } = useConfirmDialog();
+
+    // Quick edits (drag, split, menu, Delete, Ctrl+X) ask loudly before
+    // touching an event someone else has open (#775).
+    const { confirmLockedEdit, withLockGuard } = useLockedEditGuard(eventLocks, confirm);
+
     const {
         handleEventDrag,
         handleSplitEvent,
@@ -154,6 +160,7 @@ export function BluzCalendar({
             handleDeleteEvent,
             setSelectedEvent,
             setOpenEventDialog,
+            confirmLockedEdit,
         );
 
     // Only render the calendar after the component has mounted on the client.
@@ -245,10 +252,6 @@ export function BluzCalendar({
     const selection = useEventSelection(events);
     const { target: contextMenuTarget, openAt, close: closeContextMenu } =
         useEventContextMenu(selection);
-    const { confirm, confirmDialog } = useConfirmDialog();
-
-    // Quick edits ask loudly before touching an event someone else has open (#775).
-    const { confirmLockedEdit, withLockGuard } = useLockedEditGuard(eventLocks, confirm);
     const guardedEventDrag = useMemo(
         // A Ctrl+drag copy leaves the locked original untouched.
         () => withLockGuard(handleEventDrag, (segment, interaction) =>

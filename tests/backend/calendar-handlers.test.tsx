@@ -36,7 +36,9 @@ const baseEvent = {
     locked: false,
 } as unknown as Event;
 
-function renderHandlers() {
+function renderHandlers(
+    confirmLockedEdit?: (ids: Array<Event["id"]>) => Promise<boolean>,
+) {
     const handleSaveEvent = vi.fn();
     const handleDeleteEvent = vi.fn();
     const setSelectedEvent = vi.fn();
@@ -48,6 +50,7 @@ function renderHandlers() {
             handleDeleteEvent,
             setSelectedEvent,
             setOpenEventDialog,
+            confirmLockedEdit,
         ),
     ).result;
     return {
@@ -318,6 +321,61 @@ describe("useCalendarHandlers — slot selection", () => {
 
         expect(setSelectedEvent).not.toHaveBeenCalled();
         expect(setOpenEventDialog).not.toHaveBeenCalled();
+    });
+});
+
+describe("useCalendarHandlers — keyboard on a locked event (#775)", () => {
+    const flush = () => act(async () => { await Promise.resolve(); });
+
+    it("Delete asks first and deletes only on confirm", async () => {
+        const confirmLockedEdit = vi.fn().mockResolvedValue(true);
+        const { result, handleDeleteEvent } = renderHandlers(confirmLockedEdit);
+
+        act(() => result.current.setActiveEvent(baseEvent));
+        press("Delete");
+        await flush();
+
+        expect(confirmLockedEdit).toHaveBeenCalledWith([ "e1" ]);
+        expect(handleDeleteEvent).toHaveBeenCalledWith(
+            "e1",
+            EventChangeInitiator.Keyboard,
+        );
+    });
+
+    it("Delete does nothing when the user cancels", async () => {
+        const confirmLockedEdit = vi.fn().mockResolvedValue(false);
+        const { result, handleDeleteEvent } = renderHandlers(confirmLockedEdit);
+
+        act(() => result.current.setActiveEvent(baseEvent));
+        press("Delete");
+        await flush();
+
+        expect(confirmLockedEdit).toHaveBeenCalledOnce();
+        expect(handleDeleteEvent).not.toHaveBeenCalled();
+    });
+
+    it("Ctrl+X does nothing when the user cancels", async () => {
+        const confirmLockedEdit = vi.fn().mockResolvedValue(false);
+        const { result, handleDeleteEvent } = renderHandlers(confirmLockedEdit);
+
+        act(() => result.current.setActiveEvent(baseEvent));
+        press("x", { ctrlKey: true });
+        await flush();
+
+        expect(confirmLockedEdit).toHaveBeenCalledWith([ "e1" ]);
+        expect(handleDeleteEvent).not.toHaveBeenCalled();
+        expect(result.current.copiedEvent).toBeNull();
+    });
+
+    it("Ctrl+C never asks: copying leaves the event untouched", () => {
+        const confirmLockedEdit = vi.fn().mockResolvedValue(false);
+        const { result } = renderHandlers(confirmLockedEdit);
+
+        act(() => result.current.setActiveEvent(baseEvent));
+        press("c", { ctrlKey: true });
+
+        expect(confirmLockedEdit).not.toHaveBeenCalled();
+        expect(result.current.copiedEvent).toBe(baseEvent);
     });
 });
 

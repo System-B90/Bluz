@@ -171,4 +171,61 @@ test.describe("Event lock presence relay (#688)", () => {
             await secondContext?.close();
         }
     });
+
+    test("the Delete key on an event another user is editing asks loudly first (#775)", async ({
+        page,
+        browser,
+    }) => {
+        const eventName = `נעילת מחיקה ${testId("lock-delete")}`;
+        let secondContext: Awaited<ReturnType<typeof openSecondUserSession>>["context"] | undefined;
+        let secondPage: Awaited<ReturnType<typeof openSecondUserSession>>["page"] | undefined;
+
+        try {
+            await gotoAppHome(page);
+            await waitForRealtimeConnection(page);
+            await selectCalendarTimeRange(page);
+            const createDialog = getEventDialog(page);
+            await expect(createDialog).toBeVisible({ timeout: 30_000 });
+            await createDialog.getByLabel("שם").fill(eventName);
+            await createDialog.getByRole("button", { name: "שמירה" }).click();
+            await expect(createDialog).not.toBeVisible({ timeout: 30_000 });
+
+            ({ context: secondContext, page: secondPage } =
+                await openSecondUserSession(browser));
+            await gotoAppHome(secondPage);
+            await waitForRealtimeConnection(secondPage);
+            await switchToDayView(secondPage);
+            const bTile = secondPage.getByText(eventName).first();
+            await expect(bTile).toBeVisible({ timeout: 30_000 });
+
+            await page.bringToFront();
+            await dblclickCalendarEvent(page, eventName);
+            await expect(getEventDialog(page)).toBeVisible({ timeout: 10_000 });
+
+            await secondPage.bringToFront();
+            const lockedConfirm = secondPage
+                .getByRole("dialog")
+                .filter({ hasText: "המופע נערך כרגע" });
+
+            // Cancelling keeps the event.
+            await expect(async () => {
+                await bTile.click();
+                await secondPage!.keyboard.press("Delete");
+                await expect(lockedConfirm).toBeVisible({ timeout: 2_000 });
+            }).toPass({ timeout: 20_000 });
+            await lockedConfirm.getByRole("button", { name: "ביטול" }).click();
+            await expect(lockedConfirm).not.toBeVisible();
+            await expect(bTile).toBeVisible();
+
+            // Confirming deletes it.
+            await bTile.click();
+            await secondPage.keyboard.press("Delete");
+            await lockedConfirm.getByRole("button", { name: "לערוך בכל זאת" }).click();
+            await expect(secondPage.getByText(eventName)).toHaveCount(0, { timeout: 15_000 });
+        } finally {
+            await releaseEventDialogIfOpen(page);
+            if (secondPage) await releaseEventDialogIfOpen(secondPage);
+            await secondContext?.close();
+        }
+    });
 });
