@@ -19,6 +19,7 @@ import {
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
+import { SaveStatusIndicator, useSaveStatus } from "@/components/base/SaveStatus";
 import { useConfirmDialog } from "@/components/base/UseConfirmDialog";
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
@@ -58,6 +59,7 @@ export function SyllabusDialog({
     const { updateSyllabus, unlinkSyllabusFromCurriculum } =
         useSyllabusActions();
     const { confirm, confirmDialog } = useConfirmDialog();
+    const { status: saveStatus, track: trackSave, reset: resetSaveStatus } = useSaveStatus();
 
     const [localTitle, setLocalTitle] = useState(syllabus?.title ?? "");
     const [localDescription, setLocalDescription] = useState(
@@ -77,6 +79,7 @@ export function SyllabusDialog({
         if (open) {
             setLocalTitle(syllabus?.title ?? "");
             setLocalDescription(syllabus?.description ?? "");
+            resetSaveStatus();
         }
     }
 
@@ -94,7 +97,8 @@ export function SyllabusDialog({
             );
             if (!changed) return;
 
-            updateSyllabus(syllabusId, updates).catch((error) =>
+            // Fields save on blur; the title-row status says so (#836).
+            trackSave(updateSyllabus(syllabusId, updates)).catch((error) =>
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     "שמירת הסילבוס נכשלה!",
@@ -102,7 +106,7 @@ export function SyllabusDialog({
                 ),
             );
         },
-        [syllabusId, syllabus, updateSyllabus, enqueueSnackbar],
+        [syllabusId, syllabus, updateSyllabus, enqueueSnackbar, trackSave],
     );
 
     // Unlinking drops the syllabus off this gantt — one stray click on an
@@ -155,6 +159,7 @@ export function SyllabusDialog({
                     >
                         עריכת סילבוס: {syllabus?.title}
                     </Typography>
+                    <SaveStatusIndicator status={saveStatus} />
                     <Typography
                         component="span"
                         sx={{ color: "text.secondary" }}
