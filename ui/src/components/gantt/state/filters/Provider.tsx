@@ -59,7 +59,7 @@ export function GanttFiltersProvider({ children }: { children: ReactNode }) {
         const parts = active.map((def) =>
             def.describe(values[def.key], { getCourse, getInstructor }),
         );
-        return `מוצגים רק מקצועות ש${parts.join(" וגם ש")}.`;
+        return `מוצגים רק סילבוסים ש${parts.join(" וגם ש")}.`;
     }, [active, values, getCourse, getInstructor]);
 
     const contextValue = useMemo(

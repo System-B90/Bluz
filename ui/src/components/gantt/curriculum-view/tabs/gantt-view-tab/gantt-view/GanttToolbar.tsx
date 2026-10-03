@@ -196,7 +196,7 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({
             >
                 {/* First-column search: filter syllabus/module/event rows */ }
                 <TextField
-                    aria-label="חיפוש בסילבוסים, מודולים ואירועים"
+                    aria-label="חיפוש בסילבוסים, מערכים ומופעים"
                     onBlur={ () =>
                     {
                         setSearchFocused(false);

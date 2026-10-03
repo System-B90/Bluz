@@ -5,6 +5,7 @@ import { useMemo } from "react";
 
 import { GANTT_TOUR_ID } from "@/components/app-onboarding/gantt/use-gantt-tour";
 import { HELP_GROUPS } from "@/components/app-onboarding/labels";
+import { GANTT_GLOSSARY } from "@/components/gantt/glossary";
 
 function Body({ children }: { children: React.ReactNode }) {
     return (
@@ -40,12 +41,23 @@ export function useGanttHelpTopics() {
             {
                 id: "gantt.content",
                 group: HELP_GROUPS.gantt,
-                title: "סילבוס, מודול, מופע",
+                title: "סילבוס, מערך, מופע",
                 body: (
                     <Body>
-                        סילבוס מכיל מודולים, ומודול מכיל מופעים. מופע הוא בלוק
+                        סילבוס מכיל מערכים, ומערך מכיל מופעים. מופע הוא בלוק
                         למידה אחד באורך מוגדר, והיחידה שתהפוך בסוף לאירוע
                         בלו&quot;ז.
+                    </Body>
+                ),
+            },
+            {
+                // The words the UI uses, exactly (#832). Keep in step with GANTT_GLOSSARY.
+                id: "gantt.glossary",
+                group: HELP_GROUPS.gantt,
+                title: "מילון מונחים",
+                body: (
+                    <Body>
+                        { GANTT_GLOSSARY.map(({ term, meaning }) => `${term} — ${meaning}`).join(". ") }.
                     </Body>
                 ),
             },

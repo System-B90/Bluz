@@ -123,7 +123,7 @@ function CoursesPicker({
     if (options.length === 0) {
         return (
             <Typography color="text.secondary" variant="body2">
-                אין מסלולים לבחירה. שייכו את המקצוע למסלולים בחלון המקצוע.
+                אין מסלולים לבחירה. שייכו את הסילבוס למסלולים בחלון הסילבוס.
             </Typography>
         );
     }
@@ -175,7 +175,7 @@ function CoursesPicker({
                 </Button>
                 {coversAll ? (
                     <Typography color="text.secondary" variant="caption">
-                        כל המסלולים נבחרו — זה המופע לכל המקצוע.
+                        כל המסלולים נבחרו — זה המופע לכל הסילבוס.
                     </Typography>
                 ) : null}
             </Stack>
@@ -219,12 +219,12 @@ function WholeSyllabus({
     return (
         <Stack spacing={1.5}>
             <Typography color="text.secondary" variant="body2">
-                כל חניכי המקצוע משתתפים במופע, בכל השאפלים ובכל המסלולים של המקצוע.
+                כל חניכי הסילבוס משתתפים במופע, בכל השאפלים ובכל המסלולים של הסילבוס.
             </Typography>
             {current !== "all" ? (
                 <Stack alignItems="center" direction="row" spacing={1}>
                     <Button disabled={isSaving} onClick={apply} variant="contained">
-                        החלה לכל המקצוע
+                        החלה לכל הסילבוס
                     </Button>
                     {consequence ? (
                         <Typography color="text.secondary" variant="caption">

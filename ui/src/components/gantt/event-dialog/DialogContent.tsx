@@ -77,7 +77,7 @@ function AudienceChip({ event, groupSize }: { event: GanttEvent; groupSize: numb
             />
         );
     }
-    return <QuietChip label="לכל המקצוע" />;
+    return <QuietChip label="לכל הסילבוס" />;
 }
 
 export function EventDialogContent({

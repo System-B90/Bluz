@@ -360,7 +360,7 @@ export function ShufflesSection({ syllabusId }: ShufflesSectionProps) {
         if (
             shuffles.some((shuffle) => normalizeShuffleName(shuffle) === name)
         ) {
-            enqueueSnackbar("שאפל בשם הזה כבר קיים במקצוע.", {
+            enqueueSnackbar("שאפל בשם הזה כבר קיים בסילבוס.", {
                 variant: "warning",
             });
             return;
@@ -504,7 +504,7 @@ export function ShufflesSection({ syllabusId }: ShufflesSectionProps) {
             setRenaming(null);
             if (!syllabusId) return;
             if (shuffles.includes(to)) {
-                enqueueSnackbar("שאפל בשם הזה כבר קיים במקצוע.", {
+                enqueueSnackbar("שאפל בשם הזה כבר קיים בסילבוס.", {
                     variant: "warning",
                 });
                 return;
@@ -570,7 +570,7 @@ export function ShufflesSection({ syllabusId }: ShufflesSectionProps) {
     return (
         <Stack gap={1.5}>
             <Alert severity="info">
-                השאפלים שייכים למקצוע. מערכים ומופעים מתויגים בשאפלים האלה,
+                השאפלים שייכים לסילבוס. מערכים ומופעים מתויגים בשאפלים האלה,
                 ומופע יחיד יכול להתפצל לקבוצה — מופע לכל שאפל, באותו שם ובזמנים
                 שונים. כל שאפל הוא קבוצת תלמידים ב-Hive באותו שם.
             </Alert>
@@ -649,7 +649,7 @@ export function ShufflesSection({ syllabusId }: ShufflesSectionProps) {
 
             {shuffles.length === 0 ? (
                 <Typography color="text.secondary" variant="body2">
-                    לא הוגדרו שאפלים במקצוע.
+                    לא הוגדרו שאפלים בסילבוס.
                 </Typography>
             ) : (
                 <List dense disablePadding>

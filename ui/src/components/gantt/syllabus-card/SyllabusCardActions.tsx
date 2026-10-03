@@ -111,7 +111,7 @@ export function SyllabusCardActions({
                                 })}
                             </>
                         ) : (
-                            "אין שאפלים במקצוע"
+                            "אין שאפלים בסילבוס"
                         )
                     }
                 >

@@ -27,7 +27,7 @@ export function ShuffleSelect({
 {
     if (options.length === 0) return (
         <Typography color="text.secondary" variant="body1">
-            לא הוגדרו שאפלים במקצוע
+            לא הוגדרו שאפלים בסילבוס
         </Typography>
     );
 
