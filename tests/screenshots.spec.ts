@@ -63,6 +63,19 @@ test.describe("Release screenshots", () => {
         await shoot(page, "03-gantt");
     });
 
+    // The timeline toolbar and week headers changed in the UX review
+    // (#812, #815, #820): legend, quieter warnings, fixed-position toggles.
+    test("gantt timeline", async ({ page }) => {
+        await open(page, "/gantt");
+        await waitForAppLoad(page);
+        await page.getByRole("tab", { name: "רצף זמן" }).click();
+        await page.getByRole("group", { name: "מצב תצוגה" }).waitFor({ timeout: 30_000 });
+        await shoot(page, "05-gantt-timeline");
+        await page.getByRole("button", { name: "מקרא" }).click();
+        await page.getByRole("dialog", { name: "מקרא" }).waitFor();
+        await shoot(page, "06-gantt-timeline-legend");
+    });
+
     test("gantt grid context menu", async ({ page }) => {
         await open(page, "/gantt");
         await waitForAppLoad(page);
