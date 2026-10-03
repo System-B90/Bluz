@@ -17,6 +17,7 @@ import Typography from "@mui/material/Typography";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
+import { apiListIterations } from "@/api-client/iterations";
 import { CutDecision, CutValidationError } from "@/api-shared/gantt/cut-planner";
 import { WeekOverflowResolution } from "@/api-shared/gantt/cut-rules";
 import {
@@ -25,6 +26,13 @@ import {
     CurriculumCutError,
 } from "@/api-shared/types/gantt/cut";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import {
+    CUT_NO_ITERATION_REASON,
+    CutTarget,
+    describeCutTarget,
+    findLinkedIteration,
+    isCutBlocked,
+} from "@/components/gantt/cut-dialog/cut-target";
 import {
     CutDecisionAnswer,
     CutDecisionStep,
@@ -104,7 +112,7 @@ function CutErrorContent({ error }: { error: CurriculumCutError }) {
                 {typeof error.count === "number"
                     ? ` (${error.count} אירועים קיימים)`
                     : ""}
-                    . כדי לגזור מחדש יש למחוק תחילה את האירועים שנוצרו.
+                    . כדי לגזור מחדש יש לבצע תחילה &quot;משיכה חזרה&quot;.
             </Alert>
         );
     case "foreign-cut":
@@ -216,6 +224,7 @@ export function CutToScheduleDialog({
     const [autoSpillover, setAutoSpillover] = useState(true);
     const [insertBreaks, setInsertBreaks] = useState(true);
     const [answers, setAnswers] = useState<Array<CutDecisionAnswer>>([]);
+    const [target, setTarget] = useState<CutTarget>({ status: "loading" });
     const loadingIntervalRef = useRef<null | ReturnType<typeof setInterval>>(null);
 
     // See ReloadScheduleDialog: the dialog outlives its own close, and the
@@ -231,8 +240,45 @@ export function CutToScheduleDialog({
             setAutoSpillover(true);
             setInsertBreaks(true);
             setAnswers([]);
+            setTarget({ status: "loading" });
         }
     }
+
+    // Resolve the target iteration up front (#838): an unlinked curriculum
+    // disables "גזירה" with a reason instead of failing after the click, and a
+    // linked one says how many events land in which iteration. The plan call
+    // never writes, so it is safe to run on open.
+    useEffect(() => {
+        if (!open) return;
+        let active = true;
+        void (async () => {
+            let iterationLabel: string;
+            try {
+                const linked = findLinkedIteration(await apiListIterations(), curriculumId);
+                if (!linked) {
+                    if (active) setTarget({ status: "unlinked" });
+                    return;
+                }
+                iterationLabel = linked.label;
+            } catch {
+                // Let the cut itself report what is wrong.
+                if (active) setTarget({ status: "unknown" });
+                return;
+            }
+            if (active) setTarget({ status: "linked", iterationLabel, plannedEvents: null });
+            try {
+                const plan = await ganttApi.cut.plan(curriculumId, {});
+                if (active && plan.ok) {
+                    setTarget({ status: "linked", iterationLabel, plannedEvents: plan.plannedEvents });
+                }
+            } catch {
+                // The count is a nicety; the cut re-plans and reports errors.
+            }
+        })();
+        return () => {
+            active = false;
+        };
+    }, [open, curriculumId]);
 
     useEffect(() => {
         if (phase.kind === "loading" || phase.kind === "planning") {
@@ -416,10 +462,22 @@ export function CutToScheduleDialog({
             <DialogContent>
                 {phase.kind === "confirm" && (
                     <Stack gap={1}>
+                        {target.status === "unlinked" ? (
+                            <Alert data-testid="cut-no-iteration" severity="warning">
+                                {describeCutTarget(target)}
+                            </Alert>
+                        ) : (
+                            describeCutTarget(target) && (
+                                <Typography data-testid="cut-target-summary" fontWeight={600}>
+                                    {describeCutTarget(target)}
+                                </Typography>
+                            )
+                        )}
                         <DialogContentText>
                             פעולה זו תיצור אירוע במערכת השעות של המחזור המקושר
-                            עבור כל מופע מתוכנן בגאנט. הפעולה חד־פעמית — גזירה
-                            חוזרת מחייבת מחיקת האירועים שנוצרו. להמשיך?
+                            עבור כל מופע מתוכנן בגאנט. ניתן לבטל אותה בכל עת
+                            עם &quot;משיכה חזרה&quot;, שמסירה את האירועים
+                            שנוצרו. להמשיך?
                         </DialogContentText>
                         <FormControlLabel
                             control={
@@ -521,13 +579,18 @@ export function CutToScheduleDialog({
                     <>
                         <Button onClick={handleClose}>ביטול</Button>
                         <Button
+                            aria-describedby={target.status === "unlinked" ? "cut-blocked-reason" : undefined}
                             color="primary"
+                            disabled={isCutBlocked(target)}
                             onClick={() => handleConfirm()}
                             startIcon={<ContentCutIcon fontSize="small" />}
                             variant="contained"
                         >
                             גזירה
                         </Button>
+                        {target.status === "unlinked" ? (
+                            <span hidden id="cut-blocked-reason">{CUT_NO_ITERATION_REASON}</span>
+                        ) : null}
                     </>
                 )}
                 {phase.kind === "decisions" && (
