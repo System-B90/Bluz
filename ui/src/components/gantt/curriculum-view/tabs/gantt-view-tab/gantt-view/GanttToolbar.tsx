@@ -27,6 +27,9 @@ import React, { useMemo, useState } from "react";
 
 import { COMMAND_GROUPS } from "@/components/app-commands/labels";
 import { GanttFilterButton } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box/GanttFilterButton";
+import { GanttLegend } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttLegend";
+
+const TOGGLE_SX = { gap: 0.5, px: 1.5 } as const;
 
 export type GanttToolbarProps = {
     title: string;
@@ -193,7 +196,7 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({
             >
                 {/* First-column search: filter syllabus/module/event rows */ }
                 <TextField
-                    aria-label="חיפוש בסילבוסים, מודולים ואירועים"
+                    aria-label="חיפוש בסילבוסים, מערכים ומופעים"
                     onBlur={ () =>
                     {
                         setSearchFocused(false);
@@ -239,6 +242,8 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({
 
                 <GanttFilterButton withCommand={ false } />
 
+                {/* Accessible names are the visible text (WCAG 2.5.3, #815); the
+                    longer explanation is the tooltip, exposed as a description. */ }
                 {/* View mode: weekly / daily */ }
                 <ToggleButtonGroup
                     aria-label="מצב תצוגה"
@@ -253,22 +258,18 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({
                     size="small"
                     value={ weeklyView ? "week" : "day" }
                 >
-                    <ToggleButton
-                        aria-label="תצוגה שבועית"
-                        sx={ { gap: 0.5, px: 1.5 } }
-                        value="week"
-                    >
-                        <CalendarViewWeekIcon fontSize="small" />
-                        שבועי
-                    </ToggleButton>
-                    <ToggleButton
-                        aria-label="תצוגה יומית"
-                        sx={ { gap: 0.5, px: 1.5 } }
-                        value="day"
-                    >
-                        <CalendarViewDayIcon fontSize="small" />
-                        יומי
-                    </ToggleButton>
+                    <Tooltip describeChild title="תצוגה שבועית">
+                        <ToggleButton sx={ TOGGLE_SX } value="week">
+                            <CalendarViewWeekIcon fontSize="small" />
+                            שבועי
+                        </ToggleButton>
+                    </Tooltip>
+                    <Tooltip describeChild title="תצוגה יומית">
+                        <ToggleButton sx={ TOGGLE_SX } value="day">
+                            <CalendarViewDayIcon fontSize="small" />
+                            יומי
+                        </ToggleButton>
+                    </Tooltip>
                 </ToggleButtonGroup>
 
                 {/* Display options: constraints / unallocated */ }
@@ -297,75 +298,65 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({
                             : []),
                     ] }
                 >
-                    <ToggleButton
-                        aria-label="הצגת אילוצים"
-                        sx={ { gap: 0.5, px: 1.5 } }
-                        value="constraints"
-                    >
-                        <RuleIcon fontSize="small" />
-                        אילוצים
+                    <Tooltip describeChild title="הצגת אילוצים וחריגות מהשעות הזמינות">
+                        <ToggleButton sx={ TOGGLE_SX } value="constraints">
+                            <RuleIcon fontSize="small" />
+                            אילוצים
+                        </ToggleButton>
+                    </Tooltip>
+                    <Tooltip describeChild title="הצגת פערי שיבוץ">
+                        <ToggleButton sx={ TOGGLE_SX } value="unallocated">
+                            <Badge
+                                badgeContent={ unallocatedCount }
+                                color="warning"
+                                max={ 999 }
+                                overlap="circular"
+                            >
+                                <PendingActionsIcon fontSize="small" />
+                            </Badge>
+                            לא משובצים
+                        </ToggleButton>
+                    </Tooltip>
+                    <Tooltip describeChild title="התעלמות מהפסקות בסכומי הזמן">
+                        <ToggleButton sx={ TOGGLE_SX } value="breaks">
+                            <FreeBreakfastIcon fontSize="small" />
+                            ללא הפסקות
+                        </ToggleButton>
+                    </Tooltip>
+                </ToggleButtonGroup>
+
+                {/* Block sizing only applies to the weekly view. It stays in
+                    place, disabled, in the daily view so the controls after it
+                    don't jump when the view switches (#820). */ }
+                <ToggleButtonGroup
+                    aria-label="גודל בלוקים"
+                    disabled={ !weeklyView }
+                    exclusive
+                    onChange={ (_, value) =>
+                    {
+                        if (value)
+                            setRelativeDaySizing(
+                                value === "relative",
+                            );
+                    } }
+                    size="small"
+                    value={
+                        relativeDaySizing
+                            ? "relative"
+                            : "full"
+                    }
+                >
+                    <ToggleButton sx={ TOGGLE_SX } value="full">
+                        <WidthFullIcon fontSize="small" />
+                        תא מלא
                     </ToggleButton>
-                    <ToggleButton
-                        aria-label="הצגת פערי שיבוץ"
-                        sx={ { gap: 0.5, px: 1.5 } }
-                        value="unallocated"
-                    >
-                        <Badge
-                            badgeContent={ unallocatedCount }
-                            color="warning"
-                            max={ 999 }
-                            overlap="circular"
-                        >
-                            <PendingActionsIcon fontSize="small" />
-                        </Badge>
-                        לא משובצים
-                    </ToggleButton>
-                    <ToggleButton
-                        aria-label="התעלמות מהפסקות בסכומי הזמן"
-                        sx={ { gap: 0.5, px: 1.5 } }
-                        value="breaks"
-                    >
-                        <FreeBreakfastIcon fontSize="small" />
-                        ללא הפסקות
+                    <ToggleButton sx={ TOGGLE_SX } value="relative">
+                        <WidthNormalIcon fontSize="small" />
+                        לפי יום
                     </ToggleButton>
                 </ToggleButtonGroup>
 
-                { weeklyView ? (
-                    <ToggleButtonGroup
-                        aria-label="גודל בלוקים"
-                        exclusive
-                        onChange={ (_, value) =>
-                        {
-                            if (value)
-                                setRelativeDaySizing(
-                                    value === "relative",
-                                );
-                        } }
-                        size="small"
-                        value={
-                            relativeDaySizing
-                                ? "relative"
-                                : "full"
-                        }
-                    >
-                        <ToggleButton
-                            aria-label="מילוי מלא של התא"
-                            sx={ { gap: 0.5, px: 1.5 } }
-                            value="full"
-                        >
-                            <WidthFullIcon fontSize="small" />
-                            תא מלא
-                        </ToggleButton>
-                        <ToggleButton
-                            aria-label="גודל יחסי ליום"
-                            sx={ { gap: 0.5, px: 1.5 } }
-                            value="relative"
-                        >
-                            <WidthNormalIcon fontSize="small" />
-                            לפי יום
-                        </ToggleButton>
-                    </ToggleButtonGroup>
-                ) : null }
+                <GanttLegend />
 
                 <Divider flexItem orientation="vertical" />
 

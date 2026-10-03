@@ -1,9 +1,15 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { getDayDate } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { defaultExpandedSyllabusIds } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/default-expansion";
+import {
+    timelineIgnoreBreaks,
+    timelineRelativeDaySizing,
+    timelineShowConstraints,
+    timelineShowUnallocated,
+} from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/timeline-preferences";
 import { useGanttDrag } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-drag";
 import { useGanttExpansion } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-expansion";
 import { useGanttMappingsMerge } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-mappings-merge";
@@ -88,10 +94,15 @@ export const useGanttView = (curriculumId: string) =>
         [ dateByDayId ],
     );
 
-    const [ showConstraints, setShowConstraints ] = useState(true);
-    const [ relativeDaySizing, setRelativeDaySizing ] = useState(false);
-    const [ showUnallocated, setShowUnallocated ] = useState(false);
-    const [ ignoreBreaks, setIgnoreBreaks ] = useState(false);
+    // Remembered across reloads (#821).
+    const showConstraints = timelineShowConstraints.use();
+    const setShowConstraints = timelineShowConstraints.set;
+    const relativeDaySizing = timelineRelativeDaySizing.use();
+    const setRelativeDaySizing = timelineRelativeDaySizing.set;
+    const showUnallocated = timelineShowUnallocated.use();
+    const setShowUnallocated = timelineShowUnallocated.set;
+    const ignoreBreaks = timelineIgnoreBreaks.use();
+    const setIgnoreBreaks = timelineIgnoreBreaks.set;
 
     const {
         isEventVisible,

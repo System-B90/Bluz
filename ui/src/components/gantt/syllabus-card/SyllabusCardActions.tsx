@@ -11,7 +11,8 @@ import { useCallback, useMemo } from "react";
 import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
-import { formatMinutesAsDuration } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { useHoursFormat } from "@/components/gantt/curriculum-view/use-hours-format";
 import {
     useCurriculumProviderActions,
     useCurriculumState,
@@ -36,6 +37,7 @@ export function SyllabusCardActions({
     const shuffles = syllabus?.shuffles ?? [];
     const shuffleCount = shuffles.length;
     const state = useCurriculumState();
+    useHoursFormat();
     // Every shuffle must get the same time in the syllabus; its modules may
     // split it differently. Course-limited events are outside the comparison.
     const shuffleTotals = useMemo(
@@ -101,7 +103,7 @@ export function SyllabusCardActions({
                                         <div key={name}>
                                             {name}
                                             {minutes !== undefined
-                                                ? ` · ${formatMinutesAsDuration(minutes)}`
+                                                ? ` · ${formatHoursLabel(minutes)}`
                                                 : ""}
                                             {description ? ` — ${description}` : ""}
                                         </div>
@@ -109,7 +111,7 @@ export function SyllabusCardActions({
                                 })}
                             </>
                         ) : (
-                            "אין שאפלים במקצוע"
+                            "אין שאפלים בסילבוס"
                         )
                     }
                 >

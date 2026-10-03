@@ -57,7 +57,7 @@ export function SettingsDialog({
             { label: "העדפות זמן", icon: <AlarmIcon />, value: "global" },
             { label: "חדרים", icon: <MeetingRoomIcon />, value: "rooms" },
             {
-                label: "בניית קורסים",
+                label: "בניית מסלולים",
                 icon: <MenuBookIcon />,
                 value: "courses",
             },

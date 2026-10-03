@@ -1,3 +1,4 @@
+import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import Box from "@mui/material/Box";
 import { alpha, useTheme } from "@mui/material/styles";
@@ -30,6 +31,14 @@ function getCapacityColor(status: CapacityStatus): string {
     if (status === "ok") return "primary.main";
 
     return "text.secondary";
+}
+
+/** `X ש׳ / Y ש׳` reads the same in every week, so line the digits up (#829). */
+const HOURS_SX = { fontVariantNumeric: "tabular-nums" } as const;
+
+/** Spoken/hovered meaning of the `X / Y` pair, which on screen has no labels (#812). */
+export function hoursPairDescription(scheduledMinutes: number, availableMinutes: number): string {
+    return `משובץ ${formatHoursLabel(scheduledMinutes)} מתוך ${formatHoursLabel(availableMinutes)} זמינות`;
 }
 
 export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
@@ -128,7 +137,6 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                             scheduledMinutes: scheduledMinutesByDay[day.id] ?? 0,
                         })),
                     );
-                    const weekOverAllocated = weekSeverity === "error";
                     // Set on the text children, not the cell, so the native
                     // tooltip never stacks on the warning icon's tooltip.
                     const zoomTitle = canZoom
@@ -184,19 +192,41 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                                 <Typography fontWeight="bold" title={zoomTitle} variant="subtitle2">
                                     {week.title}
                                 </Typography>
-                                {weeklyView && weekSeverity ? <Tooltip
-                                    arrow
-                                    title={
-                                        weekOverAllocated
-                                            ? `חריגה בהקצאת השבוע: ${formatHoursLabel(weekScheduledMinutes)} מתוך ${formatHoursLabel(weekAvailableMinutes)}`
-                                            : `חריגה בהקצאה: ${overAllocatedDayNames.join(", ")}`
-                                    }
-                                >
-                                    <WarningAmberIcon
-                                        color={weekSeverity}
-                                        sx={{ fontSize: 16 }}
-                                    />
-                                </Tooltip> : null}
+                                {/* Week-level problems only get the ⚠ (#812): the
+                                    week needs more hours than it has. A single
+                                    overloaded day is a quieter amber dot here,
+                                    and is marked on the day itself in the daily
+                                    view. Tooltips open above, off the numbers. */}
+                                {weeklyView && weekSeverity === "error" ? (
+                                    <Tooltip
+                                        arrow
+                                        placement="top"
+                                        title={`חריגה בהקצאת השבוע: ${formatHoursLabel(weekScheduledMinutes)} מתוך ${formatHoursLabel(weekAvailableMinutes)}`}
+                                    >
+                                        <WarningAmberIcon
+                                            aria-label="חריגה בהקצאת השבוע"
+                                            color="error"
+                                            data-testid="gantt-week-overload"
+                                            role="img"
+                                            sx={{ fontSize: 16 }}
+                                        />
+                                    </Tooltip>
+                                ) : null}
+                                {weeklyView && weekSeverity === "warning" ? (
+                                    <Tooltip
+                                        arrow
+                                        placement="top"
+                                        title={`ימים בחריגה: ${overAllocatedDayNames.join(", ")}`}
+                                    >
+                                        <FiberManualRecordIcon
+                                            aria-label={`ימים בחריגה: ${overAllocatedDayNames.join(", ")}`}
+                                            color="warning"
+                                            data-testid="gantt-week-day-overload"
+                                            role="img"
+                                            sx={{ fontSize: 10 }}
+                                        />
+                                    </Tooltip>
+                                ) : null}
                             </Box>
                             {dateRangeLabel ? (
                                 <Typography
@@ -217,7 +247,8 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                                 data-testid="gantt-week-hours"
                                 display="block"
                                 fontWeight={700}
-                                title={zoomTitle}
+                                sx={HOURS_SX}
+                                title={`${hoursPairDescription(weekScheduledMinutes, weekAvailableMinutes)}${zoomTitle ? ` · ${zoomTitle}` : ""}`}
                                 variant="caption"
                             >
                                 {`${formatHoursLabel(weekScheduledMinutes)} / ${formatHoursLabel(weekAvailableMinutes)}`}
@@ -267,9 +298,31 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                                         zIndex: 2,
                                     }}
                                 >
-                                    <Typography variant="caption">
-                                        {getDayNameDisplay(day.dayIndex)}
-                                    </Typography>
+                                    <Box
+                                        alignItems="center"
+                                        display="flex"
+                                        gap={0.25}
+                                        justifyContent="center"
+                                    >
+                                        <Typography variant="caption">
+                                            {getDayNameDisplay(day.dayIndex)}
+                                        </Typography>
+                                        {isOverAllocated ? (
+                                            <Tooltip
+                                                arrow
+                                                placement="top"
+                                                title={`חריגה מהשעות הזמינות ביום: ${hoursPairDescription(scheduledMinutes, availableOf(day))}`}
+                                            >
+                                                <WarningAmberIcon
+                                                    aria-label="חריגה מהשעות הזמינות ביום"
+                                                    color="error"
+                                                    data-testid="gantt-day-overload"
+                                                    role="img"
+                                                    sx={{ fontSize: 14 }}
+                                                />
+                                            </Tooltip>
+                                        ) : null}
+                                    </Box>
                                     {dayDate ? (
                                         <Typography
                                             color="text.secondary"
@@ -307,6 +360,7 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                                                         capacityStatus,
                                                     )}
                                                     fontWeight={700}
+                                                    sx={HOURS_SX}
                                                     variant="caption"
                                                 >
                                                     {`${formatHoursLabel(

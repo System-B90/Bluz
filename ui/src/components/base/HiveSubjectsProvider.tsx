@@ -1,5 +1,4 @@
 "use client";
-import { enqueueSnackbar } from "notistack";
 import {
     createContext,
     useCallback,
@@ -11,7 +10,7 @@ import {
 
 import { apiGetSubjects } from "@/api-client/hive";
 import { Subject, SubjectLike } from "@/api-shared/types/subject";
-import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
+import { reportHiveLoadFailure } from "@/components/base/hive-load-failure";
 
 export type HiveSubjectsContextState = {
     default: boolean;
@@ -46,6 +45,9 @@ export const HiveSubjectsProvider = ({
         [subjectLookup],
     );
 
+    // Bumped by the failure toast's retry action to load again (#823).
+    const [reloadToken, setReloadToken] = useState(0);
+
     const loadSubjects = useCallback(() => {
         apiGetSubjects()
             .then((fetchedSubjects) => {
@@ -55,18 +57,12 @@ export const HiveSubjectsProvider = ({
                 });
                 setSubjectLookup(subjectsMap);
             })
-            .catch((error) =>
-                enqueueApiErrorSnackbar(
-                    enqueueSnackbar,
-                    "טעינת מקצועות נכשלה.",
-                    error,
-                ),
-            );
+            .catch((error) => reportHiveLoadFailure("subjects", error, () => setReloadToken((token) => token + 1)));
     }, [setSubjectLookup]);
 
     useEffect(() => {
         loadSubjects();
-    }, [loadSubjects]);
+    }, [loadSubjects, reloadToken]);
 
     // A fresh object literal here re-renders every consumer app-wide on
     // every render of this provider. Memoize like SettingsProvider.tsx.

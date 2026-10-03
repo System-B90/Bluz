@@ -9,7 +9,9 @@ import { useMemo } from "react";
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
 import { useCourses } from "@/components/base/CoursesProvider";
+import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { calculateStudentTentativeMinutes } from "@/components/gantt/curriculum-view/student-load";
+import { useHoursFormat } from "@/components/gantt/curriculum-view/use-hours-format";
 import { useCurriculumStudentSchedule } from "@/components/gantt/curriculum-view/use-student-schedule";
 import { useCurriculumState } from "@/components/gantt/state/context";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
@@ -25,6 +27,8 @@ export function HoursCard({
     const { state: mappingState } = useGanttMappings();
     const mappings = mappingState.mappings;
     const { courses } = useCourses();
+    // Re-render when the viewer switches decimal/clock hours (#813).
+    useHoursFormat();
 
     const totalWorkingHours = useMemo(() =>
     {
@@ -149,7 +153,7 @@ export function HoursCard({
                             ס&quot;ך:
                         </Typography>
                         <Typography fontWeight="bold" variant="body2">
-                            { totalWorkingHours.toFixed(2) }
+                            { formatHoursLabel(totalWorkingHours * 60) }
                         </Typography>
                     </Box>
                     <Box
@@ -162,7 +166,7 @@ export function HoursCard({
                             שובצו:
                         </Typography>
                         <Typography fontWeight="bold" variant="body2">
-                            { usedWorkingHours.toFixed(2) }
+                            { formatHoursLabel(usedWorkingHours * 60) }
                         </Typography>
                     </Box>
                     <Box
@@ -175,7 +179,7 @@ export function HoursCard({
                             מינימום דרוש:
                         </Typography>
                         <Typography fontWeight="bold" variant="body2">
-                            { minimumHoursRequired.toFixed(2) }
+                            { formatHoursLabel(minimumHoursRequired * 60) }
                         </Typography>
                     </Box>
                     <Box
@@ -188,7 +192,7 @@ export function HoursCard({
                             טנטטיבית:
                         </Typography>
                         <Typography fontWeight="bold" variant="body2">
-                            { tentativeWorkingHours.toFixed(2) }
+                            { formatHoursLabel(tentativeWorkingHours * 60) }
                         </Typography>
                     </Box>
                 </Stack>

@@ -103,3 +103,45 @@ describe("GanttHeader day hours in a zoomed week", () => {
         expect(screen.getAllByTestId("gantt-day-load-issue")).toHaveLength(1);
     });
 });
+
+describe("GanttHeader warnings (#812, #822, #829)", () => {
+    it("shows the ⚠ only when the whole week is over its hours", () => {
+        // d1 600 > 480 and the week 600+600 > 1080.
+        renderHeader(true, { d1: 600, d2: 600 });
+        expect(screen.getByTestId("gantt-week-overload")).toBeTruthy();
+        expect(screen.queryByTestId("gantt-week-day-overload")).toBeNull();
+    });
+
+    it("marks a single overloaded day with a quiet dot, not the ⚠", () => {
+        // d1 600 > 480, but the week 600 < 1080 still fits.
+        renderHeader(true, { d1: 600 });
+        expect(screen.queryByTestId("gantt-week-overload")).toBeNull();
+        expect(screen.getByTestId("gantt-week-day-overload").getAttribute("aria-label")).toContain("ראשון");
+    });
+
+    it("shows nothing when no day is over", () => {
+        renderHeader(true, { d1: 60 });
+        expect(screen.queryByTestId("gantt-week-overload")).toBeNull();
+        expect(screen.queryByTestId("gantt-week-day-overload")).toBeNull();
+    });
+
+    it("labels the X / Y pair as scheduled out of available", () => {
+        renderHeader(true, { d1: 300, d2: 270 });
+        expect(screen.getByTestId("gantt-week-hours").getAttribute("title")).toContain("משובץ 9.5 ש׳ מתוך 18 ש׳ זמינות");
+    });
+
+    it("uses tabular digits for the week totals", () => {
+        renderHeader(true, { d1: 300 });
+        expect(getComputedStyle(screen.getByTestId("gantt-week-hours")).fontVariantNumeric).toBe("tabular-nums");
+    });
+
+    it("marks the overloaded day itself in the daily view", () => {
+        renderHeader(true, { d1: 600 }, { dayZoom: true });
+        expect(screen.getAllByTestId("gantt-day-overload")).toHaveLength(1);
+    });
+
+    it("drops the day mark when constraints are hidden", () => {
+        renderHeader(false, { d1: 600 }, { dayZoom: true });
+        expect(screen.queryByTestId("gantt-day-overload")).toBeNull();
+    });
+});

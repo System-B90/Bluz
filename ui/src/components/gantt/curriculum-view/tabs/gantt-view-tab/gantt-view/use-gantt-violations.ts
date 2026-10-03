@@ -125,7 +125,7 @@ export const useGanttViolations = ({
                 {
                     if (!v[ entityId ]) v[ entityId ] = [];
                     v[ entityId ].push(
-                        `מפר אילוץ יחסי עם ${c.targetType === "event" ? "מפגש" : "מערך"}`,
+                        `מפר אילוץ יחסי עם ${c.targetType === "event" ? "מופע" : "מערך"}`,
                     );
                 }
 

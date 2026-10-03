@@ -9,6 +9,7 @@ import Typography from "@mui/material/Typography";
 import dayjs from "dayjs";
 
 import { CutSpillDetail } from "@/api-shared/gantt/cut-planner";
+import { formatShortDate } from "@/components/gantt/curriculum-view/gantt-time-utils";
 
 const HEBREW_WEEKDAYS = [
     "ראשון",
@@ -20,11 +21,11 @@ const HEBREW_WEEKDAYS = [
     "שבת",
 ];
 
-/** "שני, 12.05" — weekday plus date, matching how the gantt labels days. */
+/** "שני, 12/05" — weekday plus date, matching how the gantt labels days. */
 function formatDay(isoDate: string): string {
     const day = dayjs(isoDate);
     if (!day.isValid()) return isoDate;
-    return `${HEBREW_WEEKDAYS[day.day()]}, ${day.format("DD.MM")}`;
+    return `${HEBREW_WEEKDAYS[day.day()]}, ${formatShortDate(day)}`;
 }
 
 /** "1:30 שעות" / "45 דקות" — whichever reads naturally for the length. */

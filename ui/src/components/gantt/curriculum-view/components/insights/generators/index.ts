@@ -39,7 +39,8 @@ export function generateInsights(ctx: InsightContext): Array<Insight> {
         } catch {
             return [];
         }
-    });
+    // A card with nothing to say rendered as an empty slide (#851).
+    }).filter((insight) => insight.title.trim() !== "" || insight.body.trim() !== "" || insight.visual !== undefined);
 
     const warnings = insights.filter(isSeverity("warning"));
     const fun = insights.filter(isSeverity("fun"));
@@ -51,4 +52,18 @@ export function generateInsights(ctx: InsightContext): Array<Insight> {
         if ((i + 1) % FUN_EVERY === 0 && fun.length > 0) ordered.push(fun.shift() as Insight);
     });
     return [ ...ordered, ...fun ];
+}
+
+/**
+ * Splits the deck for the card (#851): warnings are actionable, so they are
+ * pinned rather than rotated away; trivia is opt-in on a work screen.
+ */
+export function partitionInsights(
+    insights: ReadonlyArray<Insight>,
+    { includeFun }: { includeFun: boolean },
+): { pinned: Array<Insight>; deck: Array<Insight> } {
+    return {
+        pinned: insights.filter(isSeverity("warning")),
+        deck: insights.filter((i) => i.severity !== "warning" && (includeFun || i.severity !== "fun")),
+    };
 }

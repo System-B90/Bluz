@@ -6,12 +6,13 @@ import { useMemo } from "react";
 
 import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
 import { useCourses } from "@/components/base/CoursesProvider";
-import { formatMinutesAsDuration } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import {
     calculateStudentMinutes,
     calculateStudentSyllabusMinutes,
     calculateStudentTentativeMinutes,
 } from "@/components/gantt/curriculum-view/student-load";
+import { useHoursFormat } from "@/components/gantt/curriculum-view/use-hours-format";
 import { useCurriculumState } from "@/components/gantt/state/context";
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
@@ -28,6 +29,8 @@ export function HoursBox({ syllabusId, ...props }: HoursBoxProps) {
     const mappings = mappingState.mappings;
     const { state: exceptionState } = useGanttRecurrenceExceptions();
     const { courses } = useCourses();
+    // Re-render when the viewer switches decimal/clock hours (#813).
+    useHoursFormat();
 
     const minimumRequiredHours = useMemo(() => {
         if (!syllabus) return 0;
@@ -135,7 +138,7 @@ export function HoursBox({ syllabusId, ...props }: HoursBoxProps) {
                             fontWeight="bold"
                             variant="body2"
                         >
-                            {formatMinutesAsDuration(scheduledHours)}
+                            {formatHoursLabel(scheduledHours)}
                         </Typography>
                     </Box>
                     <Box
@@ -156,7 +159,7 @@ export function HoursBox({ syllabusId, ...props }: HoursBoxProps) {
                             fontWeight="bold"
                             variant="body2"
                         >
-                            {formatMinutesAsDuration(minimumRequiredHours)}
+                            {formatHoursLabel(minimumRequiredHours)}
                         </Typography>
                     </Box>
                     <Box
@@ -177,7 +180,7 @@ export function HoursBox({ syllabusId, ...props }: HoursBoxProps) {
                             fontWeight="bold"
                             variant="body2"
                         >
-                            {formatMinutesAsDuration(tentativeHours)}
+                            {formatHoursLabel(tentativeHours)}
                         </Typography>
                     </Box>
                 </Stack>
