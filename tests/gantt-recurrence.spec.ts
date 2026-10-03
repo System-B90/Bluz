@@ -448,7 +448,7 @@ test.describe("Gantt Recurring Events (#111)", () => {
         });
 
         const moduleBlockBox = await page
-            .locator('[id^="block-module-"]')
+            .locator('td:not(:first-child) [id^="block-module-"]')
             .filter({ hasNotText: "הפסקות" })
             .boundingBox();
         const eventBlockBox = await page
