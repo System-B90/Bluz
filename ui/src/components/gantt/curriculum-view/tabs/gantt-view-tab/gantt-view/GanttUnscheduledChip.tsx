@@ -64,7 +64,7 @@ export const GanttUnscheduledChip: React.FC<GanttUnscheduledChipProps> = ({
                 } }
                 onKeyDown={ (e) =>
                 {
-                    if (e.key === "Enter")
+                    if (e.key === "Enter" && !isDragging)
                     {
                         e.preventDefault();
                         onOpen();

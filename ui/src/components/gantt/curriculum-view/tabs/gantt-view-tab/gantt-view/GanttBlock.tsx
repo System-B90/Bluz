@@ -133,7 +133,7 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
     // Enter opens; every other key (Space picks the bar up, #808) goes on
     // to dnd-kit.
     const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
-        if (e.key === "Enter" && payload?.moduleId) {
+        if (e.key === "Enter" && payload?.moduleId && !isDragging) {
             e.preventDefault();
             e.stopPropagation();
             void activate(e.currentTarget);
