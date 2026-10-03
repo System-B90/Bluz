@@ -11,6 +11,19 @@ import { GANTT_TAB_INDEX } from "@/components/app-onboarding/gantt/tabs";
 
 type TabKey = keyof typeof GANTT_TAB_INDEX;
 
+/**
+ * What the timeline toolbar's own view commands answer to. Those commands are
+ * registered only while the timeline is mounted, so on the other tabs a search
+ * for e.g. "משובצים" found nothing (#846). The timeline tab command answers to
+ * the same words and takes the user there.
+ */
+export const TIMELINE_VIEW_KEYWORDS = [
+    "unallocated", "unscheduled", "לא משובצים", "משובצים", "פערים",
+    "constraints", "אילוצים",
+    "breaks", "הפסקות",
+    "weekly", "daily", "שבועי", "יומי",
+];
+
 /** Mirrors the tab strip in `CurriculumViewTabs` — same labels, same order. */
 const TABS: Array<{ tab: TabKey; title: string; icon: ReactNode; keywords: Array<string> }> = [
     {
@@ -29,7 +42,7 @@ const TABS: Array<{ tab: TabKey; title: string; icon: ReactNode; keywords: Array
         tab: "timeline",
         title: "רצף זמן",
         icon: <ViewTimelineIcon />,
-        keywords: [ "timeline", "gantt view", "ציר זמן" ],
+        keywords: [ "timeline", "gantt view", "ציר זמן", ...TIMELINE_VIEW_KEYWORDS ],
     },
     {
         tab: "grid",
