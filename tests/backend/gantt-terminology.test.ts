@@ -48,6 +48,13 @@ describe("gantt terminology (#832)", () => {
         expect(offenders.filter((where) => !where.includes("EventHiveLinkageFields"))).toEqual([]);
     });
 
+    it("calls an event מופע, never מפגש", () => {
+        const offenders = GANTT_UI.flatMap(codeLines)
+            .filter(({ line }) => /מפגש/.test(line))
+            .map(({ where }) => where);
+        expect(offenders).toEqual([]);
+    });
+
     it("names the course-tree settings tab with מסלולים", () => {
         const dialog = readFileSync(path.join(UI, "components/settings-dialog/SettingsDialog.tsx"), "utf8");
         expect(dialog).toContain("בניית מסלולים");
