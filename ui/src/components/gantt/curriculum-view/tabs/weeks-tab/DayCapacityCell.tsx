@@ -33,6 +33,7 @@ import
     parseTimeInputToMinutes,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { DayStudentLoad, StudentPath } from "@/components/gantt/curriculum-view/student-load";
+import { dayHoursInputLabel, dayHoursStepLabel, REVEAL_ON_HOVER_OR_FOCUS } from "@/components/gantt/curriculum-view/tabs/weeks-tab/day-cell-labels";
 import { getDayChipLabel } from "@/components/gantt/curriculum-view/tabs/weeks-tab/day-chip-label";
 import { useDaySelection } from "@/components/gantt/curriculum-view/tabs/weeks-tab/DaySelectionContext";
 import { useCurriculumState } from "@/components/gantt/state/context";
@@ -402,6 +403,7 @@ export function DayCapacityCell({
                         sx={{ position: "relative" }}
                     >
                         <IconButton
+                            aria-label={dayHoursStepLabel("down", dayName, dateLabel)}
                             className="cell-control-btn"
                             onClick={() => adjustMinutes(-60)}
                             size="small"
@@ -412,7 +414,7 @@ export function DayCapacityCell({
                                     : "scale(0.8)",
                                 transition:
                                     "all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
-                                ".group\\/cell:hover &": {
+                                [REVEAL_ON_HOVER_OR_FOCUS]: {
                                     opacity: 1,
                                     transform: "scale(1)",
                                 },
@@ -444,7 +446,7 @@ export function DayCapacityCell({
                                     ),
                                 },
                                 htmlInput: {
-                                    "aria-label": "שעות זמינות ביום",
+                                    "aria-label": dayHoursInputLabel(dayName, dateLabel),
                                     inputMode: "numeric",
                                     style: {
                                         fontFamily: "monospace",
@@ -476,6 +478,7 @@ export function DayCapacityCell({
                             value={localTime}
                         />
                         <IconButton
+                            aria-label={dayHoursStepLabel("up", dayName, dateLabel)}
                             className="cell-control-btn"
                             onClick={() => adjustMinutes(60)}
                             size="small"
@@ -486,7 +489,7 @@ export function DayCapacityCell({
                                     : "scale(0.8)",
                                 transition:
                                     "all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
-                                ".group\\/cell:hover &": {
+                                [REVEAL_ON_HOVER_OR_FOCUS]: {
                                     opacity: 1,
                                     transform: "scale(1)",
                                 },
