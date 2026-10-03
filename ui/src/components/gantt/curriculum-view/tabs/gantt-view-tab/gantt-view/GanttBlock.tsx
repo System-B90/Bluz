@@ -339,7 +339,7 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
             >
                 <ListItemText
                     primary="עריכת מופע זה בלבד"
-                    secondary="יוצר ממנו מפגש נפרד"
+                    secondary="יוצר ממנו מופע נפרד"
                 />
             </MenuItem>
         </Menu>

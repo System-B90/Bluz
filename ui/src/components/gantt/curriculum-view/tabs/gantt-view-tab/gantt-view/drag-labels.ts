@@ -33,7 +33,7 @@ export function buildDragLabels({ modules, events, days, dateOfDayId }: LabelSou
             const title = item?.eventId
                 ? events[ item.eventId ]?.title
                 : item?.moduleId ? modules[ item.moduleId ]?.title : undefined;
-            return `"${title ?? (item?.eventId ? "מפגש" : "מערך")}"`;
+            return `"${title ?? (item?.eventId ? "מופע" : "מערך")}"`;
         },
         dayLabel: (dayId) =>
         {

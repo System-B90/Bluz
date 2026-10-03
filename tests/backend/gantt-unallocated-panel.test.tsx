@@ -49,7 +49,7 @@ describe("GanttUnallocatedPanel (#818)", () => {
         renderPanel();
 
         expect(screen.getByText("מערכים")).toBeTruthy();
-        expect(screen.getByText("מפגשים")).toBeTruthy();
+        expect(screen.getByText("מופעים")).toBeTruthy();
     });
 
     it("gives each kind its own icon, not just a colour", () => {

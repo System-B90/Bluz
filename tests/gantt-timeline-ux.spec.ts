@@ -115,7 +115,7 @@ test.describe("Gantt timeline UX (#808-#833)", () => {
         await page.getByRole("button", { name: /פערי שיבוץ|לא משובצים/ }).first().click();
 
         await expect(page.getByText("מערכים", { exact: true }).first()).toBeVisible({ timeout: 10_000 });
-        await expect(page.getByText("מפגשים", { exact: true }).first()).toBeVisible();
+        await expect(page.getByText("מופעים", { exact: true }).first()).toBeVisible();
         await expect(page.locator('[data-unallocated-chip="event"]').first()).toBeVisible();
     });
 });

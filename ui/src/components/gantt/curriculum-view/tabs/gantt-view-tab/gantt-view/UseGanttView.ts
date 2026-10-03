@@ -4,14 +4,14 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { getDayDate } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { defaultExpandedSyllabusIds } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/default-expansion";
+import { buildDragLabels } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/drag-labels";
+import { dropWarningFor } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/drop-warning";
 import {
     timelineIgnoreBreaks,
     timelineRelativeDaySizing,
     timelineShowConstraints,
     timelineShowUnallocated,
 } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/timeline-preferences";
-import { buildDragLabels } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/drag-labels";
-import { dropWarningFor } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/drop-warning";
 import { GanttContextType } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { useGanttDrag } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-drag";
 import { useGanttExpansion } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-expansion";

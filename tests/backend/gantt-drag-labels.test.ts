@@ -18,12 +18,12 @@ describe("buildDragLabels", () => {
     });
 
     it("falls back to the kind when the item is gone", () => {
-        expect(labels.itemName({ moduleId: "gone", eventId: "gone" })).toBe("\"מפגש\"");
+        expect(labels.itemName({ moduleId: "gone", eventId: "gone" })).toBe("\"מופע\"");
         expect(labels.itemName({ moduleId: "gone" })).toBe("\"מערך\"");
     });
 
     it("names a day by weekday and short date", () => {
-        expect(labels.dayLabel("d1")).toBe("יום שני 3.8");
+        expect(labels.dayLabel("d1")).toBe("יום שני 03/08");
     });
 
     it("omits the date when the curriculum has none", () => {
@@ -33,7 +33,7 @@ describe("buildDragLabels", () => {
 
 describe("dropMessages", () => {
     it("reads naturally in Hebrew", () => {
-        expect(dropMessages.moved("\"שיעור\"", "יום שני 3.8")).toBe("\"שיעור\" הועבר ליום שני 3.8");
+        expect(dropMessages.moved("\"שיעור\"", "יום שני 03/08")).toBe("\"שיעור\" הועבר ליום שני 03/08");
         expect(dropMessages.removed("\"שיעור\"")).toBe("\"שיעור\" הוסר מהציר");
     });
 });

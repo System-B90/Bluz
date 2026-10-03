@@ -180,7 +180,7 @@ export const GanttUnallocatedPanel: React.FC<GanttUnallocatedPanelProps> = ({
                         color="text.secondary"
                         variant="body2"
                     >
-                        כל המערכים והמפגשים משובצים 🎉
+                        כל המערכים והמופעים משובצים 🎉
                     </Typography>
                 ) : (
                     <Stack spacing={ 1 }>
@@ -216,7 +216,7 @@ export const GanttUnallocatedPanel: React.FC<GanttUnallocatedPanelProps> = ({
                                 ) : null }
                                 { group.events.length > 0 ? (
                                     <>
-                                        <KindHeading>מפגשים</KindHeading>
+                                        <KindHeading>מופעים</KindHeading>
                                         <Box sx={ { display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.25 } }>
                                             { group.events.map((e) => (
                                                 <UnallocatedChip
