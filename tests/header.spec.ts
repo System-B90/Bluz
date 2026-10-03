@@ -126,6 +126,13 @@ test.describe("Header / AppBar", () => {
         await expect(dialog.getByText("הגדרות")).toBeVisible();
     });
 
+    test("gear button has an accessible name (#825)", async ({ page }) => {
+        const gear = page.locator(SELECTORS.appBar).getByRole("button", { name: "הגדרות", exact: true });
+        await expect(gear).toBeVisible();
+        await gear.click();
+        await expect(page.locator(SELECTORS.settingsDialog).first()).toBeVisible();
+    });
+
     test("toggles offline mode indicator", async ({ page }) => {
         const appBar = page.locator(SELECTORS.appBar);
 
