@@ -17,6 +17,7 @@ import { GanttEventRow } from "@/components/gantt/curriculum-view/tabs/gantt-vie
 import { GanttHoursLabel } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttHoursLabel";
 import { canDragModule } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/module-drag";
 import { getModuleSpanDayIds } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/module-span";
+import { RowExpandButton } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/RowExpandButton";
 import { GanttModuleRowProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { useCurriculumState } from "@/components/gantt/state/context";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
@@ -333,21 +334,13 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
                     }}
                 >
                     {hasEvents ? (
-                        <Box
-                            component="span"
-                            onClick={() => toggleModule(moduleId)}
-                            sx={{
-                                fontSize: "0.8rem",
-                                width: 20,
-                                cursor: "pointer",
-                                display: "inline-block",
-                            }}
-                        >
-                            {isExpanded ? "▼" : "▶"}
-                        </Box>
-                    ) : null}
-                    {!hasEvents && (
-                        <Box sx={{ width: 20, display: "inline-block" }} />
+                        <RowExpandButton
+                            expanded={isExpanded}
+                            name={ganttModule?.title ?? ""}
+                            onToggle={() => toggleModule(moduleId)}
+                        />
+                    ) : (
+                        <Box sx={{ width: 24, flexShrink: 0 }} />
                     )}
 
                     <Box sx={{ flexGrow: 1, position: "relative" }}>
