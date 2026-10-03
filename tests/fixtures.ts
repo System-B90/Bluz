@@ -1067,3 +1067,16 @@ export async function dragDndKit(
     await page.waitForTimeout(150);
     await page.mouse.up();
 }
+
+/**
+ * "סילבוס חדש" asks for a name before creating anything (#845): click it,
+ * type the name, confirm. Resolves once the prompt has closed.
+ */
+export async function createSyllabusViaUi(page: Page, name: string): Promise<void> {
+    await page.getByRole("button", { name: "סילבוס חדש" }).click();
+    const field = page.getByRole("textbox", { name: "שם הסילבוס החדש" });
+    const prompt = page.getByRole("dialog").filter({ has: field });
+    await field.fill(name);
+    await prompt.getByRole("button", { name: "יצירה" }).click();
+    await baseExpect(prompt).toHaveCount(0, { timeout: 10_000 });
+}

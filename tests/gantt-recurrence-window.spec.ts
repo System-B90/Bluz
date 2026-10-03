@@ -7,6 +7,7 @@ import {
     openEventEditDialog,
     test,
     waitForAppLoad,
+    createSyllabusViaUi,
 } from "./fixtures";
 
 /**
@@ -58,7 +59,7 @@ async function addWeeks(page: Page, count: number): Promise<void> {
 
 async function createModuleWithEvents(page: Page): Promise<string> {
     await page.getByRole("tab", { name: "סילבוסים" }).click();
-    await page.getByRole("button", { name: "סילבוס חדש" }).click();
+    await createSyllabusViaUi(page, `e2e-syllabus-${Date.now()}`);
     // The new syllabus opens in its dialog (#758); close it to reach the card.
     await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
     await page.keyboard.press("Escape");
