@@ -20,7 +20,7 @@ import
     type ReactNode,
 } from "react";
 
-import { createThemeOptions } from "@/components/theme/CreateFromPalette";
+import { createThemeOptions, focusRing } from "@/components/theme/CreateFromPalette";
 
 // Build both color schemes once at module level — MUI CSS variables + the
 // "class" selector switch the active palette without any JS re-render.
@@ -53,6 +53,10 @@ export function BluzThemeProvider({
                 <CssBaseline />
                 <GlobalStyles
                     styles={ (theme) => ({
+                        // Non-MUI focusables (dnd-kit Gantt bars, custom
+                        // role="button" cells) get the same ring as
+                        // ButtonBase's .Mui-focusVisible (#824).
+                        '[role="button"]:focus-visible, [tabindex]:not([tabindex="-1"]):focus-visible': focusRing(theme),
                         "*::-webkit-scrollbar": {
                             width: "8px",
                             height: "8px",
