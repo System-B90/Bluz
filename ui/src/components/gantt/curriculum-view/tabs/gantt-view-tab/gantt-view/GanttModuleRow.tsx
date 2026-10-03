@@ -4,23 +4,26 @@ import { alpha, useTheme } from "@mui/material/styles";
 import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
-import React, { memo, useMemo } from "react";
+import React, { memo, useCallback, useMemo } from "react";
 
 import { useCourses } from "@/components/base/CoursesProvider";
 import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { calculateStudentModuleMinutes } from "@/components/gantt/curriculum-view/student-load";
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
 import { getFlashRowSx } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/flash";
-import { GanttBlock } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttBlock";
 import { GanttCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttCell";
 import { GanttEventRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttEventRow";
 import { GanttHoursLabel } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttHoursLabel";
+import { GanttUnscheduledChip } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttUnscheduledChip";
 import { canDragModule } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/module-drag";
 import { getModuleSpanDayIds } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/module-span";
 import { RowExpandButton } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/RowExpandButton";
 import { GanttModuleRowProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { eventDisplayOrder } from "@/components/gantt/event-display-order";
-import { useCurriculumState } from "@/components/gantt/state/context";
+import {
+    useCurriculumProviderActions,
+    useCurriculumState,
+} from "@/components/gantt/state/context";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
@@ -51,6 +54,11 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
         isEventVisible,
     } = useGanttContext();
     const isExpanded = isModuleExpanded(moduleId);
+    const { openModuleDialog } = useCurriculumProviderActions();
+    const syllabusId = ganttModule?.syllabusId;
+    const openThisModule = useCallback(() => {
+        if (syllabusId) openModuleDialog(syllabusId, moduleId);
+    }, [openModuleDialog, syllabusId, moduleId]);
     const { state: exceptionsState } = useGanttRecurrenceExceptions();
     const { state: mappingState } = useGanttMappings();
 
@@ -349,28 +357,26 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
                         <Box sx={{ width: 24, flexShrink: 0 }} />
                     )}
 
-                    <Box sx={{ flexGrow: 1, position: "relative" }}>
-                        {isUnmapped ? (
-                            <GanttBlock
-                                disableDrag={!isDraggable}
-                                elementId={`block-module-${moduleId}`}
-                                id={`drag-module-unmapped-${moduleId}`}
-                                isAbsolute={false}
-                                payload={{ type: "module-map", moduleId }}
-                                spanLength={1}
-                                title={ganttModule?.title}
-                                violations={myViolations}
-                            />
-                        ) : (
-                            <Typography
-                                noWrap
-                                sx={{ lineHeight: "24px" }}
-                                variant="body2"
-                            >
-                                {ganttModule?.title}
-                            </Typography>
-                        )}
+                    <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                        <Typography
+                            noWrap
+                            sx={{ lineHeight: "24px" }}
+                            variant="body2"
+                        >
+                            {ganttModule?.title}
+                        </Typography>
                     </Box>
+                    {/* Not on the timeline: the name stays, plus a handle that
+                        can't be mistaken for a scheduled bar (#817). */}
+                    {isUnmapped ? (
+                        <GanttUnscheduledChip
+                            disableDrag={!isDraggable}
+                            moduleId={moduleId}
+                            moduleTitle={ganttModule?.title ?? ""}
+                            onOpen={openThisModule}
+                            violations={myViolations}
+                        />
+                    ) : null}
                     <GanttHoursLabel minutes={requiredMinutes} />
                 </TableCell>
 
