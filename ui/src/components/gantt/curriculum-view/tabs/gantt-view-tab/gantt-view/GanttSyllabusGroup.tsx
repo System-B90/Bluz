@@ -11,6 +11,7 @@ import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-v
 import { GanttHoursLabel } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttHoursLabel";
 import { GanttModuleRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttModuleRow";
 import { RowExpandButton } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/RowExpandButton";
+import { SyllabusScopeSummary } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/SyllabusScopeSummary";
 import {
     GanttSyllabusGroupProps,
     SpanVariant,
@@ -243,6 +244,11 @@ const GanttSyllabusGroupComponent: React.FC<GanttSyllabusGroupProps> = ({
                         </Box>
                         <GanttHoursLabel minutes={requiredMinutes} />
                     </Typography>
+                    {/* Courses and shuffles it serves (#830). */}
+                    <SyllabusScopeSummary
+                        courseIds={syllabus.courseIds}
+                        shuffles={syllabus.shuffles}
+                    />
                 </TableCell>
 
                 {renderCells()}
