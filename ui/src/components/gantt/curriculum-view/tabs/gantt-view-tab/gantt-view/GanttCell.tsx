@@ -59,7 +59,9 @@ const GanttCellComponent: React.FC<GanttCellProps> = ({
             backgroundColor: isOver
                 ? theme.vars.palette.action.hover
                 : "inherit",
-            transition: "background-color 0.2s",
+            // Only the hovered cell animates: ~600 day cells each carrying a
+            // transition re-animated on every drag-driven render (#831).
+            transition: isOver ? "background-color 0.2s" : undefined,
         }),
         [theme, dayCellWidth, isOver],
     );
