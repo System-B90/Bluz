@@ -40,6 +40,16 @@ describe("light scheme", () => {
     });
 });
 
+describe("weeks-tab home-leave Saturday cell (#840)", () => {
+    // The cell now sits on paper with full-opacity text.secondary / success text.
+    for (const [ name, palette ] of [ [ "light", light ], [ "dark", dark ] ] as const) {
+        it(`its day label and "יוצאים הביתה" pass AA in ${name} mode`, () => {
+            expect(getContrastRatio(palette.text.secondary, palette.background.paper)).toBeGreaterThanOrEqual(AA_TEXT);
+            expect(getContrastRatio(palette.success.main, palette.background.paper)).toBeGreaterThanOrEqual(AA_TEXT);
+        });
+    }
+});
+
 describe("dark scheme", () => {
     const surfaces = [ dark.background.paper, dark.background.default ];
 

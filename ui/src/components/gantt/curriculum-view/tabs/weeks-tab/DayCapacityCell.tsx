@@ -6,7 +6,7 @@ import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
-import { alpha, useTheme } from "@mui/material/styles";
+import { alpha, Theme, useTheme } from "@mui/material/styles";
 import Switch from "@mui/material/Switch";
 import TableCell from "@mui/material/TableCell";
 import TextField from "@mui/material/TextField";
@@ -50,6 +50,19 @@ export type DayCapacityCellProps = {
     startDate: null | string;
     weekIndex: number;
 };
+
+/**
+ * The home-leave Saturday cell (#840): a light hatch on the normal paper with
+ * full-opacity text. It used to be 72% opacity on a grey fill, which left its
+ * text at ~1.3:1.
+ */
+export function mutedDayCellBackground(theme: Theme): string {
+    // Per-scheme via the CSS variable, so the hatch follows dark mode.
+    const line = theme.vars
+        ? `rgba(${theme.vars.palette.text.secondaryChannel} / 0.14)`
+        : alpha(theme.palette.text.secondary, 0.14);
+    return `repeating-linear-gradient(135deg, transparent 0 6px, ${line} 6px 7px)`;
+}
 
 function getStatusColor(
     status: CapacityStatus,
@@ -284,8 +297,6 @@ export function DayCapacityCell({
     );
 
     const backgroundColor = useMemo(() => {
-        if (isMuted)
-            return alpha(theme.palette.action.disabledBackground, 0.45);
         if (status === "error") return alpha(theme.palette.error.main, 0.08);
         if (status === "warning")
             return alpha(theme.palette.warning.main, 0.12);
@@ -335,7 +346,12 @@ export function DayCapacityCell({
         return (
             <TableCell
                 className="day-capacity-cell"
-                sx={{ ...cellSx, opacity: 0.72 }}
+                data-testid="muted-day-cell"
+                sx={{
+                    ...cellSx,
+                    bgcolor: "background.paper",
+                    backgroundImage: mutedDayCellBackground(theme),
+                }}
             >
                 <Box sx={cellBoxStyles}>
                     {header}
