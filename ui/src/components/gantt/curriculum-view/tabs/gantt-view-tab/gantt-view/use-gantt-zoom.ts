@@ -6,6 +6,7 @@ import
     buildDayIndexMap,
     buildWeekIndexByDayId,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { timelineWeeklyView } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/timeline-preferences";
 
 // Weekly view columns hold whole-week blocks, so keep them relatively long.
 const WEEK_MIN_WIDTH = 160;
@@ -21,7 +22,9 @@ export const useGanttZoom = ({ curriculum, weeksById }: UseGanttZoomArgs) =>
 {
     const containerRef = useRef<HTMLDivElement>(null);
 
-    const [ weeklyView, setWeeklyView ] = useState(true);
+    // Weekly/daily is remembered across reloads (#821).
+    const weeklyView = timelineWeeklyView.use();
+    const setWeeklyView = timelineWeeklyView.set;
     const [ zoomedWeekId, setZoomedWeekId ] = useState<null | string>(null);
     const [ containerWidth, setContainerWidth ] = useState(0);
 
@@ -90,7 +93,7 @@ export const useGanttZoom = ({ curriculum, weeksById }: UseGanttZoomArgs) =>
     {
         setWeeklyView(checked);
         if (checked) setZoomedWeekId(null);
-    }, []);
+    }, [ setWeeklyView ]);
 
     /**
      * Move the zoomed week by `delta` weeks, clamped to the curriculum. In

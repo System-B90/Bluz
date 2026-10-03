@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 
 /** A per-viewer on/off flag kept in localStorage and shared by every component that reads it. */
-function createViewerFlag(key: string, defaultValue: boolean)
+export function createViewerFlag(key: string, defaultValue: boolean)
 {
     const listeners = new Set<() => void>();
     const read = (): boolean =>
