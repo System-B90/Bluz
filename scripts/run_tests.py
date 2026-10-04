@@ -88,6 +88,38 @@ def find_free_port(
     raise RuntimeError(f"No usable free port on {ip} after {attempts} attempts.")
 
 
+# Docker Desktop's port forwarder sometimes rejects a port that is free on
+# both the WSL and Windows sides ("ports are not available ... /forwards/expose
+# returned unexpected status: 500"). Picking new ports and retrying gets past it.
+PORT_ATTEMPTS = 3
+
+
+def is_port_unavailable_error(stderr: str) -> bool:
+    """True when `docker compose up` failed because a host port was refused."""
+    return "ports are not available" in stderr
+
+
+def compose_down(project_name: str, compose_env: dict[str, str]) -> None:
+    """Removes the test stack and its volumes, ignoring failures."""
+    subprocess.run(
+        [
+            "docker",
+            "compose",
+            "-p",
+            project_name,
+            "-f",
+            "deploy/docker-compose.yml",
+            "-f",
+            "deploy/docker-compose.test.yml",
+            "down",
+            "-v",
+        ],
+        check=False,
+        timeout=60,
+        env=compose_env,
+    )
+
+
 def get_running_port(project_name: str, service: str, internal_port: int) -> int:
     """Queries the mapped host port for a running service."""
     try:
@@ -318,8 +350,79 @@ def main(
                 "No running containers detected. Starting fresh with new volumes...",
                 fg=typer.colors.CYAN,
             )
-        subprocess.run(
-            [
+        compose_down(project_name, compose_env)
+
+        excluded = windows_excluded_port_ranges()
+        # Ports from failed attempts stay in `taken`, so a retry never reuses
+        # a port Docker Desktop's forwarder just rejected.
+        taken: set[int] = set()
+        for attempt in range(1, PORT_ATTEMPTS + 1):
+            typer.secho("Allocating free host ports...", fg=typer.colors.CYAN)
+            for service in ("postgres", "mongo", "http", "https", "google_stub"):
+                ports[service] = find_free_port(excluded=excluded, taken=taken)
+
+            typer.echo(
+                f"Assigned ports: Postgres={ports['postgres']}, Mongo={ports['mongo']}, HTTP={ports['http']}, HTTPS={ports['https']}, GoogleStub={ports['google_stub']}"
+            )
+
+            compose_env.update(
+                {
+                    "TEST_POSTGRES_PORT": str(ports["postgres"]),
+                    "TEST_MONGO_PORT": str(ports["mongo"]),
+                    "TEST_PROXY_PORT_HTTP": str(ports["http"]),
+                    "TEST_PROXY_PORT_HTTPS": str(ports["https"]),
+                    "TEST_GOOGLE_STUB_PORT": str(ports["google_stub"]),
+                }
+            )
+
+            # Register temporary SSO client app with Hive
+            hive_url = root_env.get("NEXT_PUBLIC_HIVE_URL", "https://hive.org")
+            if not hive_url:
+                typer.secho("Hive URL not found. Aborting!", fg=typer.colors.RED)
+                raise typer.Exit(1)
+            typer.secho(
+                "Registering temporary SSO client with Hive...", fg=typer.colors.CYAN
+            )
+            client_id = None
+            client_secret = None
+            try:
+                with HiveClient(
+                    "admin", "Password1", hive_url, verify=False, timeout=10
+                ) as client:
+                    # The redirect URI must match NEXTAUTH_URL exactly, host
+                    # included, because Hive rejects a callback to any other
+                    # origin. Registering 127.0.0.3 while the app announced
+                    # bluz.dev left the browser parked on the login page until
+                    # auth.setup.ts timed out.
+                    sso_credentials = client.register_sso_service(
+                        service_name=f"Bluz Test {slug}",
+                        redirect_uris=f"https://{APP_HOST}:{ports['https']}/api/auth/callback/hive",
+                    )
+                    client_id = sso_credentials.get("client_id")
+                    client_secret = sso_credentials.get("client_secret")
+                    typer.secho(
+                        f"SSO registered successfully. ID: {client_id}",
+                        fg=typer.colors.GREEN,
+                    )
+            except Exception as e:
+                typer.secho(
+                    f"Failed to register SSO client with Hive: {e}", fg=typer.colors.RED
+                )
+                raise RuntimeError(f"SSO registration failed: {e}") from e
+
+            # Set environment for docker compose
+            assert client_id is not None and client_secret is not None, (
+                "Hive SSO creds are unset!"
+            )
+            compose_env.update(
+                {
+                    "TEST_HIVE_CLIENT_ID": client_id,
+                    "TEST_HIVE_CLIENT_SECRET": client_secret,
+                }
+            )
+
+            typer.secho("Starting Docker Compose...", fg=typer.colors.CYAN)
+            compose_cmd = [
                 "docker",
                 "compose",
                 "-p",
@@ -328,102 +431,34 @@ def main(
                 "deploy/docker-compose.yml",
                 "-f",
                 "deploy/docker-compose.test.yml",
-                "down",
-                "-v",
-            ],
-            check=False,
-            timeout=60,
-            env=compose_env,
-        )
+                "up",
+                "-d",
+            ]
+            if rebuild:
+                compose_cmd.append("--build")
 
-        typer.secho("Allocating free host ports...", fg=typer.colors.CYAN)
-        excluded = windows_excluded_port_ranges()
-        taken: set[int] = set()
-        for service in ("postgres", "mongo", "http", "https", "google_stub"):
-            ports[service] = find_free_port(excluded=excluded, taken=taken)
-
-        typer.echo(
-            f"Assigned ports: Postgres={ports['postgres']}, Mongo={ports['mongo']}, HTTP={ports['http']}, HTTPS={ports['https']}, GoogleStub={ports['google_stub']}"
-        )
-
-        compose_env.update(
-            {
-                "TEST_POSTGRES_PORT": str(ports["postgres"]),
-                "TEST_MONGO_PORT": str(ports["mongo"]),
-                "TEST_PROXY_PORT_HTTP": str(ports["http"]),
-                "TEST_PROXY_PORT_HTTPS": str(ports["https"]),
-                "TEST_GOOGLE_STUB_PORT": str(ports["google_stub"]),
-            }
-        )
-
-        # Register temporary SSO client app with Hive
-        hive_url = root_env.get("NEXT_PUBLIC_HIVE_URL", "https://hive.org")
-        if not hive_url:
-            typer.secho("Hive URL not found. Aborting!", fg=typer.colors.RED)
-            raise typer.Exit(1)
-        typer.secho(
-            "Registering temporary SSO client with Hive...", fg=typer.colors.CYAN
-        )
-        client_id = None
-        client_secret = None
-        try:
-            with HiveClient(
-                "admin", "Password1", hive_url, verify=False, timeout=10
-            ) as client:
-                # The redirect URI must match NEXTAUTH_URL exactly, host
-                # included, because Hive rejects a callback to any other
-                # origin. Registering 127.0.0.3 while the app announced
-                # bluz.dev left the browser parked on the login page until
-                # auth.setup.ts timed out.
-                sso_credentials = client.register_sso_service(
-                    service_name=f"Bluz Test {slug}",
-                    redirect_uris=f"https://{APP_HOST}:{ports['https']}/api/auth/callback/hive",
-                )
-                client_id = sso_credentials.get("client_id")
-                client_secret = sso_credentials.get("client_secret")
-                typer.secho(
-                    f"SSO registered successfully. ID: {client_id}",
-                    fg=typer.colors.GREEN,
-                )
-        except Exception as e:
-            typer.secho(
-                f"Failed to register SSO client with Hive: {e}", fg=typer.colors.RED
+            result = subprocess.run(
+                compose_cmd,
+                env=compose_env,
+                check=False,
+                timeout=1200 if new_ui_container else 180,
+                stderr=subprocess.PIPE,
+                text=True,
             )
-            raise RuntimeError(f"SSO registration failed: {e}") from e
-
-        # Set environment for docker compose
-        assert client_id is not None and client_secret is not None, (
-            "Hive SSO creds are unset!"
-        )
-        compose_env.update(
-            {
-                "TEST_HIVE_CLIENT_ID": client_id,
-                "TEST_HIVE_CLIENT_SECRET": client_secret,
-            }
-        )
-
-        typer.secho("Starting Docker Compose...", fg=typer.colors.CYAN)
-        compose_cmd = [
-            "docker",
-            "compose",
-            "-p",
-            project_name,
-            "-f",
-            "deploy/docker-compose.yml",
-            "-f",
-            "deploy/docker-compose.test.yml",
-            "up",
-            "-d",
-        ]
-        if rebuild:
-            compose_cmd.append("--build")
-
-        subprocess.run(
-            compose_cmd,
-            env=compose_env,
-            check=True,
-            timeout=1200 if new_ui_container else 180,
-        )
+            sys.stderr.write(result.stderr)
+            if result.returncode == 0:
+                break
+            if attempt < PORT_ATTEMPTS and is_port_unavailable_error(result.stderr):
+                typer.secho(
+                    f"Docker could not publish a host port (attempt {attempt}/{PORT_ATTEMPTS}). "
+                    "Retrying with new ports...",
+                    fg=typer.colors.YELLOW,
+                )
+                compose_down(project_name, compose_env)
+                continue
+            raise subprocess.CalledProcessError(
+                result.returncode, compose_cmd, stderr=result.stderr
+            )
 
         typer.secho("Waiting for web application to be ready...", fg=typer.colors.CYAN)
         if wait_for_ui_ready(ports["https"], timeout=1200 if new_ui_container else 120):

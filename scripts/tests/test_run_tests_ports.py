@@ -151,3 +151,48 @@ def test_no_ranges_when_netsh_fails(monkeypatch: pytest.MonkeyPatch) -> None:
         lambda *_a, **_k: SimpleNamespace(stdout="", returncode=1),
     )
     assert run_tests.windows_excluded_port_ranges() == []
+
+
+DOCKER_PORT_ERROR = (
+    "Error response from daemon: ports are not available: exposing port TCP "
+    "127.0.0.3:41788 -> 127.0.0.1:0: /forwards/expose returned unexpected status: 500"
+)
+
+
+def test_recognises_docker_desktop_port_refusal() -> None:
+    assert run_tests.is_port_unavailable_error(DOCKER_PORT_ERROR)
+
+
+def test_other_compose_failures_are_not_retried() -> None:
+    assert not run_tests.is_port_unavailable_error("Error: no such image: bluz-ui")
+    assert not run_tests.is_port_unavailable_error("")
+
+
+def test_retries_are_bounded() -> None:
+    assert run_tests.PORT_ATTEMPTS > 1
+
+
+def test_compose_down_targets_the_test_stack(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[list[str]] = []
+
+    def fake_run(cmd: list[str], **kwargs: object) -> SimpleNamespace:
+        calls.append(cmd)
+        assert kwargs["check"] is False
+        return SimpleNamespace(returncode=1)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    run_tests.compose_down("bluz-test-x", {})
+    assert calls == [
+        [
+            "docker",
+            "compose",
+            "-p",
+            "bluz-test-x",
+            "-f",
+            "deploy/docker-compose.yml",
+            "-f",
+            "deploy/docker-compose.test.yml",
+            "down",
+            "-v",
+        ]
+    ]
