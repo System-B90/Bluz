@@ -109,6 +109,22 @@ def is_port_unavailable_error(stderr: str) -> bool:
     return "ports are not available" in stderr
 
 
+# hive.org and bluz.dev are pinned to 127.0.0.x in /etc/hosts with IPv4
+# entries only, but hive.org is also a real public domain with AAAA records.
+# Node (unlike Chromium, which uses the host-resolver rules) could connect to
+# the public IPv6 address, so API requests from the specs reached the
+# internet's hive.org and got a 301/404 instead of the shared Hive.
+IPV4_FIRST = "--dns-result-order=ipv4first"
+
+
+def with_ipv4_first(node_options: str) -> str:
+    """Adds IPV4_FIRST to a NODE_OPTIONS string, once."""
+    options = node_options.split()
+    if IPV4_FIRST not in options:
+        options.append(IPV4_FIRST)
+    return " ".join(options)
+
+
 def compose_down(project_name: str, compose_env: dict[str, str]) -> None:
     """Removes the test stack and its volumes, ignoring failures."""
     subprocess.run(
@@ -499,6 +515,7 @@ def main(
         # seed a shared calendar or inspect what the integration wrote.
         "GOOGLE_STUB_URL": f"http://127.0.0.3:{ports['google_stub']}",
     }
+    test_env["NODE_OPTIONS"] = with_ipv4_first(test_env.get("NODE_OPTIONS", ""))
 
     # Drizzle Schema Generate/Push
     typer.secho("Syncing database schema (drizzle-kit)...", fg=typer.colors.CYAN)

@@ -221,3 +221,21 @@ def test_compose_down_targets_the_test_stack(monkeypatch: pytest.MonkeyPatch) ->
             "-v",
         ]
     ]
+
+
+def test_node_resolves_ipv4_first() -> None:
+    # Regression: hive-lesson-queue.spec.ts logged in to the public hive.org
+    # over IPv6 (301/404) instead of the shared Hive pinned to 127.0.0.6.
+    assert run_tests.with_ipv4_first("") == "--dns-result-order=ipv4first"
+
+
+def test_ipv4_first_keeps_existing_node_options() -> None:
+    assert (
+        run_tests.with_ipv4_first("--max-old-space-size=4096")
+        == "--max-old-space-size=4096 --dns-result-order=ipv4first"
+    )
+
+
+def test_ipv4_first_is_not_added_twice() -> None:
+    once = run_tests.with_ipv4_first("")
+    assert run_tests.with_ipv4_first(once) == once
