@@ -70,7 +70,15 @@ test.describe("New syllabus opens its dialog (#758)", () => {
         await page.keyboard.press("Escape");
         await expect(syllabusDialog(page)).toHaveCount(0);
         await expectNoOpenModal(page);
-        await expect(page.getByText(NAME).first()).toBeVisible();
+        // The card shows its name in an editable field, which getByText
+        // doesn't match, so check the fields' values instead.
+        await expect
+            .poll(() =>
+                page
+                    .getByRole("textbox", { name: /שם הסילבוס/ })
+                    .evaluateAll((inputs) => inputs.map((input) => (input as HTMLInputElement).value)),
+            )
+            .toContain(NAME);
     });
 
     test("the syllabus is persisted, not just shown", async ({ page, request }) => {

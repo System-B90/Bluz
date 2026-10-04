@@ -19,6 +19,18 @@ from pyhive import HiveClient
 from pyhive.src.types.enums.class_type_enum import ClassTypeEnum
 from pyhive.types import ClearanceEnum, GenderEnum
 
+# The service account Bluz's background jobs (lesson activator, schedule feed)
+# log in with. It must survive clean_existing_data: when the cleanup deleted
+# it and the re-create failed silently, the account was simply gone and
+# hive-lesson-queue.spec.ts got a 404 from Hive's token endpoint.
+SERVICE_ACCOUNT_USERNAME = os.getenv("HIVE_API_USERNAME", "api")
+PROTECTED_USERNAMES = frozenset({"admin", SERVICE_ACCOUNT_USERNAME})
+
+
+def is_protected_user(username: str, clearance: ClearanceEnum) -> bool:
+    """True for accounts clean_existing_data must never delete."""
+    return username in PROTECTED_USERNAMES or clearance == ClearanceEnum.ADMIN
+
 
 @dataclass
 class UserData:
@@ -256,7 +268,7 @@ def clean_existing_data(client: HiveClient):
             tqdm.tqdm.write(f"Error deleting program: {ex}")
 
     for user in tqdm.tqdm(client.get_users(), desc="Deleting Users"):
-        if user.username != "admin" and user.clearance != ClearanceEnum.ADMIN:
+        if not is_protected_user(user.username, user.clearance):
             try:
                 client.delete_user(user)
             except Exception as ex:
@@ -466,15 +478,20 @@ def main():
     with HiveClient("admin", "Password1", hive_url, verify=False, timeout=10) as client:
         clean_existing_data(client)
 
-        # Already exists on every run after the first.
-        with contextlib.suppress(Exception):
+        # Kept by clean_existing_data, so this only creates it on a Hive that
+        # never had it; on every other run Hive rejects the duplicate.
+        try:
             client.create_user(
-                "api",
-                "Password1",
+                SERVICE_ACCOUNT_USERNAME,
+                os.getenv("HIVE_API_PASSWORD", "Password1"),
                 clearance=ClearanceEnum.SEGEL,
                 gender=GenderEnum.MALE,
                 first_name="Api",
                 last_name="Account",
+            )
+        except Exception as ex:
+            tqdm.tqdm.write(
+                f"Service account {SERVICE_ACCOUNT_USERNAME!r} not created: {ex}"
             )
 
         create_segel(client)
