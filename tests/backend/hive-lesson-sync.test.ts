@@ -35,6 +35,7 @@ vi.mock("@/api-server/hive/session-client", () => ({
 
 import {
     buildLessonDescription,
+    describeUnresolvedShuffles,
     isLessonOwnedByEvent,
     planLessonRules,
     reconcileEventLesson,
@@ -190,6 +191,29 @@ describe("planLessonRules", () => {
 function coursesByName(entries: Array<[string, string]>) {
     return new Map(entries.map(([id, name]) => [id, { name }]));
 }
+
+describe("describeUnresolvedShuffles", () => {
+    it("names a shuffle missing from the iteration", () => {
+        const message = describeUnresolvedShuffles(
+            makeEvent(),
+            coursesByName([["c-lechem", "לחם"]]),
+            HIVE_CLASSES,
+        );
+
+        expect(message).toContain("c-nitza: no such course in this iteration");
+        expect(message).toContain(`${HIVE_CLASSES.length} visible`);
+    });
+
+    it("names a shuffle with no Hive group of its name", () => {
+        const message = describeUnresolvedShuffles(
+            makeEvent({ courses: ["c-nitza"], hiveQueues: { "c-nitza": 100 } }),
+            coursesByName([["c-nitza", "אין כזו"]]),
+            HIVE_CLASSES,
+        );
+
+        expect(message).toContain('c-nitza ("אין כזו"): no matching Hive group');
+    });
+});
 
 describe("resolveDesiredRules", () => {
     it("maps shuffles to Hive student groups by name", () => {

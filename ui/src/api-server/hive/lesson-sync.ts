@@ -124,6 +124,29 @@ export function resolveDesiredRules(
 }
 
 /**
+ * Says why each queue-carrying shuffle of an event failed to resolve to a
+ * Hive group: the course is missing from this iteration, or no group matches
+ * its link or name.
+ *
+ * @param event The event carrying `hiveQueues`.
+ * @param courseById Bluz course id → course (shuffle).
+ * @param hiveClasses Hive student groups the sync could see.
+ * @returns A one-line log message.
+ */
+export function describeUnresolvedShuffles(
+    event: DbEventDocument,
+    courseById: Map<CourseId, Pick<Course, "hiveClassId" | "name">>,
+    hiveClasses: Array<Class>,
+): string {
+    const reasons = eventQueueCourseIds(event).map((courseId) => {
+        const course = courseById.get(courseId);
+        if (!course) return `${courseId}: no such course in this iteration`;
+        return `${courseId} ("${course.name}"${course.hiveClassId ? `, linked group ${course.hiveClassId}` : ""}): no matching Hive group`;
+    });
+    return `Hive lesson sync for event ${event.id} found no Hive group among ${hiveClasses.length} visible: ${reasons.join("; ")}`;
+}
+
+/**
  * Brings the Hive lesson of a single event in line with the event: creates it
  * when the event first gets a queue mapping, re-points its rules when the
  * mapping changes, and deletes it when the mapping (or the event) goes away.
@@ -152,12 +175,14 @@ export async function reconcileEventLesson(
 
     const courses = await controller.courses.find({}).toArray();
     const courseById = new Map(courses.map((c) => [c.id, c]));
-    const desired = resolveDesiredRules(
-        event,
-        courseById,
-        await client.getClasses(),
-    );
+    const hiveClasses = await client.getClasses();
+    const desired = resolveDesiredRules(event, courseById, hiveClasses);
     if (desired.size === 0) {
+        // The event asks for a queue but none of its shuffles resolved to a
+        // Hive group — the silent "lesson none" this sync exists to avoid.
+        logger.warn(
+            describeUnresolvedShuffles(event, courseById, hiveClasses),
+        );
         return await deleteOwnedLesson(client, event);
     }
 
