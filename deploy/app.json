@@ -41,6 +41,7 @@
             "TROUBLESHOOTING.md": "docs/deployment/TROUBLESHOOTING.md",
             "API.md": "docs/rest-api.md"
         },
-        "local_wheels": ["cli/dist/*.whl"]
+        "local_wheels": ["cli/dist/*.whl"],
+        "pythons": ["3.11", "3.12", "3.13"]
     }
 }

@@ -27,23 +27,24 @@ instead — see [Co-located Hive](#co-located-hive) below.
 
 ## What you need first
 
-| Requirement                                       | Why                                                                                                                                     | Check                     |
-| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
-| Docker Engine or Docker Desktop                   | Runs the stack                                                                                                                          | `docker info`             |
-| Docker Compose **v2**                             | The bundle uses v2 syntax                                                                                                               | `docker compose version`  |
-| Python 3.10+                                      | Runs the installer, wizard and upgrades in a local `.venv` (Ubuntu 22.04's stock `python3` is enough; `python3-venv` is **not** needed) | `python3 --version`       |
-| A Hive server you can reach                       | Bluz reads its data and uses it for SSO                                                                                                 | open its URL in a browser |
-| A Hive account that can register SSO applications | The wizard registers Bluz automatically                                                                                                 | —                         |
+| Requirement                                       | Why                                                                                                                                                                                    | Check                     |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| Docker Engine or Docker Desktop                   | Runs the stack                                                                                                                                                                         | `docker info`             |
+| Docker Compose **v2**                             | The bundle uses v2 syntax                                                                                                                                                              | `docker compose version`  |
+| Python 3.11+                                      | Runs the installer, wizard, upgrades and the `bluz` CLI in a local `.venv` (Ubuntu 24.04's stock `python3` is enough; on 22.04 install `python3.11`; `python3-venv` is **not** needed) | `python3 --version`       |
+| A Hive server you can reach                       | Bluz reads its data and uses it for SSO                                                                                                                                                | open its URL in a browser |
+| A Hive account that can register SSO applications | The wizard registers Bluz automatically                                                                                                                                                | —                         |
 
 The online bundle also needs outbound access to `ghcr.io`. The offline bundle
 ships every image as a `.tar` under `images/` and every Python package the
-installer needs (for Linux and Windows, Python 3.10-3.13) as a wheel under
+installer needs (for Linux and Windows, Python 3.11-3.13) as a wheel under
 `wheels/`, so it needs neither registry nor PyPI access.
 
 The `.sh`/`.ps1` scripts are thin launchers: they find any Python 3.6+, and
 `bootstrap.py` builds `.venv` from a Python 3.10+ and runs the shared
-[sb90-deploy](https://github.com/System-B90/deploy-py) tooling inside it. If
-the host has no Python 3.10+, it says so before touching anything.
+[sb90-deploy](https://github.com/System-B90/deploy-py) tooling inside it. Bluz's
+CLI needs 3.11+, so on a host whose newest Python is 3.10 the install stops
+when it installs the `bluz` package; install `python3.11` first.
 
 ## What the installer asks you
 
