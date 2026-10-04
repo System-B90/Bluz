@@ -45,6 +45,16 @@ export class HiveClient extends HiveClientBase {
         }
     }
 
+    /**
+     * Drops this Hive's cached student groups and fetches them again, for a
+     * caller that just missed a group that may have been created since the
+     * cache filled (the lesson sync, when a shuffle matches no group).
+     */
+    async refreshClasses(): Promise<Array<Class>> {
+        classesCache.delete(this.hiveBaseUrl);
+        return await this.getClasses();
+    }
+
     async getRooms(): Promise<Array<HiveRoom>> {
         return (
             await this._get<Array<HiveRoom>>(

@@ -99,6 +99,7 @@ function makeHiveStub(lessons: Array<Lesson>, rules: Array<LessonRule> = []) {
         deleteLesson: vi.fn(async () => undefined),
         deleteLessonRule: vi.fn(async () => undefined),
         getClasses: vi.fn(async () => HIVE_CLASSES),
+        refreshClasses: vi.fn(async () => HIVE_CLASSES),
         getLesson: vi.fn(async (id: number) => {
             const found = lessons.find((l) => l.id === id);
             if (!found) throw new Error("404");
@@ -285,6 +286,33 @@ describe("ownership", () => {
 });
 
 describe("reconcileEventLesson", () => {
+    // Regression: the student-group list is cached for minutes, so a shuffle
+    // whose Hive group was created after the cache filled never matched and
+    // the event silently got no lesson (hive-lesson-queue.spec.ts).
+    it("refetches the groups when a stale cache has none of the event's shuffles", async () => {
+        const hive = makeHiveStub([]);
+        hive.getClasses.mockResolvedValue([]);
+
+        const lessonId = await reconcileEventLesson(
+            hive,
+            makeEvent(),
+            "upsert",
+            fakeController as any,
+        );
+
+        expect(hive.refreshClasses).toHaveBeenCalledOnce();
+        expect(lessonId).toBe(900);
+        expect(hive.createLessonRule).toHaveBeenCalledTimes(2);
+    });
+
+    it("does not refetch when the cached groups already match", async () => {
+        const hive = makeHiveStub([]);
+
+        await reconcileEventLesson(hive, makeEvent(), "upsert", fakeController as any);
+
+        expect(hive.refreshClasses).not.toHaveBeenCalled();
+    });
+
     it("creates the lesson and one rule per shuffle", async () => {
         const hive = makeHiveStub([]);
 
