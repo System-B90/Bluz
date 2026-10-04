@@ -175,8 +175,14 @@ export async function reconcileEventLesson(
 
     const courses = await controller.courses.find({}).toArray();
     const courseById = new Map(courses.map((c) => [c.id, c]));
-    const hiveClasses = await client.getClasses();
-    const desired = resolveDesiredRules(event, courseById, hiveClasses);
+    let hiveClasses = await client.getClasses();
+    let desired = resolveDesiredRules(event, courseById, hiveClasses);
+    if (desired.size === 0) {
+        // The group list is cached for minutes; a shuffle whose Hive group
+        // was created since would never match until it expired.
+        hiveClasses = await client.refreshClasses();
+        desired = resolveDesiredRules(event, courseById, hiveClasses);
+    }
     if (desired.size === 0) {
         // The event asks for a queue but none of its shuffles resolved to a
         // Hive group — the silent "lesson none" this sync exists to avoid.
