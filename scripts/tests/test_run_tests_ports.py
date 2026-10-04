@@ -27,11 +27,10 @@ Start Port    End Port
 
 
 class FakeSocket:
-    """Stands in for socket.socket, handing out ports from a fixed sequence."""
+    """Stands in for socket.socket; binding a port in `busy` fails."""
 
-    def __init__(self, ports: list[int]) -> None:
-        self._ports = ports
-        self._port = 0
+    def __init__(self, busy: set[int]) -> None:
+        self._busy = busy
 
     def __call__(self, *_args: object) -> Self:
         return self
@@ -42,15 +41,18 @@ class FakeSocket:
     def __exit__(self, *_args: object) -> None:
         return None
 
-    def bind(self, _address: tuple[str, int]) -> None:
-        self._port = self._ports.pop(0)
-
-    def getsockname(self) -> tuple[str, int]:
-        return ("127.0.0.3", self._port)
+    def bind(self, address: tuple[str, int]) -> None:
+        if address[1] in self._busy:
+            raise OSError("Address already in use")
 
 
-def fake_ports(monkeypatch: pytest.MonkeyPatch, ports: list[int]) -> None:
-    monkeypatch.setattr(run_tests.socket, "socket", FakeSocket(ports))
+def fake_ports(
+    monkeypatch: pytest.MonkeyPatch, ports: list[int], busy: set[int] | None = None
+) -> None:
+    """Makes find_free_port draw `ports` in order, with `busy` ones unbindable."""
+    candidates = iter(ports)
+    monkeypatch.setattr(run_tests.random, "randint", lambda *_: next(candidates))
+    monkeypatch.setattr(run_tests.socket, "socket", FakeSocket(busy or set()))
 
 
 def test_parses_netsh_ranges() -> None:
@@ -115,7 +117,30 @@ def test_without_exclusions_behaves_as_before(monkeypatch: pytest.MonkeyPatch) -
 
 def test_real_socket_returns_a_bindable_port() -> None:
     port = run_tests.find_free_port(ip="127.0.0.1")
-    assert 0 < port < 65536
+    assert run_tests.PORT_RANGE[0] <= port <= run_tests.PORT_RANGE[1]
+
+
+def test_skips_a_port_already_in_use(monkeypatch: pytest.MonkeyPatch) -> None:
+    fake_ports(monkeypatch, [21000, 21001], busy={21000})
+    assert run_tests.find_free_port() == 21001
+
+
+def test_draws_from_below_the_linux_ephemeral_range(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Regression: kernel-assigned ports (32768+) landed in 37600-41999, which
+    # Docker Desktop refused on the runner host, so E2E never started.
+    ranges: list[tuple[int, int]] = []
+
+    def fake_randint(low: int, high: int) -> int:
+        ranges.append((low, high))
+        return 25000
+
+    monkeypatch.setattr(run_tests.random, "randint", fake_randint)
+    monkeypatch.setattr(run_tests.socket, "socket", FakeSocket(set()))
+    assert run_tests.find_free_port() == 25000
+    assert ranges == [run_tests.PORT_RANGE]
+    assert run_tests.PORT_RANGE[1] < 32768
 
 
 def test_reads_ranges_from_netsh(monkeypatch: pytest.MonkeyPatch) -> None:
