@@ -7,6 +7,7 @@ Author: Antigravity
 import hashlib
 import http.client
 import os
+import random
 import secrets
 import shlex
 import socket
@@ -68,20 +69,29 @@ def windows_excluded_port_ranges() -> list[tuple[int, int]]:
     return parse_excluded_port_ranges(result.stdout)
 
 
+# Below the Linux ephemeral range (32768-60999). Ports the kernel hands out
+# for port 0 overlap a block Docker Desktop's forwarder refuses on the runner
+# host (about 37600-41999 on mks90-laptop), so we pick from a range of our own.
+PORT_RANGE = (20000, 32767)
+
+
 def find_free_port(
     ip: str = "127.0.0.3",
     excluded: list[tuple[int, int]] | None = None,
     taken: set[int] | None = None,
     attempts: int = 200,
 ) -> int:
-    """Finds a free port on `ip` outside `excluded` ranges and not in `taken`."""
+    """Finds a free port on `ip` in PORT_RANGE, outside `excluded` and `taken`."""
     excluded = excluded or []
     taken = taken if taken is not None else set()
     for _ in range(attempts):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind((ip, 0))
-            port = s.getsockname()[1]
+        port = random.randint(*PORT_RANGE)
         if port in taken or any(start <= port <= end for start, end in excluded):
+            continue
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.bind((ip, port))
+        except OSError:
             continue
         taken.add(port)
         return port
