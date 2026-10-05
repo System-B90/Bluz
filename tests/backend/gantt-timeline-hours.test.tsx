@@ -45,7 +45,6 @@ function renderHeader(
 ) {
     const ctx = {
         dayCellWidth: 40,
-        scheduledMinutesByDay: scheduled,
         studentLoadByDay: loadOf(scheduled, issues),
         studentPaths: [ { id: "all", courseIds: [], label: "כל החניכים" } ],
         setWeeklyView: vi.fn(),

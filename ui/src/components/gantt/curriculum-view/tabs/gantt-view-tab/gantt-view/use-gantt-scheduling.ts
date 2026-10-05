@@ -2,7 +2,7 @@ import { useMemo } from "react";
 
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
 import { GanttCurriculum } from "@/api-shared/types/gantt/models";
-import { getStudentMinutesByDay, withoutBreaks } from "@/components/gantt/curriculum-view/student-load";
+import { withoutBreaks } from "@/components/gantt/curriculum-view/student-load";
 import { useCurriculumStudentSchedule } from "@/components/gantt/curriculum-view/use-student-schedule";
 
 // Multi-day spillover layout (which days each mapped event actually
@@ -28,15 +28,10 @@ export const useGanttScheduling = ({
         [ ignoreBreaks, schedule.byDay ],
     );
 
-    const scheduledMinutesByDay = useMemo(
-        () => getStudentMinutesByDay(studentLoadByDay),
-        [ studentLoadByDay ],
-    );
-
     return {
         eventSpans: schedule.spans,
-        scheduledMinutesByDay,
         studentLoadByDay,
+        studentLoadWithBreaksByDay: schedule.byDay,
         studentPaths: schedule.paths,
     };
 };

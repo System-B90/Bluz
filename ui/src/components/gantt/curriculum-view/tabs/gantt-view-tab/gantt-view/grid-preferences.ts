@@ -1,15 +1,22 @@
 import { useSyncExternalStore } from "react";
 
-/** A per-viewer on/off flag kept in localStorage and shared by every component that reads it. */
-export function createViewerFlag(key: string, defaultValue: boolean)
+/** A per-viewer value kept in localStorage and shared by every component that reads it. */
+export function createViewerSetting<T>(
+    key: string,
+    defaultValue: T,
+    /** Stored text → value; null (nothing stored) never reaches it. */
+    parse: (saved: string) => T,
+    /** Value → stored text; null removes the key. */
+    format: (value: T) => null | string,
+)
 {
     const listeners = new Set<() => void>();
-    const read = (): boolean =>
+    const read = (): T =>
     {
         try
         {
             const saved = typeof window === "undefined" ? null : window.localStorage.getItem(key);
-            return saved === null ? defaultValue : saved === "on";
+            return saved === null ? defaultValue : parse(saved);
         } catch
         {
             return defaultValue;
@@ -23,12 +30,14 @@ export function createViewerFlag(key: string, defaultValue: boolean)
     };
     return {
         get: () => value,
-        set: (next: boolean) =>
+        set: (next: T) =>
         {
             value = next;
             try
             {
-                window.localStorage.setItem(key, next ? "on" : "off");
+                const text = format(next);
+                if (text === null) window.localStorage.removeItem(key);
+                else window.localStorage.setItem(key, text);
             } catch
             {
                 // Best-effort: private browsing keeps it for this session only.
@@ -38,6 +47,10 @@ export function createViewerFlag(key: string, defaultValue: boolean)
         use: () => useSyncExternalStore(subscribe, () => value, () => defaultValue),
     };
 }
+
+/** A per-viewer on/off flag kept in localStorage and shared by every component that reads it. */
+export const createViewerFlag = (key: string, defaultValue: boolean) =>
+    createViewerSetting(key, defaultValue, (saved) => saved === "on", (on) => (on ? "on" : "off"));
 
 /** Whether the gantt grid animates collapse/expand. On by default. */
 const animation = createViewerFlag("bluz.gridAnimation", true);

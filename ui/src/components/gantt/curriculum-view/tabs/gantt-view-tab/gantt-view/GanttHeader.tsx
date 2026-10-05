@@ -21,8 +21,9 @@ import {
     getWeekDateRange,
     getWeekOverAllocationSeverity,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
-import { sumStudentMinutes } from "@/components/gantt/curriculum-view/student-load";
+import { dayStudentMinutes, sumStudentMinutes } from "@/components/gantt/curriculum-view/student-load";
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
+import { HoursCourseSelect, useHoursPathId } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/HoursCourseSelect";
 import { useCurriculumState } from "@/components/gantt/state/context";
 
 function getCapacityColor(status: CapacityStatus): string {
@@ -49,7 +50,6 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
     const {
         dayCellWidth,
         ignoreBreaks,
-        scheduledMinutesByDay,
         setWeeklyView,
         setZoomedWeekId,
         singleWeekDayZoom,
@@ -68,6 +68,9 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
     const availableOf = (day: { id: string; totalWorkingMinutes: number }) =>
         day.totalWorkingMinutes
         - (ignoreBreaks ? (studentLoadByDay[day.id]?.breakMinutes ?? 0) : 0);
+    // The chosen course's time, else the busiest course's (#899).
+    const pathId = useHoursPathId(studentPaths);
+    const scheduledOf = (dayId: string) => dayStudentMinutes(studentLoadByDay[dayId], pathId);
 
     return (
         <TableHead>
@@ -92,6 +95,7 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                     <Typography fontWeight="bold" variant="subtitle2">
                         סילבוס / מערך
                     </Typography>
+                    <HoursCourseSelect paths={studentPaths} />
                 </TableCell>
                 {timelineWeeks.map((week, weekIndex) => {
                     const dateRangeLabel = formatWeekDateRange(
@@ -113,7 +117,7 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                             (day) =>
                                 getCapacityStatus(
                                     availableOf(day),
-                                    scheduledMinutesByDay[day.id] ?? 0,
+                                    scheduledOf(day.id),
                                 ) === "error",
                         )
                         .map((day) => getDayNameDisplay(day.dayIndex));
@@ -130,11 +134,12 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                     const weekScheduledMinutes = sumStudentMinutes(
                         studentLoadByDay,
                         week.days,
+                        pathId,
                     );
                     const weekSeverity = getWeekOverAllocationSeverity(
                         constraintDays.map((day) => ({
                             availableMinutes: availableOf(day),
-                            scheduledMinutes: scheduledMinutesByDay[day.id] ?? 0,
+                            scheduledMinutes: scheduledOf(day.id),
                         })),
                     );
                     // Set on the text children, not the cell, so the native
@@ -268,8 +273,7 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                                 weekIndex + weekIndexOffset,
                                 day.dayIndex,
                             );
-                            const scheduledMinutes =
-                                scheduledMinutesByDay[dayId] ?? 0;
+                            const scheduledMinutes = scheduledOf(dayId);
                             const capacityStatus = getCapacityStatus(
                                 availableOf(day),
                                 scheduledMinutes,

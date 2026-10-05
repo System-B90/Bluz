@@ -36,6 +36,13 @@ const state = {
     events: { e1: { id: "e1", title: "אירוע", minimumDuration: 90, recurrence: "none" } },
 };
 
+const loadsOf = (dayIds: Array<string>) => Object.fromEntries(dayIds.map((dayId) => [ dayId, {
+    minutes: 90,
+    breakMinutes: 0,
+    paths: [ { pathId: "all", minutes: 90, breakMinutes: 0, bySyllabus: [] } ],
+    issues: [],
+} ]));
+
 vi.mock("@/components/gantt/state/context", () => ({
     useCurriculumState: () => state,
     useCurriculumProviderActions: () => ({
@@ -70,6 +77,10 @@ vi.mock("@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/UseGa
                 e1: { dayIds: ctx.placedDayIds, minutesPerDay: ctx.placedDayIds.map(() => 90), spillover: false },
             },
             isModuleExpanded: (id: string) => ctx.expanded.has(id),
+            // One all-students path: e1's 90 minutes on each placed day.
+            studentLoadByDay: loadsOf(ctx.placedDayIds),
+            studentLoadWithBreaksByDay: loadsOf(ctx.placedDayIds),
+            studentPaths: [ { id: "all", courseIds: [], label: "כל החניכים" } ],
             isSyllabusExpanded: (id: string) => ctx.expanded.has(id),
             timelineWeeks: [ { id: "w1", title: "שבוע 1", days: [ "a1" ] }, { id: "w2", title: "שבוע 2", days: [ "b1" ] } ],
             toggleModule: actions.toggleModule,

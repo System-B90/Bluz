@@ -1,6 +1,7 @@
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import Remove from "@mui/icons-material/Remove";
+import Box from "@mui/material/Box";
 import InputBase from "@mui/material/InputBase";
 import Paper from "@mui/material/Paper";
 import { alpha, keyframes, Theme } from "@mui/material/styles";
@@ -19,13 +20,14 @@ import {
     formatHours,
     getWeekTotalMinutes,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
-import { buildStudentPaths } from "@/components/gantt/curriculum-view/student-load";
+import { buildStudentPaths, sumStudentMinutes, withoutBreaks } from "@/components/gantt/curriculum-view/student-load";
 import { parseHoursInput, ZeroChoice } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-allotment";
 import { onGridExpansionRequest, publishGridAllCollapsed } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-expansion-bus";
 import { useGridAnimation, useGridCompactHeader, useGridIgnoreBreaks, useGridVerticalLines } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-preferences";
 import { buildGridRows, CoursePresence, GridRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-rows";
 import { initialSelection, isCellSelected, selectCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-selection";
 import { GridContextMenu } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GridContextMenu";
+import { HoursCourseSelect, useHoursPathId } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/HoursCourseSelect";
 import { mergeRowTransitions, RowPhase, TransitionRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/row-transitions";
 import { GanttViewProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { useGridAllotment } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-grid-allotment";
@@ -109,6 +111,8 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         isSyllabusExpanded,
         setAllRows,
         studentLoadByDay,
+        studentLoadWithBreaksByDay,
+        studentPaths,
         timelineWeeks,
         toggleModule,
         toggleSyllabus,
@@ -223,10 +227,14 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         (item.phase === "exit" ? item : { ...item, row: rowById.get(rowId(item.row)) ?? item.row }));
     const rowIndex = new Map(rows.map((r, i) => [ rowId(r), i ]));
 
-    // Syllabus rows are always present and sum everything under them (busiest shuffle, not every shuffle).
-    const usedByWeek = rows
-        .filter((r) => r.kind === "syllabus")
-        .reduce((sum, r) => sum.map((m, w) => m + r.weekMinutes[ w ]), new Array<number>(weekCount).fill(0));
+    // One student's week, as on the timeline: the chosen course's, else the busiest course's (#899).
+    // Summing the syllabus rows instead added up courses no student attends together.
+    const hoursPathId = useHoursPathId(studentPaths);
+    const studentLoads = useMemo(
+        () => (ignoreBreaks ? withoutBreaks(studentLoadWithBreaksByDay) : studentLoadWithBreaksByDay),
+        [ ignoreBreaks, studentLoadWithBreaksByDay ],
+    );
+    const usedByWeek = timelineWeeks.map((week) => sumStudentMinutes(studentLoads, week.days, hoursPathId));
     // Weeks where an event keeps a mapping, so a kept 0 reads "0" rather than looking removed.
     const placedWeeks = useMemo(() =>
     {
@@ -507,7 +515,14 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                         { c.name }
                                     </TableCell>
                                 )) }
-                                <TableCell colSpan={ LEAD_COLUMNS }>{ label }</TableCell>
+                                <TableCell colSpan={ LEAD_COLUMNS }>
+                                    { byWeek === usedByWeek ? (
+                                        <Box alignItems="center" display="flex" gap={ 1 } justifyContent="space-between">
+                                            { label }
+                                            <HoursCourseSelect paths={ studentPaths } />
+                                        </Box>
+                                    ) : label }
+                                </TableCell>
                                 { timelineWeeks.map((week, w) => (
                                     <TableCell
                                         align="center"
