@@ -69,7 +69,8 @@ test.describe("Gantt scheduled hours per course (#899)", () => {
             await expect(picker).toHaveText(name);
         };
 
-        // Timeline (default tab): the week header shows the busiest course's 2h.
+        // Timeline: the week header shows the busiest course's 2h.
+        await page.getByRole("tab", { name: "רצף זמן" }).click();
         const weekHours = page.getByTestId("gantt-week-hours").first();
         await expect(weekHours).toHaveText(/^2 ש׳ \//, { timeout: 30_000 });
         await pick(short.name);
