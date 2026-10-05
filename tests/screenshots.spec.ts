@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 
 import { test, expect, waitForAppLoad, waitForHydration } from "./fixtures";
+import { createHoursCourseFixture, deleteCourses } from "./hours-course-fixture";
 
 /**
  * Release screenshots. Captures the main screens into
@@ -85,6 +86,22 @@ test.describe("Release screenshots", () => {
         await firstCell.click({ button: "right" });
         await page.getByRole("menu").waitFor();
         await shoot(page, "04-gantt-grid-menu");
+    });
+
+    // #899: the course picker inside the table's scheduled-hours cell. The demo
+    // assigns nothing per course (one kind of student, so no picker): stage two.
+    test("gantt hours per course", async ({ page, request }) => {
+        const fixture = await createHoursCourseFixture(request, "shot-hours-course");
+        try {
+            await open(page, `/gantt?gc=${ fixture.curriculumId }`);
+            await waitForAppLoad(page);
+            await page.getByRole("tab", { name: "טבלה" }).click();
+            await page.getByRole("combobox", { name: "קורס לחישוב השעות" }).click({ timeout: 30_000 });
+            await page.getByRole("listbox").waitFor();
+            await shoot(page, "08-gantt-hours-course");
+        } finally {
+            await deleteCourses(request, fixture.courses);
+        }
     });
 
     test("schedule in pink mode", async ({ page }) => {

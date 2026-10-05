@@ -476,10 +476,12 @@ export function computeStudentSchedule({
 /**
  * Scheduled minutes over a set of days: each path's total, and the busiest
  * path's. A student's week is the sum of their days, not of the busiest days.
+ * With `pathId`, that one path's total instead of the busiest (#899).
  */
 export function sumStudentMinutes(
     byDay: Record<GanttDayId, DayStudentLoad>,
     dayIds: Iterable<GanttDayId>,
+    pathId: null | string = null,
 ): number {
     const byPath = new Map<string, number>();
     for (const dayId of dayIds) {
@@ -487,7 +489,14 @@ export function sumStudentMinutes(
             byPath.set(load.pathId, (byPath.get(load.pathId) ?? 0) + load.minutes);
         }
     }
-    return Math.max(0, ...byPath.values());
+    return pathId === null ? Math.max(0, ...byPath.values()) : byPath.get(pathId) ?? 0;
+}
+
+/** A day's scheduled minutes: the busiest path's, or with `pathId` that path's (#899). */
+export function dayStudentMinutes(load: DayStudentLoad | undefined, pathId: null | string = null): number {
+    if (!load) return 0;
+    if (pathId === null) return load.minutes;
+    return load.paths.find((path) => path.pathId === pathId)?.minutes ?? 0;
 }
 
 /** The loads with break time taken out of every path and day. */
@@ -503,15 +512,6 @@ export function withoutBreaks(
             }));
             return [dayId, { ...load, paths, minutes: Math.max(0, ...paths.map((path) => path.minutes)) }];
         }),
-    );
-}
-
-/** Per-day busiest-path minutes, the shape the capacity views consume. */
-export function getStudentMinutesByDay(
-    byDay: Record<GanttDayId, DayStudentLoad>,
-): Record<GanttDayId, number> {
-    return Object.fromEntries(
-        Object.entries(byDay).map(([dayId, load]) => [dayId, load.minutes]),
     );
 }
 

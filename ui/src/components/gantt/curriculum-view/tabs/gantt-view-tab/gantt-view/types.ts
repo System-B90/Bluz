@@ -38,10 +38,10 @@ export type GanttContextType = {
     curriculumMappings: Record<string, GanttCurriculumModuleDayMapping>;
     /** Days each mapped event occupies once multi-day spillover is applied (#105). */
     eventSpans: Record<string, EventDaySpan>;
-    /** Per-day scheduled minutes with spillover subtracted/added per day (#105). */
-    scheduledMinutesByDay: Record<string, number>;
     /** Per-day scheduled time per student path, with alignment issues. */
     studentLoadByDay: Record<string, DayStudentLoad>;
+    /** `studentLoadByDay` with breaks counted whatever the timeline toggle: for views with their own toggle. */
+    studentLoadWithBreaksByDay: Record<string, DayStudentLoad>;
     /** The student paths `studentLoadByDay` is broken down by. */
     studentPaths: Array<StudentPath>;
     violations: Record<string, Array<string>>;

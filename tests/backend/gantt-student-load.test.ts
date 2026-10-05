@@ -8,6 +8,7 @@ import {
     buildStudentPaths,
     calculateStudentMinutes,
     computeStudentSchedule,
+    dayStudentMinutes,
     sumStudentMinutes,
 } from "@/components/gantt/curriculum-view/student-load";
 
@@ -189,6 +190,31 @@ describe("computeStudentSchedule", () => {
 
         expect([ "d1", "d2", "d3" ].map((dayId) => result.byDay[ dayId ]?.minutes)).toEqual([ 45, 45, 45 ]);
         expect(sumStudentMinutes(result.byDay, [ "d1", "d2", "d3" ])).toBe(135);
+    });
+});
+
+describe("one course's minutes (#899)", () => {
+    const result = () => schedule(store({
+        math: ALIGNED_MATH,
+        phys: { phys: { minutes: 120 } },
+        chem: { chem: { minutes: 240 } },
+    }));
+
+    it("sums a chosen path's days instead of the busiest path's", () => {
+        const { byDay } = result();
+
+        expect(sumStudentMinutes(byDay, [ "d1", "d2" ])).toBe(420);
+        expect(sumStudentMinutes(byDay, [ "d1", "d2" ], "apollo")).toBe(300);
+        expect(sumStudentMinutes(byDay, [ "d1", "d2" ], "sphinx")).toBe(420);
+        expect(sumStudentMinutes(byDay, [ "d1" ], "gone")).toBe(0);
+    });
+
+    it("reads one day for the busiest or a chosen path", () => {
+        const { byDay } = result();
+
+        expect(dayStudentMinutes(byDay.d1)).toBe(420);
+        expect(dayStudentMinutes(byDay.d1, "apollo")).toBe(300);
+        expect(dayStudentMinutes(byDay.d2, "apollo")).toBe(0);
     });
 });
 

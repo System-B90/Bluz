@@ -154,7 +154,7 @@ export const useGanttView = (curriculumId: string) =>
         curriculumId,
     );
 
-    const { eventSpans, scheduledMinutesByDay, studentLoadByDay, studentPaths } = useGanttScheduling({
+    const { eventSpans, studentLoadByDay, studentLoadWithBreaksByDay, studentPaths } = useGanttScheduling({
         curriculum,
         ignoreBreaks,
         state,
@@ -255,8 +255,8 @@ export const useGanttView = (curriculumId: string) =>
             eventMappings,
             curriculumMappings,
             eventSpans,
-            scheduledMinutesByDay,
             studentLoadByDay,
+            studentLoadWithBreaksByDay,
             studentPaths,
             violations,
             dayCellWidth,
@@ -296,8 +296,8 @@ export const useGanttView = (curriculumId: string) =>
             eventMappings,
             curriculumMappings,
             eventSpans,
-            scheduledMinutesByDay,
             studentLoadByDay,
+            studentLoadWithBreaksByDay,
             studentPaths,
             violations,
             dayCellWidth,
