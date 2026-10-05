@@ -55,7 +55,7 @@ from bluz.models import (
 from bluz.models._base import APP_TIMEZONE, today
 from bluz.sdk import Bluz, connect
 
-__version__ = "1.4.0"
+__version__ = "1.4.1-rc.1"
 
 __all__ = [
     "APP_TIMEZONE",
