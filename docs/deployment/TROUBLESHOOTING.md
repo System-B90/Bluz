@@ -133,6 +133,31 @@ specific loopback IP.
 
 ---
 
+## 502 Bad Gateway on a co-located host, `bluz-proxy could not be resolved`
+
+**Symptom:** Hive and Bluz share one machine and Hive's nginx fronts Bluz's
+hostname. Every request returns 502, and `docker logs hive-nginx` shows
+`bluz-proxy could not be resolved (2: Server failure)`.
+
+**Cause (fixed in current bundles):** `docker-compose.hive-local.yml` attached
+only `ui` and `sessions` to Hive's network, so `hive-nginx` could not resolve
+`bluz-proxy` by name.
+
+**Diagnose:**
+
+```bash
+docker inspect bluz-proxy --format '{{range $n, $_ := .NetworkSettings.Networks}}{{println $n}}{{end}}'
+```
+
+**Fix:** upgrade, then run `./link-hive.sh` (or `.\link-hive.ps1`). On an older
+bundle, connect it by hand. This lasts until the container is next recreated:
+
+```bash
+docker network connect hive_hive-net bluz-proxy
+```
+
+---
+
 ## SSO registration fails / `.env` contains `MANUAL_ENTRY_REQUIRED`
 
 **Cause (fixed in current bundles):** the wizard's non-browser fallback posted an
