@@ -7,18 +7,22 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 /**
  * Timeline toolbar (#815, #820): every toggle's accessible name is its visible
- * text, and the block-sizing group keeps its place in the daily view.
+ * text, and the block-sizing group keeps its place in the daily view. Its
+ * palette commands bring the timeline tab back before acting (#883).
  */
 
+const registered = vi.hoisted(() => ({ commands: [] as Array<{ id: string; run: () => unknown }> }));
 vi.mock("@system-b90/command-palette", async (importOriginal) => ({
     ...(await importOriginal<object>()),
-    useCommands: () => undefined,
+    useCommands: (commands: typeof registered.commands) => { registered.commands = commands; },
 }));
 vi.mock(
     "@/components/gantt/curriculum-view/components/syllabuses-actions-box/GanttFilterButton",
     () => ({ GanttFilterButton: () => null }),
 );
 
+import { GANTT_TAB_INDEX } from "@/components/app-onboarding/gantt/tabs";
+import { GanttTabContext } from "@/components/gantt/curriculum-view/gantt-tab-context";
 import {
     GanttToolbar,
     GanttToolbarProps,
@@ -91,5 +95,43 @@ describe("GanttToolbar", () => {
         const relative = screen.getByRole("button", { name: "לפי יום" }) as HTMLButtonElement;
         expect(full.disabled).toBe(true);
         expect(relative.disabled).toBe(true);
+    });
+
+    describe("palette commands (#883)", () => {
+        const runCommand = (id: string) => {
+            const command = registered.commands.find((c) => c.id === id);
+            expect(command).toBeDefined();
+            command!.run();
+        };
+
+        it("switch to the timeline from another tab, then toggle", () => {
+            const setSelectedTabIndex = vi.fn();
+            const setShowUnallocated = vi.fn();
+            render(
+                <GanttTabContext.Provider value={ { selectedTabIndex: GANTT_TAB_INDEX.weeks, setSelectedTabIndex } }>
+                    <GanttToolbar { ...baseProps } setShowUnallocated={ setShowUnallocated } />
+                </GanttTabContext.Provider>,
+            );
+
+            runCommand("gantt.timeline.unallocated.toggle");
+
+            expect(setSelectedTabIndex).toHaveBeenCalledWith(GANTT_TAB_INDEX.timeline);
+            expect(setShowUnallocated).toHaveBeenCalledWith(true);
+        });
+
+        it("leave the tab alone when the timeline is already showing", () => {
+            const setSelectedTabIndex = vi.fn();
+            const setShowConstraints = vi.fn();
+            render(
+                <GanttTabContext.Provider value={ { selectedTabIndex: GANTT_TAB_INDEX.timeline, setSelectedTabIndex } }>
+                    <GanttToolbar { ...baseProps } setShowConstraints={ setShowConstraints } />
+                </GanttTabContext.Provider>,
+            );
+
+            runCommand("gantt.timeline.constraints.toggle");
+
+            expect(setSelectedTabIndex).not.toHaveBeenCalled();
+            expect(setShowConstraints).toHaveBeenCalledWith(false);
+        });
     });
 });
