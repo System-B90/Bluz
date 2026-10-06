@@ -12,7 +12,7 @@ import Select, { SelectChangeEvent } from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useCallback, useId, useRef, useState } from "react";
+import { useCallback, useId, useMemo, useRef, useState } from "react";
 
 import { CourseId } from "@/api-shared/types/course";
 import { COMMAND_GROUPS } from "@/components/app-commands/labels";
@@ -20,6 +20,8 @@ import { useCommand } from "@/components/app-commands/use-command";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { InstructorSelect } from "@/components/base/InstructorSelect";
+import { useCurriculumState } from "@/components/gantt/state/context";
+import { shuffleFilterOptions } from "@/components/gantt/state/filters/definitions";
 import { useGanttFilters } from "@/components/gantt/state/filters/Provider";
 
 const SELECT_RTL_SX = { "& .MuiSelect-select": { textAlign: "right" } };
@@ -33,6 +35,9 @@ export function GanttFilterButton({
 }) {
     const coursesLabelId = useId();
     const leadsLabelId = useId();
+    const shufflesLabelId = useId();
+    const { syllabuses } = useCurriculumState();
+    const shuffleOptions = useMemo(() => shuffleFilterOptions(Object.values(syllabuses)), [syllabuses]);
     const { courses, getCourse } = useCourses();
     const { getInstructor } = useHiveUsers();
     const { values, setFilter, clearFilters, hasActiveFilters, description } =
@@ -78,9 +83,18 @@ export function GanttFilterButton({
         [setFilter],
     );
 
+    const onShufflesChange = useCallback(
+        (event: SelectChangeEvent<Array<string>>) => {
+            const value = event.target.value;
+            setFilter("shuffleNames", typeof value === "string" ? value.split(",") : value);
+        },
+        [setFilter],
+    );
+
     const activeCount =
         (values.courseIds.length > 0 ? 1 : 0) +
-        (values.leadInstructorIds.length > 0 ? 1 : 0);
+        (values.leadInstructorIds.length > 0 ? 1 : 0) +
+        (values.shuffleNames.length > 0 ? 1 : 0);
 
     return (
         <>
@@ -180,6 +194,37 @@ export function GanttFilterButton({
                             value={values.leadInstructorIds}
                         />
                     </FormControl>
+
+                    {shuffleOptions.length > 0 ? (
+                        <FormControl fullWidth size="small">
+                            <InputLabel id={shufflesLabelId} size="small">
+                                סינון לפי שאפל
+                            </InputLabel>
+                            <Select<Array<string>>
+                                label="סינון לפי שאפל"
+                                labelId={shufflesLabelId}
+                                MenuProps={{ disablePortal: true }}
+                                multiple
+                                onChange={onShufflesChange}
+                                renderValue={(selected) => (
+                                    <Box display="flex" flexWrap="wrap" gap={0.5}>
+                                        {selected.map((name) => (
+                                            <Chip key={name} label={name} size="small" />
+                                        ))}
+                                    </Box>
+                                )}
+                                size="small"
+                                sx={SELECT_RTL_SX}
+                                value={values.shuffleNames}
+                            >
+                                {shuffleOptions.map((name) => (
+                                    <MenuItem key={name} value={name}>
+                                        {name}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    ) : null}
 
                     <Typography color="text.secondary" variant="body2">
                         {hasActiveFilters

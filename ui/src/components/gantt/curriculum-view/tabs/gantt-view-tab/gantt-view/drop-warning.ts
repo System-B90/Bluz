@@ -2,13 +2,14 @@
  * Name: drop-warning.ts
  * Purpose: Says, while a bar is still being dragged, what dropping it on the
  *   hovered cell would break, so the cell can warn before the drop instead
- *   of a violation showing up after it (#811). Shuffle-alignment checks are
- *   tracked separately (#830 follow-up).
+ *   of a violation showing up after it (#811), including a syllabus's
+ *   shuffles falling out of step (#886).
  * Created: 2026-10-03
  * Author: Michael K. Steinberg
  */
 import { GanttConstraint, GanttDayIndex } from "@/api-shared/types/gantt/models";
 import { planModuleMap } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/module-drag";
+import { AlignmentSources, EventMove, shuffleAlignmentWarning } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/shuffle-alignment";
 import { temporalViolationsAt } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-violations";
 
 export const SHIFT_OFF_TIMELINE = "לא ניתן להזיז — מופעים יחרגו מסוף הציר";
@@ -24,6 +25,8 @@ export type DropWarningSources = {
     linearDays: ReadonlyArray<string>;
     /** Null when the shift would push an event off the timeline. */
     planShift: (moduleId: string, deltaDays: number) => Array<{ eventId: null | string; to: string }> | null;
+    /** Shuffle names, module → syllabus and event details for the alignment check (#886). */
+    alignment?: Omit<AlignmentSources, "eventMappings">;
 };
 
 type DragData = Record<string, unknown> | undefined;
@@ -42,9 +45,12 @@ export function dropWarningFor(
     const moduleId = payload.moduleId as string;
     const placements: Array<{ entity: Constrained; dayId: string }> = [];
     const moduleAt = (day: string) => placements.push({ entity: sources.modules[ moduleId ], dayId: day });
+    const eventMoves: Array<EventMove> = [];
     const eventAt = (eventId: null | string, day: string) =>
     {
-        if (eventId) placements.push({ entity: sources.events[ eventId ], dayId: day });
+        if (!eventId) return;
+        placements.push({ entity: sources.events[ eventId ], dayId: day });
+        eventMoves.push({ eventId, to: day });
     };
 
     switch (payload.type)
@@ -86,6 +92,14 @@ export function dropWarningFor(
             entity.constraints.map((c) => sources.constraints[ c.id ]),
             dayIndex,
         ).forEach((reason) => broken.add(reason));
+    }
+    if (sources.alignment)
+    {
+        const misaligned = shuffleAlignmentWarning(eventMoves, {
+            ...sources.alignment,
+            eventMappings: sources.eventMappings,
+        });
+        if (misaligned) broken.add(misaligned);
     }
     return broken.size > 0 ? [ ...broken ].join(" · ") : null;
 }

@@ -34,19 +34,21 @@ const courseFilter = byKey.courseIds;
 const leadFilter = byKey.leadInstructorIds;
 
 /** Mirrors the provider's AND composition over the active definitions. */
-function matches(item: GanttSyllabus, values: GanttFilterValues): boolean {
+function matches(item: GanttSyllabus, partial: Partial<GanttFilterValues>): boolean {
+    const values: GanttFilterValues = { ...EMPTY_GANTT_FILTERS, ...partial };
     return GANTT_FILTER_DEFINITIONS.filter((def) =>
         def.isActive(values[def.key] as never),
     ).every((def) => def.matches(item, values[def.key] as never));
 }
 
 describe("filter registry", () => {
-    it("registers exactly the course and lead-instructor filters", () => {
+    it("registers exactly the course, lead-instructor and shuffle filters", () => {
         // The provider iterates this array, so an entry silently dropped here
         // disables that filter everywhere at once.
         expect(GANTT_FILTER_DEFINITIONS.map((def) => def.key).sort()).toEqual([
             "courseIds",
             "leadInstructorIds",
+            "shuffleNames",
         ]);
     });
 
