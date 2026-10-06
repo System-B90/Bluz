@@ -40,6 +40,18 @@ services:
             - bluz_net
             - hive_net
 
+    # Co-located, Hive's own nginx fronts Bluz's hostname and proxies it to
+    # `bluz-proxy` by container name, so proxy must sit on hive_net too or
+    # hive-nginx logs "bluz-proxy could not be resolved" and every request is
+    # a 502 (System-B90/deploy-py#14). Declared here, not connected by hand, so
+    # it survives `up -d` recreating the container. Safe on a shared network:
+    # nginx.conf addresses its upstreams as bluz-ui / bluz-sessions, never the
+    # bare `ui` alias other stacks' containers also carry there.
+    proxy:
+        networks:
+            - bluz_net
+            - hive_net
+
 networks:
     hive_net:
         # Compose derives a network's name from the directory the stack was
