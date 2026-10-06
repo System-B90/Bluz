@@ -126,59 +126,70 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                             zoomedWeekId={ zoomedWeekId }
                         />
 
-                        { showUnallocated ? (
-                            <GanttUnallocatedPanel
-                                onReveal={ revealItem }
-                                unallocatedBySyllabus={ unallocatedBySyllabus }
-                            />
-                        ) : null }
-
+                        {/* The unallocated panel sits beside the rows at the
+                            inline end, so opening it never pushes rows down (#882). */ }
                         <Box
                             sx={ {
                                 flexGrow: 1,
-                                position: "relative",
-                                overflow: "hidden",
+                                minHeight: 0,
                                 display: "flex",
-                                flexDirection: "column",
+                                flexDirection: "row",
                             } }
                         >
-                            <TableContainer
-                                ref={ containerRef }
+                            <Box
                                 sx={ {
-                                    width: "100%",
-                                    height: "100%",
-                                    overflow: "auto",
-                                    pb: 3,
+                                    flexGrow: 1,
+                                    minWidth: 0,
+                                    position: "relative",
+                                    overflow: "hidden",
+                                    display: "flex",
+                                    flexDirection: "column",
                                 } }
                             >
-                                <Table
-                                    size="small"
-                                    stickyHeader
+                                <TableContainer
+                                    ref={ containerRef }
                                     sx={ {
-                                        width: "max-content",
-                                        minWidth: "100%",
-                                        tableLayout: "fixed",
+                                        width: "100%",
+                                        height: "100%",
+                                        overflow: "auto",
+                                        pb: 3,
                                     } }
                                 >
-                                    <GanttHeader
-                                        showConstraints={ showConstraints }
+                                    <Table
+                                        size="small"
+                                        stickyHeader
+                                        sx={ {
+                                            width: "max-content",
+                                            minWidth: "100%",
+                                            tableLayout: "fixed",
+                                        } }
+                                    >
+                                        <GanttHeader
+                                            showConstraints={ showConstraints }
+                                        />
+                                        <TableBody>
+                                            { curriculum.syllabuses.map(
+                                                (syllabusId) => (
+                                                    <GanttSyllabusGroup
+                                                        key={ syllabusId }
+                                                        syllabusId={ syllabusId }
+                                                    />
+                                                ),
+                                            ) }
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+                                { showConstraints ? (
+                                    <ConstraintLines
+                                        containerRef={ containerRef }
+                                        links={ activeLinks }
                                     />
-                                    <TableBody>
-                                        { curriculum.syllabuses.map(
-                                            (syllabusId) => (
-                                                <GanttSyllabusGroup
-                                                    key={ syllabusId }
-                                                    syllabusId={ syllabusId }
-                                                />
-                                            ),
-                                        ) }
-                                    </TableBody>
-                                </Table>
-                            </TableContainer>
-                            { showConstraints ? (
-                                <ConstraintLines
-                                    containerRef={ containerRef }
-                                    links={ activeLinks }
+                                ) : null }
+                            </Box>
+                            { showUnallocated ? (
+                                <GanttUnallocatedPanel
+                                    onReveal={ revealItem }
+                                    unallocatedBySyllabus={ unallocatedBySyllabus }
                                 />
                             ) : null }
                         </Box>
