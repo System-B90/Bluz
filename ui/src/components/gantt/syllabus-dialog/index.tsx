@@ -11,7 +11,7 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
-import { Dispatch, SetStateAction, useCallback, useState } from "react";
+import { Dispatch, SetStateAction, useCallback, useRef, useState } from "react";
 
 import {
     GanttCurriculumId,
@@ -30,6 +30,9 @@ import { SyllabusLinksSection } from "@/components/gantt/syllabus-dialog/Syllabu
 import { ColorPickerField } from "@/components/schedule/event-dialog/ColorPickerField";
 
 export const UNLINK_HINT = "הסילבוס יישאר במערכת, אך לא יהיה משויך עוד לתוכנית הלימודים";
+export const DRAFT_TITLE = "סילבוס חדש";
+export const DRAFT_NAME_HINT = "הסילבוס ייווצר כשתאשרו את השם (Enter או מעבר לשדה הבא)";
+export const DRAFT_SECTIONS_HINT = "אחרי שהסילבוס ייווצר יהיה אפשר לשייך אותו, להוסיף שאפלים ומערכים.";
 
 export type SyllabusDialogProps = {
     open: boolean;
@@ -42,6 +45,13 @@ export type SyllabusDialogProps = {
      * closes. Before #884 it only hid its destructive action (#834).
      */
     covered?: boolean;
+    /**
+     * Open on a syllabus that doesn't exist yet (#881). Nothing is saved until
+     * the name is committed; then the syllabus is created and the dialog
+     * carries on editing it through `onDraftCreated`.
+     */
+    draft?: boolean;
+    onDraftCreated?: (syllabusId: GanttSyllabusId) => void;
 };
 
 /**
@@ -59,11 +69,15 @@ export function SyllabusDialog({
     curriculumId,
     syllabusId,
     covered = false,
+    draft = false,
+    onDraftCreated,
 }: SyllabusDialogProps) {
     const { enqueueSnackbar } = useSnackbar();
     const syllabus = useSyllabus(syllabusId as GanttSyllabusId);
-    const { updateSyllabus, unlinkSyllabusFromCurriculum } =
+    const { createSyllabus, updateSyllabus, unlinkSyllabusFromCurriculum } =
         useSyllabusActions();
+    const isDraft = draft && !syllabusId;
+    const creatingDraftRef = useRef(false);
     const { confirm, confirmDialog } = useConfirmDialog();
     const { status: saveStatus, track: trackSave, reset: resetSaveStatus } = useSaveStatus();
 
@@ -80,9 +94,12 @@ export function SyllabusDialog({
     const [prevSyllabusId, setPrevSyllabusId] = useState(syllabusId);
     const [prevOpen, setPrevOpen] = useState(open);
     if (syllabusId !== prevSyllabusId || open !== prevOpen) {
+        // A draft that just got created keeps what was typed into it; the
+        // store may not hold the new record's fields on this very render.
+        const draftJustCreated = open === prevOpen && prevSyllabusId === null;
         setPrevSyllabusId(syllabusId);
         setPrevOpen(open);
-        if (open) {
+        if (open && !draftJustCreated) {
             setLocalTitle(syllabus?.title ?? "");
             setLocalDescription(syllabus?.description ?? "");
             resetSaveStatus();
@@ -90,8 +107,42 @@ export function SyllabusDialog({
     }
 
     const titleMissing = localTitle.trim() === "";
+    // A draft starts empty on purpose; only a saved syllabus can lose its name.
+    const showTitleError = titleMissing && !isDraft;
 
     const closeHandler = useCallback(() => setOpen(false), [setOpen]);
+
+    // The first committed name creates the syllabus (#881). Guarded so Enter
+    // followed by the blur it causes creates one record, not two.
+    const createFromDraft = useCallback(() => {
+        const title = localTitle.trim();
+        if (!isDraft || !title || creatingDraftRef.current) return;
+        creatingDraftRef.current = true;
+        const description = localDescription.trim();
+        trackSave(
+            createSyllabus(title, curriculumId).then(async (created) => {
+                if (!created) return;
+                if (description) await updateSyllabus(created.id, { description });
+                onDraftCreated?.(created.id);
+            }),
+        )
+            .catch((error) =>
+                enqueueApiErrorSnackbar(enqueueSnackbar, "יצירת הסילבוס נכשלה!", error),
+            )
+            .finally(() => {
+                creatingDraftRef.current = false;
+            });
+    }, [
+        isDraft,
+        localTitle,
+        localDescription,
+        trackSave,
+        createSyllabus,
+        curriculumId,
+        updateSyllabus,
+        onDraftCreated,
+        enqueueSnackbar,
+    ]);
 
     const commit = useCallback(
         (updates: Partial<GanttSyllabus>) => {
@@ -144,7 +195,14 @@ export function SyllabusDialog({
         enqueueSnackbar,
     ]);
 
-    if (!syllabusId) return null;
+    if (!syllabusId && !isDraft) return null;
+
+    // In a draft only the name and description exist; the rest needs an id.
+    const draftHint = (
+        <Typography color="text.secondary" variant="body2">
+            {DRAFT_SECTIONS_HINT}
+        </Typography>
+    );
 
     // Only the top layer shows (#884); a covered dialog hides but stays mounted.
     const isTopLayer: boolean = open && !covered;
@@ -174,24 +232,28 @@ export function SyllabusDialog({
                         sx={{ fontWeight: "bold" }}
                         variant="h5"
                     >
-                        עריכת סילבוס: {syllabus?.title}
+                        {isDraft ? DRAFT_TITLE : `עריכת סילבוס: ${syllabus?.title ?? ""}`}
                     </Typography>
                     <SaveStatusIndicator status={saveStatus} />
-                    <Typography
-                        component="span"
-                        sx={{ color: "text.secondary" }}
-                        variant="caption"
-                    >
-                        {`${syllabus?.modules?.length ?? 0} מערכים · ${
-                            syllabus?.shuffles?.length ?? 0
-                        } שאפלים`}
-                    </Typography>
+                    {isDraft ? null : (
+                        <Typography
+                            component="span"
+                            sx={{ color: "text.secondary" }}
+                            variant="caption"
+                        >
+                            {`${syllabus?.modules?.length ?? 0} מערכים · ${
+                                syllabus?.shuffles?.length ?? 0
+                            } שאפלים`}
+                        </Typography>
+                    )}
                 </Stack>
-                <SyllabusImportExportButton
-                    curriculumId={curriculumId}
-                    syllabusId={syllabusId}
-                    title={syllabus?.title}
-                />
+                {syllabusId ? (
+                    <SyllabusImportExportButton
+                        curriculumId={curriculumId}
+                        syllabusId={syllabusId}
+                        title={syllabus?.title}
+                    />
+                ) : null}
             </DialogTitle>
 
             <DialogContent>
@@ -205,15 +267,29 @@ export function SyllabusDialog({
                     <Stack spacing={2.5} width={{ xs: "100%", md: "45%" }}>
                         <Stack alignItems="stretch" direction="row" gap={1}>
                             <TextField
-                                error={titleMissing}
+                                autoFocus={isDraft}
+                                error={showTitleError}
                                 fullWidth
                                 helperText={
-                                    titleMissing
-                                        ? "לסילבוס חייב להיות שם. השם הקודם יישמר."
-                                        : undefined
+                                    isDraft
+                                        ? DRAFT_NAME_HINT
+                                        : titleMissing
+                                            ? "לסילבוס חייב להיות שם. השם הקודם יישמר."
+                                            : undefined
                                 }
                                 label="שם הסילבוס"
-                                onBlur={() => {
+                                onBlur={(e) => {
+                                    if (isDraft) {
+                                        // Moving on to another field commits the
+                                        // name; cancelling, clicking the backdrop
+                                        // or leaving the window must not.
+                                        const next = e.relatedTarget as HTMLElement | null;
+                                        const dialog = e.currentTarget.closest("[role='dialog']");
+                                        if (next && dialog?.contains(next) && !next.dataset.draftCancel) {
+                                            createFromDraft();
+                                        }
+                                        return;
+                                    }
                                     // An empty title leaves the card nameless, so
                                     // the field falls back to the saved one.
                                     if (titleMissing) {
@@ -223,17 +299,25 @@ export function SyllabusDialog({
                                     commit({ title: localTitle.trim() });
                                 }}
                                 onChange={(e) => setLocalTitle(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (isDraft && e.key === "Enter") {
+                                        e.preventDefault();
+                                        createFromDraft();
+                                    }
+                                }}
                                 required
                                 size="small"
                                 value={localTitle}
                             />
-                            <ColorPickerField
-                                event={{ color: syllabus?.color ?? undefined }}
-                                onUpdate={({ color }) =>
-                                    commit({ color: color ?? null })
-                                }
-                                size="small"
-                            />
+                            {isDraft ? null : (
+                                <ColorPickerField
+                                    event={{ color: syllabus?.color ?? undefined }}
+                                    onUpdate={({ color }) =>
+                                        commit({ color: color ?? null })
+                                    }
+                                    size="small"
+                                />
+                            )}
                         </Stack>
 
                         <TextField
@@ -251,18 +335,22 @@ export function SyllabusDialog({
                             value={localDescription}
                         />
 
-                        <SyllabusLinksSection syllabusId={syllabusId} />
+                        {syllabusId ? (
+                            <>
+                                <SyllabusLinksSection syllabusId={syllabusId} />
 
-                        <Divider flexItem>
-                            <Typography
-                                color="text.secondary"
-                                variant="caption"
-                            >
-                                שאפלים
-                            </Typography>
-                        </Divider>
+                                <Divider flexItem>
+                                    <Typography
+                                        color="text.secondary"
+                                        variant="caption"
+                                    >
+                                        שאפלים
+                                    </Typography>
+                                </Divider>
 
-                        <ShufflesSection syllabusId={syllabusId} />
+                                <ShufflesSection syllabusId={syllabusId} />
+                            </>
+                        ) : draftHint}
                     </Stack>
 
                     <Divider
@@ -278,18 +366,20 @@ export function SyllabusDialog({
                         >
                             מערכים
                         </Typography>
-                        <ModulesTable
-                            curriculumId={curriculumId}
-                            maxHeight="60vh"
-                            syllabusId={syllabusId}
-                            syllabusModules={syllabus?.modules ?? []}
-                        />
+                        {syllabusId ? (
+                            <ModulesTable
+                                curriculumId={curriculumId}
+                                maxHeight="60vh"
+                                syllabusId={syllabusId}
+                                syllabusModules={syllabus?.modules ?? []}
+                            />
+                        ) : draftHint}
                     </Stack>
                 </Box>
             </DialogContent>
 
             <DialogActions>
-                {covered ? null : (
+                {covered || isDraft ? null : (
                     // describeChild: the visible text stays the name; the hint
                     // becomes the description (#837, WCAG 2.5.3).
                     <Tooltip describeChild title={UNLINK_HINT}>
@@ -304,10 +394,11 @@ export function SyllabusDialog({
                 )}
                 <Button
                     color="primary"
+                    data-draft-cancel={isDraft ? "true" : undefined}
                     onClick={closeHandler}
                     variant="contained"
                 >
-                    סגירה
+                    {isDraft ? "ביטול" : "סגירה"}
                 </Button>
             </DialogActions>
             {confirmDialog}

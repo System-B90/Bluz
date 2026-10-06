@@ -6,8 +6,8 @@ import { createCurriculum } from "./gantt-api";
 const NAME = "e2e-new-syllabus";
 
 /**
- * "New syllabus" asks for a name, creates only on confirm (#845), and opens
- * the syllabus it made (#758).
+ * "New syllabus" opens the syllabus dialog as a draft (#881), creates only once
+ * a name is committed (#845), and keeps editing the syllabus it made (#758).
  *
  * Before, a card appeared somewhere in the grid and nothing else happened,
  * so users could not tell a syllabus had been created.
@@ -45,6 +45,20 @@ test.describe("New syllabus opens its dialog (#758)", () => {
         await expectNoOpenModal(page);
         const response = await request.get(`/api/gantt/curriculums/${curriculumId}`);
         expect(JSON.stringify(await response.json())).not.toContain("סילבוס חדש");
+    });
+
+    test("a typed name then cancel creates nothing (#881)", async ({ page, request }) => {
+        await page.getByRole("button", { name: "סילבוס חדש" }).click();
+        const draft = page.getByRole("dialog").filter({ hasText: "סילבוס חדש" });
+        await draft.getByRole("textbox", { name: /^שם הסילבוס/ }).fill(`${NAME}-cancelled`);
+        await test.info().attach("syllabus-draft-dialog", {
+            body: await page.screenshot(),
+            contentType: "image/png",
+        });
+        await draft.getByRole("button", { name: "ביטול" }).click();
+        await expectNoOpenModal(page);
+        const response = await request.get(`/api/gantt/curriculums/${curriculumId}`);
+        expect(JSON.stringify(await response.json())).not.toContain(`${NAME}-cancelled`);
     });
 
     test("confirming a name opens the syllabus dialog", async ({ page }) => {

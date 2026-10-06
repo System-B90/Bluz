@@ -1130,14 +1130,16 @@ export async function selectGanttTab(page: Page, name: string): Promise<void> {
 }
 
 /**
- * "סילבוס חדש" asks for a name before creating anything (#845): click it,
- * type the name, confirm. Resolves once the prompt has closed.
+ * "סילבוס חדש" opens the syllabus dialog as a draft that saves nothing until
+ * its name is committed (#845, #881): click it, type the name, press Enter.
+ * Resolves once the same dialog is editing the created syllabus.
  */
 export async function createSyllabusViaUi(page: Page, name: string): Promise<void> {
     await page.getByRole("button", { name: "סילבוס חדש" }).click();
-    const field = page.getByRole("textbox", { name: "שם הסילבוס החדש" });
-    const prompt = page.getByRole("dialog").filter({ has: field });
+    const draft = page.getByRole("dialog").filter({ hasText: "סילבוס חדש" });
+    const field = draft.getByRole("textbox", { name: /^שם הסילבוס/ });
     await field.fill(name);
-    await prompt.getByRole("button", { name: "יצירה" }).click();
-    await baseExpect(prompt).toHaveCount(0, { timeout: 10_000 });
+    await field.press("Enter");
+    await baseExpect(page.getByRole("dialog").filter({ hasText: `עריכת סילבוס: ${name}` }))
+        .toBeVisible({ timeout: 10_000 });
 }
