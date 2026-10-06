@@ -36,7 +36,11 @@ export type SyllabusDialogProps = {
     setOpen: Dispatch<SetStateAction<boolean>>;
     curriculumId: GanttCurriculumId;
     syllabusId: GanttSyllabusId | null;
-    /** A module/event dialog is open on top; hide this layer's destructive action (#834). */
+    /**
+     * A module/event dialog is open on top. The dialog then hides entirely
+     * (#884) and stays mounted, so it comes back as it was when the top layer
+     * closes. Before #884 it only hid its destructive action (#834).
+     */
     covered?: boolean;
 };
 
@@ -142,6 +146,9 @@ export function SyllabusDialog({
 
     if (!syllabusId) return null;
 
+    // Only the top layer shows (#884); a covered dialog hides but stays mounted.
+    const isTopLayer: boolean = open && !covered;
+
     return (
         // One layer at a time (#884): a module or event dialog opened from
         // here replaces it on screen; it stays mounted and comes back on close.
@@ -150,7 +157,7 @@ export function SyllabusDialog({
             keepMounted={covered}
             maxWidth="lg"
             onClose={closeHandler}
-            open={open ? !covered : null}
+            open={isTopLayer}
         >
             <DialogTitle
                 sx={{
