@@ -184,7 +184,9 @@ jobs:
             # died before its teardown leaves one behind. Only bluz-test-* is
             # ours: never prune here, the shared Hive lives on this daemon.
             - name: Reclaim leaked Bluz test stacks
-              uses: ./.github/actions/bluz-test-stack-down
+              uses: System-B90/.github/actions/teardown-test-stack@main
+              with:
+                  prefix: bluz-test-
 
             - name: Install default dev SSL certificates
               run: |
@@ -262,8 +264,9 @@ jobs:
             # is reset. Only this app's stack; never prune (see above).
             - name: Stop Bluz
               if: always()
-              uses: ./.github/actions/bluz-test-stack-down
+              uses: System-B90/.github/actions/teardown-test-stack@main
               with:
+                  prefix: bluz-test-
                   compose-files: deploy/docker-compose.yml deploy/docker-compose.test.yml
 
             - name: Release shared Hive
@@ -329,8 +332,9 @@ jobs:
             # Throwaway VM: anything bluz-test-* at the start of a run is
             # leaked, and disk is the scarce thing, so this one also prunes.
             - name: Reclaim leaked test stacks
-              uses: ./.github/actions/bluz-test-stack-down
+              uses: System-B90/.github/actions/teardown-test-stack@main
               with:
+                  prefix: bluz-test-
                   prune: "true"
 
             - name: Set up Hive
@@ -444,7 +448,9 @@ jobs:
             # Harmless on a throwaway VM, but keeps the two paths identical.
             - name: Tear down test + Hive stacks
               if: always()
-              uses: ./.github/actions/bluz-test-stack-down
+              uses: System-B90/.github/actions/teardown-test-stack@main
+              with:
+                  prefix: bluz-test-
 
             - name: Tear down Hive
               if: always()
