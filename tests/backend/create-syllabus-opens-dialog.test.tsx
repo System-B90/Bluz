@@ -42,8 +42,8 @@ const render = (ui: React.ReactElement) => rtlRender(ui, {
     wrapper: ({ children }) => <ThemeProvider theme={ theme }>{ children }</ThemeProvider>,
 });
 
-function renderDraft(onDraftCreated = vi.fn(), setOpen = vi.fn()) {
-    render(
+function renderDraft(onDraftCreated: () => void = vi.fn(), setOpen = vi.fn()) {
+    const view = render(
         <SyllabusDialog
             curriculumId={ CID }
             draft
@@ -55,7 +55,7 @@ function renderDraft(onDraftCreated = vi.fn(), setOpen = vi.fn()) {
     );
     const name = screen.getByRole("textbox", { name: /שם הסילבוס/ });
     const description = screen.getByRole("textbox", { name: /תיאור/ });
-    return { name, description, onDraftCreated, setOpen };
+    return { name, description, onDraftCreated, setOpen, view };
 }
 
 beforeEach(() => vi.clearAllMocks());
@@ -132,6 +132,55 @@ describe("SyllabusDialog draft (#881)", () => {
         fireEvent.change(name, { target: { value: "פיקוד" } });
         fireEvent.keyDown(name, { key: "Enter" });
         await waitFor(() => expect(updateSyllabus).toHaveBeenCalledWith("s_new", { description: "תיאור ראשון" }));
+    });
+
+    it("a failed description save never creates a second syllabus", async () => {
+        createSyllabus.mockResolvedValue({ id: "s_new" });
+        updateSyllabus.mockRejectedValue(new Error("boom"));
+        // Stand in for the provider: onDraftCreated switches the dialog to the
+        // real syllabus. Before the fix it was never reached on this path.
+        let rerenderReal = () => undefined as void;
+        const onDraftCreated = vi.fn(() => rerenderReal());
+        const { name, description, view } = renderDraft(onDraftCreated);
+        rerenderReal = () => view.rerender(
+            <SyllabusDialog curriculumId={ CID } open setOpen={ vi.fn() } syllabusId={ "s_new" as GanttSyllabusId } />,
+        );
+        fireEvent.change(description, { target: { value: "תיאור" } });
+        fireEvent.change(name, { target: { value: "פיקוד" } });
+        fireEvent.keyDown(name, { key: "Enter" });
+        await waitFor(() => expect(onDraftCreated).toHaveBeenCalledWith("s_new"));
+        await waitFor(() => expect(updateSyllabus).toHaveBeenCalledWith("s_new", { description: "תיאור" }));
+        await new Promise((r) => setTimeout(r, 0));
+        fireEvent.keyDown(name, { key: "Enter" });
+        expect(createSyllabus).toHaveBeenCalledTimes(1);
+    });
+
+    it("announces the new syllabus", async () => {
+        createSyllabus.mockResolvedValue({ id: "s_new" });
+        const { name } = renderDraft();
+        fireEvent.change(name, { target: { value: "פיקוד" } });
+        fireEvent.keyDown(name, { key: "Enter" });
+        await waitFor(() => expect(enqueueSnackbar).toHaveBeenCalledWith("נוצר סילבוס חדש", { variant: "success" }));
+    });
+
+    it("says so when the create resolves empty", async () => {
+        createSyllabus.mockResolvedValue(undefined);
+        const { name, onDraftCreated } = renderDraft();
+        fireEvent.change(name, { target: { value: "פיקוד" } });
+        fireEvent.keyDown(name, { key: "Enter" });
+        await waitFor(() => expect(enqueueSnackbar).toHaveBeenCalledWith("יצירת הסילבוס נכשלה!", { variant: "error" }));
+        expect(onDraftCreated).not.toHaveBeenCalled();
+    });
+
+    it("can't be cancelled while the create is in flight", async () => {
+        createSyllabus.mockReturnValue(new Promise(() => undefined));
+        const { name, setOpen } = renderDraft();
+        fireEvent.change(name, { target: { value: "פיקוד" } });
+        fireEvent.keyDown(name, { key: "Enter" });
+        const cancel = screen.getByRole("button", { name: "ביטול" });
+        await waitFor(() => expect(cancel).toHaveProperty("disabled", true));
+        fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+        expect(setOpen).not.toHaveBeenCalled();
     });
 
     it("reports a failed create and stays a draft", async () => {

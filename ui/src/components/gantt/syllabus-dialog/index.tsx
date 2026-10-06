@@ -77,7 +77,10 @@ export function SyllabusDialog({
     const { createSyllabus, updateSyllabus, unlinkSyllabusFromCurriculum } =
         useSyllabusActions();
     const isDraft = draft && !syllabusId;
+    // The ref guards against Enter plus the blur it causes (both run before a
+    // re-render); the state disables closing while the create is in flight.
     const creatingDraftRef = useRef(false);
+    const [creatingDraft, setCreatingDraft] = useState(false);
     const { confirm, confirmDialog } = useConfirmDialog();
     const { status: saveStatus, track: trackSave, reset: resetSaveStatus } = useSaveStatus();
 
@@ -110,7 +113,11 @@ export function SyllabusDialog({
     // A draft starts empty on purpose; only a saved syllabus can lose its name.
     const showTitleError = titleMissing && !isDraft;
 
-    const closeHandler = useCallback(() => setOpen(false), [setOpen]);
+    // A cancel while the draft is being created would still end with a new
+    // syllabus, so closing waits for the create to settle.
+    const closeHandler = useCallback(() => {
+        if (!creatingDraft) setOpen(false);
+    }, [creatingDraft, setOpen]);
 
     // The first committed name creates the syllabus (#881). Guarded so Enter
     // followed by the blur it causes creates one record, not two.
@@ -118,19 +125,30 @@ export function SyllabusDialog({
         const title = localTitle.trim();
         if (!isDraft || !title || creatingDraftRef.current) return;
         creatingDraftRef.current = true;
+        setCreatingDraft(true);
         const description = localDescription.trim();
-        trackSave(
-            createSyllabus(title, curriculumId).then(async (created) => {
-                if (!created) return;
-                if (description) await updateSyllabus(created.id, { description });
+        trackSave(createSyllabus(title, curriculumId))
+            .then((created) => {
+                if (!created) {
+                    enqueueSnackbar("יצירת הסילבוס נכשלה!", { variant: "error" });
+                    return;
+                }
+                // Leave draft mode the moment the record exists, so nothing
+                // after this point can create it a second time.
                 onDraftCreated?.(created.id);
-            }),
-        )
+                // The title swap isn't announced; the snackbar is (role=alert).
+                enqueueSnackbar("נוצר סילבוס חדש", { variant: "success" });
+                if (!description) return;
+                trackSave(updateSyllabus(created.id, { description })).catch((error) =>
+                    enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת תיאור הסילבוס נכשלה!", error),
+                );
+            })
             .catch((error) =>
                 enqueueApiErrorSnackbar(enqueueSnackbar, "יצירת הסילבוס נכשלה!", error),
             )
             .finally(() => {
                 creatingDraftRef.current = false;
+                setCreatingDraft(false);
             });
     }, [
         isDraft,
@@ -395,6 +413,7 @@ export function SyllabusDialog({
                 <Button
                     color="primary"
                     data-draft-cancel={isDraft ? "true" : undefined}
+                    disabled={creatingDraft}
                     onClick={closeHandler}
                     variant="contained"
                 >
