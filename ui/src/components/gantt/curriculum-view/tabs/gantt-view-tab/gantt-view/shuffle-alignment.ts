@@ -34,22 +34,36 @@ function shufflesOf(eventId: string, all: Array<string>, sources: AlignmentSourc
     return moduleShuffles?.length ? moduleShuffles : all;
 }
 
+/** The events `mappings` places on each of `days`, in one pass over the mappings. */
+function eventsOnDays(mappings: Readonly<Record<string, string>>, days: ReadonlySet<string>): Map<string, Array<string>>
+{
+    const byDay = new Map<string, Array<string>>();
+    for (const [ eventId, day ] of Object.entries(mappings))
+    {
+        if (!days.has(day)) continue;
+        const events = byDay.get(day);
+        if (events) events.push(eventId);
+        else byDay.set(day, [ eventId ]);
+    }
+    return byDay;
+}
+
 /**
- * Minutes each shuffle of `syllabusId` has on `dayId`, under `mappings`.
+ * Minutes each shuffle of `syllabusId` has among `eventIds`.
+ *
+ * Approximation: a placed event counts its `minimumDuration`, the same
+ * figure the timeline's day totals use and the full allotment a placement
+ * gets by default. The rule itself is about the shared block having the same
+ * start and end for every shuffle; equal daily time per shuffle is how that
+ * shows at the gantt's day granularity, before the cut assigns clock times.
  * Course-limited events don't count: they need not align (#886).
  */
-export function shuffleMinutesOnDay(
-    syllabusId: string,
-    dayId: string,
-    mappings: Readonly<Record<string, string>>,
-    sources: AlignmentSources,
-): Map<string, number>
+function shuffleMinutes(syllabusId: string, eventIds: Iterable<string>, sources: AlignmentSources): Map<string, number>
 {
     const all = sources.syllabuses[ syllabusId ]?.shuffles ?? [];
     const totals = new Map(all.map((name) => [ name, 0 ]));
-    for (const [ eventId, day ] of Object.entries(mappings))
+    for (const eventId of eventIds)
     {
-        if (day !== dayId) continue;
         const event = sources.events[ eventId ];
         if (!event || event.courseIds?.length) continue;
         if (sources.modules[ event.moduleId ]?.syllabusId !== syllabusId) continue;
@@ -61,24 +75,39 @@ export function shuffleMinutesOnDay(
     return totals;
 }
 
+/** Minutes each shuffle of `syllabusId` has on `dayId`, under `mappings`. */
+export function shuffleMinutesOnDay(
+    syllabusId: string,
+    dayId: string,
+    mappings: Readonly<Record<string, string>>,
+    sources: AlignmentSources,
+): Map<string, number>
+{
+    return shuffleMinutes(syllabusId, eventsOnDays(mappings, new Set([ dayId ])).get(dayId) ?? [], sources);
+}
+
 const isAligned = (totals: Map<string, number>) => new Set(totals.values()).size <= 1;
 
 /**
  * Why `moves` would misalign a syllabus's shuffles on some day, or null.
  * Only a day that was aligned and no longer is counts; an existing
- * imbalance is not this drop's doing.
+ * imbalance is not this drop's doing. Runs per hovered cell, so the
+ * mappings are indexed by day once per call rather than once per check.
+ * It reports the first broken day only: the cell warning is a hint.
  */
 export function shuffleAlignmentWarning(moves: Array<EventMove>, sources: AlignmentSources): null | string
 {
     if (moves.length === 0) return null;
     const after: Record<string, string> = { ...sources.eventMappings };
     const checks = new Map<string, Set<string>>();
+    const allDays = new Set<string>();
     const check = (syllabusId: string, dayId: string | undefined) =>
     {
         if (!dayId) return;
         const days = checks.get(syllabusId) ?? new Set<string>();
         days.add(dayId);
         checks.set(syllabusId, days);
+        allDays.add(dayId);
     };
 
     for (const { eventId, to } of moves)
@@ -90,13 +119,16 @@ export function shuffleAlignmentWarning(moves: Array<EventMove>, sources: Alignm
         check(syllabusId, to);
         after[ eventId ] = to;
     }
+    if (checks.size === 0) return null;
 
+    const beforeByDay = eventsOnDays(sources.eventMappings, allDays);
+    const afterByDay = eventsOnDays(after, allDays);
     for (const [ syllabusId, days ] of checks)
     {
         for (const dayId of days)
         {
-            const before = shuffleMinutesOnDay(syllabusId, dayId, sources.eventMappings, sources);
-            const next = shuffleMinutesOnDay(syllabusId, dayId, after, sources);
+            const before = shuffleMinutes(syllabusId, beforeByDay.get(dayId) ?? [], sources);
+            const next = shuffleMinutes(syllabusId, afterByDay.get(dayId) ?? [], sources);
             if (isAligned(before) && !isAligned(next))
             {
                 const detail = [ ...next ].map(([ name, minutes ]) => `${name} ${formatHoursLabel(minutes)}`).join(", ");
