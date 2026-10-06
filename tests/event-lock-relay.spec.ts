@@ -1,10 +1,10 @@
 import type { Page } from "@playwright/test";
 
 import {
-    dblclickCalendarEvent,
     expect,
     getEventDialog,
     gotoAppHome,
+    openEventDialog,
     openSecondUserSession,
     selectCalendarTimeRange,
     switchToDayView,
@@ -77,9 +77,7 @@ test.describe("Event lock presence relay (#688)", () => {
             // B opens the same event for editing first. Its own lock is
             // filtered out of its own view (applyLockUpdate ignores echoes of
             // the sender's own id), so at this point B shows no lock banner.
-            await dblclickCalendarEvent(secondPage, eventName);
-            const bDialog = getEventDialog(secondPage);
-            await expect(bDialog).toBeVisible({ timeout: 10_000 });
+            const bDialog = await openEventDialog(secondPage, eventName);
             const lockBanner = bDialog.getByText("עורך כעת", {
                 exact: false,
             });
@@ -88,9 +86,7 @@ test.describe("Event lock presence relay (#688)", () => {
             // A now opens the same event. This is the broadcast under test:
             // it must reach B without a reload.
             await page.bringToFront();
-            await dblclickCalendarEvent(page, eventName);
-            const aDialog = getEventDialog(page);
-            await expect(aDialog).toBeVisible({ timeout: 10_000 });
+            const aDialog = await openEventDialog(page, eventName);
 
             await expect(
                 lockBanner,
@@ -141,8 +137,7 @@ test.describe("Event lock presence relay (#688)", () => {
 
             // A holds the lock by keeping the edit dialog open.
             await page.bringToFront();
-            await dblclickCalendarEvent(page, eventName);
-            await expect(getEventDialog(page)).toBeVisible({ timeout: 10_000 });
+            await openEventDialog(page, eventName);
 
             await secondPage.bringToFront();
             const lockedConfirm = secondPage
@@ -199,8 +194,7 @@ test.describe("Event lock presence relay (#688)", () => {
             await expect(bTile).toBeVisible({ timeout: 30_000 });
 
             await page.bringToFront();
-            await dblclickCalendarEvent(page, eventName);
-            await expect(getEventDialog(page)).toBeVisible({ timeout: 10_000 });
+            await openEventDialog(page, eventName);
 
             await secondPage.bringToFront();
             const lockedConfirm = secondPage

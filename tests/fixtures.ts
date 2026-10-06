@@ -605,6 +605,24 @@ export async function dblclickCalendarEvent(page: Page, name: string): Promise<v
 }
 
 /**
+ * Double-clicks an event open and waits for its edit dialog, retrying the
+ * double-click while no dialog shows. A forced double-click that lands while
+ * the tile re-renders (a lock-relay update arriving, say) registers as two
+ * single clicks, and the dialog never opens (#895). Never re-clicks once the
+ * dialog is up, so a slow open isn't answered with a click on its backdrop.
+ */
+export async function openEventDialog(page: Page, name: string): Promise<Locator> {
+    const dialog = getEventDialog(page);
+    await baseExpect(async () => {
+        if (!(await dialog.isVisible())) {
+            await dblclickCalendarEvent(page, name);
+        }
+        await baseExpect(dialog).toBeVisible({ timeout: 5_000 });
+    }).toPass({ timeout: 30_000 });
+    return dialog;
+}
+
+/**
  * Creates a calendar event while already in offline mode.
  * Returns the event name used.
  */
