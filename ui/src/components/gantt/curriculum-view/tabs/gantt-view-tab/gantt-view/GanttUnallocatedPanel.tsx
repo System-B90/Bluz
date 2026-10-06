@@ -9,8 +9,14 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import React, { useCallback, useLayoutEffect, useRef, useState } from "react";
 
-/** Never more than ~a fifth of the viewport, and never above the old 200px. */
-export const UNALLOCATED_PANEL_MAX_HEIGHT = "min(200px, 22vh)";
+/**
+ * A side drawer at the timeline's inline end (#882): above the rows it pushed
+ * them down and left ~4 visible on a 735px laptop screen (#819). It takes the
+ * full height instead and can be dragged wider.
+ */
+export const UNALLOCATED_PANEL_WIDTH = 280;
+export const UNALLOCATED_PANEL_MIN_WIDTH = 200;
+export const UNALLOCATED_PANEL_MAX_WIDTH = "45%";
 
 export type GanttUnallocatedGroup = {
     syllabusId: string;
@@ -153,12 +159,17 @@ export const GanttUnallocatedPanel: React.FC<GanttUnallocatedPanelProps> = ({
 
     return (
         <Box
+            aria-label="לא משובצים"
+            component="aside"
             sx={ {
                 position: "relative",
-                borderBottom: `1px solid ${theme.vars.palette.divider}`,
+                borderInlineStart: `1px solid ${theme.vars.palette.divider}`,
                 backgroundColor:
                     theme.vars.palette.background.paper,
                 flexShrink: 0,
+                display: "flex",
+                flexDirection: "column",
+                minHeight: 0,
             } }
         >
             <Box
@@ -168,10 +179,12 @@ export const GanttUnallocatedPanel: React.FC<GanttUnallocatedPanelProps> = ({
                 sx={ {
                     px: 2,
                     py: 1.5,
-                    // Viewport-relative so a ~735px laptop screen keeps most of the
-                    // timeline in view; the user can drag it taller (#819).
-                    maxHeight: UNALLOCATED_PANEL_MAX_HEIGHT,
-                    resize: "vertical",
+                    flexGrow: 1,
+                    minHeight: 0,
+                    width: UNALLOCATED_PANEL_WIDTH,
+                    minWidth: UNALLOCATED_PANEL_MIN_WIDTH,
+                    maxWidth: UNALLOCATED_PANEL_MAX_WIDTH,
+                    resize: "horizontal",
                     overflow: "auto",
                 } }
             >

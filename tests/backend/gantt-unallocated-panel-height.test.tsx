@@ -7,20 +7,32 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
     GanttUnallocatedPanel,
-    UNALLOCATED_PANEL_MAX_HEIGHT,
+    UNALLOCATED_PANEL_MIN_WIDTH,
+    UNALLOCATED_PANEL_WIDTH,
 } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttUnallocatedPanel";
 
 /**
- * On a ~735px-tall laptop viewport the unallocated panel took 200px and left
- * about four timeline rows (#819). It is now capped relative to the viewport
- * and can be dragged taller.
+ * On a ~735px-tall laptop viewport the unallocated panel took 200px above the
+ * rows and left about four of them (#819). It is now a side drawer beside the
+ * rows (#882), which costs width instead of rows and can be dragged wider.
  */
 
 afterEach(cleanup);
 
-describe("GanttUnallocatedPanel height (#819)", () => {
-    it("caps at the smaller of 200px and 22% of the viewport", () => {
-        expect(UNALLOCATED_PANEL_MAX_HEIGHT).toBe("min(200px, 22vh)");
+describe("GanttUnallocatedPanel side drawer (#819, #882)", () => {
+    it("is a fixed-width drawer that can grow wider, not a band above the rows", () => {
+        expect(UNALLOCATED_PANEL_WIDTH).toBeGreaterThanOrEqual(UNALLOCATED_PANEL_MIN_WIDTH);
+    });
+
+    it("is a labelled landmark", () => {
+        render(
+            <ThemeProvider theme={ createTheme({ cssVariables: true }) }>
+                <DndContext>
+                    <GanttUnallocatedPanel onReveal={ () => undefined } unallocatedBySyllabus={ [] } />
+                </DndContext>
+            </ThemeProvider>,
+        );
+        expect(screen.getByRole("complementary", { name: "לא משובצים" })).toBeTruthy();
     });
 
     it("renders the empty state with the gantt's own word for events", () => {
