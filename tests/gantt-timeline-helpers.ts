@@ -1,6 +1,6 @@
 import { Locator, Page } from "@playwright/test";
 
-import { createSyllabusViaUi, expect, expectNoOpenModal } from "./fixtures";
+import { createSyllabusViaUi, expect, expectNoOpenModal, selectGanttTab } from "./fixtures";
 
 /**
  * Shared steps for specs that build a curriculum from scratch and work on
@@ -36,10 +36,12 @@ export async function createAndSelectCurriculum(page: Page): Promise<void> {
 
 /** Adds `count` weeks to the currently-selected curriculum via the weeks tab. */
 export async function addWeeks(page: Page, count: number): Promise<void> {
-    await page.getByRole("tab", { name: "שבועות" }).click();
+    await selectGanttTab(page, "שבועות");
 
+    // The weeks tab mounts behind a table skeleton (#839); under load that
+    // alone outlasted the old 10s wait for the button (#897).
     const manageButton = page.getByRole("button", { name: "ניהול אורך קורס" });
-    await expect(manageButton).toBeVisible({ timeout: 10_000 });
+    await expect(manageButton).toBeVisible({ timeout: 30_000 });
 
     // The gantt renders its cards progressively (useProgressiveItemCount), so
     // the layout keeps shifting while skeletons are still being replaced.

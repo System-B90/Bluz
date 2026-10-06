@@ -1072,6 +1072,21 @@ export async function dragDndKit(
 }
 
 /**
+ * Selects a gantt view tab and confirms it took: a click that lands while the
+ * tab strip re-renders, or that the tab/URL sync overrides, leaves the old tab
+ * showing and the next locator waits out its whole timeout (#896, #897).
+ */
+export async function selectGanttTab(page: Page, name: string): Promise<void> {
+    const tab = page.getByRole("tab", { name, exact: true });
+    await baseExpect(async () => {
+        if ((await tab.getAttribute("aria-selected")) !== "true") {
+            await tab.click({ timeout: 5_000 });
+        }
+        await baseExpect(tab).toHaveAttribute("aria-selected", "true", { timeout: 2_000 });
+    }).toPass({ timeout: 20_000 });
+}
+
+/**
  * "סילבוס חדש" asks for a name before creating anything (#845): click it,
  * type the name, confirm. Resolves once the prompt has closed.
  */
