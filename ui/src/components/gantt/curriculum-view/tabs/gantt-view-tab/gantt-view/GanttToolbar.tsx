@@ -26,7 +26,9 @@ import { Command, useCommands } from "@system-b90/command-palette";
 import React, { useMemo, useState } from "react";
 
 import { COMMAND_GROUPS } from "@/components/app-commands/labels";
+import { GANTT_TAB_INDEX } from "@/components/app-onboarding/gantt/tabs";
 import { GanttFilterButton } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box/GanttFilterButton";
+import { useShowGanttTab } from "@/components/gantt/curriculum-view/gantt-tab-context";
 import { GanttLegend } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttLegend";
 
 const TOGGLE_SX = { gap: 0.5, px: 1.5 } as const;
@@ -92,7 +94,7 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({
     const commitSearch = () => onSearchChange(searchDraft);
 
     // Palette mirrors of the toolbar controls, calling the same setters.
-    const commands = useMemo<Array<Command>>(() => [
+    const toolbarCommands = useMemo<Array<Command>>(() => [
         {
             id: "gantt.timeline.view.toggle",
             title: weeklyView ? "תצוגה יומית" : "תצוגה שבועית",
@@ -160,6 +162,21 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({
         allCollapsed, expandAllSyllabuses, collapseAllSyllabuses,
         zoomedWeekId, setZoomedWeekId,
     ]);
+    // The timeline stays mounted, and these registered, after the user moves
+    // to another tab. Each brings the timeline back first, so the change is
+    // seen instead of landing on a hidden panel (#883).
+    const showTimeline = useShowGanttTab(GANTT_TAB_INDEX.timeline);
+    const commands = useMemo<Array<Command>>(
+        () => toolbarCommands.map((command) => ({
+            ...command,
+            run: () =>
+            {
+                showTimeline();
+                return command.run();
+            },
+        })),
+        [ toolbarCommands, showTimeline ],
+    );
     useCommands(commands);
 
     return (
