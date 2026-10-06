@@ -1036,7 +1036,10 @@ export async function dragDndKit(
     // Let the drag's own UI (overlays, extra drop zones) mount and settle.
     await page.waitForTimeout(150);
 
-    const targetBox = await target.boundingBox();
+    // Bounded: an unbounded boundingBox() waits for the locator to match, and
+    // a target whose text changes mid-drag (RootDropZone's does on hover)
+    // then hangs until the 120s test timeout with no clue why (#898).
+    const targetBox = await target.boundingBox({ timeout: 5_000 }).catch(() => null);
     if (!targetBox) {
         await page.mouse.up();
         throw new Error("dragDndKit: target is not rendered once dragging");
@@ -1060,7 +1063,7 @@ export async function dragDndKit(
     // so the target measured above may have moved by now: the course
     // builder's root drop zone moved ~56px and the release missed it (#771).
     // Re-measure and correct before letting go.
-    const settledBox = (await target.boundingBox()) ?? targetBox;
+    const settledBox = (await target.boundingBox({ timeout: 2_000 }).catch(() => null)) ?? targetBox;
     const end = pointInside(settledBox);
     await page.mouse.move(end.x, end.y, { steps: 5 });
     await page.mouse.move(end.x + 1, end.y + 1, { steps: 2 });
