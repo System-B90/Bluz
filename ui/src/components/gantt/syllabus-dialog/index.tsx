@@ -143,7 +143,15 @@ export function SyllabusDialog({
     if (!syllabusId) return null;
 
     return (
-        <Dialog fullWidth maxWidth="lg" onClose={closeHandler} open={open}>
+        // One layer at a time (#884): a module or event dialog opened from
+        // here replaces it on screen; it stays mounted and comes back on close.
+        <Dialog
+            fullWidth
+            keepMounted={covered}
+            maxWidth="lg"
+            onClose={closeHandler}
+            open={open ? !covered : null}
+        >
             <DialogTitle
                 sx={{
                     alignItems: "flex-start",

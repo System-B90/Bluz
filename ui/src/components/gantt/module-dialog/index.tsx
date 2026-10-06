@@ -462,9 +462,13 @@ function ModuleDialogInner({
     return (
         <Dialog
             fullWidth
+            // One layer at a time (#884): while the event dialog is open on
+            // top, this one hides instead of stacking, and stays mounted so
+            // closing the event brings it back as it was.
+            keepMounted={covered}
             maxWidth="xl"
             onClose={handleClose}
-            open={open}
+            open={open ? !covered : null}
             {...props}
             transitionDuration={{ enter: 200, exit: 100 }}
             TransitionProps={{ onEnter: () => startTransition(() => setIsContentReady(true)) }}
