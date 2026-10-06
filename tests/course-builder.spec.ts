@@ -188,7 +188,8 @@ test.describe("Course Builder settings tab", () => {
         });
         await menu.getByRole("menuitem", { name: courseBName, exact: true }).click();
 
-        await expect(page.getByText(`${courseAName} הועבר אל ${courseBName}`)).toBeVisible();
+        // The provider reports the outcome once the update settles.
+        await expect(page.getByText(`עדכון מסלול ${courseAName} הסתיים בהצלחה.`)).toBeVisible();
         await expect
             .poll(() => parentIdOf(request, courseA.id), { timeout: 10_000 })
             .toBe(courseB.id);

@@ -44,10 +44,18 @@ export function moveCourseLabel(course: Pick<Course, "name">): string
     return `העברת ${course.name}…`;
 }
 
-/** What a screen reader hears, and the snackbar shows, after a move. */
-export function movedCourseMessage(course: Pick<Course, "name">, target: null | Pick<Course, "name">): string
+/**
+ * Focuses a course's card once the tree has re-rendered after a move: the
+ * card that held focus may have just unmounted under a collapsed parent.
+ * CourseItem marks each card with `data-course-card`.
+ */
+export function focusCourseCard(courseId: CourseId): void
 {
-    return target
-        ? `${course.name} הועבר אל ${target.name}`
-        : `${course.name} הועבר לרמה העליונה`;
+    if (typeof window === "undefined") return;
+    window.requestAnimationFrame(() =>
+    {
+        document
+            .querySelector<HTMLElement>(`[data-course-card="${CSS.escape(courseId)}"]`)
+            ?.focus();
+    });
 }

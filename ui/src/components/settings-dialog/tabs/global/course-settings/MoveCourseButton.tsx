@@ -4,17 +4,17 @@ import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
+import ListSubheader from "@mui/material/ListSubheader";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Tooltip from "@mui/material/Tooltip";
-import { useSnackbar } from "notistack";
 import { MouseEvent, useCallback, useMemo, useState } from "react";
 
 import { Course } from "@/api-shared/types/course";
 import { useCourses } from "@/components/base/CoursesProvider";
 import {
+    focusCourseCard,
     moveCourseLabel,
-    movedCourseMessage,
     moveTargets,
 } from "@/components/settings-dialog/tabs/global/course-settings/course-moves";
 
@@ -32,7 +32,6 @@ export type MoveCourseButtonProps = {
 export function MoveCourseButton({ course, onOpenChange }: MoveCourseButtonProps)
 {
     const { courses, updateCoursePartial } = useCourses();
-    const { enqueueSnackbar } = useSnackbar();
     const [ anchorEl, setAnchorEl ] = useState<HTMLElement | null>(null);
     const targets = useMemo(() => moveTargets(courses, course), [ courses, course ]);
 
@@ -49,14 +48,17 @@ export function MoveCourseButton({ course, onOpenChange }: MoveCourseButtonProps
         setOpen(event.currentTarget);
     }, [ setOpen ]);
 
-    const moveTo = useCallback((target: Course | null) =>
+    const moveTo = useCallback(async (target: Course | null) =>
     {
         setOpen(null);
-        void updateCoursePartial(course.id, { parentId: target?.id ?? null });
-        // Snackbars are role="alert", so this is also the screen-reader
-        // announcement of the move.
-        enqueueSnackbar(movedCourseMessage(course, target), { variant: "success" });
-    }, [ course, enqueueSnackbar, setOpen, updateCoursePartial ]);
+        // The courses provider reports the outcome itself once the update
+        // settles (success, or failure plus rollback), in a role="alert"
+        // snackbar, so nothing is announced here ahead of the server.
+        await updateCoursePartial(course.id, { parentId: target?.id ?? null });
+        // Nested under a collapsed parent, this card (and the focused button)
+        // unmounts; keep keyboard focus on the tree instead of <body>.
+        focusCourseCard(target?.id ?? course.id);
+    }, [ course.id, setOpen, updateCoursePartial ]);
 
     const label = moveCourseLabel(course);
 
@@ -81,11 +83,11 @@ export function MoveCourseButton({ course, onOpenChange }: MoveCourseButtonProps
                 open={ Boolean(anchorEl) }
                 slotProps={ { list: { "aria-label": label } } }
             >
-                <MenuItem disabled sx={ { fontSize: "0.75rem", fontWeight: 700 } }>
+                <ListSubheader sx={ { fontSize: "0.75rem", fontWeight: 700, lineHeight: 2.5 } }>
                     העברה אל
-                </MenuItem>
+                </ListSubheader>
                 { course.parentId ? (
-                    <MenuItem onClick={ () => moveTo(null) } sx={ { fontSize: "0.8rem" } }>
+                    <MenuItem onClick={ () => void moveTo(null) } sx={ { fontSize: "0.8rem" } }>
                         <ListItemIcon><VerticalAlignTopIcon fontSize="small" /></ListItemIcon>
                         <ListItemText>הרמה העליונה</ListItemText>
                     </MenuItem>
@@ -94,7 +96,7 @@ export function MoveCourseButton({ course, onOpenChange }: MoveCourseButtonProps
                 { targets.map(({ course: target, depth }) => (
                     <MenuItem
                         key={ target.id }
-                        onClick={ () => moveTo(target) }
+                        onClick={ () => void moveTo(target) }
                         sx={ { paddingInlineStart: 2 + depth * 2, fontSize: "0.8rem" } }
                     >
                         { target.name }

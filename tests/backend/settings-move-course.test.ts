@@ -5,7 +5,6 @@ import { Course } from "@/api-shared/types/course";
 import { CourseUser } from "@/api-shared/types/hive";
 import { courseDndAccessibility } from "@/components/settings-dialog/tabs/global/course-settings/course-dnd-announcements";
 import {
-    movedCourseMessage,
     moveTargets,
     wouldNestInsideItself,
 } from "@/components/settings-dialog/tabs/global/course-settings/course-moves";
@@ -63,13 +62,6 @@ describe("moveTargets", () => {
     });
 });
 
-describe("movedCourseMessage", () => {
-    it("names the new parent, or the top level", () => {
-        expect(movedCourseMessage(tree[ 1 ], tree[ 4 ])).toBe("אפולו הועבר אל מבצר");
-        expect(movedCourseMessage(tree[ 1 ], null)).toBe("אפולו הועבר לרמה העליונה");
-    });
-});
-
 describe("courseDndAccessibility", () => {
     const instructors = [ { id: 7, display_name: "דנה" } ] as unknown as Array<CourseUser>;
     const { announcements, screenReaderInstructions } = courseDndAccessibility(tree, instructors);
@@ -77,8 +69,8 @@ describe("courseDndAccessibility", () => {
     const over = (data: object) => ({ data: { current: data } }) as unknown as Over;
 
     it("names dragged courses and instructors in Hebrew", () => {
-        expect(announcements.onDragStart({ active: active({ type: "COURSE", courseId: "a" }) })).toBe("אפולו הורם.");
-        expect(announcements.onDragStart({ active: active({ type: "INSTRUCTOR", instructorId: 7 }) })).toBe("דנה הורם.");
+        expect(announcements.onDragStart({ active: active({ type: "COURSE", courseId: "a" }) })).toBe("גרירה: אפולו.");
+        expect(announcements.onDragStart({ active: active({ type: "INSTRUCTOR", instructorId: 7 }) })).toBe("גרירה: דנה.");
     });
 
     it("names the drop target, including the root zone", () => {
@@ -86,7 +78,7 @@ describe("courseDndAccessibility", () => {
         expect(announcements.onDragOver({ active: a, over: over({ type: "COURSE_DROP", targetCourseId: "c" }) }))
             .toBe("אפולו מעל ספינקס.");
         expect(announcements.onDragEnd({ active: a, over: over({ type: "ROOT_DROP" }) }))
-            .toBe("אפולו שוחרר אל הרמה העליונה.");
+            .toBe("שחרור אפולו אל הרמה העליונה.");
         expect(announcements.onDragEnd({ active: a, over: null })).toContain("לא בוצע שינוי");
     });
 

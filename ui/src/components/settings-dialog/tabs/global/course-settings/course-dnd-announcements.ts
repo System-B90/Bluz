@@ -10,6 +10,7 @@ import {
 /**
  * Hebrew screen-reader text for the course builder's drag and drop (#885).
  * dnd-kit's defaults are English and name items by their internal ids.
+ * Worded without gendered verbs: the item may be a course or an instructor.
  */
 export function courseDndAccessibility(
     courses: ReadonlyArray<Course>,
@@ -42,22 +43,22 @@ export function courseDndAccessibility(
                 + "אפשר גם להשתמש בכפתור ההעברה של המסלול.",
         },
         announcements: {
-            onDragStart: ({ active }) => `${nameOfActive(active)} הורם.`,
+            onDragStart: ({ active }) => `גרירה: ${nameOfActive(active)}.`,
             onDragOver: ({ active, over }) =>
             {
                 const target = nameOfOver(over);
                 return target
                     ? `${nameOfActive(active)} מעל ${target}.`
-                    : `${nameOfActive(active)} אינו מעל יעד.`;
+                    : `${nameOfActive(active)}: לא מעל יעד.`;
             },
             onDragEnd: ({ active, over }) =>
             {
                 const target = nameOfOver(over);
                 return target
-                    ? `${nameOfActive(active)} שוחרר אל ${target}.`
-                    : `${nameOfActive(active)} שוחרר מחוץ ליעד. לא בוצע שינוי.`;
+                    ? `שחרור ${nameOfActive(active)} אל ${target}.`
+                    : `שחרור ${nameOfActive(active)} מחוץ ליעד. לא בוצע שינוי.`;
             },
-            onDragCancel: ({ active }) => `הגרירה בוטלה. ${nameOfActive(active)} נשאר במקומו.`,
+            onDragCancel: ({ active }) => `הגרירה של ${nameOfActive(active)} בוטלה, ללא שינוי.`,
         },
     };
 }
