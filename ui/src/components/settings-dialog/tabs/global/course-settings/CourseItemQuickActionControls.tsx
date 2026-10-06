@@ -5,8 +5,10 @@ import Box from "@mui/material/Box";
 import Collapse from "@mui/material/Collapse";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
+import { useState } from "react";
 
 import { Course } from "@/api-shared/types/course";
+import { MoveCourseButton } from "@/components/settings-dialog/tabs/global/course-settings/MoveCourseButton";
 
 export type CourseItemQuickActionControlsProps = {
     course: Course;
@@ -26,8 +28,10 @@ export function CourseItemQuickActionControls({
     deleteCourse
 }: CourseItemQuickActionControlsProps)
 {
+    const [ isMoveMenuOpen, setIsMoveMenuOpen ] = useState(false);
+
     return (
-        <Collapse in={ isHovered || isMenuOpen } orientation="horizontal">
+        <Collapse in={ isHovered || isMenuOpen || isMoveMenuOpen } orientation="horizontal">
             <Box
                 sx={ { display: "flex", alignItems: "center", gap: 0.5 } }
             >
@@ -62,6 +66,9 @@ export function CourseItemQuickActionControls({
                             <PersonAddIcon className="text-[18px]" />
                         </IconButton>
                     </Tooltip>
+
+                    {/* Move without dragging (#885) */ }
+                    <MoveCourseButton course={ course } onOpenChange={ setIsMoveMenuOpen } />
 
                     {/* Delete Course */ }
                     <Tooltip title="מחיקת מסלול">

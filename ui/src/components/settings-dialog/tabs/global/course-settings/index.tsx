@@ -18,7 +18,7 @@ import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Course } from "@/api-shared/types/course";
@@ -27,6 +27,8 @@ import { useCourses } from "@/components/base/CoursesProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { SettingsAddButton } from "@/components/settings-dialog/tabs/global/common/AddButton";
 import { iconBadgeSx, settingsCardSx } from "@/components/settings-dialog/tabs/global/common/styles";
+import { courseDndAccessibility } from "@/components/settings-dialog/tabs/global/course-settings/course-dnd-announcements";
+import { wouldNestInsideItself } from "@/components/settings-dialog/tabs/global/course-settings/course-moves";
 import { CourseItem } from "@/components/settings-dialog/tabs/global/course-settings/CourseItem";
 import
 {
@@ -286,25 +288,7 @@ export function CourseSettings()
 
                     if (draggedId === targetId) return;
 
-                    // Cycle Detection: check if target is a descendant of dragged course
-                    const hasCycle = (
-                        dragId: string,
-                        destId: string,
-                    ): boolean =>
-                    {
-                        let current = courses.find((c) => c.id === destId);
-                        while (current)
-                        {
-                            if (current.parentId === dragId) return true;
-                            const parentId = current.parentId;
-                            current = parentId
-                                ? courses.find((c) => c.id === parentId)
-                                : undefined;
-                        }
-                        return false;
-                    };
-
-                    if (hasCycle(draggedId, targetId))
+                    if (wouldNestInsideItself(courses, draggedId, targetId))
                     {
                         enqueueSnackbar(
                             "שגיאה: לא ניתן להכניס מסלול אב לתוך אחד מצאצאיו!",
@@ -330,8 +314,14 @@ export function CourseSettings()
             !c.parentId || !courses.some((parent) => parent.id === c.parentId),
     );
 
+    const accessibility = useMemo(
+        () => courseDndAccessibility(courses, instructors),
+        [ courses, instructors ],
+    );
+
     return (
         <DndContext
+            accessibility={ accessibility }
             collisionDetection={ pointerFirstCollision }
             measuring={ COURSE_DND_MEASURING }
             onDragCancel={ handleDragCancel }
