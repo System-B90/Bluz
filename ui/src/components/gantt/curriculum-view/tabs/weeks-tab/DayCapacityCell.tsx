@@ -13,18 +13,23 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
-import { KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+    KeyboardEvent,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
 
-import
-{
+import {
     GanttDayId,
     GanttDayIndex,
     getDayNameDisplay,
 } from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { StudentLoadTooltip } from "@/components/gantt/curriculum-view/components/StudentLoadTooltip";
-import
-{
+import {
     CapacityStatus,
     formatMinutesAsTimeInput,
     formatShortDate,
@@ -32,8 +37,15 @@ import
     getDayDate,
     parseTimeInputToMinutes,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
-import { DayStudentLoad, StudentPath } from "@/components/gantt/curriculum-view/student-load";
-import { dayHoursInputLabel, dayHoursStepLabel, REVEAL_ON_HOVER_OR_FOCUS } from "@/components/gantt/curriculum-view/tabs/weeks-tab/day-cell-labels";
+import {
+    DayStudentLoad,
+    StudentPath,
+} from "@/components/gantt/curriculum-view/student-load";
+import {
+    dayHoursInputLabel,
+    dayHoursStepLabel,
+    REVEAL_ON_HOVER_OR_FOCUS,
+} from "@/components/gantt/curriculum-view/tabs/weeks-tab/day-cell-labels";
 import { getDayChipLabel } from "@/components/gantt/curriculum-view/tabs/weeks-tab/day-chip-label";
 import { useDaySelection } from "@/components/gantt/curriculum-view/tabs/weeks-tab/DaySelectionContext";
 import { useCurriculumState } from "@/components/gantt/state/context";
@@ -137,25 +149,29 @@ export function DayCapacityCell({
     const day = useCurriculumDay(dayId);
     const { updateDay, updateWeek } = useWeekActions();
     const week = day ? state.weeks[day.weekId] : undefined;
-    const { extendTo, selectedDayIds } = useDaySelection();
+    const { extendTo, selectedDayIds, toggle } = useDaySelection();
     const isSelected = selectedDayIds.has(dayId);
 
-    // Shift-click anywhere on the cell joins it to the bulk-edit selection
-    // (#476). Only Shift-click: a plain click still belongs to the inputs the
-    // cell is made of.
+    // Shift-click extends a range, Ctrl/Cmd-click toggles the single day
+    // (#476). A plain click still belongs to the inputs the cell is made of.
     const handleShiftClick = useCallback(
         (event: React.MouseEvent) => {
+            if (event.ctrlKey || event.metaKey) {
+                event.stopPropagation();
+                toggle([dayId]);
+                return;
+            }
             if (!event.shiftKey) return;
             event.stopPropagation();
             extendTo(dayId);
         },
-        [dayId, extendTo],
+        [dayId, extendTo, toggle],
     );
 
     // Focus and text selection are decided on mousedown, so suppressing them
     // has to happen there — by click time the input underneath already has both.
     const handleShiftMouseDown = useCallback((event: React.MouseEvent) => {
-        if (!event.shiftKey) return;
+        if (!event.shiftKey && !event.ctrlKey && !event.metaKey) return;
         event.preventDefault();
         event.stopPropagation();
     }, []);
@@ -196,7 +212,9 @@ export function DayCapacityCell({
     useEffect(() => {
         if (!isTimeFocused) {
             // eslint-disable-next-line react-hooks/set-state-in-effect -- Sync local state from server prop when field is not focused
-            setLocalTime(formatMinutesAsTimeInput(day?.totalWorkingMinutes ?? 0));
+            setLocalTime(
+                formatMinutesAsTimeInput(day?.totalWorkingMinutes ?? 0),
+            );
         }
     }, [day?.totalWorkingMinutes, isTimeFocused]);
 
@@ -397,14 +415,16 @@ export function DayCapacityCell({
                 transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
                 ...(isSelected
                     ? {
-                        outline: "2px solid",
-                        outlineColor: "primary.main",
-                        outlineOffset: "-2px",
-                        bgcolor: alpha(theme.palette.primary.main, 0.16),
-                    }
+                          outline: "2px solid",
+                          outlineColor: "primary.main",
+                          outlineOffset: "-2px",
+                          bgcolor: alpha(theme.palette.primary.main, 0.16),
+                      }
                     : {}),
                 "&:hover": {
-                    bgcolor: backgroundColor ? alpha(backgroundColor, 0.18) : "action.hover",
+                    bgcolor: backgroundColor
+                        ? alpha(backgroundColor, 0.18)
+                        : "action.hover",
                 },
             }}
         >
@@ -419,7 +439,11 @@ export function DayCapacityCell({
                         sx={{ position: "relative" }}
                     >
                         <IconButton
-                            aria-label={dayHoursStepLabel("down", dayName, dateLabel)}
+                            aria-label={dayHoursStepLabel(
+                                "down",
+                                dayName,
+                                dateLabel,
+                            )}
                             className="cell-control-btn"
                             onClick={() => adjustMinutes(-60)}
                             size="small"
@@ -454,22 +478,38 @@ export function DayCapacityCell({
                                 // marks it as a duration (#813).
                                 input: {
                                     endAdornment: (
-                                        <InputAdornment position="end" sx={{ marginInlineStart: 0, marginInlineEnd: 0.5 }}>
-                                            <Typography color="text.secondary" variant="caption">
+                                        <InputAdornment
+                                            position="end"
+                                            sx={{
+                                                marginInlineStart: 0,
+                                                marginInlineEnd: 0.5,
+                                            }}
+                                        >
+                                            <Typography
+                                                color="text.secondary"
+                                                variant="caption"
+                                            >
                                                 ש׳
                                             </Typography>
                                         </InputAdornment>
                                     ),
                                 },
                                 htmlInput: {
-                                    "aria-label": dayHoursInputLabel(dayName, dateLabel),
+                                    "aria-label": dayHoursInputLabel(
+                                        dayName,
+                                        dateLabel,
+                                    ),
                                     inputMode: "numeric",
                                     style: {
                                         fontFamily: "monospace",
                                         textAlign: "center",
                                         fontWeight: 700,
-                                        fontSize: isCompact ? "0.75rem" : "0.85rem",
-                                        padding: isCompact ? "0px 4px" : "4px 8px",
+                                        fontSize: isCompact
+                                            ? "0.75rem"
+                                            : "0.85rem",
+                                        padding: isCompact
+                                            ? "0px 4px"
+                                            : "4px 8px",
                                     },
                                 },
                             }}
@@ -494,7 +534,11 @@ export function DayCapacityCell({
                             value={localTime}
                         />
                         <IconButton
-                            aria-label={dayHoursStepLabel("up", dayName, dateLabel)}
+                            aria-label={dayHoursStepLabel(
+                                "up",
+                                dayName,
+                                dateLabel,
+                            )}
                             className="cell-control-btn"
                             onClick={() => adjustMinutes(60)}
                             size="small"
@@ -525,9 +569,13 @@ export function DayCapacityCell({
                             color={getStatusColor(status)}
                             data-testid="day-capacity-chip"
                             icon={
-                                chipLabel.over || hasLoadIssues
-                                    ? <WarningAmberIcon color={chipLabel.over ? "error" : "warning"} />
-                                    : undefined
+                                chipLabel.over || hasLoadIssues ? (
+                                    <WarningAmberIcon
+                                        color={
+                                            chipLabel.over ? "error" : "warning"
+                                        }
+                                    />
+                                ) : undefined
                             }
                             label={chipLabel.short}
                             size="smaller"
@@ -596,11 +644,11 @@ export function DayCapacityCell({
                             },
                             ...(!hasComment && !isCommentFocused
                                 ? {
-                                    display: "none",
-                                    ".group\\/cell:hover &": {
-                                        display: "block",
-                                    },
-                                }
+                                      display: "none",
+                                      ".group\\/cell:hover &": {
+                                          display: "block",
+                                      },
+                                  }
                                 : {}),
                         }}
                     >

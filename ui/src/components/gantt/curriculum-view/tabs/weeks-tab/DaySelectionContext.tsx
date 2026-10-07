@@ -20,12 +20,19 @@ type DaySelectionState = {
      * anchor itself clears the selection.
      */
     extendTo: (dayId: GanttDayId) => void;
+    /**
+     * Ctrl/Cmd-click: adds the given days to the selection, or removes them
+     * when all are already selected. Lets non-adjacent days and whole weeks
+     * be combined. The last toggled day becomes the Shift anchor.
+     */
+    toggle: (dayIds: ReadonlyArray<GanttDayId>) => void;
     clear: () => void;
 };
 
 const DaySelectionContext = createContext<DaySelectionState>({
     selectedDayIds: new Set<GanttDayId>(),
     extendTo: () => {},
+    toggle: () => {},
     clear: () => {},
 });
 
@@ -44,9 +51,9 @@ export function DaySelectionProvider({
     children: React.ReactNode;
     orderedDayIds: Array<GanttDayId>;
 }) {
-    const [selectedDayIds, setSelectedDayIds] = useState<ReadonlySet<GanttDayId>>(
-        new Set<GanttDayId>(),
-    );
+    const [selectedDayIds, setSelectedDayIds] = useState<
+        ReadonlySet<GanttDayId>
+    >(new Set<GanttDayId>());
     const anchorRef = useRef<GanttDayId | null>(null);
 
     const clear = useCallback(() => {
@@ -77,14 +84,31 @@ export function DaySelectionProvider({
             }
 
             const [start, end] = from <= to ? [from, to] : [to, from];
-            setSelectedDayIds(new Set(orderedDayIds.slice(start, end + 1)));
+            setSelectedDayIds(
+                (prev) =>
+                    new Set([...prev, ...orderedDayIds.slice(start, end + 1)]),
+            );
         },
         [orderedDayIds],
     );
 
+    const toggle = useCallback((dayIds: ReadonlyArray<GanttDayId>) => {
+        if (dayIds.length === 0) return;
+        anchorRef.current = dayIds[dayIds.length - 1];
+        setSelectedDayIds((prev) => {
+            const next = new Set(prev);
+            const allSelected = dayIds.every((dayId) => prev.has(dayId));
+            for (const dayId of dayIds) {
+                if (allSelected) next.delete(dayId);
+                else next.add(dayId);
+            }
+            return next;
+        });
+    }, []);
+
     const value = useMemo(
-        () => ({ clear, extendTo, selectedDayIds }),
-        [clear, extendTo, selectedDayIds],
+        () => ({ clear, extendTo, selectedDayIds, toggle }),
+        [clear, extendTo, selectedDayIds, toggle],
     );
 
     return (
