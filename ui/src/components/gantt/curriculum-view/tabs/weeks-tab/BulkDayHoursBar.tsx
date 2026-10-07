@@ -88,7 +88,6 @@ export function BulkDayHoursBar() {
                     bottom: 16,
                     insetInline: 0,
                     zIndex: (theme) => theme.zIndex.snackbar - 1,
-                    zIndex: 9,
                     display: "flex",
                     justifyContent: "center",
                     pointerEvents: "none",
@@ -134,7 +133,7 @@ export function BulkDayHoursBar() {
                             size="small"
                             variant="contained"
                         >
-                            החלה
+                        החלה
                         </Button>
                         <IconButton
                             aria-label="ביטול הבחירה"

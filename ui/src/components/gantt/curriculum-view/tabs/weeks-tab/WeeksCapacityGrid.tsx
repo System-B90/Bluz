@@ -165,7 +165,6 @@ function WeekRow({
         <TableRow hover>
             <TableCell
                 onClick={handleWeekClick}
-                title="Ctrl+לחיצה לבחירת השבוע"
                 sx={{
                     cursor: "pointer",
                     outline: isWeekSelected ? "2px solid" : "none",
@@ -182,6 +181,7 @@ function WeekRow({
                     pb: isCompact ? 0.15 : 0.75,
                     px: 1.25,
                 }}
+                title="Ctrl+לחיצה לבחירת השבוע"
             >
                 <Typography
                     fontWeight={800}
@@ -203,8 +203,8 @@ function WeekRow({
                             weekStatus === "error"
                                 ? "error"
                                 : weekStatus === "warning"
-                                  ? "warning"
-                                  : "primary"
+                                    ? "warning"
+                                    : "primary"
                         }
                         label={`${formatHoursLabel(scheduledMinutes)} / ${formatHoursLabel(weekTotalMinutes)}`}
                         size="smaller"

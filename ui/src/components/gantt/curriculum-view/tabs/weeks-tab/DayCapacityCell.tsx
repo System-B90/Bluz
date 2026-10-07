@@ -13,23 +13,18 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
-import {
-    KeyboardEvent,
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
-} from "react";
+import { KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import {
+import
+{
     GanttDayId,
     GanttDayIndex,
     getDayNameDisplay,
 } from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { StudentLoadTooltip } from "@/components/gantt/curriculum-view/components/StudentLoadTooltip";
-import {
+import
+{
     CapacityStatus,
     formatMinutesAsTimeInput,
     formatShortDate,
@@ -37,15 +32,8 @@ import {
     getDayDate,
     parseTimeInputToMinutes,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
-import {
-    DayStudentLoad,
-    StudentPath,
-} from "@/components/gantt/curriculum-view/student-load";
-import {
-    dayHoursInputLabel,
-    dayHoursStepLabel,
-    REVEAL_ON_HOVER_OR_FOCUS,
-} from "@/components/gantt/curriculum-view/tabs/weeks-tab/day-cell-labels";
+import { DayStudentLoad, StudentPath } from "@/components/gantt/curriculum-view/student-load";
+import { dayHoursInputLabel, dayHoursStepLabel, REVEAL_ON_HOVER_OR_FOCUS } from "@/components/gantt/curriculum-view/tabs/weeks-tab/day-cell-labels";
 import { getDayChipLabel } from "@/components/gantt/curriculum-view/tabs/weeks-tab/day-chip-label";
 import { useDaySelection } from "@/components/gantt/curriculum-view/tabs/weeks-tab/DaySelectionContext";
 import { useCurriculumState } from "@/components/gantt/state/context";
@@ -212,9 +200,7 @@ export function DayCapacityCell({
     useEffect(() => {
         if (!isTimeFocused) {
             // eslint-disable-next-line react-hooks/set-state-in-effect -- Sync local state from server prop when field is not focused
-            setLocalTime(
-                formatMinutesAsTimeInput(day?.totalWorkingMinutes ?? 0),
-            );
+            setLocalTime(formatMinutesAsTimeInput(day?.totalWorkingMinutes ?? 0));
         }
     }, [day?.totalWorkingMinutes, isTimeFocused]);
 
@@ -415,16 +401,14 @@ export function DayCapacityCell({
                 transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
                 ...(isSelected
                     ? {
-                          outline: "2px solid",
-                          outlineColor: "primary.main",
-                          outlineOffset: "-2px",
-                          bgcolor: alpha(theme.palette.primary.main, 0.16),
-                      }
+                        outline: "2px solid",
+                        outlineColor: "primary.main",
+                        outlineOffset: "-2px",
+                        bgcolor: alpha(theme.palette.primary.main, 0.16),
+                    }
                     : {}),
                 "&:hover": {
-                    bgcolor: backgroundColor
-                        ? alpha(backgroundColor, 0.18)
-                        : "action.hover",
+                    bgcolor: backgroundColor ? alpha(backgroundColor, 0.18) : "action.hover",
                 },
             }}
         >
@@ -439,11 +423,7 @@ export function DayCapacityCell({
                         sx={{ position: "relative" }}
                     >
                         <IconButton
-                            aria-label={dayHoursStepLabel(
-                                "down",
-                                dayName,
-                                dateLabel,
-                            )}
+                            aria-label={dayHoursStepLabel("down", dayName, dateLabel)}
                             className="cell-control-btn"
                             onClick={() => adjustMinutes(-60)}
                             size="small"
@@ -478,38 +458,22 @@ export function DayCapacityCell({
                                 // marks it as a duration (#813).
                                 input: {
                                     endAdornment: (
-                                        <InputAdornment
-                                            position="end"
-                                            sx={{
-                                                marginInlineStart: 0,
-                                                marginInlineEnd: 0.5,
-                                            }}
-                                        >
-                                            <Typography
-                                                color="text.secondary"
-                                                variant="caption"
-                                            >
+                                        <InputAdornment position="end" sx={{ marginInlineStart: 0, marginInlineEnd: 0.5 }}>
+                                            <Typography color="text.secondary" variant="caption">
                                                 ש׳
                                             </Typography>
                                         </InputAdornment>
                                     ),
                                 },
                                 htmlInput: {
-                                    "aria-label": dayHoursInputLabel(
-                                        dayName,
-                                        dateLabel,
-                                    ),
+                                    "aria-label": dayHoursInputLabel(dayName, dateLabel),
                                     inputMode: "numeric",
                                     style: {
                                         fontFamily: "monospace",
                                         textAlign: "center",
                                         fontWeight: 700,
-                                        fontSize: isCompact
-                                            ? "0.75rem"
-                                            : "0.85rem",
-                                        padding: isCompact
-                                            ? "0px 4px"
-                                            : "4px 8px",
+                                        fontSize: isCompact ? "0.75rem" : "0.85rem",
+                                        padding: isCompact ? "0px 4px" : "4px 8px",
                                     },
                                 },
                             }}
@@ -534,11 +498,7 @@ export function DayCapacityCell({
                             value={localTime}
                         />
                         <IconButton
-                            aria-label={dayHoursStepLabel(
-                                "up",
-                                dayName,
-                                dateLabel,
-                            )}
+                            aria-label={dayHoursStepLabel("up", dayName, dateLabel)}
                             className="cell-control-btn"
                             onClick={() => adjustMinutes(60)}
                             size="small"
@@ -569,13 +529,9 @@ export function DayCapacityCell({
                             color={getStatusColor(status)}
                             data-testid="day-capacity-chip"
                             icon={
-                                chipLabel.over || hasLoadIssues ? (
-                                    <WarningAmberIcon
-                                        color={
-                                            chipLabel.over ? "error" : "warning"
-                                        }
-                                    />
-                                ) : undefined
+                                chipLabel.over || hasLoadIssues
+                                    ? <WarningAmberIcon color={chipLabel.over ? "error" : "warning"} />
+                                    : undefined
                             }
                             label={chipLabel.short}
                             size="smaller"
@@ -644,11 +600,11 @@ export function DayCapacityCell({
                             },
                             ...(!hasComment && !isCommentFocused
                                 ? {
-                                      display: "none",
-                                      ".group\\/cell:hover &": {
-                                          display: "block",
-                                      },
-                                  }
+                                    display: "none",
+                                    ".group\\/cell:hover &": {
+                                        display: "block",
+                                    },
+                                }
                                 : {}),
                         }}
                     >
