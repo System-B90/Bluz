@@ -49,6 +49,39 @@ test.describe("Gantt dialogs a11y", () => {
         await expect(page.getByRole("button", { name: "מחיקת המערך", exact: true })).toBeVisible();
     });
 
+    test("one dialog layer shows at a time; closing the top brings back the one under it (#884)", async ({ page, request }) => {
+        const f = await buildFixture(request);
+        // Syllabus, module and event all open, in that order.
+        await gotoGantt(page, `gc=${f.curriculumId}&gs=${f.syllabusId}&gm=${f.moduleId}&ge=${f.eventId}`);
+
+        const visibleDialogs = page.locator("[role=dialog]:visible");
+        await expect(page.getByRole("button", { name: "מחיקת המופע", exact: true })).toBeVisible({ timeout: 30_000 });
+        await expect(visibleDialogs).toHaveCount(1);
+        await test.info().attach("single-dialog-event-layer", { body: await page.screenshot(), contentType: "image/png" });
+
+        await page.keyboard.press("Escape");
+        await expect(page.getByRole("button", { name: "מחיקת המערך", exact: true })).toBeVisible();
+        await expect(visibleDialogs).toHaveCount(1);
+
+        await page.keyboard.press("Escape");
+        await expect(page.getByRole("button", { name: "הסרה מהגאנט", exact: true })).toBeVisible();
+        await expect(visibleDialogs).toHaveCount(1);
+    });
+
+    test("the event's syllabus crumb goes to the syllabus, not the module under it (#884)", async ({ page, request }) => {
+        const f = await buildFixture(request);
+        // An event link opens its module underneath (no syllabus layer yet).
+        await gotoGantt(page, `gc=${f.curriculumId}&ge=${f.eventId}`);
+        await expect(page.getByRole("button", { name: "מחיקת המופע", exact: true })).toBeVisible({ timeout: 30_000 });
+
+        await page.getByRole("dialog").getByRole("link", { name: /-syllabus-/ }).click();
+
+        const visibleDialogs = page.locator("[role=dialog]:visible");
+        await expect(page.getByRole("button", { name: "הסרה מהגאנט", exact: true })).toBeVisible();
+        await expect(visibleDialogs).toHaveCount(1);
+        await expect(page.getByRole("button", { name: "מחיקת המערך", exact: true })).toHaveCount(0);
+    });
+
     test("syllabus dialog: autosave status and the unlink button's name (#836, #837)", async ({ page, request }) => {
         const f = await buildFixture(request);
         await gotoGantt(page, `gc=${f.curriculumId}&gs=${f.syllabusId}`);

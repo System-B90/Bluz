@@ -47,7 +47,7 @@ function EventDialogInner({
 }: Omit<EventDialogProps, "curriculumId">)
 {
     const { deleteEvent } = useModuleEventActions();
-    const { openModuleDialog, openSyllabusDialog } = useCurriculumProviderActions();
+    const { closeModuleDialog, openModuleDialog, openSyllabusDialog } = useCurriculumProviderActions();
 
     const [ isContentReady, setIsContentReady ] = useState(false);
     const [ moveDialogOpen, setMoveDialogOpen ] = useState(false);
@@ -74,8 +74,10 @@ function EventDialogInner({
     {
         if (!syllabusId) return;
         setOpen(false);
+        // The module layer under this one would otherwise surface instead.
+        closeModuleDialog();
         openSyllabusDialog(syllabusId);
-    }, [ syllabusId, setOpen, openSyllabusDialog ]);
+    }, [ syllabusId, setOpen, closeModuleDialog, openSyllabusDialog ]);
 
     // A gantt delete has no undo, so one stray click on מחיקה used to
     // drop the event — and its placement, constraints and shuffles — for

@@ -61,8 +61,9 @@ export type ModuleDialogProps = {
     /** When set, the matching event row is scrolled into view and highlighted. */
     focusEventId?: GanttEventId | null;
     /**
-     * Another gantt dialog (the event dialog) is open on top. Its delete is
-     * hidden so only the top layer's delete is ever on screen (#834).
+     * Another gantt dialog (the event dialog) is open on top. This dialog
+     * then hides entirely and stays mounted (#884), which also keeps its
+     * delete off screen (#834).
      */
     covered?: boolean;
 } & DialogProps;
@@ -459,12 +460,19 @@ function ModuleDialogInner({
 
     if (syllabusId === null || moduleId === null) return null;
 
+    // Only the top layer shows (#884); a covered dialog hides but stays mounted.
+    const isTopLayer: boolean = open && !covered;
+
     return (
         <Dialog
             fullWidth
+            // One layer at a time (#884): while the event dialog is open on
+            // top, this one hides instead of stacking, and stays mounted so
+            // closing the event brings it back as it was.
+            keepMounted={covered}
             maxWidth="xl"
             onClose={handleClose}
-            open={open}
+            open={isTopLayer}
             {...props}
             transitionDuration={{ enter: 200, exit: 100 }}
             TransitionProps={{ onEnter: () => startTransition(() => setIsContentReady(true)) }}
