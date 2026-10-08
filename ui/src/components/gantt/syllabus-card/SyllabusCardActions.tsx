@@ -11,7 +11,7 @@ import { useCallback, useMemo } from "react";
 import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
-import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { formatHours } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useHoursFormat } from "@/components/gantt/curriculum-view/use-hours-format";
 import {
     useCurriculumProviderActions,
@@ -103,7 +103,7 @@ export function SyllabusCardActions({
                                         <div key={name}>
                                             {name}
                                             {minutes !== undefined
-                                                ? ` · ${formatHoursLabel(minutes)}`
+                                                ? ` · ${formatHours(minutes)}`
                                                 : ""}
                                             {description ? ` — ${description}` : ""}
                                         </div>

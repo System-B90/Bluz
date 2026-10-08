@@ -18,7 +18,7 @@ import {
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
 import { useCourses } from "@/components/base/CoursesProvider";
-import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { formatHours } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { MODULE_ANCHOR_PREFIX } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
 import { calculateStudentModuleMinutes } from "@/components/gantt/curriculum-view/student-load";
 import { useHoursFormat } from "@/components/gantt/curriculum-view/use-hours-format";
@@ -110,7 +110,7 @@ export function ModuleRow({
             </TableCell>
             <TableCell>
                 {minimumRequiredTime !== undefined ? (
-                    formatHoursLabel(minimumRequiredTime)
+                    formatHours(minimumRequiredTime)
                 ) : (
                     <CircularProgress size="1rem" />
                 )}

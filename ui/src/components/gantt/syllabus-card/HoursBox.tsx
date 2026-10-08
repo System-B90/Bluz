@@ -6,7 +6,7 @@ import { useMemo } from "react";
 
 import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
 import { useCourses } from "@/components/base/CoursesProvider";
-import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { formatHours } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import {
     calculateStudentMinutes,
     calculateStudentSyllabusMinutes,
@@ -138,7 +138,7 @@ export function HoursBox({ syllabusId, ...props }: HoursBoxProps) {
                             fontWeight="bold"
                             variant="body2"
                         >
-                            {formatHoursLabel(scheduledHours)}
+                            {formatHours(scheduledHours)}
                         </Typography>
                     </Box>
                     <Box
@@ -159,7 +159,7 @@ export function HoursBox({ syllabusId, ...props }: HoursBoxProps) {
                             fontWeight="bold"
                             variant="body2"
                         >
-                            {formatHoursLabel(minimumRequiredHours)}
+                            {formatHours(minimumRequiredHours)}
                         </Typography>
                     </Box>
                     <Box
@@ -180,7 +180,7 @@ export function HoursBox({ syllabusId, ...props }: HoursBoxProps) {
                             fontWeight="bold"
                             variant="body2"
                         >
-                            {formatHoursLabel(tentativeHours)}
+                            {formatHours(tentativeHours)}
                         </Typography>
                     </Box>
                 </Stack>

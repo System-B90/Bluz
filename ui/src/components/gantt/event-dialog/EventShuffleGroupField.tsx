@@ -18,7 +18,7 @@ import {
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
-import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { formatHours } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import {
     useCurriculumProviderActions,
     useCurriculumState,
@@ -207,7 +207,7 @@ export function EventShuffleGroupField({
                                 variant="outlined"
                             />
                             <Typography color="text.secondary" variant="body2">
-                                {formatHoursLabel(member.minimumDuration)}
+                                {formatHours(member.minimumDuration, { unit: true })}
                             </Typography>
                             {member.id === eventId ? (
                                 <Typography color="text.secondary" variant="body2">

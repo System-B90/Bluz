@@ -11,7 +11,7 @@ import
     isRecurrenceSatisfied,
 } from "@/api-shared/gantt/recurrence";
 import { EventRecurrence, getAllowedDayIndices } from "@/api-shared/types/gantt/models";
-import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { formatHours } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
 import { getFlashRowSx } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/flash";
 import
@@ -124,12 +124,12 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
     // with its allotted time.
     const timeLabel =
         event && (singleWeekDayZoom || span?.multiDay || zeroAllotted)
-            ? formatHoursLabel(anchorMinutes ?? event.minimumDuration ?? 0)
+            ? formatHours(anchorMinutes ?? event.minimumDuration ?? 0, { unit: true })
             : undefined;
 
     // Weekly columns are wide enough to always carry the allotted time.
     const weeklyTimeLabel = event
-        ? formatHoursLabel(anchorMinutes ?? event.minimumDuration ?? 0)
+        ? formatHours(anchorMinutes ?? event.minimumDuration ?? 0, { unit: true })
         : undefined;
 
     const recurrence = event?.recurrence ?? EventRecurrence.None;

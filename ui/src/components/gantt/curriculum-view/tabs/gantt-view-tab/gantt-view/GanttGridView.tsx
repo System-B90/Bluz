@@ -62,7 +62,7 @@ const phaseSx = (phase: RowPhase) =>
         };
 
 /** Two digits so a quarter hour reads 0.75, not 0.8. */
-const hours = (minutes: number) => formatHours(minutes, 2);
+const hours = (minutes: number) => formatHours(minutes, { maximumFractionDigits: 2 });
 const hoursOrBlank = (minutes: number) => (minutes ? hours(minutes) : "");
 /** Opaque error tint: the tint layered over paper, so sticky cells hide what scrolls beneath. */
 const errorTint = {

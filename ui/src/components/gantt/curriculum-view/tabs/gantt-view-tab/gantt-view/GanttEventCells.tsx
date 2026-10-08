@@ -6,7 +6,7 @@ import {
     GanttDayIndex,
     GanttWeek,
 } from "@/api-shared/types/gantt/models";
-import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { formatHours } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { GanttCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttCell";
 import { GanttBlockPayload } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 
@@ -225,7 +225,7 @@ export function buildWeeklyEventCells(
                 blockPayload={ blockPayload }
                 blockTimeLabel={
                     isSplitPart
-                        ? formatHoursLabel(splitPartMinutesByDay!.get(splitPartDayId)!)
+                        ? formatHours(splitPartMinutesByDay!.get(splitPartDayId)!, { unit: true })
                         : isExplicitlyMappedHere
                             ? timeLabel
                             : undefined
@@ -388,7 +388,7 @@ export function buildDailyEventCells(
                     blockPayload={ blockPayload }
                     blockTimeLabel={
                         isSplitPart
-                            ? formatHoursLabel(splitMinutes)
+                            ? formatHours(splitMinutes, { unit: true })
                             : isExplicitlyMappedHere
                                 ? timeLabel
                                 : undefined

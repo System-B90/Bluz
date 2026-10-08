@@ -27,7 +27,7 @@ import {
 } from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import {
-    formatHoursLabel,
+    formatHours,
     formatWeekDateRange,
     getCapacityStatus,
     getWeekDateRange,
@@ -206,7 +206,7 @@ function WeekRow({
                                     ? "warning"
                                     : "primary"
                         }
-                        label={`${formatHoursLabel(scheduledMinutes)} / ${formatHoursLabel(weekTotalMinutes)}`}
+                        label={`${formatHours(scheduledMinutes, { unit: true })} / ${formatHours(weekTotalMinutes, { unit: true })}`}
                         size="smaller"
                         sx={{ fontWeight: 700 }}
                         variant="outlined"

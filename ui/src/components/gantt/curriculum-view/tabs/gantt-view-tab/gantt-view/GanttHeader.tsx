@@ -13,7 +13,7 @@ import { getDayNameDisplay } from "@/api-shared/types/gantt/models";
 import { StudentLoadTooltip } from "@/components/gantt/curriculum-view/components/StudentLoadTooltip";
 import {
     CapacityStatus,
-    formatHoursLabel,
+    formatHours,
     formatShortDate,
     formatWeekDateRange,
     getCapacityStatus,
@@ -39,7 +39,7 @@ const HOURS_SX = { fontVariantNumeric: "tabular-nums" } as const;
 
 /** Spoken/hovered meaning of the `X / Y` pair, which on screen has no labels (#812). */
 export function hoursPairDescription(scheduledMinutes: number, availableMinutes: number): string {
-    return `משובץ ${formatHoursLabel(scheduledMinutes)} מתוך ${formatHoursLabel(availableMinutes)} זמינות`;
+    return `משובץ ${formatHours(scheduledMinutes, { unit: true })} מתוך ${formatHours(availableMinutes, { unit: true })} זמינות`;
 }
 
 export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
@@ -206,7 +206,7 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                                     <Tooltip
                                         arrow
                                         placement="top"
-                                        title={`חריגה בהקצאת השבוע: ${formatHoursLabel(weekScheduledMinutes)} מתוך ${formatHoursLabel(weekAvailableMinutes)}`}
+                                        title={`חריגה בהקצאת השבוע: ${formatHours(weekScheduledMinutes, { unit: true })} מתוך ${formatHours(weekAvailableMinutes, { unit: true })}`}
                                     >
                                         <WarningAmberIcon
                                             aria-label="חריגה בהקצאת השבוע"
@@ -256,7 +256,7 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                                 title={`${hoursPairDescription(weekScheduledMinutes, weekAvailableMinutes)}${zoomTitle ? ` · ${zoomTitle}` : ""}`}
                                 variant="caption"
                             >
-                                {`${formatHoursLabel(weekScheduledMinutes)} / ${formatHoursLabel(weekAvailableMinutes)}`}
+                                {`${formatHours(weekScheduledMinutes, { unit: true })} / ${formatHours(weekAvailableMinutes, { unit: true })}`}
                             </Typography>
                         </TableCell>
                     );
@@ -367,10 +367,12 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                                                     sx={HOURS_SX}
                                                     variant="caption"
                                                 >
-                                                    {`${formatHoursLabel(
+                                                    {`${formatHours(
                                                         scheduledMinutes,
-                                                    )} / ${formatHoursLabel(
+                                                        { unit: true },
+                                                    )} / ${formatHours(
                                                         availableOf(day),
+                                                        { unit: true },
                                                     )}`}
                                                 </Typography>
                                             </Box>

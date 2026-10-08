@@ -1,7 +1,7 @@
 import Typography from "@mui/material/Typography";
 import React from "react";
 
-import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { formatHours } from "@/components/gantt/curriculum-view/gantt-time-utils";
 
 /** Required-hours column pinned to the end of a label cell (#766). */
 export const GanttHoursLabel: React.FC<{ minutes: number }> = ({ minutes }) => (
@@ -17,6 +17,6 @@ export const GanttHoursLabel: React.FC<{ minutes: number }> = ({ minutes }) => (
         } }
         variant="caption"
     >
-        { formatHoursLabel(minutes) }
+        { formatHours(minutes, { unit: true }) }
     </Typography>
 );

@@ -245,7 +245,7 @@ describe("formatHours", () => {
     afterEach(() => setHoursFormat("decimal"));
 
     it("renders decimal or clock hours by the viewer's choice", () => {
-        expect(formatHours(45, 2)).toBe("0.75");
+        expect(formatHours(45, { maximumFractionDigits: 2 })).toBe("0.75");
         setHoursFormat("clock");
         expect([ formatHours(45), formatHours(90), formatHours(605), formatHours(-30), formatHours(0) ])
             .toEqual([ "0:45", "1:30", "10:05", "-0:30", "0:00" ]);

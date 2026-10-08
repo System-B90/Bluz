@@ -84,27 +84,30 @@ export function subscribeHoursFormat(listener: () => void): () => void {
     return () => hoursFormatListeners.delete(listener);
 }
 
+export type FormatHoursOptions = {
+    /** Decimal places in decimal mode (clock mode is always `h:mm`). */
+    maximumFractionDigits?: number;
+    /** Append the `ש׳` unit, so a duration never reads as a clock time (#813). */
+    unit?: boolean;
+};
+
+/** A duration in the viewer's decimal or clock hours, optionally with its unit. */
 export function formatHours(
     minutes: number,
-    maximumFractionDigits = 1,
+    { maximumFractionDigits = 1, unit = false }: FormatHoursOptions = {},
 ): string {
+    let text: string;
     if (hoursFormat === "clock") {
         const total = Math.round(Math.abs(minutes));
         const sign = minutes < 0 && total ? "-" : "";
-        return `${sign}${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+        text = `${sign}${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+    } else {
+        text = new Intl.NumberFormat("he-IL", {
+            maximumFractionDigits,
+            minimumFractionDigits: 0,
+        }).format(minutes / 60);
     }
-    return new Intl.NumberFormat("he-IL", {
-        maximumFractionDigits,
-        minimumFractionDigits: 0,
-    }).format(minutes / 60);
-}
-
-/**
- * The one way a duration is shown in the gantt (#813): the viewer's decimal or
- * clock hours, always with the `ש׳` unit so it never reads as a clock time.
- */
-export function formatHoursLabel(minutes: number): string {
-    return `${formatHours(minutes)} ש׳`;
+    return unit ? `${text} ש׳` : text;
 }
 
 export function getWeekTotalMinutes(

@@ -18,7 +18,7 @@ import {
     OccurrenceExecution,
 } from "@/api-shared/types/gantt/execution";
 import { EventRecurrence, GanttEvent } from "@/api-shared/types/gantt/models";
-import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { formatHours } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { CollapsibleSection } from "@/components/gantt/event-dialog/CollapsibleSection";
 import { useGanttExecution } from "@/components/gantt/state/execution/hooks";
 
@@ -79,12 +79,12 @@ function OccurrenceRow({
             </TableCell>
             <TableCell>
                 {occurrence.planned
-                    ? formatHoursLabel(occurrence.planned.durationMinutes)
+                    ? formatHours(occurrence.planned.durationMinutes, { unit: true })
                     : "—"}
             </TableCell>
             <TableCell>
                 {occurrence.actual
-                    ? formatHoursLabel(occurrence.actual.durationMinutes)
+                    ? formatHours(occurrence.actual.durationMinutes, { unit: true })
                     : "—"}
             </TableCell>
             <TableCell>
@@ -142,10 +142,10 @@ function ExecutionTable({
                             {execution.totals.occurrencesPlanned} מופעים
                         </TableCell>
                         <TableCell sx={{ fontWeight: 600 }}>
-                            {formatHoursLabel(execution.totals.plannedMinutes)}
+                            {formatHours(execution.totals.plannedMinutes, { unit: true })}
                         </TableCell>
                         <TableCell sx={{ fontWeight: 600 }}>
-                            {formatHoursLabel(execution.totals.actualMinutes)}
+                            {formatHours(execution.totals.actualMinutes, { unit: true })}
                         </TableCell>
                         <TableCell />
                     </TableRow> : null}

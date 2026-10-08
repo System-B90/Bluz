@@ -7,7 +7,7 @@ import Typography from "@mui/material/Typography";
 import React, { memo, useCallback, useMemo } from "react";
 
 import { useCourses } from "@/components/base/CoursesProvider";
-import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { formatHours } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { calculateStudentModuleMinutes } from "@/components/gantt/curriculum-view/student-load";
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
 import { getFlashRowSx } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/flash";
@@ -184,7 +184,7 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
     );
     // Zoomed single-week day view: label the module block with this week's time out of its total.
     const timeLabel = singleWeekDayZoom && ganttModule
-        ? `${formatHoursLabel(weekMinutes)} / ${formatHoursLabel(requiredMinutes)}`
+        ? `${formatHours(weekMinutes, { unit: true })} / ${formatHours(requiredMinutes, { unit: true })}`
         : undefined;
 
     // Build cells depending on view mode. Memoized so a re-render triggered by the
