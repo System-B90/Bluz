@@ -74,10 +74,9 @@ export const GET: ServerApiEventGet = withApi(async (request) => {
             undefined,
             controller,
         );
-        const eventRecord = eventArray.reduce(
-            (prev, ev) => ({ ...prev, [ev.id]: ev }),
-            {} as Record<EventId, Partial<DbEventDocument>>,
-        );
+        const eventRecord = Object.fromEntries(
+            eventArray.map((ev) => [ev.id, ev]),
+        ) as Record<EventId, Partial<DbEventDocument>>;
         return ApiSuccess(eventRecord);
     } else {
         const start = new Date(rawStartDate!);
