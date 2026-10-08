@@ -9,7 +9,6 @@ import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
 import { GanttCurriculum } from "@/api-shared/types/gantt/models";
 import {
     formatHours,
-    formatHoursLabel,
     getCurriculumTotalWorkingMinutes,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useCurriculumStudentSchedule } from "@/components/gantt/curriculum-view/use-student-schedule";
@@ -108,20 +107,20 @@ export function WeeksSummaryBar({ curriculum, state }: WeeksSummaryBarProps) {
             <Divider flexItem orientation="vertical" />
             <SummaryMetric
                 label="שעות זמינות"
-                value={formatHoursLabel(totalWorkingMinutes)}
+                value={formatHours(totalWorkingMinutes, { unit: true })}
             />
             <SummaryMetric
                 label="מינימום דרוש"
-                value={formatHoursLabel(minimumMinutes)}
+                value={formatHours(minimumMinutes, { unit: true })}
             />
             <SummaryMetric
                 label="שובצו"
-                value={formatHoursLabel(scheduledMinutes)}
+                value={formatHours(scheduledMinutes, { unit: true })}
             />
             <SummaryMetric
                 label={remainingMinutes < 0 ? "חריגה" : "יתרה"}
                 tone={remainingTone}
-                value={formatHoursLabel(Math.abs(remainingMinutes))}
+                value={formatHours(Math.abs(remainingMinutes), { unit: true })}
             />
             <Box
                 flex={1}

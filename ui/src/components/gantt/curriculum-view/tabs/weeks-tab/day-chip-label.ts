@@ -1,4 +1,4 @@
-import { formatHours, formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { formatHours } from "@/components/gantt/curriculum-view/gantt-time-utils";
 
 /**
  * The weeks-tab day chip (#841). The old "X ש׳ משובץ | נותרו Y ש׳" sentence
@@ -22,16 +22,16 @@ export function getDayChipLabel(availableMinutes: number, scheduledMinutes: numb
     let status: string;
     if (scheduledMinutes === 0 && availableMinutes === 0) status = "סגור";
     else if (scheduledMinutes === 0) status = "פנוי";
-    else if (over) status = `חריגה ${formatHoursLabel(-remaining)}`;
-    else status = `נותרו ${formatHoursLabel(remaining)}`;
+    else if (over) status = `חריגה ${formatHours(-remaining, { unit: true })}`;
+    else status = `נותרו ${formatHours(remaining, { unit: true })}`;
 
     const short = scheduledMinutes === 0 && availableMinutes === 0
         ? "סגור"
-        : `${formatHours(scheduledMinutes)} / ${formatHoursLabel(availableMinutes)}`;
+        : `${formatHours(scheduledMinutes)} / ${formatHours(availableMinutes, { unit: true })}`;
 
     return {
         short,
-        full: `${formatHoursLabel(scheduledMinutes)} משובץ מתוך ${formatHoursLabel(availableMinutes)} | ${status}`,
+        full: `${formatHours(scheduledMinutes, { unit: true })} משובץ מתוך ${formatHours(availableMinutes, { unit: true })} | ${status}`,
         over,
     };
 }

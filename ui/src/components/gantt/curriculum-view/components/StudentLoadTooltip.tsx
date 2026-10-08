@@ -9,7 +9,6 @@ import { ReactElement, ReactNode, useMemo } from "react";
 import {
     CapacityStatus,
     formatHours,
-    formatHoursLabel,
     getCapacityStatus,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import {
@@ -84,7 +83,7 @@ function PathRow({
                     </Typography>
                 ) : <span />}
                 <Typography color={STATUS_COLOR[status]} fontWeight={700} variant="body2">
-                    {formatHoursLabel(minutes)}
+                    {formatHours(minutes, { unit: true })}
                 </Typography>
             </Stack>
             <Box sx={{ mt: 0.5, height: 6, borderRadius: 3, overflow: "hidden", bgcolor: "action.hover" }}>
@@ -118,7 +117,7 @@ function ComparisonRow({ label, max, minutes }: { label: string; max: number; mi
                 />
             </Box>
             <Typography sx={{ fontVariantNumeric: "tabular-nums", textAlign: "end" }} variant="body2">
-                {formatHoursLabel(minutes)}
+                {formatHours(minutes, { unit: true })}
                 {short > 0 ? (
                     <Box color="warning.main" component="span" fontWeight={700}>
                         {` (−${formatHours(short)})`}
@@ -196,9 +195,9 @@ export function StudentLoadCard({
                 <Typography fontWeight={700} variant="subtitle2">{title}</Typography>
                 <Typography color="text.secondary" variant="caption">
                     <Box color={STATUS_COLOR[status]} component="span" fontWeight={700}>
-                        {formatHoursLabel(minutes)}
+                        {formatHours(minutes, { unit: true })}
                     </Box>
-                    {` מתוך ${formatHoursLabel(capacity)} לחניך`}
+                    {` מתוך ${formatHours(capacity, { unit: true })} לחניך`}
                 </Typography>
             </Box>
             {load && load.issues.length > 0 ? (

@@ -276,7 +276,7 @@ export function useGridAllotment(ctx: Context): {
         const target = names ? `השאפלים ${names}` : `${siblings.length} השאפלים האחרים`;
         const question = zeroChoice === "remove"
             ? `להסיר את השיבוץ גם מ${target}?`
-            : `להחיל ${formatHours(minutes, 2)} שעות גם על ${target}?`;
+            : `להחיל ${formatHours(minutes, { maximumFractionDigits: 2 })} שעות גם על ${target}?`;
         enqueueSnackbar(question, {
             variant: "info",
             action: (key) => (

@@ -15,7 +15,7 @@ import {
     GanttWeekId,
 } from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
-import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { formatHours } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { ClosingSaturdayChip } from "@/components/gantt/curriculum-view/tabs/weeks-tab/ClosingSaturdayChip";
 import { DayEntry } from "@/components/gantt/curriculum-view/tabs/weeks-tab/DayEntry";
 import { useHoursFormat } from "@/components/gantt/curriculum-view/use-hours-format";
@@ -34,7 +34,7 @@ export function WorkTimeChip({ totalHours }: { totalHours: number }) {
         <Chip
             color="primary"
             icon={<AccessTimeIcon sx={{ fontSize: "0.95rem !important" }} />}
-            label={formatHoursLabel(totalHours * 60)}
+            label={formatHours(totalHours * 60, { unit: true })}
             size="small"
             sx={{
                 fontWeight: 600,

@@ -10,7 +10,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import React, { memo, useState } from "react";
 
-import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { formatHours } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { buildBlockTooltip } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/block-tooltip";
 import { GanttBlockProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import {
@@ -310,7 +310,7 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
     const tooltipContent = buildBlockTooltip({
         title,
         path: eventObj ? [syllabusTitle, moduleObj?.title] : [syllabusTitle],
-        hoursLabel: tooltipMinutes ? formatHoursLabel(tooltipMinutes) : undefined,
+        hoursLabel: tooltipMinutes ? formatHours(tooltipMinutes, { unit: true }) : undefined,
         notes: [recurrenceNote, skippedNote, spilloverNote, ...violations],
     });
 

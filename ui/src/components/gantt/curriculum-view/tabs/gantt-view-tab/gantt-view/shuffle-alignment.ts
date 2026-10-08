@@ -8,7 +8,7 @@
  * Created: 2026-10-06
  * Author: Michael K. Steinberg
  */
-import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { formatHours } from "@/components/gantt/curriculum-view/gantt-time-utils";
 
 export type AlignmentSources = {
     syllabuses: Readonly<Record<string, { shuffles?: Array<string> } | undefined>>;
@@ -131,7 +131,7 @@ export function shuffleAlignmentWarning(moves: Array<EventMove>, sources: Alignm
             const next = shuffleMinutes(syllabusId, afterByDay.get(dayId) ?? [], sources);
             if (isAligned(before) && !isAligned(next))
             {
-                const detail = [ ...next ].map(([ name, minutes ]) => `${name} ${formatHoursLabel(minutes)}`).join(", ");
+                const detail = [ ...next ].map(([ name, minutes ]) => `${name} ${formatHours(minutes, { unit: true })}`).join(", ");
                 return `שאפלי הסילבוס לא יתחילו ויסתיימו יחד (${detail})`;
             }
         }
