@@ -61,13 +61,18 @@ const TOOL_RESULTS = [
     "notes על קיצוץ או nextOffset — הבא את ההמשך או ציין שהתוצאה חלקית.",
 ];
 
+const fmtDate = (date: dayjs.Dayjs) => date.format("YYYY-MM-DD");
+
 const bullets = (lines: Array<string>) => lines.map((line) => `- ${line}`).join("\n");
 
 export function buildSystemPrompt(context: AiToolContext): string {
     const now = dayjs(context.now ?? new Date()).tz(APP_TIMEZONE);
+    const weekStart = now.startOf("day").subtract(now.day(), "day");
     const facts = [
         `אתה משוחח עם ${context.actor.displayName}.`,
         `היום יום ${WEEKDAYS[now.day()]}, ${now.format("YYYY-MM-DD")}, ${now.format("HH:mm")} (${APP_TIMEZONE}, UTC${now.format("Z")}). כל שעה שהמשתמש אומר היא בשעון הזה.`,
+        "שבוע עבודה: ראשון–חמישי; שבוע מתחיל ביום ראשון ונגמר בשבת.",
+        `השבוע: ${fmtDate(weekStart)} (ראשון) עד ${fmtDate(weekStart.add(6, "day"))} (שבת). שבוע הבא: ${fmtDate(weekStart.add(7, "day"))} (ראשון) עד ${fmtDate(weekStart.add(13, "day"))} (שבת). מחר: ${WEEKDAYS[now.add(1, "day").day()]}, ${fmtDate(now.add(1, "day"))}.`,
         context.iterationId ? `מחזור: ${context.iterationId}.` : "מחזור: הנוכחי.",
         context.curriculumId ? `גאנט פתוח במסך: ${context.curriculumId}.` : "אין גאנט פתוח במסך.",
     ];

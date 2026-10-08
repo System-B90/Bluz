@@ -12,6 +12,8 @@ import { ClientApiWarning, UserNotLoggedInError } from "@/api-shared/errors";
 export const HIVE_RESOURCE_EFFECTS = {
     subjects: "שמות מקצועות",
     users: "שמות משתמשים ומדריכים",
+    lessons: "שיעורים",
+    modules: "מערכים",
 } as const;
 
 export type HiveResource = keyof typeof HIVE_RESOURCE_EFFECTS;

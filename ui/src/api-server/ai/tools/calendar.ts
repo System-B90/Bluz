@@ -33,6 +33,7 @@ import { DbEventHistory } from "@/api-server/db-event-history";
 import { DbIterations } from "@/api-server/db-iterations";
 import { DbRooms } from "@/api-server/db-rooms";
 import { resolveIterationDb } from "@/api-server/mongo-db-controller";
+import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 import { ClientApiError } from "@/api-shared/errors";
 import { AiToolDanger, AiToolKind } from "@/api-shared/types/ai";
 import { DbEventDocument, EventType } from "@/api-shared/types/event";
@@ -49,13 +50,16 @@ import { MAX_EVENT_RANGE_DAYS, MILLISECONDS_IN_A_DAY } from "@/settings";
  */
 export type AiEventSummary = ReturnType<typeof summarizeEvent>;
 
+/** Local ISO with offset, so the model never converts from UTC itself. */
+const toLocalIso = (date: Date) => dayjs(date).tz(APP_TIMEZONE).format();
+
 function summarizeEvent(event: DbEventDocument) {
     return {
         id: event.id,
         name: event.name,
         type: event.type,
-        startTime: event.startTime.toISOString(),
-        endTime: event.endTime.toISOString(),
+        startTime: toLocalIso(event.startTime),
+        endTime: toLocalIso(event.endTime),
         rooms: event.rooms,
         courses: event.courses,
         instructors: event.instructors,
@@ -190,7 +194,8 @@ export const listEventsTool: AiTool<ListEventsArgs> = {
             },
             withPeople: {
                 type: "boolean",
-                description: "true — רק אירועים עם מבזר או מרצה. לשאלות כמו \"מי מבזר\".",
+                description:
+                    "סינון בלבד: true — משמיט אירועים בלי מבזר או מרצה. לא מתרגם שמות; קבל שמות מ-list_people. אל תציג למשתמש מזהי אנשים מספריים.",
             },
             fields: {
                 type: "array",
