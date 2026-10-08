@@ -121,5 +121,9 @@
     },
     "allowScripts": {
         "esbuild@0.27.7": true
+    },
+    "overrides": {
+        "node-domexception": "npm:@nolyfill/domexception@^1.0.28",
+        "rimraf": "^6.1.3"
     }
 }
