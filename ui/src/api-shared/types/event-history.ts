@@ -50,7 +50,11 @@ export enum EventChangeInitiator {
     ContextMenu = "context-menu",
     /** Change made by the in-app AI assistant on the user's behalf. */
     AiAssistant = "ai-assistant",
-    /** Write with no declared initiator (CLI, scripts, legacy call sites). */
+    /** The `bluz` CLI driven by the Bluz Claude plugin (run inside Claude Code). */
+    ClaudePlugin = "claude-plugin",
+    /** The `bluz` CLI run directly by a person or a script. */
+    Cli = "cli",
+    /** Write with no declared initiator (old CLI versions, legacy call sites). */
     Unknown = "unknown",
 }
 

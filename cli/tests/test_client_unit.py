@@ -339,3 +339,26 @@ def test_stream_sse_reports_a_network_failure(monkeypatch):
         list(client.stream_sse("/api/ai/chat", json={}))
 
     assert raised.value.error_name == "NetworkError"
+
+
+@pytest.mark.parametrize(
+    ("claudecode", "expected"),
+    [("1", "claude-plugin"), (None, "cli")],
+)
+def test_requests_name_their_source_for_the_event_change_log(
+    monkeypatch, claudecode, expected
+):
+    # Claude Code sets CLAUDECODE=1, which is how the Bluz Claude plugin runs us.
+    if claudecode is None:
+        monkeypatch.delenv("CLAUDECODE", raising=False)
+    else:
+        monkeypatch.setenv("CLAUDECODE", claudecode)
+    seen: list[str | None] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request.headers.get("x-bluz-event-initiator"))
+        return httpx.Response(200, json={"status": 0, "data": {}})
+
+    _client(monkeypatch, handler).get("/api/x")
+
+    assert seen == [expected]

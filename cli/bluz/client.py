@@ -8,6 +8,7 @@ Author: Michael K. Steinberg
 
 from __future__ import annotations
 
+import os
 import time
 from collections.abc import Iterator
 from typing import Any, Self
@@ -34,6 +35,21 @@ _GET_RETRY_BACKOFF_SECONDS = 0.5
 _SSE_DONE_SENTINEL = "[DONE]"
 
 
+# Mirrors EVENT_INITIATOR_HEADER / EventChangeInitiator in
+# ui/src/api-shared/types/event-history.ts: names this client in the event
+# change log instead of leaving the write unattributed.
+_EVENT_INITIATOR_HEADER = "x-bluz-event-initiator"
+
+
+def event_initiator() -> str:
+    """The change-log source for writes from this process.
+
+    Claude Code sets ``CLAUDECODE=1`` for the commands it runs, which is how the
+    Bluz Claude plugin drives the CLI; anything else is a person or a script.
+    """
+    return "claude-plugin" if os.environ.get("CLAUDECODE") == "1" else "cli"
+
+
 class BluzClient:
     """Authenticated HTTP client for the Bluz `/api/*` surface."""
 
@@ -42,7 +58,10 @@ class BluzClient:
         base_url = config.require_url()
 
         cookies: dict[str, str] = {}
-        headers = {"Accept": "application/json"}
+        headers = {
+            "Accept": "application/json",
+            _EVENT_INITIATOR_HEADER: event_initiator(),
+        }
         if config.token:
             # next-auth session cookie — the same credential the browser sends.
             cookies[config.cookie_name] = config.token

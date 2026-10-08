@@ -15,7 +15,9 @@ import KeyboardIcon from "@mui/icons-material/Keyboard";
 import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
 import RestoreIcon from "@mui/icons-material/Restore";
 import SelfImprovementIcon from "@mui/icons-material/SelfImprovement";
+import SmartToyIcon from "@mui/icons-material/SmartToy";
 import SyncIcon from "@mui/icons-material/Sync";
+import TerminalIcon from "@mui/icons-material/Terminal";
 import TouchAppIcon from "@mui/icons-material/TouchApp";
 import UndoIcon from "@mui/icons-material/Undo";
 import { ReactElement } from "react";
@@ -103,6 +105,14 @@ const PRESENTATION: Record<EventChangeInitiator, InitiatorPresentation> = {
     [EventChangeInitiator.AiAssistant]: {
         color: "info",
         icon: <AutoAwesomeIcon fontSize="small" />,
+    },
+    [EventChangeInitiator.ClaudePlugin]: {
+        color: "info",
+        icon: <SmartToyIcon fontSize="small" />,
+    },
+    [EventChangeInitiator.Cli]: {
+        color: "info",
+        icon: <TerminalIcon fontSize="small" />,
     },
     [EventChangeInitiator.Unknown]: {
         color: "info",

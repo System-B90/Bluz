@@ -171,5 +171,7 @@ export const INITIATOR_LABELS: Record<EventChangeInitiator, string> = {
     [EventChangeInitiator.Undo]: "ביטול/ביצוע חוזר",
     [EventChangeInitiator.ContextMenu]: "תפריט ימני בלוח",
     [EventChangeInitiator.AiAssistant]: "עוזר AI",
+    [EventChangeInitiator.ClaudePlugin]: "תוסף Claude",
+    [EventChangeInitiator.Cli]: "שורת פקודה (CLI)",
     [EventChangeInitiator.Unknown]: "לא ידוע",
 };
