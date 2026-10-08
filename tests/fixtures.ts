@@ -605,6 +605,27 @@ export async function dblclickCalendarEvent(page: Page, name: string): Promise<v
 }
 
 /**
+ * Double-clicks an event open and waits for its edit dialog, retrying the
+ * double-click while no dialog shows. A forced double-click that lands while
+ * the tile re-renders (a lock-relay update arriving, say) registers as two
+ * single clicks, and the dialog never opens (#895). Never re-clicks once the
+ * dialog is up, so a slow open isn't answered with a click on its backdrop.
+ */
+export async function openEventDialog(page: Page, name: string): Promise<Locator> {
+    const dialog = getEventDialog(page);
+    let attempts = 0;
+    await baseExpect(async () => {
+        if (!(await dialog.isVisible())) {
+            attempts++;
+            await dblclickCalendarEvent(page, name);
+        }
+        await baseExpect(dialog).toBeVisible({ timeout: 5_000 });
+    }).toPass({ timeout: 30_000 });
+    noteRetries(`opening the event dialog for "${name}"`, attempts);
+    return dialog;
+}
+
+/**
  * Creates a calendar event while already in offline mode.
  * Returns the event name used.
  */
@@ -993,6 +1014,25 @@ export async function closeEventAndModuleDialogs(
     }
 }
 
+/** A locator that never showed up is "not rendered"; anything else is a real error. */
+function nullOnTimeout(error: unknown): null {
+    if (error instanceof Error && error.name === "TimeoutError") return null;
+    throw error;
+}
+
+/**
+ * Records, on the test, a UI action that needed retrying. A retry hides a
+ * render race in the e2e run; this keeps it visible in the report so a real
+ * regression (e.g. #896's tab snap-back) doesn't pass unnoticed.
+ */
+function noteRetries(action: string, attempts: number): void {
+    if (attempts <= 1) return;
+    test.info().annotations.push({
+        type: "retried-ui-action",
+        description: `${action} took ${attempts} attempts`,
+    });
+}
+
 /**
  * Drags a dnd-kit draggable onto a droppable (#648).
  *
@@ -1036,7 +1076,10 @@ export async function dragDndKit(
     // Let the drag's own UI (overlays, extra drop zones) mount and settle.
     await page.waitForTimeout(150);
 
-    const targetBox = await target.boundingBox();
+    // Bounded: an unbounded boundingBox() waits for the locator to match, and
+    // a target whose text changes mid-drag (RootDropZone's does on hover)
+    // then hangs until the 120s test timeout with no clue why (#898).
+    const targetBox = await target.boundingBox({ timeout: 5_000 }).catch(nullOnTimeout);
     if (!targetBox) {
         await page.mouse.up();
         throw new Error("dragDndKit: target is not rendered once dragging");
@@ -1060,12 +1103,30 @@ export async function dragDndKit(
     // so the target measured above may have moved by now: the course
     // builder's root drop zone moved ~56px and the release missed it (#771).
     // Re-measure and correct before letting go.
-    const settledBox = (await target.boundingBox()) ?? targetBox;
+    const settledBox = (await target.boundingBox({ timeout: 2_000 }).catch(nullOnTimeout)) ?? targetBox;
     const end = pointInside(settledBox);
     await page.mouse.move(end.x, end.y, { steps: 5 });
     await page.mouse.move(end.x + 1, end.y + 1, { steps: 2 });
     await page.waitForTimeout(150);
     await page.mouse.up();
+}
+
+/**
+ * Selects a gantt view tab and confirms it took: a click that lands while the
+ * tab strip re-renders, or that the tab/URL sync overrides, leaves the old tab
+ * showing and the next locator waits out its whole timeout (#896, #897).
+ */
+export async function selectGanttTab(page: Page, name: string): Promise<void> {
+    const tab = page.getByRole("tab", { name, exact: true });
+    let attempts = 0;
+    await baseExpect(async () => {
+        if ((await tab.getAttribute("aria-selected")) !== "true") {
+            attempts++;
+            await tab.click({ timeout: 5_000 });
+        }
+        await baseExpect(tab).toHaveAttribute("aria-selected", "true", { timeout: 2_000 });
+    }).toPass({ timeout: 20_000 });
+    noteRetries(`selecting the "${name}" gantt tab`, attempts);
 }
 
 /**

@@ -33,11 +33,20 @@ export function useGanttTabUrl(): [number, Dispatch<SetStateAction<number>>]
 
     // Follow external URL changes. Only a *change* of `v` counts, so the
     // missing `v` of a fresh landing URL doesn't fight the initial state.
+    //
+    // useSearchParams catches up with history.replaceState a render or more
+    // late, so it can deliver an echo of our own earlier write after a newer
+    // one: land (we write v=0), click a tab (we write v=3), then v=0 arrives.
+    // Following that undid the click and the tab snapped back (#896, #897).
+    // A real external change is also in the live URL; a stale echo is not.
     const [ seenUrlTab, setSeenUrlTab ] = useState(urlTab);
     if (urlTab !== seenUrlTab)
     {
         setSeenUrlTab(urlTab);
-        if (urlTab !== null) setSelectedTabIndex(parseGanttTabIndex(urlTab));
+        const liveUrlTab = typeof window === "undefined"
+            ? urlTab
+            : new URLSearchParams(window.location.search).get(GANTT_TAB_PARAM);
+        if (urlTab !== null && urlTab === liveUrlTab) setSelectedTabIndex(parseGanttTabIndex(urlTab));
     }
 
     useEffect(() =>

@@ -1,4 +1,4 @@
-import { expect, test, waitForAppLoad } from "./fixtures";
+import { expect, selectGanttTab, test, waitForAppLoad } from "./fixtures";
 import { createCurriculum, createEvent, createModule, createSyllabus } from "./gantt-api";
 
 /**
@@ -17,7 +17,7 @@ test.describe("Gantt grid right-click menu", () => {
 
         await page.goto(`/gantt?gc=${curriculumId}`, { waitUntil: "commit", timeout: 60_000 });
         await waitForAppLoad(page);
-        await page.getByRole("tab", { name: "טבלה" }).click();
+        await selectGanttTab(page, "טבלה");
         const grid = page.getByRole("grid", { name: "טבלת גאנט" });
         await expect(grid).toBeVisible({ timeout: 30_000 });
 

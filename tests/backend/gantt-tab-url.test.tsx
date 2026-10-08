@@ -73,6 +73,25 @@ describe("useGanttTabUrl (#844)", () => {
         expect(new URLSearchParams(window.location.search).get("v")).toBe("1");
     });
 
+    it("ignores a late echo of its own earlier write (#896, #897)", () => {
+        const { result, rerender } = renderHook(() => useGanttTabUrl());
+        expect(new URLSearchParams(window.location.search).get("v")).toBe("0");
+
+        // The user picks a tab before useSearchParams has caught up with the
+        // landing write of v=0.
+        act(() => result.current[ 1 ](3));
+        expect(new URLSearchParams(window.location.search).get("v")).toBe("3");
+
+        // Now the stale v=0 arrives, then the current v=3.
+        nav.search = "v=0";
+        rerender();
+        expect(result.current[ 0 ]).toBe(3);
+        nav.search = "v=3";
+        rerender();
+        expect(result.current[ 0 ]).toBe(3);
+        expect(new URLSearchParams(window.location.search).get("v")).toBe("3");
+    });
+
     it("adds v to a landing URL that has none", () => {
         renderHook(() => useGanttTabUrl());
         expect(new URLSearchParams(window.location.search).get("v")).toBe("0");

@@ -205,7 +205,13 @@ test.describe("Course Builder settings tab", () => {
         }
         await expect(nestedCard).toBeVisible({ timeout: 5_000 });
 
-        const rootDropZone = page.getByText("גרור להוצאה מהיררכיה").locator("..");
+        // Matches both labels: the zone reads "שחרר כאן לראשי" while a drag
+        // hovers it, and dragDndKit re-measures the target at exactly that
+        // moment. Matching only the idle text made the locator vanish and the
+        // re-measure hang until the 120s timeout (#898).
+        const rootDropZone = page
+            .getByText(/^(גרור להוצאה מהיררכיה|שחרר כאן לראשי)$/)
+            .locator("..");
         await expect(rootDropZone).toBeVisible();
         await dragCourseOnto(page, nestedCard, rootDropZone);
         await expect
