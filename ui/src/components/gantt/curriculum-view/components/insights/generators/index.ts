@@ -56,14 +56,11 @@ export function generateInsights(ctx: InsightContext): Array<Insight> {
 
 /**
  * Splits the deck for the card (#851): warnings are actionable, so they are
- * pinned rather than rotated away; trivia is opt-in on a work screen.
+ * pinned rather than rotated away; trivia always joins the deck.
  */
-export function partitionInsights(
-    insights: ReadonlyArray<Insight>,
-    { includeFun }: { includeFun: boolean },
-): { pinned: Array<Insight>; deck: Array<Insight> } {
+export function partitionInsights(insights: ReadonlyArray<Insight>): { pinned: Array<Insight>; deck: Array<Insight> } {
     return {
         pinned: insights.filter(isSeverity("warning")),
-        deck: insights.filter((i) => i.severity !== "warning" && (includeFun || i.severity !== "fun")),
+        deck: insights.filter((i) => i.severity !== "warning"),
     };
 }
