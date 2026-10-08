@@ -166,6 +166,50 @@ test.describe("Course Builder settings tab", () => {
         await expect(newCourseCardsBefore).toHaveCount(countBefore, { timeout: 10_000 });
     });
 
+    test("the move menu nests a course and lifts it back to the top level, without dragging (#885)", async ({
+        page,
+        request,
+    }) => {
+        const [ courseA, courseB ] = courses;
+        await openCourseBuilderTab(page);
+
+        const sourceCard = getCourseCard(page, courseAName);
+        await expect(sourceCard).toBeVisible();
+        // Keyboard path: focusing inside the card reveals its quick actions.
+        await sourceCard.getByText(courseAName).first().hover();
+        await sourceCard.getByRole("button", { name: `העברת ${courseAName}…` }).click();
+        const menu = page.getByRole("menu", { name: `העברת ${courseAName}…` });
+        await expect(menu).toBeVisible();
+        // A course is never offered as its own parent.
+        await expect(menu.getByRole("menuitem", { name: courseAName, exact: true })).toHaveCount(0);
+        await test.info().attach("course-move-menu", {
+            body: await page.screenshot(),
+            contentType: "image/png",
+        });
+        await menu.getByRole("menuitem", { name: courseBName, exact: true }).click();
+
+        // The provider reports the outcome once the update settles.
+        await expect(page.getByText(`עדכון מסלול ${courseAName} הסתיים בהצלחה.`)).toBeVisible();
+        await expect
+            .poll(() => parentIdOf(request, courseA.id), { timeout: 10_000 })
+            .toBe(courseB.id);
+
+        // Lift it back out from the nested card.
+        await getCourseCard(page, courseBName).getByRole("button", { name: "הרחבה" }).click();
+        const nestedCard = page
+            .locator(".course-card-container")
+            .filter({ hasText: courseAName })
+            .filter({ hasNotText: courseBName });
+        await expect(nestedCard).toBeVisible({ timeout: 5_000 });
+        await nestedCard.getByText(courseAName).first().hover();
+        await nestedCard.getByRole("button", { name: `העברת ${courseAName}…` }).click();
+        await page.getByRole("menuitem", { name: "הרמה העליונה" }).click();
+
+        await expect
+            .poll(() => parentIdOf(request, courseA.id), { timeout: 10_000 })
+            .toBeNull();
+    });
+
     test("dragging a course onto another nests it as a child, and the RootDropZone un-nests it", async ({
         page,
         request,

@@ -250,6 +250,8 @@ export function CourseItem({
             {/* Main Course Card Container */ }
             <Box
                 className="course-card-container"
+                // Focus target after a move from the menu (#885).
+                data-course-card={ course.id }
                 // Keyboard users reach the quick actions too (#848).
                 onBlur={ (event) =>
                 {
@@ -278,6 +280,7 @@ export function CourseItem({
                         ? {}
                         : theme.applyStyles("dark", { bgcolor: "rgba(255, 255, 255, 0.02)" })),
                 }) }
+                tabIndex={ -1 }
             >
                 <Box
                     ref={ setDragRef }
