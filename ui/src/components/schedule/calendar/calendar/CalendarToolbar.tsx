@@ -32,6 +32,7 @@ import
     CONTROL_BUTTON_SX,
     PULSING_ICON_BUTTON_SX,
 } from "@/components/schedule/calendar/calendar/toolbar-button-sx";
+import { useScheduleWeek } from "@/components/schedule/calendar/calendar/use-schedule-week";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { EventSegment } from "@/components/schedule/calendar/split/segments";
 
@@ -60,6 +61,9 @@ export function CalendarToolbar({
 {
     const { offlineMode, setOfflineMode } = useOffline();
     const { startDate, endDate } = useCalendar();
+    // Week of the iteration under the date range (week/day views only).
+    const shownWeek = useScheduleWeek(date);
+    const week = view === "month" || view === "agenda" ? { number: null, comment: "" } : shownWeek;
     const { hasActiveFilters: hasAnyFilter } = useCalendarFilters();
     const [ open, setOpen ] = useState(false);
     const [ filterAnchorEl, setFilterAnchorEl ] =
@@ -191,13 +195,27 @@ export function CalendarToolbar({
                         transform: { lg: "translateX(-50%)" },
                     } }
                 >
-                    <Typography
-                        fontWeight="bold"
-                        sx={ { color: "text.primary" } }
-                        variant="h6"
-                    >
-                        { label }
-                    </Typography>
+                    <Box alignItems="center" display="flex" flexDirection="column">
+                        <Typography
+                            fontWeight="bold"
+                            sx={ { color: "text.primary", lineHeight: week.number === null ? undefined : 1.2 } }
+                            variant="h6"
+                        >
+                            { label }
+                        </Typography>
+                        { week.number !== null ? (
+                            // The linked gantt week's comment, when it has one.
+                            <Tooltip title={ week.comment }>
+                                <Typography
+                                    sx={ { color: "text.secondary", cursor: week.comment ? "help" : undefined } }
+                                    tabIndex={ week.comment ? 0 : undefined }
+                                    variant="caption"
+                                >
+                                    שבוע { week.number }
+                                </Typography>
+                            </Tooltip>
+                        ) : null }
+                    </Box>
                     <IconButton
                         onClick={ openDatePicker }
                         size="small"
