@@ -17,6 +17,7 @@ import {
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { useReserveAiFabSlot } from "@/components/ai/fab-slot";
 import { GANTT_ANCHORS } from "@/components/app-onboarding/anchors";
 import { CurriculumActionItems } from "@/components/gantt/curriculum-fab/CurriculumActionItems";
 import { CurriculumListItems } from "@/components/gantt/curriculum-fab/CurriculumListItems";
@@ -37,6 +38,8 @@ export function CurriculumFab({
     currentCurriculum: propCurrentCurriculum,
     onLoadingChange,
 }: CurriculumDrawerProps) {
+    // The AI launcher stacks above this FAB while it is on screen.
+    useReserveAiFabSlot();
     const listState = useCurriculumList();
     const curriculumsData = listState.curriculums;
     const isFetchingDetails = listState.isLoading;

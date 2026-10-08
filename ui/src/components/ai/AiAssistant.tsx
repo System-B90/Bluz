@@ -47,6 +47,7 @@ import { CURRICULUM_QUERY_PARAM } from "@/api-shared/types/gantt/models";
 import { ApprovalCard } from "@/components/ai/ApprovalCard";
 import { ChatExportFormat } from "@/components/ai/chat-export";
 import { ChoicePrompt } from "@/components/ai/ChoicePrompt";
+import { useAiFabSlotTaken } from "@/components/ai/fab-slot";
 import { ThinkingBlock } from "@/components/ai/ThinkingBlock";
 import { ToolCallChip } from "@/components/ai/ToolCallChip";
 import {
@@ -62,10 +63,14 @@ import { useIterationScope } from "@/components/base/IterationProvider";
 
 const PANEL_WIDTH = 420;
 const PANEL_WIDTH_WIDE = 680;
-/** Clears the launcher, which sits above the Gantt screen's curriculum FAB. */
-const PANEL_BOTTOM = 168;
-/** Stacks above the Gantt screen's curriculum FAB (bottom: 16, 56px tall). */
-const LAUNCHER_BOTTOM = 88;
+/** At the page bottom, like any FAB. */
+const LAUNCHER_BOTTOM = 16;
+/** Stacked above the Gantt screen's curriculum FAB (bottom: 16, 56px tall). */
+const LAUNCHER_BOTTOM_RAISED = 88;
+/** The panel clears the launcher: its 56px height plus a gap. */
+const PANEL_ABOVE_LAUNCHER = 80;
+/** The launcher and panel glide when the curriculum FAB comes and goes. */
+const SLIDE = "bottom 240ms cubic-bezier(0.4, 0, 0.2, 1)";
 /**
  * How close to the bottom the user must be for a new message to scroll the
  * view. Past that, they are reading history and yanking them back down every
@@ -357,6 +362,10 @@ function StatsFooter({ stats }: { stats: AiChatStats }) {
 }
 
 export function AiAssistant() {
+    const launcherBottom = useAiFabSlotTaken()
+        ? LAUNCHER_BOTTOM_RAISED
+        : LAUNCHER_BOTTOM;
+    const panelBottom = launcherBottom + PANEL_ABOVE_LAUNCHER;
     const [open, setOpen] = React.useState(false);
     const [wide, setWide] = React.useState(false);
     const [enabled, setEnabled] = React.useState<boolean | null>(null);
@@ -480,9 +489,14 @@ export function AiAssistant() {
                     onClick={toggleOpen}
                     sx={{
                         position: "fixed",
-                        bottom: LAUNCHER_BOTTOM,
+                        bottom: launcherBottom,
                         insetInlineEnd: 16,
                         zIndex: 1200,
+                        transition: (theme) =>
+                            `${SLIDE}, ${theme.transitions.create(["background-color", "box-shadow"])}`,
+                        "@media (prefers-reduced-motion: reduce)": {
+                            transition: "none",
+                        },
                     }}
                 >
                     {open ? <CloseIcon /> : <AutoAwesomeIcon />}
@@ -494,20 +508,23 @@ export function AiAssistant() {
                     elevation={8}
                     sx={{
                         position: "fixed",
-                        bottom: PANEL_BOTTOM,
+                        bottom: panelBottom,
                         insetInlineEnd: 24,
                         width: {
                             xs: "calc(100vw - 48px)",
                             sm: wide ? PANEL_WIDTH_WIDE : PANEL_WIDTH,
                         },
                         maxWidth: "calc(100vw - 48px)",
-                        maxHeight: `calc(100vh - ${PANEL_BOTTOM + 48}px)`,
+                        maxHeight: `calc(100vh - ${panelBottom + 48}px)`,
                         display: "flex",
                         flexDirection: "column",
                         borderRadius: 3,
                         overflow: "hidden",
-                        transition: "width 180ms",
+                        transition: `width 180ms, ${SLIDE}, max-height 240ms`,
                         zIndex: 1200,
+                        "@media (prefers-reduced-motion: reduce)": {
+                            transition: "none",
+                        },
                     }}
                 >
                     <Stack
