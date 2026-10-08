@@ -26,11 +26,18 @@ type LayoutInput = {
 };
 
 /**
- * Overlap small enough to read as back-to-back: such events stack at full
- * width, the earlier tile drawn under the next one, instead of being split
- * into half-width columns.
+ * Overlap that still counts as back-to-back: events stack at full width only
+ * when one ends where the next starts, give or take this much. Anything more
+ * shares the column side by side.
  */
-export const SLIGHT_OVERLAP_MS = 15 * 60 * 1000;
+export const SLIGHT_OVERLAP_MS = 60 * 1000;
+
+/**
+ * Minutes apart two starts must be for react-big-calendar not to force the
+ * events side by side. Its default is half a slot group (30 minutes on the
+ * schedule), which split back-to-back events such as 9:00–9:15 and 9:15.
+ */
+export const MINIMUM_START_DIFFERENCE_MIN = 1;
 
 /**
  * For each event that runs at most {@link SLIGHT_OVERLAP_MS} into a later
@@ -72,21 +79,20 @@ export function slightOverlapEnds(
  * already cleared for it.
  */
 export function splitAwareDayLayout(input: LayoutInput): Array<StyledSegment> {
-    // Lay slightly overlapping events out as if back-to-back, then give each
-    // clipped tile back its real height so it still shows its full time.
+    // Back-to-back events (within a minute) stack; only a real overlap shares
+    // the column. Clipped tiles get their real height back afterwards.
     const clipped = slightOverlapEnds(input.events, input.accessors);
-    const laidOut = overlap(
-        clipped.size === 0
-            ? input
-            : {
-                ...input,
-                accessors: {
-                    ...input.accessors,
-                    end: (event: EventSegment) =>
-                        clipped.get(event) ?? input.accessors.end(event),
-                },
+    const laidOut = overlap({
+        ...input,
+        minimumStartDifference: MINIMUM_START_DIFFERENCE_MIN,
+        ...(clipped.size > 0 && {
+            accessors: {
+                ...input.accessors,
+                end: (event: EventSegment) =>
+                    clipped.get(event) ?? input.accessors.end(event),
             },
-    ) as Array<StyledSegment>;
+        }),
+    }) as Array<StyledSegment>;
     const styled = clipped.size === 0 ? laidOut : laidOut.map((entry) =>
         clipped.has(entry.event)
             ? {
