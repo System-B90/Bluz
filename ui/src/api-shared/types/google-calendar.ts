@@ -30,6 +30,12 @@ export type GoogleCalendarLink = {
      * current iteration.
      */
     iterationId?: IterationId;
+    /**
+     * Google rejected the refresh token (`invalid_grant`: expired or
+     * revoked). The link is kept so a reconnect reuses its calendar, but no
+     * sync runs until then (#914).
+     */
+    needsReauth?: boolean;
     /** Incremental sync cursor for pulling changes back from Google (nextSyncToken). */
     syncToken?: string;
     connectedAt: number;
@@ -69,6 +75,8 @@ export type GoogleCalendarSelection = {
 export type GoogleCalendarStatus = {
     configured: boolean; // an OAuth client (shipped default or env override) is available
     connected: boolean;
+    /** A link exists but its Google token expired or was revoked; `connected` is false (#914). */
+    needsReauth?: boolean;
     enabled: boolean;
     /** Public OAuth client id the browser uses for the GIS "Continue with Google" popup. */
     clientId: string;

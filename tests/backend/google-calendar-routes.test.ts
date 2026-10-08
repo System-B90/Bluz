@@ -6,6 +6,7 @@ vi.mock("@/api-server/db-personal-settings", () => ({
 vi.mock("@/api-server/google/google-calendar-service", () => ({
     isGoogleCalendarConfigured: vi.fn(() => true),
     getGoogleCalendarSelection: vi.fn(async () => null),
+    googleCalendarNeedsReauth: vi.fn(async () => false),
     getGoogleClientId: vi.fn(() => "client-id.apps.googleusercontent.com"),
     getGoogleScopes: vi.fn(() => [ "https://www.googleapis.com/auth/calendar" ]),
     disconnectGoogleCalendar: vi.fn(async () => undefined),
@@ -22,13 +23,14 @@ import { DbPersonalSettings } from "@/api-server/db-personal-settings";
 import {
     disconnectGoogleCalendar,
     getGoogleCalendarSelection,
+    googleCalendarNeedsReauth,
     isGoogleCalendarConfigured,
     listGoogleCalendarOptions,
     purgeGoogleEvents,
     selectGoogleCalendar,
 } from "@/api-server/google/google-calendar-service";
 import { requireStaffSession } from "@/api-server/session-user";
-import { ForbiddenError } from "@/api-shared/errors";
+import { ForbiddenError, GoogleReauthRequiredError } from "@/api-shared/errors";
 import * as CalendarsRoute from "@/app/api/integrations/google-calendar/calendars/route";
 import * as DisconnectRoute from "@/app/api/integrations/google-calendar/disconnect/route";
 import * as PurgeRoute from "@/app/api/integrations/google-calendar/purge/route";
@@ -103,6 +105,18 @@ describe("GET /api/integrations/google-calendar/status", () => {
 
         expect(data.configured).toBe(false);
         expect(data.connected).toBe(false);
+    });
+
+    it("reports an expired/revoked token as disconnected and needing a reconnect (#914)", async () => {
+        vi.mocked(googleCalendarNeedsReauth).mockResolvedValueOnce(true);
+
+        const { data } = await (
+            await StatusRoute.GET(anyRequest, undefined as never)
+        ).json();
+
+        expect(data.connected).toBe(false);
+        expect(data.needsReauth).toBe(true);
+        expect(data).not.toHaveProperty("calendar");
     });
 
     it("403s a caller without staff clearance", async () => {
@@ -311,5 +325,18 @@ describe("POST /api/integrations/google-calendar/purge", () => {
 
         expect(response.status).toBe(403);
         expect(purgeGoogleEvents).not.toHaveBeenCalled();
+    });
+});
+
+describe("expired or revoked Google token (#914)", () => {
+    it("GET /calendars answers 401 with a reconnect error instead of 500", async () => {
+        vi.mocked(listGoogleCalendarOptions).mockRejectedValueOnce(
+            new GoogleReauthRequiredError(),
+        );
+
+        const response = await CalendarsRoute.GET(anyRequest, undefined as never);
+
+        expect(response.status).toBe(401);
+        expect((await response.json()).error.name).toBe("GoogleReauthRequiredError");
     });
 });

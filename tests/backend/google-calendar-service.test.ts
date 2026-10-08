@@ -162,6 +162,7 @@ vi.mock("@/api-server/mongo-db-controller", () => ({
 }));
 
 import * as service from "@/api-server/google/google-calendar-service";
+import { GoogleReauthRequiredError } from "@/api-shared/errors";
 import { openSecret, sealSecret } from "@/api-server/secret-box";
 import { EventType } from "@/api-shared/types/event";
 import { EventChangeInitiator } from "@/api-shared/types/event-history";
@@ -1178,7 +1179,7 @@ describe("connectGoogleCalendar — shared calendars and iteration binding", () 
 
         const [, update] = links.updateOne.mock.calls[0];
         expect(update.$set.iterationId).toBe("2026a");
-        expect(update.$unset).toEqual({ syncToken: "" });
+        expect(update.$unset).toEqual({ syncToken: "", needsReauth: "" });
     });
 
     it("stores no iteration when none is registered", async () => {
@@ -1634,5 +1635,89 @@ describe("purgeGoogleEvents", () => {
 
         // 404 = already gone = removed; the forbidden one is the failure.
         expect(result).toEqual({ scanned: 3, removed: 2, failed: 1 });
+    });
+});
+
+// ---------------------------------------------------------------------------
+// Expired / revoked refresh token (#914)
+// ---------------------------------------------------------------------------
+
+describe("invalid_grant (expired or revoked refresh token)", () => {
+    /** What gaxios rejects with when Google's token endpoint refuses the grant. */
+    const invalidGrant = () =>
+        Object.assign(new Error("invalid_grant"), {
+            response: {
+                status: 400,
+                data: {
+                    error: "invalid_grant",
+                    error_description: "Token has been expired or revoked.",
+                },
+            },
+        });
+
+    const flaggedReauth = () =>
+        links.updateOne.mock.calls.some(
+            (call) =>
+                (call as unknown as [unknown, { $set?: { needsReauth?: boolean } }])[1]
+                    .$set?.needsReauth === true,
+        );
+
+    it("recognises the gaxios rejection and its bare message", () => {
+        expect(service.isInvalidGrantError(invalidGrant())).toBe(true);
+        expect(service.isInvalidGrantError(new Error("invalid_grant"))).toBe(true);
+        expect(service.isInvalidGrantError({ code: 401 })).toBe(false);
+        expect(service.isInvalidGrantError(new Error("offline"))).toBe(false);
+    });
+
+    it("listing calendars flags the link and throws a reconnect error, not a 500", async () => {
+        gapi.api.calendarList.list.mockRejectedValueOnce(invalidGrant());
+
+        await expect(service.listGoogleCalendarOptions("u1")).rejects.toBeInstanceOf(
+            GoogleReauthRequiredError,
+        );
+        expect(flaggedReauth()).toBe(true);
+    });
+
+    it("purge flags the link and throws a reconnect error", async () => {
+        gapi.api.events.list.mockRejectedValueOnce(invalidGrant());
+
+        await expect(service.purgeGoogleEvents("u1", "all")).rejects.toBeInstanceOf(
+            GoogleReauthRequiredError,
+        );
+        expect(flaggedReauth()).toBe(true);
+    });
+
+    it("background pulls flag the link instead of logging a warning", async () => {
+        gapi.api.events.list.mockRejectedValueOnce(invalidGrant());
+        const warn = vi.spyOn(logger, "warn").mockImplementation(() => logger);
+
+        await expect(service.pullEventEdits("u1")).resolves.toBe(0);
+        expect(flaggedReauth()).toBe(true);
+        expect(warn).not.toHaveBeenCalled();
+    });
+
+    it("skips Google entirely once the link awaits a reconnect", async () => {
+        links.findOne.mockResolvedValue(makeLink({ needsReauth: true }));
+
+        await expect(service.pullEventEdits("u1")).resolves.toBe(0);
+        await expect(service.pullBusyBlocks("u1")).resolves.toEqual([]);
+        await expect(
+            service.pushEventToGoogle("u1", eventFixture(), "upsert"),
+        ).resolves.toBe(false);
+        expect(totalApiCalls()).toBe(0);
+        await expect(service.listGoogleCalendarOptions("u1")).rejects.toBeInstanceOf(
+            GoogleReauthRequiredError,
+        );
+        await expect(service.googleCalendarNeedsReauth("u1")).resolves.toBe(true);
+    });
+
+    it("a reconnect clears the flag", async () => {
+        await service.connectGoogleCalendar("u1", "code");
+
+        const [, update] = links.updateOne.mock.calls.at(-1) as unknown as [
+            unknown,
+            { $unset?: Record<string, string> },
+        ];
+        expect(update.$unset).toHaveProperty("needsReauth");
     });
 });

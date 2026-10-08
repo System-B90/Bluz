@@ -9,6 +9,7 @@ vi.mock("@/api-server/db-event", () => ({
 vi.mock("@/api-server/google/google-calendar-service", () => ({
     isGoogleCalendarConfigured: vi.fn(() => true),
     getGoogleCalendarSelection: vi.fn(async () => null),
+    googleCalendarNeedsReauth: vi.fn(async () => false),
     pullEventEdits: vi.fn(async () => 0),
     pushAllEvents: vi.fn(async () => 0),
     pullBusyBlocks: vi.fn(async () => []),

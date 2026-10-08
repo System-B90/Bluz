@@ -13,7 +13,7 @@ import {
     resolveIterationDb,
 } from "@/api-server/mongo-db-controller";
 import { openSecret, sealSecret } from "@/api-server/secret-box";
-import { ClientApiError } from "@/api-shared/errors";
+import { ClientApiError, GoogleReauthRequiredError } from "@/api-shared/errors";
 import { DbEventDocument } from "@/api-shared/types/event";
 import { EventChangeInitiator } from "@/api-shared/types/event-history";
 import {
@@ -127,6 +127,21 @@ export function googleErrorStatus(error: unknown): number | undefined {
     return typeof status === "number" && Number.isFinite(status)
         ? status
         : undefined;
+}
+
+/**
+ * Google's token endpoint refused the refresh token: it expired (7 days on an
+ * OAuth app still in "Testing") or the user revoked access. No retry helps —
+ * only a reconnect does (#914).
+ */
+export function isInvalidGrantError(error: unknown): boolean {
+    const e = error as
+        | { message?: unknown; response?: { data?: { error?: unknown } } }
+        | undefined;
+    return (
+        e?.response?.data?.error === "invalid_grant" ||
+        (typeof e?.message === "string" && e.message.includes("invalid_grant"))
+    );
 }
 
 function isRateLimit403(error: unknown): boolean {
@@ -492,8 +507,8 @@ export async function connectGoogleCalendar(
             connectedAt: Date.now(),
         },
         // A reconnect onto a (possibly different) calendar must not replay a
-        // cursor from the previous one.
-        ["syncToken"],
+        // cursor from the previous one, and fresh tokens clear the reauth flag.
+        ["syncToken", "needsReauth"],
     );
 }
 
@@ -503,10 +518,32 @@ export async function disconnectGoogleCalendar(userId: string): Promise<void> {
 
 type Authorized = { auth: OAuth2Client; link: GoogleCalendarLink };
 
-/** Authorized client for a linked user, refreshing (and persisting) the access token if needed. */
+/**
+ * When `error` is Google refusing the refresh token, flags the link so status
+ * reports it and background syncs stop retrying a dead token (#914).
+ */
+async function flagIfInvalidGrant(
+    userId: string,
+    error: unknown,
+): Promise<boolean> {
+    if (!isInvalidGrantError(error)) return false;
+    await saveLink(userId, { needsReauth: true });
+    logger.info(`Google Calendar token for user ${userId} expired or was revoked; reconnect required.`);
+    return true;
+}
+
+/** Whether the user's link exists but needs a reconnect. */
+export async function googleCalendarNeedsReauth(userId: string): Promise<boolean> {
+    return (await getLink(userId))?.needsReauth === true;
+}
+
+/**
+ * Authorized client for a linked user, refreshing (and persisting) the access
+ * token if needed. Null when not linked, or when the link awaits a reconnect.
+ */
 async function getAuthorizedClient(userId: string): Promise<Authorized | null> {
     const link = await getLink(userId);
-    if (!link) return null;
+    if (!link || link.needsReauth) return null;
 
     const client = createOAuthClient();
     client.setCredentials({
@@ -528,9 +565,27 @@ async function getAuthorizedClient(userId: string): Promise<Authorized | null> {
 async function requireAuthorized(userId: string): Promise<Authorized> {
     const authorized = await getAuthorizedClient(userId);
     if (!authorized) {
+        if (await googleCalendarNeedsReauth(userId)) {
+            throw new GoogleReauthRequiredError();
+        }
         throw new ClientApiError("חשבון Google אינו מחובר");
     }
     return authorized;
+}
+
+/** Runs a user-facing Google call, turning `invalid_grant` into a 401 reconnect error. */
+async function reauthOnInvalidGrant<T>(
+    userId: string,
+    call: () => Promise<T>,
+): Promise<T> {
+    try {
+        return await call();
+    } catch (error) {
+        if (await flagIfInvalidGrant(userId, error)) {
+            throw new GoogleReauthRequiredError();
+        }
+        throw error;
+    }
 }
 
 /**
@@ -541,7 +596,9 @@ export async function listGoogleCalendarOptions(
     userId: string,
 ): Promise<{ calendars: Array<GoogleCalendarOption>; selectedId: string }> {
     const { auth, link } = await requireAuthorized(userId);
-    const calendars = await listWritableCalendars(calendarFor(auth));
+    const calendars = await reauthOnInvalidGrant(userId, () =>
+        listWritableCalendars(calendarFor(auth)),
+    );
     return { calendars, selectedId: link.calendarId };
 }
 
@@ -553,6 +610,13 @@ export async function listGoogleCalendarOptions(
  * mirror from now on.
  */
 export async function selectGoogleCalendar(
+    userId: string,
+    payload: ApiGoogleCalendarSelectPayload,
+): Promise<GoogleCalendarSelection> {
+    return await reauthOnInvalidGrant(userId, () => selectGoogleCalendarUnsafe(userId, payload));
+}
+
+async function selectGoogleCalendarUnsafe(
     userId: string,
     payload: ApiGoogleCalendarSelectPayload,
 ): Promise<GoogleCalendarSelection> {
@@ -663,6 +727,7 @@ export async function pushEventToGoogle(
         return true;
     } catch (error) {
         // Never let a Google outage/misconfiguration break Bluz's own event flow.
+        if (await flagIfInvalidGrant(userId, error)) return false;
         logger.warn({ err: error }, `Google Calendar push skipped for user ${userId} (event ${event.id}):`);
         return false;
     }
@@ -819,6 +884,7 @@ export async function pullEventEdits(userId: string): Promise<number> {
         }
         return updatedCount;
     } catch (error) {
+        if (await flagIfInvalidGrant(userId, error)) return 0;
         logger.warn({ err: error }, `Google Calendar edit pull skipped for user ${userId}:`);
         return 0;
     }
@@ -855,6 +921,7 @@ export async function pullBusyBlocks(
             end: b.end ?? "",
         }));
     } catch (error) {
+        if (await flagIfInvalidGrant(userId, error)) return [];
         logger.warn({ err: error }, `Google Calendar pull skipped for user ${userId}:`);
         return [];
     }
@@ -970,6 +1037,13 @@ async function findOrphans(
  * counted, not thrown, so the rest of the purge completes.
  */
 export async function purgeGoogleEvents(
+    userId: string,
+    scope: GoogleCalendarPurgeScope,
+): Promise<ApiGoogleCalendarPurgeResponse> {
+    return await reauthOnInvalidGrant(userId, () => purgeGoogleEventsUnsafe(userId, scope));
+}
+
+async function purgeGoogleEventsUnsafe(
     userId: string,
     scope: GoogleCalendarPurgeScope,
 ): Promise<ApiGoogleCalendarPurgeResponse> {

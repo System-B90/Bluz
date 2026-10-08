@@ -5,6 +5,7 @@ import EventIcon from "@mui/icons-material/Event";
 import PeopleIcon from "@mui/icons-material/People";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import Alert from "@mui/material/Alert";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -502,6 +503,29 @@ export function PersonalSettings()
         [ enqueueSnackbar, googleStatus, refreshGoogleStatus ],
     );
 
+    // Google refused the stored token (expired/revoked): rerun the consent
+    // popup. A fresh code replaces the tokens and keeps the same calendar (#914).
+    const handleReconnectGoogle = useCallback(async () =>
+    {
+        if (!googleStatus?.clientId) return;
+        setGoogleBusy(true);
+        try
+        {
+            const code = await requestGoogleAuthCode(googleStatus.clientId, googleStatus.scopes);
+            await apiConnectGoogleCalendar({ code }, {});
+            refreshGoogleStatus();
+            enqueueSnackbar("חשבון Google חובר מחדש.", { variant: "success" });
+        }
+        catch (e)
+        {
+            enqueueApiErrorSnackbar(enqueueSnackbar, "כשל בחיבור מחדש ל-Google Calendar", e);
+        }
+        finally
+        {
+            setGoogleBusy(false);
+        }
+    }, [ enqueueSnackbar, googleStatus, refreshGoogleStatus ]);
+
     const handleDisconnectGoogle = useCallback(async () =>
     {
         setGoogleBusy(true);
@@ -536,12 +560,15 @@ export function PersonalSettings()
         catch (e)
         {
             enqueueApiErrorSnackbar(enqueueSnackbar, "כשל בסנכרון עם Google Calendar", e);
+            // An expired Google token surfaces here first; refetch so the
+            // card switches to its reconnect prompt (#914).
+            refreshGoogleStatus();
         }
         finally
         {
             setGoogleSyncing(false);
         }
-    }, [ enqueueSnackbar ]);
+    }, [ enqueueSnackbar, refreshGoogleStatus ]);
 
     // SelectionCard is memoized, but a freshly-mapped array is a new
     // reference every render regardless of whether its contents changed —
@@ -652,6 +679,23 @@ export function PersonalSettings()
                             האינטגרציה אינה מוגדרת בשרת זה (מתאים לפריסות ללא גישה לאינטרנט).
                         </Typography>
                     ) }
+                    { state.googleCalendarEnabled && googleStatus?.needsReauth ? (
+                        <Alert
+                            action={
+                                <Box display="flex" gap={ 1 }>
+                                    <Button color="inherit" disabled={ googleBusy } onClick={ handleReconnectGoogle } size="small">
+                                        התחברות מחדש
+                                    </Button>
+                                    <Button color="inherit" disabled={ googleBusy } onClick={ handleDisconnectGoogle } size="small">
+                                        נתק חשבון
+                                    </Button>
+                                </Box>
+                            }
+                            severity="warning"
+                        >
+                            ההרשאה של Bluz לחשבון Google פגה או בוטלה, והסנכרון מושהה. התחברו מחדש כדי לחדש אותו.
+                        </Alert>
+                    ) : null }
                     { state.googleCalendarEnabled && googleStatus?.connected ? <>
                         <Box alignItems="center" display="flex" gap={ 1.5 }>
                             <Box flex={ 1 }>

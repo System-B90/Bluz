@@ -5,6 +5,7 @@ import { DbEvent } from "@/api-server/db-event";
 import { DbPersonalSettings } from "@/api-server/db-personal-settings";
 import {
     getGoogleCalendarSelection,
+    googleCalendarNeedsReauth,
     isGoogleCalendarConfigured,
     pullBusyBlocks,
     pullEventEdits,
@@ -15,7 +16,7 @@ import {
     resolveIterationDb,
 } from "@/api-server/mongo-db-controller";
 import { requireStaffSession } from "@/api-server/session-user";
-import { ClientApiError } from "@/api-shared/errors";
+import { ClientApiError, GoogleReauthRequiredError } from "@/api-shared/errors";
 import { ApiGoogleCalendarSyncResponse } from "@/api-shared/types/google-calendar";
 
 const SYNC_WINDOW_DAYS = 90;
@@ -35,6 +36,9 @@ export const POST = withApi(async () => {
     }
     const calendar = await getGoogleCalendarSelection(user.id);
     if (!calendar) throw new ClientApiError("חשבון Google אינו מחובר");
+    if (await googleCalendarNeedsReauth(user.id)) {
+        throw new GoogleReauthRequiredError();
+    }
 
     const userIdAsNumber = Number(user.id);
     const now = new Date();
@@ -45,6 +49,11 @@ export const POST = withApi(async () => {
     // Pull Google-side edits first so the push that follows doesn't overwrite
     // changes the user just made in Google Calendar.
     const updated = await pullEventEdits(user.id);
+    // The pull is where an expired/revoked token first shows up (#914); stop
+    // there rather than report a sync that pushed nothing.
+    if (await googleCalendarNeedsReauth(user.id)) {
+        throw new GoogleReauthRequiredError();
+    }
 
     // The calendar mirrors one iteration — read from that one, not whichever
     // is current (a legacy link with no iteration still means "current").
