@@ -4,7 +4,12 @@ import assert from "assert";
 import { NextRequest, NextResponse } from "next/server";
 
 import { AiNotConfiguredError } from "@/api-server/ai/provider";
-import { ClientApiError, ForbiddenError, UserNotLoggedInError } from "@/api-shared/errors";
+import {
+    ClientApiError,
+    ForbiddenError,
+    GoogleReauthRequiredError,
+    UserNotLoggedInError,
+} from "@/api-shared/errors";
 import { logger } from "@/logging/pino";
 import { CACHE_CONTROL_HTTP_HEADER, IMMUTABLE_CACHE_MAX_TTL } from "@/settings";
 
@@ -231,6 +236,12 @@ export function catchHandler<T extends NextRequest>(request: T, e: unknown) {
             { status: -1, error: { name: "ForbiddenError", message: "אין הרשאה לפעולה זו" } },
             { status: 403 },
         );
+    }
+
+    // An expired/revoked Google token is the user's to fix by reconnecting,
+    // not a server fault (#914).
+    if (e instanceof GoogleReauthRequiredError) {
+        return ApiErrorMaker(e, 401);
     }
 
     if (e instanceof ClientApiError) {

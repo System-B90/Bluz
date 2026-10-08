@@ -26,6 +26,18 @@ export {
 } from "@system-b90/hive-core";
 
 /**
+ * The user's stored Google refresh token was expired or revoked
+ * (`invalid_grant`): the link exists but cannot act until the user reconnects
+ * (#914). Served as 401 so it never reads as a server fault.
+ */
+export class GoogleReauthRequiredError extends ClientApiError {
+    constructor(message = "חיבור Google Calendar פג תוקף — יש להתחבר מחדש") {
+        super(message);
+        this.name = "GoogleReauthRequiredError";
+    }
+}
+
+/**
  * Subclasses the network-message factory should reconstruct into, keyed by
  * the `name` the server payload carries. hive-core's own
  * `constructErrorFromNetworkMessage` always builds a base `ClientApiError`,
@@ -42,6 +54,7 @@ const NETWORK_ERROR_CONSTRUCTORS: Record<
     HiveClientError,
     ClientApiWarning,
     OperationAborted,
+    GoogleReauthRequiredError,
 };
 
 /**
