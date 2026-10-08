@@ -1,4 +1,3 @@
-import AddIcon from "@mui/icons-material/Add";
 import Box from "@mui/material/Box";
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
@@ -29,11 +28,6 @@ export function CreateCurriculumHoverMenu({
 }: CreateCurriculumHoverMenuProps) {
     return (
         <Box alignItems="center" display="flex">
-            <AddIcon
-                aria-hidden
-                color={isDisabled ? "disabled" : "primary"}
-                fontSize="small"
-            />
             <Box
                 alignItems="center"
                 display="flex"
