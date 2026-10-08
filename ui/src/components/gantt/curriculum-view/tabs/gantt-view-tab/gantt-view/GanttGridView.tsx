@@ -21,6 +21,7 @@ import {
     getWeekTotalMinutes,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { buildStudentPaths, sumStudentMinutes, withoutBreaks } from "@/components/gantt/curriculum-view/student-load";
+import { frozenColumns } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/frozen-columns";
 import { parseHoursInput, ZeroChoice } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-allotment";
 import { onGridExpansionRequest, publishGridAllCollapsed } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-expansion-bus";
 import { useGridAnimation, useGridCompactHeader, useGridIgnoreBreaks, useGridVerticalLines } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/grid-preferences";
@@ -78,6 +79,19 @@ const errorTint = {
 const selectedSx = {
     boxShadow: (theme: Theme) => `inset 0 0 0 100vmax ${alpha(theme.palette.primary.main, 0.16)}`,
 };
+
+/**
+ * A frozen leading cell (#913): sticks at `offset` while the weeks scroll
+ * sideways. Opaque paper plus the row's tint (`--row-tint`, set on the row),
+ * so what scrolls beneath never shows through.
+ */
+const frozenSx = (offset: number) => ({
+    position: "sticky",
+    insetInlineStart: offset,
+    zIndex: 1,
+    bgcolor: "background.paper",
+    backgroundImage: "linear-gradient(var(--row-tint, transparent), var(--row-tint, transparent))",
+});
 
 /** Course cell fill: solid when the course attends all of the row, stripes when only some. */
 const presenceSx = (presence: CoursePresence, color: string) =>
@@ -261,6 +275,35 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
     const gridRef = useRef<HTMLDivElement>(null);
     const { enqueueSnackbar } = useSnackbar();
 
+    // The title column takes whatever the fixed columns leave, so its width is
+    // measured: the frozen hour columns sit right after it (#913).
+    const titleHeadRef = useRef<HTMLTableCellElement>(null);
+    const [ titleWidth, setTitleWidth ] = useState(TITLE_MIN_WIDTH);
+    const hasCurriculum = Boolean(curriculum);
+    useEffect(() =>
+    {
+        const cell = titleHeadRef.current;
+        if (!cell || typeof ResizeObserver === "undefined") return;
+        const observer = new ResizeObserver(() => setTitleWidth(cell.offsetWidth));
+        observer.observe(cell);
+        return () => observer.disconnect();
+    }, [ hasCurriculum ]);
+    const frozen = useMemo(
+        () => frozenColumns({
+            courseCount,
+            courseWidth: COURSE_WIDTH,
+            titleWidth,
+            leadColumns: LEAD_COLUMNS,
+            hoursWidth: HOURS_WIDTH,
+        }),
+        [ courseCount, titleWidth ],
+    );
+    // Header course groups start where their first column does.
+    const groupOffsets = courseColumns.groups.reduce<Array<number>>(
+        (offsets, _g, i) => [ ...offsets, i === 0 ? 0 : offsets[ i - 1 ] + courseColumns.groups[ i - 1 ].span * COURSE_WIDTH ],
+        [],
+    );
+
     const { commitWeek, splitShuffles, dialog } = useGridAllotment({
         curriculumId,
         dateOf: dateOfDayId,
@@ -438,7 +481,8 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                 onKeyDown={ handleKeyDown }
                 ref={ gridRef }
                 role="grid"
-                sx={ { maxHeight: "calc(100vh - 180px)", "&:focus": { outline: "none" } } }
+                // Keyboard moves scroll the cursor clear of the frozen columns.
+                sx={ { maxHeight: "calc(100vh - 180px)", scrollPaddingInlineStart: frozen.width, "&:focus": { outline: "none" } } }
                 tabIndex={ 0 }
             >
                 <Table
@@ -487,14 +531,14 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                     colSpan={ g.span }
                                     key={ `${g.id}-${i}` }
                                     rowSpan={ g.id ? 1 : compactHeader ? 2 : 3 }
-                                    sx={ { fontSize: "0.75rem", px: 0.5 } }
+                                    sx={ { ...frozenSx(groupOffsets[ i ]), fontSize: "0.75rem", px: 0.5 } }
                                 >
                                     { g.name }
                                 </TableCell>
                             )) }
-                            <TableCell>שם</TableCell>
-                            <TableCell align="center">נדרש</TableCell>
-                            <TableCell align="center">שובץ</TableCell>
+                            <TableCell ref={ titleHeadRef } sx={ frozenSx(frozen.offsets[ courseCount ]) }>שם</TableCell>
+                            <TableCell align="center" sx={ frozenSx(frozen.offsets[ courseCount + 1 ]) }>נדרש</TableCell>
+                            <TableCell align="center" sx={ frozenSx(frozen.offsets[ courseCount + 2 ]) }>שובץ</TableCell>
                             { timelineWeeks.map((week) => (
                                 <TableCell align="center" key={ week.id }>{ week.title }</TableCell>
                             )) }
@@ -505,17 +549,17 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                 : [ [ "זמן זמין", availableByWeek ] as const, [ "זמן משובץ", usedByWeek ] as const ]),
                         ]).map(([ label, byWeek, against ], rowNumber) => (
                             <TableRow key={ label }>
-                                { rowNumber === 0 && courseColumns.columns.filter((c) => c.group).map((c) => (
+                                { rowNumber === 0 && courseColumns.columns.map((c, ci) => c.group && (
                                     <TableCell
                                         align="center"
                                         key={ c.path.id }
                                         rowSpan={ compactHeader ? 1 : 2 }
-                                        sx={ { fontSize: "0.75rem", fontWeight: "normal", px: 0.5 } }
+                                        sx={ { ...frozenSx(frozen.offsets[ ci ]), fontSize: "0.75rem", fontWeight: "normal", px: 0.5 } }
                                     >
                                         { c.name }
                                     </TableCell>
                                 )) }
-                                <TableCell colSpan={ LEAD_COLUMNS }>
+                                <TableCell colSpan={ LEAD_COLUMNS } sx={ frozenSx(frozen.offsets[ courseCount ]) }>
                                     { byWeek === usedByWeek ? (
                                         <Box alignItems="center" display="flex" gap={ 1 } justifyContent="space-between">
                                             { label }
@@ -560,8 +604,16 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                     sx={ {
                                         ...phaseSx(phase),
                                         ...(isSummary && { bgcolor: r.kind === "module" ? "action.hover" : "action.selected" }),
+                                        // The same tint for the frozen cells, which paint their own opaque background.
+                                        ...(isSummary && {
+                                            "--row-tint": (theme: Theme) =>
+                                                r.kind === "module" ? theme.palette.action.hover : theme.palette.action.selected,
+                                        }),
                                         // Blue, not the theme's gray hover: gray is the module row's own fill.
-                                        "&.MuiTableRow-hover:hover": { bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.14) },
+                                        "&.MuiTableRow-hover:hover": {
+                                            bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.14),
+                                            "--row-tint": (theme: Theme) => alpha(theme.palette.primary.main, 0.14),
+                                        },
                                     } }
                                 >
                                     { courseColumns.columns.map((c, ci) =>
@@ -577,7 +629,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                                 onContextMenu={ (e) => openMenu(e, { row: ri, col: cc }) }
                                                 ref={ ri === row && col === cc ? selectedRef : undefined }
                                                 // The 1/0 value is data only: transparent text.
-                                                sx={ { ...cellSx(ri, cc, "event"), ...(presenceSx(r.coursePresence[ ci ], c.color) as object), color: "transparent" } }
+                                                sx={ { ...frozenSx(frozen.offsets[ ci ]), ...cellSx(ri, cc, "event"), ...(presenceSx(r.coursePresence[ ci ], c.color) as object), color: "transparent" } }
                                                 title={ c.path.label }
                                             >
                                                 { r.coursePresence[ ci ] === "none" ? 0 : 1 }
@@ -591,7 +643,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                         onContextMenu={ (e) => openMenu(e, { row: ri, col: 0 }) }
                                         onDoubleClick={ isSummary ? undefined : () => activate(r) }
                                         ref={ ri === row && col === 0 ? selectedRef : undefined }
-                                        sx={ cellSx(ri, 0, r.kind, r.depth) }
+                                        sx={ { ...frozenSx(frozen.offsets[ courseCount ]), ...cellSx(ri, 0, r.kind, r.depth) } }
                                     >
                                         { isSummary ? (r.childless ? <Remove fontSize="inherit" /> : expanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />) : null }
                                         { " " }{ r.title }
@@ -607,6 +659,7 @@ export const GanttGridView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                             onDoubleClick={ () => startEdit(ri, vi + 1) }
                                             ref={ ri === row && col === vi + 1 ? selectedRef : undefined }
                                             sx={ {
+                                                ...(vi < LEAD_COLUMNS - 1 && frozenSx(frozen.offsets[ courseCount + 1 + vi ])),
                                                 ...cellSx(ri, vi + 1, r.kind),
                                                 ...(conflict && vi < LEAD_COLUMNS - 1 && errorTint),
                                             } }
