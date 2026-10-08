@@ -224,7 +224,7 @@ export function SyllabusesActionsBox({
             width="100%"
         >
             <Box alignItems="center" display="flex" flexShrink={ 0 } gap={ 1.5 }>
-                <CreateSyllabusButton curriculumId={ curriculumId } />
+                <CreateSyllabusButton />
                 <SyllabusSelectionField
                     alignItems="center"
                     curriculumId={ curriculumId }

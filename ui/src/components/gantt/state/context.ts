@@ -23,6 +23,8 @@ export type OpenModuleDialog = (
 export type CloseModuleDialog = () => void;
 
 export type OpenSyllabusDialog = (syllabusId: GanttSyllabusId) => void;
+/** Opens the syllabus dialog on a syllabus that doesn't exist yet (#881). */
+export type OpenSyllabusDraft = () => void;
 export type CloseSyllabusDialog = () => void;
 
 export type OpenEventDialog = (
@@ -61,6 +63,7 @@ export const CurriculumActionsContext = createContext<{
     openEventDialog: OpenEventDialog;
     closeEventDialog: CloseEventDialog;
     openSyllabusDialog: OpenSyllabusDialog;
+    openSyllabusDraft: OpenSyllabusDraft;
     closeSyllabusDialog: CloseSyllabusDialog;
     requestReveal: RevealGanttItem;
     registerRevealHandler: (handler: RevealGanttItem) => () => void;

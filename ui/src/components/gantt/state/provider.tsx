@@ -38,6 +38,7 @@ import
     OpenEventDialog,
     OpenModuleDialog,
     OpenSyllabusDialog,
+    OpenSyllabusDraft,
     RevealGanttItem,
     useCurriculumProviderActions,
     useCurriculumState,
@@ -86,6 +87,9 @@ function ModuleDialogManager({
     const [ syllabusDialogSyllabusId, setSyllabusDialogSyllabusId ] =
         useState<GanttSyllabusId | null>(null);
     const [ syllabusDialogOpen, setSyllabusDialogOpen ] = useState<boolean>(false);
+    // Draft: the dialog is open on a syllabus that is created only once it
+    // gets a name (#881). Never in the URL, since there is no id to restore.
+    const [ syllabusDialogDraft, setSyllabusDialogDraft ] = useState<boolean>(false);
 
     // This function is passed to the Actions context
     const openModuleDialog: OpenModuleDialog = useCallback<OpenModuleDialog>((syllabusId, moduleId, eventId) =>
@@ -111,7 +115,22 @@ function ModuleDialogManager({
     const openSyllabusDialog: OpenSyllabusDialog = useCallback<OpenSyllabusDialog>((syllabusId) =>
     {
         setSyllabusDialogSyllabusId(syllabusId);
+        setSyllabusDialogDraft(false);
         setSyllabusDialogOpen(true);
+    }, []);
+
+    const openSyllabusDraft: OpenSyllabusDraft = useCallback(() =>
+    {
+        setSyllabusDialogSyllabusId(null);
+        setSyllabusDialogDraft(true);
+        setSyllabusDialogOpen(true);
+    }, []);
+
+    // The draft got its name and now exists: keep the same dialog open on it.
+    const onSyllabusDraftCreated = useCallback((syllabusId: GanttSyllabusId) =>
+    {
+        setSyllabusDialogSyllabusId(syllabusId);
+        setSyllabusDialogDraft(false);
     }, []);
 
     const closeSyllabusDialog: CloseSyllabusDialog = useCallback(() => setSyllabusDialogOpen(false), []);
@@ -145,6 +164,7 @@ function ModuleDialogManager({
         const ganttModule = moduleId ? modules[ moduleId ] : undefined;
 
         if (syllabusFound && urlSyllabusId) setSyllabusDialogSyllabusId(urlSyllabusId);
+        setSyllabusDialogDraft(false);
         setSyllabusDialogOpen(syllabusFound);
 
         if (ganttModule && moduleId)
@@ -240,6 +260,7 @@ function ModuleDialogManager({
             openEventDialog={ openEventDialog }
             openModuleDialog={ openModuleDialog }
             openSyllabusDialog={ openSyllabusDialog }
+            openSyllabusDraft={ openSyllabusDraft }
         >
             { children }
             {/* Render order is stacking order on restore: syllabus, then
@@ -247,6 +268,8 @@ function ModuleDialogManager({
             <SyllabusDialog
                 covered={ moduleDialogOpen || eventDialogOpen }
                 curriculumId={ curriculumId }
+                draft={ syllabusDialogDraft }
+                onDraftCreated={ onSyllabusDraftCreated }
                 open={ syllabusDialogOpen }
                 setOpen={ setSyllabusDialogOpen }
                 syllabusId={ syllabusDialogSyllabusId }
@@ -284,6 +307,7 @@ function CurriculumUIProviderInternal({
     openEventDialog,
     closeEventDialog,
     openSyllabusDialog,
+    openSyllabusDraft,
     closeSyllabusDialog,
 }: {
     children: ReactNode;
@@ -292,6 +316,7 @@ function CurriculumUIProviderInternal({
     openEventDialog: OpenEventDialog;
     closeEventDialog: CloseEventDialog;
     openSyllabusDialog: OpenSyllabusDialog;
+    openSyllabusDraft: OpenSyllabusDraft;
     closeSyllabusDialog: CloseSyllabusDialog;
 })
 {
@@ -306,6 +331,7 @@ function CurriculumUIProviderInternal({
             openEventDialog,
             closeEventDialog,
             openSyllabusDialog,
+            openSyllabusDraft,
             closeSyllabusDialog,
             requestReveal,
             registerRevealHandler,
@@ -317,6 +343,7 @@ function CurriculumUIProviderInternal({
             openEventDialog,
             closeEventDialog,
             openSyllabusDialog,
+            openSyllabusDraft,
             closeSyllabusDialog,
             requestReveal,
             registerRevealHandler,
@@ -387,6 +414,7 @@ export function CurriculumProvider({
                     openEventDialog: () => { },
                     closeEventDialog: () => { },
                     openSyllabusDialog: () => { },
+                    openSyllabusDraft: () => { },
                     closeSyllabusDialog: () => { },
                     requestReveal,
                     registerRevealHandler,
