@@ -328,7 +328,10 @@ def main(
         **merged_env,
         "POSTGRES_PASSWORD": db_pass,
         "TEST_PROJECT_NAME": project_name,
-        "BLUZ_VERSION": "latest",
+        # CI builds each run's images under its own tag: self-hosted jobs
+        # share one Docker daemon, and parallel runs all tagging ":latest"
+        # tested whichever branch built last.
+        "BLUZ_VERSION": os.environ.get("BLUZ_IMAGE_TAG") or "latest",
         # docker-compose.test.yml points the ui container's Mongo connection
         # string at TEST_MONGO_PASSWORD, but mongodb's actual root password
         # (set by the base compose file) is MONGO_ROOT_PASSWORD -- reuse it

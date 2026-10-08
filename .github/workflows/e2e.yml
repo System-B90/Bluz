@@ -173,6 +173,11 @@ jobs:
             # network to resolve the hive.org alias.
             HIVE_NETWORK_NAME: hive_hive-net
             NEXT_PUBLIC_HIVE_URL: https://hive.org
+            # This run's own image tag. The shared-hive runners share one
+            # Docker daemon, so parallel runs that all built ":latest" tested
+            # whichever branch finished building last. run_tests.py points
+            # compose at this tag.
+            BLUZ_IMAGE_TAG: ci-${{ github.run_id }}-${{ github.run_attempt }}
 
         steps:
             - name: Checkout repository
@@ -208,18 +213,19 @@ jobs:
                   node-version: "24"
 
             # Built here rather than handed over as an artifact, so a rerun of
-            # this job alone still has its images. Tags match what
-            # deploy/docker-compose.yml resolves to with BLUZ_VERSION=latest.
+            # this job alone still has its images. Tagged per run (see
+            # BLUZ_IMAGE_TAG); deploy/docker-compose.yml resolves the tag
+            # through BLUZ_VERSION, which run_tests.py sets from it.
             - name: Build Bluz images
               run: |
                   docker build -f ui/Dockerfile --target runner \
                       --secret id=npm_token,env=NPM_TOKEN \
-                      -t ghcr.io/system-b90/bluz/ui:latest .
+                      -t "ghcr.io/system-b90/bluz/ui:${BLUZ_IMAGE_TAG}" .
                   docker build -f session-server/Dockerfile.websocket \
                       --secret id=npm_token,env=NPM_TOKEN \
-                      -t ghcr.io/system-b90/bluz/sessions:latest session-server/
+                      -t "ghcr.io/system-b90/bluz/sessions:${BLUZ_IMAGE_TAG}" session-server/
                   docker build -f nginx/Dockerfile.proxy \
-                      -t ghcr.io/system-b90/bluz/proxy:latest nginx/
+                      -t "ghcr.io/system-b90/bluz/proxy:${BLUZ_IMAGE_TAG}" nginx/
 
             - name: Generate CI .env
               uses: ./.github/actions/bluz-ci-env
@@ -272,6 +278,15 @@ jobs:
             - name: Release shared Hive
               if: always()
               uses: System-B90/.github/actions/shared-hive-release@main
+
+            # Per-run tags would otherwise pile up on the shared daemon. Only
+            # this run's tags: never a prune here (the shared Hive lives on it).
+            - name: Remove this run's Bluz images
+              if: always()
+              run: |
+                  for image in ui sessions proxy; do
+                      docker image rm "ghcr.io/system-b90/bluz/${image}:${BLUZ_IMAGE_TAG}" >/dev/null 2>&1 || true
+                  done
 
             # ── Artifacts ────────────────────────────────────────────────────
             - name: Upload Playwright Report
