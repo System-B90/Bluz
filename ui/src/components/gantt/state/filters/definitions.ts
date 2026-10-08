@@ -5,6 +5,8 @@ import { CourseUser } from "@/api-shared/types/hive";
 export type GanttFilterValues = {
     courseIds: Array<CourseId>;
     leadInstructorIds: Array<number>;
+    /** Shuffle names: a syllabus passes when it has any of them (#886). */
+    shuffleNames: Array<string>;
 };
 
 export type GanttFilterKey = keyof GanttFilterValues;
@@ -30,6 +32,7 @@ export type GanttFilterDefinition<K extends GanttFilterKey = GanttFilterKey> = {
 export const EMPTY_GANTT_FILTERS: GanttFilterValues = {
     courseIds: [],
     leadInstructorIds: [],
+    shuffleNames: [],
 };
 
 const joinNames = (names: Array<string>) =>
@@ -55,7 +58,24 @@ const leadInstructorFilter: GanttFilterDefinition<"leadInstructorIds"> = {
         )}`,
 };
 
+const shuffleFilter: GanttFilterDefinition<"shuffleNames"> = {
+    key: "shuffleNames",
+    isActive: (value) => value.length > 0,
+    matches: (syllabus, value) =>
+        (syllabus.shuffles ?? []).some((name) => value.includes(name)),
+    describe: (value) => `כוללים את השאפל ${joinNames(value)}`,
+};
+
 export const GANTT_FILTER_DEFINITIONS: Array<GanttFilterDefinition> = [
     courseFilter as GanttFilterDefinition,
     leadInstructorFilter as GanttFilterDefinition,
+    shuffleFilter as GanttFilterDefinition,
 ];
+
+/** Every shuffle name used by syllabuses, sorted, for the shuffle filter. */
+export function shuffleFilterOptions(syllabuses: Iterable<Pick<GanttSyllabus, "shuffles"> | undefined>): Array<string>
+{
+    const names = new Set<string>();
+    for (const syllabus of syllabuses) for (const name of syllabus?.shuffles ?? []) names.add(name);
+    return [ ...names ].sort((a, b) => a.localeCompare(b, "he"));
+}

@@ -232,8 +232,9 @@ export const useGanttView = (curriculumId: string) =>
             eventMappings,
             linearDays,
             planShift,
+            alignment: { syllabuses: state.syllabuses, modules: state.modules, events: state.events },
         }),
-        [ constraints, state.modules, state.events, state.days, eventMappings, linearDays, planShift ],
+        [ constraints, state.syllabuses, state.modules, state.events, state.days, eventMappings, linearDays, planShift ],
     );
 
     // Memoized so context consumers (every day cell) don't re-render on unrelated
