@@ -11,12 +11,51 @@ type SegmentStyle = {
     xOffset: number;
 };
 type StyledSegment = { event: EventSegment; style: SegmentStyle };
+type Accessors = {
+    start: (event: EventSegment) => Date;
+    end: (event: EventSegment) => Date;
+};
+type SlotMetrics = {
+    getRange: (start: Date, end: Date) => { height: number };
+};
 type LayoutInput = {
     events: Array<EventSegment>;
     minimumStartDifference: number;
-    slotMetrics: unknown;
-    accessors: unknown;
+    slotMetrics: SlotMetrics;
+    accessors: Accessors;
 };
+
+/**
+ * Overlap small enough to read as back-to-back: such events stack at full
+ * width, the earlier tile drawn under the next one, instead of being split
+ * into half-width columns.
+ */
+export const SLIGHT_OVERLAP_MS = 15 * 60 * 1000;
+
+/**
+ * For each event that runs at most {@link SLIGHT_OVERLAP_MS} into a later
+ * one, the later event's start: where the layout should consider it ended.
+ * Starting together is never "slight"; those still share the column.
+ */
+export function slightOverlapEnds(
+    events: Array<EventSegment>,
+    accessors: Accessors,
+): Map<EventSegment, Date> {
+    const clipped = new Map<EventSegment, Date>();
+    for (const event of events) {
+        const start = +accessors.start(event);
+        const end = +accessors.end(event);
+        let clipAt = end;
+        for (const other of events) {
+            const otherStart = +accessors.start(other);
+            if (otherStart <= start || otherStart >= end) continue;
+            if (end - otherStart > SLIGHT_OVERLAP_MS) continue;
+            clipAt = Math.min(clipAt, otherStart);
+        }
+        if (clipAt < end) clipped.set(event, new Date(clipAt));
+    }
+    return clipped;
+}
 
 /**
  * The built-in `overlap` layout, with the pieces of a split event squared up
@@ -33,7 +72,35 @@ type LayoutInput = {
  * already cleared for it.
  */
 export function splitAwareDayLayout(input: LayoutInput): Array<StyledSegment> {
-    const styled = overlap(input) as Array<StyledSegment>;
+    // Lay slightly overlapping events out as if back-to-back, then give each
+    // clipped tile back its real height so it still shows its full time.
+    const clipped = slightOverlapEnds(input.events, input.accessors);
+    const laidOut = overlap(
+        clipped.size === 0
+            ? input
+            : {
+                ...input,
+                accessors: {
+                    ...input.accessors,
+                    end: (event: EventSegment) =>
+                        clipped.get(event) ?? input.accessors.end(event),
+                },
+            },
+    ) as Array<StyledSegment>;
+    const styled = clipped.size === 0 ? laidOut : laidOut.map((entry) =>
+        clipped.has(entry.event)
+            ? {
+                ...entry,
+                style: {
+                    ...entry.style,
+                    height: input.slotMetrics.getRange(
+                        input.accessors.start(entry.event),
+                        input.accessors.end(entry.event),
+                    ).height,
+                },
+            }
+            : entry,
+    );
 
     const bandByEvent = new Map<string, { start: number; end: number }>();
     for (const { event: segment, style } of styled) {
