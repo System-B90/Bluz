@@ -86,6 +86,13 @@ def _from_epoch_ms(value: Any) -> Any:
     return value
 
 
+def _to_epoch_ms(value: Any) -> int:
+    # Rows built without validation keep the raw int; pass it through.
+    if isinstance(value, int | float):
+        return int(value)
+    return int(value.timestamp() * 1000)
+
+
 LenientDate = Annotated[date, BeforeValidator(_date_part)]
 """A calendar date, accepted as "YYYY-MM-DD" or an ISO datetime; sent as "YYYY-MM-DD"."""
 
@@ -100,9 +107,7 @@ HHMM = Annotated[
 EpochMs = Annotated[
     datetime,
     BeforeValidator(_from_epoch_ms),
-    PlainSerializer(
-        lambda value: int(value.timestamp() * 1000), return_type=int, when_used="json"
-    ),
+    PlainSerializer(_to_epoch_ms, return_type=int, when_used="json"),
 ]
 """A UTC datetime the server stores as epoch milliseconds."""
 

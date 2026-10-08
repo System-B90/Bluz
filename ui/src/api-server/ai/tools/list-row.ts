@@ -5,8 +5,12 @@
 
 import type { AiEventSummary } from "@/api-server/ai/tools/calendar";
 
-/** Columns every list row carries: enough to name an event and say when. */
-const LIST_BASE_FIELDS = ["id", "name", "startTime", "endTime"] as const;
+/**
+ * Columns every list row carries: enough to name an event and say when, plus
+ * the visibility flags (dropped when false) so a staff-only event never reads
+ * as part of the visible schedule.
+ */
+const LIST_BASE_FIELDS = ["id", "name", "startTime", "endTime", "hidden", "fake"] as const;
 
 /** Columns the model may ask list_events for; get_event returns all of them. */
 export const LIST_EXTRA_FIELDS = [
