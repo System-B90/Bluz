@@ -137,25 +137,29 @@ export function DayCapacityCell({
     const day = useCurriculumDay(dayId);
     const { updateDay, updateWeek } = useWeekActions();
     const week = day ? state.weeks[day.weekId] : undefined;
-    const { extendTo, selectedDayIds } = useDaySelection();
+    const { extendTo, selectedDayIds, toggle } = useDaySelection();
     const isSelected = selectedDayIds.has(dayId);
 
-    // Shift-click anywhere on the cell joins it to the bulk-edit selection
-    // (#476). Only Shift-click: a plain click still belongs to the inputs the
-    // cell is made of.
+    // Shift-click extends a range, Ctrl/Cmd-click toggles the single day
+    // (#476). A plain click still belongs to the inputs the cell is made of.
     const handleShiftClick = useCallback(
         (event: React.MouseEvent) => {
+            if (event.ctrlKey || event.metaKey) {
+                event.stopPropagation();
+                toggle([dayId]);
+                return;
+            }
             if (!event.shiftKey) return;
             event.stopPropagation();
             extendTo(dayId);
         },
-        [dayId, extendTo],
+        [dayId, extendTo, toggle],
     );
 
     // Focus and text selection are decided on mousedown, so suppressing them
     // has to happen there — by click time the input underneath already has both.
     const handleShiftMouseDown = useCallback((event: React.MouseEvent) => {
-        if (!event.shiftKey) return;
+        if (!event.shiftKey && !event.ctrlKey && !event.metaKey) return;
         event.preventDefault();
         event.stopPropagation();
     }, []);

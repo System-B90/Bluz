@@ -12,6 +12,7 @@ import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import { ErrorSurface } from "@/components/errors/ErrorSurface";
+import { BedtimeReminder } from "@/components/gantt/BedtimeReminder";
 import { CurriculumFab } from "@/components/gantt/curriculum-fab";
 import { CurriculumView } from "@/components/gantt/curriculum-view";
 import {
@@ -152,6 +153,7 @@ function GanttPageInner() {
             maxWidth="100vw"
             sx={ { position: "relative" } }
         >
+            <BedtimeReminder />
             <CurriculumFab
                 open={ drawerOpen }
                 setOpen={ setDrawerOpen }

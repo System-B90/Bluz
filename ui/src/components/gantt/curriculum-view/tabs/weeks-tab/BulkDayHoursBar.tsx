@@ -5,6 +5,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
+import Portal from "@mui/material/Portal";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -77,68 +78,73 @@ export function BulkDayHoursBar() {
 
     if (selectedDayIds.size === 0) return null;
 
+    // Portaled and fixed to the viewport: sticky inside the grid only pinned
+    // it to the grid's bottom edge, so the user had to scroll down to reach it.
     return (
-        <Box
-            sx={{
-                position: "sticky",
-                bottom: 8,
-                zIndex: 9,
-                display: "flex",
-                justifyContent: "center",
-                pointerEvents: "none",
-            }}
-        >
-            <Paper
-                elevation={6}
+        <Portal>
+            <Box
                 sx={{
-                    px: 2,
-                    py: 1,
-                    borderRadius: "14px",
-                    border: "1px solid",
-                    borderColor: "primary.main",
-                    pointerEvents: "auto",
+                    position: "fixed",
+                    bottom: 16,
+                    insetInline: 0,
+                    zIndex: (theme) => theme.zIndex.snackbar - 1,
+                    display: "flex",
+                    justifyContent: "center",
+                    pointerEvents: "none",
                 }}
             >
-                <Stack alignItems="center" direction="row" spacing={1.5}>
-                    <Typography fontWeight={700} variant="body2">
-                        {selectedDayIds.size} ימים נבחרו
-                    </Typography>
-                    <TextField
-                        autoFocus
-                        label="שעות עבודה"
-                        onChange={(event) => setValue(event.target.value)}
-                        onKeyDown={handleKeyDown}
-                        size="small"
-                        slotProps={{
-                            htmlInput: {
-                                inputMode: "numeric",
-                                style: {
-                                    fontFamily: "monospace",
-                                    fontWeight: 700,
-                                    textAlign: "center",
-                                    width: "5.5ch",
+                <Paper
+                    elevation={6}
+                    sx={{
+                        px: 2,
+                        py: 1,
+                        borderRadius: "14px",
+                        border: "1px solid",
+                        borderColor: "primary.main",
+                        pointerEvents: "auto",
+                    }}
+                >
+                    <Stack alignItems="center" direction="row" spacing={1.5}>
+                        <Typography fontWeight={700} variant="body2">
+                            {selectedDayIds.size} ימים נבחרו
+                        </Typography>
+                        <TextField
+                            autoFocus
+                            label="שעות עבודה"
+                            onChange={(event) => setValue(event.target.value)}
+                            onKeyDown={handleKeyDown}
+                            size="small"
+                            slotProps={{
+                                htmlInput: {
+                                    inputMode: "numeric",
+                                    style: {
+                                        fontFamily: "monospace",
+                                        fontWeight: 700,
+                                        textAlign: "center",
+                                        width: "5.5ch",
+                                    },
                                 },
-                            },
-                        }}
-                        value={value}
-                    />
-                    <Button
-                        disabled={isSaving}
-                        onClick={() => void apply()}
-                        size="small"
-                        variant="contained"
-                    >
-                    החלה
-                    </Button>
-                    <IconButton
-                        aria-label="ביטול הבחירה"
-                        onClick={clear}
-                        size="small"
-                    >
-                        <CloseIcon fontSize="small" />
-                    </IconButton>
-                </Stack>
-            </Paper>
-        </Box>
+                            }}
+                            value={value}
+                        />
+                        <Button
+                            disabled={isSaving}
+                            onClick={() => void apply()}
+                            size="small"
+                            variant="contained"
+                        >
+                        החלה
+                        </Button>
+                        <IconButton
+                            aria-label="ביטול הבחירה"
+                            onClick={clear}
+                            size="small"
+                        >
+                            <CloseIcon fontSize="small" />
+                        </IconButton>
+                    </Stack>
+                </Paper>
+            </Box>
+        </Portal>
     );
 }

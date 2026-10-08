@@ -9,7 +9,13 @@ import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
-import { KeyboardEvent, useCallback, useEffect, useMemo, useState } from "react";
+import {
+    KeyboardEvent,
+    useCallback,
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
 
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
 import {
@@ -27,10 +33,17 @@ import {
     getWeekDateRange,
     getWeekTotalMinutes,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
-import { DayStudentLoad, StudentPath, sumStudentMinutes } from "@/components/gantt/curriculum-view/student-load";
+import {
+    DayStudentLoad,
+    StudentPath,
+    sumStudentMinutes,
+} from "@/components/gantt/curriculum-view/student-load";
 import { BulkDayHoursBar } from "@/components/gantt/curriculum-view/tabs/weeks-tab/BulkDayHoursBar";
 import { DayCapacityCell } from "@/components/gantt/curriculum-view/tabs/weeks-tab/DayCapacityCell";
-import { DaySelectionProvider } from "@/components/gantt/curriculum-view/tabs/weeks-tab/DaySelectionContext";
+import {
+    DaySelectionProvider,
+    useDaySelection,
+} from "@/components/gantt/curriculum-view/tabs/weeks-tab/DaySelectionContext";
 import { useCurriculumStudentSchedule } from "@/components/gantt/curriculum-view/use-student-schedule";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 
@@ -125,10 +138,38 @@ function WeekRow({
         [commitComment],
     );
 
+    const weekDayIds = useMemo(
+        () =>
+            DAY_COLUMNS.map((dayIndex) =>
+                getDayIdByIndex(week, state, dayIndex),
+            ).filter((dayId): dayId is GanttDayId => Boolean(dayId)),
+        [state, week],
+    );
+    const { selectedDayIds, toggle } = useDaySelection();
+    const isWeekSelected =
+        weekDayIds.length > 0 &&
+        weekDayIds.every((dayId) => selectedDayIds.has(dayId));
+
+    // Ctrl/Cmd-click the week cell to add or remove the whole week from the
+    // bulk-edit selection, so several weeks can be edited at once.
+    const handleWeekClick = useCallback(
+        (event: React.MouseEvent) => {
+            if (!event.ctrlKey && !event.metaKey) return;
+            event.preventDefault();
+            toggle(weekDayIds);
+        },
+        [toggle, weekDayIds],
+    );
+
     return (
         <TableRow hover>
             <TableCell
+                onClick={handleWeekClick}
                 sx={{
+                    cursor: "pointer",
+                    outline: isWeekSelected ? "2px solid" : "none",
+                    outlineColor: "primary.main",
+                    outlineOffset: -2,
                     position: "sticky",
                     insetInlineStart: 0,
                     zIndex: 3,
@@ -140,6 +181,7 @@ function WeekRow({
                     pb: isCompact ? 0.15 : 0.75,
                     px: 1.25,
                 }}
+                title="Ctrl+לחיצה לבחירת השבוע"
             >
                 <Typography
                     fontWeight={800}
@@ -316,9 +358,9 @@ export function WeeksCapacityGrid({
             <TableContainer
                 className="animate-slide-up-fade"
                 sx={{
-                // The tab itself is the scroll container now (#477), so the
-                // grid must grow instead of scrolling inside it — two nested
-                // scrollers would leave the summary card pinned after all.
+                    // The tab itself is the scroll container now (#477), so the
+                    // grid must grow instead of scrolling inside it — two nested
+                    // scrollers would leave the summary card pinned after all.
                     flex: "0 0 auto",
                     border: "1px solid",
                     borderColor: "divider",
@@ -352,7 +394,7 @@ export function WeeksCapacityGrid({
                                     fontSize: "0.85rem",
                                 }}
                             >
-                            שבוע
+                                שבוע
                             </TableCell>
                             <TableCell
                                 sx={{
@@ -364,11 +406,14 @@ export function WeeksCapacityGrid({
                                     fontSize: "0.85rem",
                                 }}
                             >
-                            שם / הערת שבוע
+                                שם / הערת שבוע
                             </TableCell>
 
                             {DAY_COLUMNS.map((dayIndex) => (
-                                <DayHeaderCell dayIndex={dayIndex} key={dayIndex} />
+                                <DayHeaderCell
+                                    dayIndex={dayIndex}
+                                    key={dayIndex}
+                                />
                             ))}
                         </TableRow>
                     </TableHead>
@@ -394,8 +439,8 @@ export function WeeksCapacityGrid({
                                     sx={{ py: 5 }}
                                 >
                                     <Typography color="text.secondary">
-                                    אין עדיין שבועות בגאנט. הוסיפו שבוע דרך
-                                    ניהול אורך קורס.
+                                        אין עדיין שבועות בגאנט. הוסיפו שבוע דרך
+                                        ניהול אורך קורס.
                                     </Typography>
                                 </TableCell>
                             </TableRow>
