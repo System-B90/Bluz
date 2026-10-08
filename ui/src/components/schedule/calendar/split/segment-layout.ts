@@ -11,12 +11,58 @@ type SegmentStyle = {
     xOffset: number;
 };
 type StyledSegment = { event: EventSegment; style: SegmentStyle };
+type Accessors = {
+    start: (event: EventSegment) => Date;
+    end: (event: EventSegment) => Date;
+};
+type SlotMetrics = {
+    getRange: (start: Date, end: Date) => { height: number };
+};
 type LayoutInput = {
     events: Array<EventSegment>;
     minimumStartDifference: number;
-    slotMetrics: unknown;
-    accessors: unknown;
+    slotMetrics: SlotMetrics;
+    accessors: Accessors;
 };
+
+/**
+ * Overlap that still counts as back-to-back: events stack at full width only
+ * when one ends where the next starts, give or take this much. Anything more
+ * shares the column side by side.
+ */
+export const SLIGHT_OVERLAP_MS = 60 * 1000;
+
+/**
+ * Minutes apart two starts must be for react-big-calendar not to force the
+ * events side by side. Its default is half a slot group (30 minutes on the
+ * schedule), which split back-to-back events such as 9:00–9:15 and 9:15.
+ */
+export const MINIMUM_START_DIFFERENCE_MIN = 1;
+
+/**
+ * For each event that runs at most {@link SLIGHT_OVERLAP_MS} into a later
+ * one, the later event's start: where the layout should consider it ended.
+ * Starting together is never "slight"; those still share the column.
+ */
+export function slightOverlapEnds(
+    events: Array<EventSegment>,
+    accessors: Accessors,
+): Map<EventSegment, Date> {
+    const clipped = new Map<EventSegment, Date>();
+    for (const event of events) {
+        const start = +accessors.start(event);
+        const end = +accessors.end(event);
+        let clipAt = end;
+        for (const other of events) {
+            const otherStart = +accessors.start(other);
+            if (otherStart <= start || otherStart >= end) continue;
+            if (end - otherStart > SLIGHT_OVERLAP_MS) continue;
+            clipAt = Math.min(clipAt, otherStart);
+        }
+        if (clipAt < end) clipped.set(event, new Date(clipAt));
+    }
+    return clipped;
+}
 
 /**
  * The built-in `overlap` layout, with the pieces of a split event squared up
@@ -33,7 +79,34 @@ type LayoutInput = {
  * already cleared for it.
  */
 export function splitAwareDayLayout(input: LayoutInput): Array<StyledSegment> {
-    const styled = overlap(input) as Array<StyledSegment>;
+    // Back-to-back events (within a minute) stack; only a real overlap shares
+    // the column. Clipped tiles get their real height back afterwards.
+    const clipped = slightOverlapEnds(input.events, input.accessors);
+    const laidOut = overlap({
+        ...input,
+        minimumStartDifference: MINIMUM_START_DIFFERENCE_MIN,
+        ...(clipped.size > 0 && {
+            accessors: {
+                ...input.accessors,
+                end: (event: EventSegment) =>
+                    clipped.get(event) ?? input.accessors.end(event),
+            },
+        }),
+    }) as Array<StyledSegment>;
+    const styled = clipped.size === 0 ? laidOut : laidOut.map((entry) =>
+        clipped.has(entry.event)
+            ? {
+                ...entry,
+                style: {
+                    ...entry.style,
+                    height: input.slotMetrics.getRange(
+                        input.accessors.start(entry.event),
+                        input.accessors.end(entry.event),
+                    ).height,
+                },
+            }
+            : entry,
+    );
 
     const bandByEvent = new Map<string, { start: number; end: number }>();
     for (const { event: segment, style } of styled) {

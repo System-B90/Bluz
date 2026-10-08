@@ -7,7 +7,7 @@ vi.mock(
     () => ({ default: overlap }),
 );
 
-import { splitAwareDayLayout } from "@/components/schedule/calendar/split/segment-layout";
+import { slightOverlapEnds, splitAwareDayLayout } from "@/components/schedule/calendar/split/segment-layout";
 
 type Placed = {
     id: string;
@@ -117,5 +117,55 @@ describe("splitAwareDayLayout", () => {
         overlap.mockReturnValueOnce(original);
 
         expect(splitAwareDayLayout(input)).toBe(original);
+    });
+});
+
+describe("slightly overlapping events stack instead of sharing the column", () => {
+    const at = (hhmm: string) => new Date(`2026-10-08T${hhmm}:00+03:00`);
+    const segment = (id: string, start: string, end: string) =>
+        ({ key: `${id}#0`, event: { id }, index: 0, count: 1, start: at(start), end: at(end) }) as never;
+    const accessors = {
+        start: (e: { start: Date }) => e.start,
+        end: (e: { end: Date }) => e.end,
+    } as never;
+
+    it("ends an event at the next one's start when it runs at most a minute into it", () => {
+        const a = segment("a", "09:00", "10:01");
+        const b = segment("b", "10:00", "11:00");
+
+        expect(slightOverlapEnds([ a, b ], accessors).get(a)).toEqual(at("10:00"));
+    });
+
+    it("leaves real overlaps, simultaneous starts and back-to-back events alone", () => {
+        const long = segment("a", "09:00", "10:02");
+        const next = segment("b", "10:00", "11:00");
+        const twinA = segment("c", "12:00", "12:01");
+        const twinB = segment("d", "12:00", "13:00");
+        const touching = segment("e", "13:00", "14:00");
+
+        expect(slightOverlapEnds([ long, next, twinA, twinB, touching ], accessors).size).toBe(0);
+    });
+
+    it("lays out with the clipped end but keeps the tile's real height", () => {
+        const a = segment("a", "09:00", "10:01");
+        const b = segment("b", "10:00", "11:00");
+        const getRange = vi.fn((start: Date, end: Date) => ({ height: (+end - +start) / 60_000 }));
+        overlap.mockImplementationOnce(({ events, accessors: acc }) =>
+            events.map((event: never) => ({
+                event,
+                style: { top: 0, height: getRange(acc.start(event), acc.end(event)).height, width: 100, xOffset: 0 },
+            })),
+        );
+
+        const [ first ] = splitAwareDayLayout({
+            events: [ a, b ],
+            minimumStartDifference: 0,
+            slotMetrics: { getRange },
+            accessors,
+        } as never);
+
+        // Laid out as 09:00-10:00, drawn as the full 61 minutes.
+        expect(getRange).toHaveBeenCalledWith(at("09:00"), at("10:00"));
+        expect(first.style.height).toBe(61);
     });
 });
