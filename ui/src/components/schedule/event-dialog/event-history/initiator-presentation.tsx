@@ -16,11 +16,13 @@ import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
 import RestoreIcon from "@mui/icons-material/Restore";
 import SelfImprovementIcon from "@mui/icons-material/SelfImprovement";
 import SyncIcon from "@mui/icons-material/Sync";
+import TerminalIcon from "@mui/icons-material/Terminal";
 import TouchAppIcon from "@mui/icons-material/TouchApp";
 import UndoIcon from "@mui/icons-material/Undo";
 import { ReactElement } from "react";
 
 import { EventChangeInitiator } from "@/api-shared/types/event-history";
+import { ClaudeIcon } from "@/components/base/icons/ClaudeIcon";
 
 /**
  * Visual vocabulary for the event change log: every initiator gets its own
@@ -103,6 +105,14 @@ const PRESENTATION: Record<EventChangeInitiator, InitiatorPresentation> = {
     [EventChangeInitiator.AiAssistant]: {
         color: "info",
         icon: <AutoAwesomeIcon fontSize="small" />,
+    },
+    [EventChangeInitiator.ClaudePlugin]: {
+        color: "info",
+        icon: <ClaudeIcon fontSize="small" />,
+    },
+    [EventChangeInitiator.Cli]: {
+        color: "info",
+        icon: <TerminalIcon fontSize="small" />,
     },
     [EventChangeInitiator.Unknown]: {
         color: "info",
