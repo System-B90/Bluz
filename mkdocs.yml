@@ -99,7 +99,6 @@ nav:
   - Backup & Restore: backup-and-restore.md
   - Code Quality Review: code-quality.md
   - Duplication Audit: duplication-audit.md
-  - Bug Hunt 2026-09: bug-hunt-2026-09.md
   - Gantt Cut Rules: gantt-cut-rules.md
   - E2E Cloud Runbook: e2e-cloud-runbook.md
   - REST API: rest-api.md
