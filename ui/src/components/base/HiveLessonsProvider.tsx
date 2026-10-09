@@ -1,5 +1,4 @@
 "use client";
-import { enqueueSnackbar } from "notistack";
 import {
     createContext,
     useCallback,
@@ -11,7 +10,7 @@ import {
 
 import { apiGetLessons } from "@/api-client/hive";
 import { HiveLesson, HiveLessonId, lessonModuleId } from "@/api-shared/types/hive";
-import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
+import { reportHiveLoadFailure } from "@/components/base/hive-load-failure";
 
 export type HiveLessonsContextState = {
     default: boolean;
@@ -54,6 +53,9 @@ export const HiveLessonsProvider = ({
         [lessons],
     );
 
+    // Bumped by the failure toast's retry action to load again (#823).
+    const [reloadToken, setReloadToken] = useState(0);
+
     const loadLessons = useCallback(() => {
         apiGetLessons()
             .then((fetchedLessons) => {
@@ -64,17 +66,13 @@ export const HiveLessonsProvider = ({
                 setLessonLookup(lessonsMap);
             })
             .catch((error) =>
-                enqueueApiErrorSnackbar(
-                    enqueueSnackbar,
-                    "טעינת השיעורים נכשלה.",
-                    error,
-                ),
+                reportHiveLoadFailure("lessons", error, () => setReloadToken((token) => token + 1)),
             );
     }, [setLessonLookup]);
 
     useEffect(() => {
         loadLessons();
-    }, [loadLessons]);
+    }, [loadLessons, reloadToken]);
 
     // A fresh object literal here re-renders every consumer app-wide on
     // every render of this provider. Memoize like SettingsProvider.tsx.

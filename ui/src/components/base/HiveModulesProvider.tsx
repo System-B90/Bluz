@@ -1,5 +1,4 @@
 "use client";
-import { enqueueSnackbar } from "notistack";
 import {
     createContext,
     useCallback,
@@ -12,7 +11,7 @@ import {
 import { apiGetModules } from "@/api-client/hive";
 import { Module, ModuleLike } from "@/api-shared/types/module";
 import { SubjectLike } from "@/api-shared/types/subject";
-import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
+import { reportHiveLoadFailure } from "@/components/base/hive-load-failure";
 
 export type HiveModulesContextState = {
     default: boolean;
@@ -54,6 +53,9 @@ export const HiveModulesProvider = ({
         [modules],
     );
 
+    // Bumped by the failure toast's retry action to load again (#823).
+    const [reloadToken, setReloadToken] = useState(0);
+
     const loadModules = useCallback(() => {
         apiGetModules()
             .then((fetchedModules) => {
@@ -64,17 +66,13 @@ export const HiveModulesProvider = ({
                 setModuleLookup(modulesMap);
             })
             .catch((error) =>
-                enqueueApiErrorSnackbar(
-                    enqueueSnackbar,
-                    "טעינת המערךים נכשלה.",
-                    error,
-                ),
+                reportHiveLoadFailure("modules", error, () => setReloadToken((token) => token + 1)),
             );
     }, [setModuleLookup]);
 
     useEffect(() => {
         loadModules();
-    }, [loadModules]);
+    }, [loadModules, reloadToken]);
 
     // A fresh object literal here re-renders every consumer app-wide on
     // every render of this provider. Memoize like SettingsProvider.tsx.

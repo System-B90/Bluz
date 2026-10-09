@@ -26,7 +26,7 @@ import {
     readInsightsDismissedUntil,
 } from "@/components/gantt/curriculum-view/components/insights/dismiss";
 import { partitionInsights } from "@/components/gantt/curriculum-view/components/insights/generators";
-import { insightsAutoRotate, insightsShowFun } from "@/components/gantt/curriculum-view/components/insights/preferences";
+import { insightsAutoRotate } from "@/components/gantt/curriculum-view/components/insights/preferences";
 import {
     Insight,
     InsightCategory,
@@ -80,10 +80,9 @@ export function InsightsCard({ curriculum }: { curriculum: GanttCurriculumDocume
     const allInsights = useInsights(curriculum);
     // Off by default (#851): warnings shouldn't rotate away before they are read.
     const autoRotate = insightsAutoRotate.use();
-    const showFun = insightsShowFun.use();
     const { pinned, deck: insights } = useMemo(
-        () => partitionInsights(allInsights, { includeFun: showFun }),
-        [ allInsights, showFun ],
+        () => partitionInsights(allInsights),
+        [ allInsights ],
     );
     const [ hovered, setHovered ] = useState(false);
     const userPaused = !autoRotate;
@@ -116,25 +115,18 @@ export function InsightsCard({ curriculum }: { curriculum: GanttCurriculumDocume
                 width: 0,
                 minWidth: "100%",
                 boxSizing: "border-box",
+                // Long decks scroll inside the card, below the fixed header.
+                display: "flex",
+                flexDirection: "column",
+                maxHeight: "min(60vh, 560px)",
                 borderInlineStart: 4,
                 borderInlineStartColor: color,
                 transition: "border-color 300ms ease",
             } }
         >
-            <Box sx={ { display: "flex", alignItems: "center", gap: 0.5, mb: 1 } }>
+            <Box sx={ { display: "flex", alignItems: "center", gap: 0.5, mb: 1, flexShrink: 0 } }>
                 <AutoAwesomeOutlined color="primary" sx={ { fontSize: 18 } } />
                 <Typography sx={ { flex: 1 } } variant="subtitle1">תובנות</Typography>
-                <Tooltip title={ showFun ? "הסתרת תובנות משעשעות" : "הצגת תובנות משעשעות" }>
-                    <IconButton
-                        aria-label="תובנות משעשעות"
-                        aria-pressed={ showFun }
-                        color={ showFun ? "primary" : "default" }
-                        onClick={ () => insightsShowFun.set(!showFun) }
-                        size="small"
-                    >
-                        <EmojiEmotionsOutlined fontSize="small" />
-                    </IconButton>
-                </Tooltip>
                 <Tooltip title={ userPaused ? "החלפה אוטומטית" : "עצירת החלפה" }>
                     <IconButton
                         aria-label={ userPaused ? "החלפה אוטומטית" : "עצירת החלפה" }
@@ -160,54 +152,56 @@ export function InsightsCard({ curriculum }: { curriculum: GanttCurriculumDocume
                 </Tooltip>
             </Box>
 
-            { pinned.length > 0 ? (
-                <Box
-                    aria-label="דורש טיפול"
-                    component="ul"
-                    data-testid="insights-pinned"
-                    sx={ { listStyle: "none", m: 0, mb: insight ? 1.5 : 0, p: 0, display: "flex", flexDirection: "column", gap: 0.75 } }
-                >
-                    { pinned.map((warning) => (
-                        <Box component="li" key={ warning.id } sx={ { display: "flex", gap: 0.75, alignItems: "flex-start" } }>
-                            <WarningAmberRounded color="warning" sx={ { fontSize: 18, mt: 0.125 } } />
-                            <Box>
-                                <Typography fontWeight={ 600 } variant="body2">{ warning.title }</Typography>
-                                <Typography color="text.secondary" variant="caption">{ warning.body }</Typography>
+            <Box sx={ { flex: 1, minHeight: 0, overflowY: "auto" } }>
+                { pinned.length > 0 ? (
+                    <Box
+                        aria-label="דורש טיפול"
+                        component="ul"
+                        data-testid="insights-pinned"
+                        sx={ { listStyle: "none", m: 0, mb: insight ? 1.5 : 0, p: 0, display: "flex", flexDirection: "column", gap: 0.75 } }
+                    >
+                        { pinned.map((warning) => (
+                            <Box component="li" key={ warning.id } sx={ { display: "flex", gap: 0.75, alignItems: "flex-start" } }>
+                                <WarningAmberRounded color="warning" sx={ { fontSize: 18, mt: 0.125 } } />
+                                <Box>
+                                    <Typography fontWeight={ 600 } variant="body2">{ warning.title }</Typography>
+                                    <Typography color="text.secondary" variant="caption">{ warning.body }</Typography>
+                                </Box>
                             </Box>
-                        </Box>
-                    )) }
-                </Box>
-            ) : null }
-
-            { insight ? (
-                <Fade in key={ insight.id } timeout={ 450 }>
-                    <Box aria-live="polite" onClick={ () => go(1) } sx={ { minHeight: 170, cursor: "pointer" } }>
-                        <Box sx={ { display: "flex", alignItems: "flex-start", gap: 1, mb: 0.5 } }>
-                            <Box
-                                sx={ {
-                                    p: 0.5,
-                                    borderRadius: 1,
-                                    display: "flex",
-                                    color,
-                                    bgcolor: alpha(color, 0.12),
-                                } }
-                            >
-                                <Icon sx={ { fontSize: 18 } } />
-                            </Box>
-                            <Typography fontWeight={ 600 } sx={ { lineHeight: 1.35 } } variant="body2">
-                                { insight.title }
-                            </Typography>
-                        </Box>
-                        <Typography color="text.secondary" sx={ { mb: insight.visual ? 1.5 : 0 } } variant="body2">
-                            { insight.body }
-                        </Typography>
-                        { insight.visual ? <InsightVisualView visual={ insight.visual } /> : null }
+                        )) }
                     </Box>
-                </Fade>
-            ) : null }
+                ) : null }
+
+                { insight ? (
+                    <Fade in key={ insight.id } timeout={ 450 }>
+                        <Box aria-live="polite" onClick={ () => go(1) } sx={ { minHeight: 170, cursor: "pointer" } }>
+                            <Box sx={ { display: "flex", alignItems: "flex-start", gap: 1, mb: 0.5 } }>
+                                <Box
+                                    sx={ {
+                                        p: 0.5,
+                                        borderRadius: 1,
+                                        display: "flex",
+                                        color,
+                                        bgcolor: alpha(color, 0.12),
+                                    } }
+                                >
+                                    <Icon sx={ { fontSize: 18 } } />
+                                </Box>
+                                <Typography fontWeight={ 600 } sx={ { lineHeight: 1.35 } } variant="body2">
+                                    { insight.title }
+                                </Typography>
+                            </Box>
+                            <Typography color="text.secondary" sx={ { mb: insight.visual ? 1.5 : 0 } } variant="body2">
+                                { insight.body }
+                            </Typography>
+                            { insight.visual ? <InsightVisualView visual={ insight.visual } /> : null }
+                        </Box>
+                    </Fade>
+                ) : null }
+            </Box>
 
             { insight && !userPaused ? (
-                <Box sx={ { mt: 1, height: 2, borderRadius: 1, overflow: "hidden", bgcolor: alpha(theme.palette.text.primary, 0.06) } }>
+                <Box sx={ { mt: 1, flexShrink: 0, height: 2, borderRadius: 1, overflow: "hidden", bgcolor: alpha(theme.palette.text.primary, 0.06) } }>
                     <Box
                         key={ `${insight.id}-${hovered || userPaused}` }
                         sx={ {
