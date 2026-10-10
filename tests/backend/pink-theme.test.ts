@@ -1,17 +1,17 @@
 import { createTheme, getContrastRatio } from "@mui/material/styles";
 import { describe, expect, it } from "vitest";
 
-import { createThemeOptions, PINK_PALETTE } from "@/components/theme/CreateFromPalette";
+import { createThemeOptions, PINK_DARK_PALETTE, PINK_PALETTE } from "@/components/theme/CreateFromPalette";
 
 /**
- * Pink mode (#765): a third colour scheme next to light and dark. It must be
- * soft rather than neon, and still readable.
+ * Pink modes (#765): pink and pink-dark, next to light and dark. The pink
+ * must be rose rather than neon, and still readable.
  */
 describe("pink colour scheme", () => {
     const theme = createTheme({ ...createThemeOptions(), direction: "rtl" });
 
-    it("is registered as a light scheme next to light and dark", () => {
-        expect(Object.keys(theme.colorSchemes).sort()).toEqual([ "dark", "light", "pink" ]);
+    it("is registered as a light scheme next to light, dark and pink-dark", () => {
+        expect(Object.keys(theme.colorSchemes).sort()).toEqual([ "dark", "light", "pink", "pink-dark" ]);
         expect(theme.colorSchemes.pink?.palette.mode).toBe("light");
         expect(theme.colorSchemes.pink?.palette.primary.main).toBe(PINK_PALETTE.primary.main);
     });
@@ -35,13 +35,41 @@ describe("pink colour scheme", () => {
         }
     });
 
-    it("is a soft pink, not neon: the primary is pastel-saturated", () => {
+    it("is a rose pink, not neon: the primary is moderately saturated", () => {
         const hex = PINK_PALETTE.primary.main.slice(1);
         const [ r, g, b ] = [ 0, 2, 4 ].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
         const max = Math.max(r, g, b);
         const min = Math.min(r, g, b);
         const saturationHsv = (max - min) / max;
         expect(r).toBe(max); // a red-family hue
-        expect(saturationHsv).toBeLessThan(0.5);
+        // Aurora rose #E0629A sits at 0.56; neon pinks like #FF1493 are 0.92.
+        expect(saturationHsv).toBeLessThan(0.6);
+    });
+});
+
+describe("pink-dark colour scheme", () => {
+    const theme = createTheme({ ...createThemeOptions(), direction: "rtl" });
+
+    it("is registered as a dark scheme with its own palette", () => {
+        expect(theme.colorSchemes["pink-dark"]?.palette.mode).toBe("dark");
+        expect(theme.colorSchemes["pink-dark"]?.palette.primary.main).toBe(PINK_DARK_PALETTE.primary.main);
+    });
+
+    it("emits its CSS variables under the `.pink-dark` class next-themes sets", () => {
+        const css = JSON.stringify(theme.generateStyleSheets());
+        expect(css).toContain(".pink-dark");
+        expect(css).toContain(PINK_DARK_PALETTE.background.default);
+    });
+
+    it("keeps button and chip labels readable", () => {
+        for (const c of [ PINK_DARK_PALETTE.primary, PINK_DARK_PALETTE.secondary, PINK_DARK_PALETTE.info ]) {
+            expect(getContrastRatio(c.contrastText, c.main)).toBeGreaterThanOrEqual(4.5);
+        }
+    });
+
+    it("is rose, not plum: the page background leans red rather than blue", () => {
+        const hex = PINK_DARK_PALETTE.background.default.slice(1);
+        const [ r, , b ] = [ 0, 2, 4 ].map((i) => parseInt(hex.slice(i, i + 2), 16));
+        expect(r).toBeGreaterThan(b * 1.4);
     });
 });

@@ -12,7 +12,7 @@ import IconButton from "@mui/material/IconButton";
 import { alpha, Theme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 
-import { ThemeSelectorIcon } from "@/components/header/ThemeSelector";
+import { ThemeControls } from "@/components/header/ThemeSelector";
 import { ColorSettings } from "@/components/settings-dialog/tabs/global/color-settings";
 import { CourseBuilderSettings } from "@/components/settings-dialog/tabs/global/CourseBuilderSettings";
 import { GlobalSettings } from "@/components/settings-dialog/tabs/global/GlobalSettings";
@@ -242,7 +242,7 @@ export function SettingsDialog({
                         >
                             מצב תצוגה
                         </Typography>
-                        <ThemeSelectorIcon />
+                        <ThemeControls />
                     </Box>
 
                     { process.env.NEXT_PUBLIC_APP_VERSION ? (

@@ -2,7 +2,7 @@
 @import url("./fonts.css");
 @import "tailwindcss";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(.dark *, .pink-dark *));
 
 @utility container {
     margin-inline: auto;
@@ -154,6 +154,49 @@
         --chart-3: 30 80% 55%;
         --chart-4: 280 65% 60%;
         --chart-5: 340 75% 55%;
+    }
+
+    /* Pink modes (#765): same tokens, rose hues instead of turquoise. */
+    .pink {
+        --background: 334 77% 87%;
+        --foreground: 334 59% 14%;
+        --card: 336 82% 94%;
+        --card-foreground: 334 59% 14%;
+        --popover: 336 82% 94%;
+        --popover-foreground: 334 59% 14%;
+        --primary: 333 67% 63%;
+        --primary-foreground: 334 59% 14%;
+        --secondary: 328 50% 37%;
+        --secondary-foreground: 0 0% 100%;
+        --muted: 334 70% 92%;
+        --muted-foreground: 330 40% 30%;
+        --accent: 333 67% 63% / 0.15;
+        --accent-foreground: 334 59% 14%;
+        --border: 333 50% 80%;
+        --input: 333 50% 80%;
+        --ring: 333 67% 63%;
+    }
+
+    .pink-dark {
+        --background: 342 45% 10%;
+        --foreground: 339 77% 95%;
+        --card: 342 35% 15%;
+        --card-foreground: 339 77% 95%;
+        --popover: 342 35% 15%;
+        --popover-foreground: 339 77% 95%;
+        --primary: 337 75% 70%;
+        --primary-foreground: 340 62% 10%;
+        --secondary: 339 72% 79%;
+        --secondary-foreground: 0 0% 0%;
+        --muted: 338 35% 74%;
+        --muted-foreground: 338 35% 74%;
+        --accent: 337 75% 70% / 0.15;
+        --accent-foreground: 339 77% 95%;
+        --destructive: 0 62.8% 30.6%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 342 28% 22%;
+        --input: 342 28% 22%;
+        --ring: 337 75% 70%;
     }
 }
 

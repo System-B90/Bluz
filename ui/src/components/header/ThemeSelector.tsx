@@ -1,3 +1,10 @@
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
+import { useSyncExternalStore } from "react";
+
 import "@/components/header/theme-selector.css";
 import { useTheme } from "@/components/theme/ThemeProvider";
 
@@ -33,10 +40,10 @@ const MoonIcon = () => (
 );
 
 export function ThemeSelectorIcon() {
-    const { setTheme, resolvedTheme } = useTheme();
+    const { setBrightness, resolvedTheme } = useTheme();
 
     const toggleTheme = () => {
-        setTheme(resolvedTheme === "dark" ? "light" : "dark");
+        setBrightness(resolvedTheme === "dark" ? "light" : "dark");
     };
 
     return (
@@ -66,5 +73,41 @@ export function ThemeSelectorIcon() {
                 </span>
             </div>
         </button>
+    );
+}
+
+const noopSubscribe = () => () => {};
+
+/** Pink on/off (#765). Keeps the current light/dark choice. */
+export function PinkModeToggle() {
+    const { accent, setAccent } = useTheme();
+    // The server cannot know the stored theme; render "off" until hydrated so
+    // the markup matches, then show the real state.
+    const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false);
+    const isPink = hydrated && accent === "pink";
+    const label = isPink ? "כיבוי מצב ורוד" : "מצב ורוד";
+
+    return (
+        <Tooltip title={label}>
+            <IconButton
+                aria-label={label}
+                aria-pressed={isPink}
+                color={isPink ? "primary" : "default"}
+                onClick={() => setAccent(isPink ? "brand" : "pink")}
+                size="small"
+            >
+                {isPink ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+            </IconButton>
+        </Tooltip>
+    );
+}
+
+/** Light/dark slider plus the pink toggle, side by side. */
+export function ThemeControls() {
+    return (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <ThemeSelectorIcon />
+            <PinkModeToggle />
+        </Box>
     );
 }

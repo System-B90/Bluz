@@ -7,7 +7,7 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import { ReactNode } from "react";
 
-import { ThemeSelectorIcon } from "@/components/header/ThemeSelector";
+import { PinkModeToggle } from "@/components/header/ThemeSelector";
 
 export default function PreAuthLayout({ children }: { children: ReactNode }) {
     return (
@@ -41,7 +41,7 @@ export default function PreAuthLayout({ children }: { children: ReactNode }) {
                         display={"flex"}
                         justifyContent={"flex-end"}
                     >
-                        <ThemeSelectorIcon />
+                        <PinkModeToggle />
 
                         <IconButton
                             aria-disabled={true}
