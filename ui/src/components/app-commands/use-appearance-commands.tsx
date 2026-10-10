@@ -11,7 +11,7 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 
 /** Theme switching. Registered app-wide. */
 export function useAppearanceCommands(): void {
-    const { theme, resolvedTheme, setTheme } = useTheme();
+    const { theme, resolvedTheme, setTheme, setBrightness } = useTheme();
 
     const commands = useMemo(
         () => [
@@ -29,7 +29,7 @@ export function useAppearanceCommands(): void {
                     ),
                 keywords: ["theme", "toggle", "dark", "light", "ערכת נושא"],
                 run: () =>
-                    setTheme(resolvedTheme === "dark" ? "light" : "dark"),
+                    setBrightness(resolvedTheme === "dark" ? "light" : "dark"),
             },
             {
                 id: "appearance.dark",
@@ -62,6 +62,16 @@ export function useAppearanceCommands(): void {
                 run: () => setTheme("pink"),
             },
             {
+                id: "appearance.pink-dark",
+                title: "מצב ורוד כהה",
+                group: COMMAND_GROUPS.appearance,
+                kind: "command" as const,
+                icon: <FavoriteIcon />,
+                keywords: ["pink dark mode", "pink night", "ורוד כהה"],
+                enabled: theme !== "pink-dark",
+                run: () => setTheme("pink-dark"),
+            },
+            {
                 id: "appearance.system",
                 title: "לפי הגדרות המערכת",
                 group: COMMAND_GROUPS.appearance,
@@ -72,7 +82,7 @@ export function useAppearanceCommands(): void {
                 run: () => setTheme("system"),
             },
         ],
-        [theme, resolvedTheme, setTheme],
+        [theme, resolvedTheme, setTheme, setBrightness],
     );
 
     useCommands(commands);

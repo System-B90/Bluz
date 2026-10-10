@@ -125,12 +125,12 @@ button.rbc-input::-moz-focus-inner {
     background-color: hsl(240 4.8% 95.9%);
 }
 
-.dark .rbc-today {
-    background-color: rgba(103, 200, 221, 0.08);
+:is(.dark, .pink, .pink-dark) .rbc-today {
+    background-color: hsl(var(--primary) / 0.08);
 }
 
-.dark .rbc-header,
-.dark .rbc-time-header {
+:is(.dark, .pink-dark) .rbc-header,
+:is(.dark, .pink-dark) .rbc-time-header {
     background-color: hsl(var(--background));
 }
 

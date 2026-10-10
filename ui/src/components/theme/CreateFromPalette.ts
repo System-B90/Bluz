@@ -5,34 +5,9 @@ declare module "@mui/material/styles" {
     interface ColorSchemeOverrides
     {
         pink: true;
+        "pink-dark": true;
     }
 }
-
-/** Soft "princess" pink (#765): a light scheme, so `mode` stays light. */
-export const PINK_PALETTE = {
-    mode: "light",
-    primary: {
-        main: "#E48AB0", // Aurora rose
-        light: "#F6C4D9",
-        dark: "#B8607F",
-        contrastText: "#3A0F22",
-    },
-    secondary: {
-        main: "#9C4F79", // Deep rosewood for headings and accents
-        light: "#C47FA4",
-        dark: "#6E2E52",
-        contrastText: "#FFFFFF",
-    },
-    background: {
-        default: "#FFF3F8", // Blush, not neon
-        paper: "#FFFBFD",
-    },
-    text: {
-        primary: "#3D1A2C",
-        secondary: "#7E5168",
-    },
-    divider: "rgba(184, 96, 127, 0.2)",
-} as const;
 
 declare module "@mui/material/Chip" {
     // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- MUI module augmentation requires interface for declaration merging
@@ -71,6 +46,78 @@ export const CONTRAST_COLORS = {
     darkPrimaryText: "#67C8DD",
     lightWarning: "#B85300",
     darkError: "#FF6B5E",
+} as const;
+
+/** Princess Aurora pink (#765): a light scheme, so `mode` stays light. */
+export const PINK_PALETTE = {
+    mode: "light",
+    primary: {
+        main: "#E0629A", // Aurora's dress
+        light: "#F49AC1",
+        dark: "#B03F73",
+        contrastText: "#3A0F22",
+    },
+    secondary: {
+        main: "#8E2F62", // Deep rosewood for headings and accents
+        light: "#B85D8C",
+        dark: "#5E1A40",
+        contrastText: "#FFFFFF",
+    },
+    // MUI's default info is blue; keep it in the rose family.
+    info: {
+        main: "#8E2F62",
+        contrastText: "#FFFFFF",
+    },
+    background: {
+        default: "#F7C6DB", // Rose page, not white-pink
+        paper: "#FCE1EC",
+    },
+    text: {
+        primary: "#3A0F22",
+        secondary: "#6B2E4C",
+    },
+    // Without this the scheme inherits the light scheme's teal text colour.
+    primaryText: { main: "#8E2F62" },
+    // On a pink page the usual status colours drop below WCAG AA.
+    warning: {
+        main: "#8A3E00",
+        contrastText: "#ffffff",
+    },
+    error: { main: "#A31515" },
+    success: { main: "#1B5E20" },
+    divider: "rgba(142, 47, 98, 0.22)",
+} as const;
+
+/** Night-time counterpart of {@link PINK_PALETTE}: deep rose surfaces, not plum. */
+export const PINK_DARK_PALETTE = {
+    mode: "dark",
+    primary: {
+        main: "#EC79A6",
+        light: "#F7B3CC",
+        dark: "#C04D7C",
+        contrastText: "#2B0A16",
+    },
+    secondary: {
+        main: "#F0A3BE",
+        light: "#F8CCDB",
+        dark: "#C2708E",
+        contrastText: "#000000",
+    },
+    info: {
+        main: "#F2A9C2",
+        contrastText: "#2B0A16",
+    },
+    background: {
+        default: "#250E15", // Deep rose, not pure black or plum
+        paper: "#341921",
+    },
+    text: {
+        primary: "#FCEBF1",
+        secondary: "#D4A5B6",
+    },
+    primaryText: { main: "#F7A8C4" },
+    error: { main: CONTRAST_COLORS.darkError },
+    divider: "rgba(247, 168, 196, 0.16)",
 } as const;
 
 /** The focus ring every focusable control shows on keyboard focus (#824). */
@@ -153,6 +200,7 @@ export function createThemeOptions(): ThemeOptions
             // MUI only expands light/dark from partial input; a custom
             // scheme must arrive as a complete palette.
             pink: { palette: createTheme({ palette: PINK_PALETTE }).palette },
+            "pink-dark": { palette: createTheme({ palette: PINK_DARK_PALETTE }).palette },
         },
         typography: {
             fontFamily: [ '"Assistant"', "sans-serif" ].join(","),

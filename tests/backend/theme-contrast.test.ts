@@ -4,13 +4,16 @@ import { describe, expect, it } from "vitest";
 import { CONTRAST_COLORS, createThemeOptions } from "@/components/theme/CreateFromPalette";
 
 /**
- * WCAG AA contrast of the theme's text colours, in both schemes
- * (#807 turquoise text, #826 dark-mode red, #827 orange badges, #824 focus ring).
+ * WCAG AA contrast of the theme's text colours, in every scheme
+ * (#807 turquoise text, #826 dark-mode red, #827 orange badges, #824 focus ring,
+ * #765 pink and pink-dark).
  */
 
 const theme = createTheme(createThemeOptions());
 const light = theme.colorSchemes.light!.palette;
 const dark = theme.colorSchemes.dark!.palette;
+const pink = theme.colorSchemes.pink!.palette;
+const pinkDark = theme.colorSchemes["pink-dark"]!.palette;
 const AA_TEXT = 4.5;
 const AA_NON_TEXT = 3;
 
@@ -68,5 +71,34 @@ describe("dark scheme", () => {
 
     it("error badges keep readable label text", () => {
         expect(getContrastRatio(dark.error.main, dark.error.contrastText)).toBeGreaterThanOrEqual(AA_TEXT);
+    });
+});
+
+describe("pink schemes (#765)", () => {
+    for (const [ name, palette ] of [ [ "pink", pink ], [ "pink-dark", pinkDark ] ] as const) {
+        const surfaces = [ palette.background.paper, palette.background.default ];
+
+        it(`${name}: text, primary-as-text and status colours are readable`, () => {
+            for (const bg of surfaces) {
+                expect(getContrastRatio(palette.text.primary, bg)).toBeGreaterThanOrEqual(AA_TEXT);
+                expect(getContrastRatio(palette.text.secondary, bg)).toBeGreaterThanOrEqual(AA_TEXT);
+                expect(getContrastRatio(palette.primaryText.main, bg)).toBeGreaterThanOrEqual(AA_TEXT);
+                expect(getContrastRatio(palette.warning.main, bg)).toBeGreaterThanOrEqual(AA_TEXT);
+                expect(getContrastRatio(palette.error.main, bg)).toBeGreaterThanOrEqual(AA_TEXT);
+                expect(getContrastRatio(palette.success.main, bg)).toBeGreaterThanOrEqual(AA_TEXT);
+            }
+        });
+
+        it(`${name}: no teal or blue leaks in from the brand schemes`, () => {
+            const brand = [ "#67C8DD", CONTRAST_COLORS.lightPrimaryText, CONTRAST_COLORS.darkPrimaryText ];
+            for (const colour of [ palette.primary.main, palette.primaryText.main, palette.info.main ]) {
+                expect(brand).not.toContain(colour);
+            }
+        });
+    }
+
+    it("pink-dark is a dark scheme, pink a light one", () => {
+        expect(pink.mode).toBe("light");
+        expect(pinkDark.mode).toBe("dark");
     });
 });

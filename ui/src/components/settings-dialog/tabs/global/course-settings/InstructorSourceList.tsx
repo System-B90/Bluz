@@ -140,7 +140,7 @@ export function InstructorSourceList() {
                 gap: 2,
                 height: "100%",
                 boxSizing: "border-box",
-                bgcolor: "rgba(103, 200, 221, 0.02)",
+                bgcolor: `rgb(${theme.vars.palette.primary.mainChannel} / 0.02)`,
                 ...theme.applyStyles("dark", {
                     bgcolor: "rgba(255, 255, 255, 0.01)",
                 }),

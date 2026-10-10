@@ -115,4 +115,11 @@ test.describe("Release screenshots", () => {
         await waitForAppLoad(page);
         await shoot(page, "05-schedule-pink");
     });
+
+    test("schedule in pink dark mode", async ({ page }) => {
+        await page.addInitScript(() => localStorage.setItem("theme", "pink-dark"));
+        await open(page, "/");
+        await waitForAppLoad(page);
+        await shoot(page, "09-schedule-pink-dark");
+    });
 });

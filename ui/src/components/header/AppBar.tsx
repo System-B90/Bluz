@@ -12,6 +12,7 @@ import { CommandPaletteButton } from "@/components/header/CommandPaletteButton";
 import { CurriculumIcon } from "@/components/header/CurriculumIcon";
 import { Logo } from "@/components/header/logo";
 import { StudentViewIcon } from "@/components/header/StudentViewIcon";
+import { PinkModeToggle } from "@/components/header/ThemeSelector";
 import { UserAccessCard } from "@/components/header/UserAccessCard";
 
 export function ScheduleAppBar({
@@ -79,6 +80,8 @@ export function ScheduleAppBar({
                     justifyContent={"flex-end"}
                 >
                     <CurriculumIcon />
+
+                    <PinkModeToggle />
 
                     <IconButton
                         aria-label="הגדרות"

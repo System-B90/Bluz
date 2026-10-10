@@ -17,7 +17,7 @@
     /* Sky blue */
 }
 
-.dark .theme-slider {
+:is(.dark, .pink-dark) .theme-slider {
     background-color: #1a202c;
     /* Night sky */
 }
@@ -37,7 +37,7 @@
     opacity: 0;
 }
 
-.dark .theme-slider .starry-bg {
+:is(.dark, .pink-dark) .theme-slider .starry-bg {
     opacity: 1;
 }
 
@@ -70,7 +70,7 @@
 }
 
 /* --- Sunny Day Elements --- */
-.dark .theme-slider .sunny-bg {
+:is(.dark, .pink-dark) .theme-slider .sunny-bg {
     opacity: 0;
 }
 
@@ -133,7 +133,7 @@
     box-shadow: 0 0 10px rgba(251, 191, 36, 0.8);
 }
 
-.dark .theme-slider .slider-head {
+:is(.dark, .pink-dark) .theme-slider .slider-head {
     background-color: #f8fafc;
     transform: translateX(34px);
     box-shadow: 0 0 10px rgba(248, 250, 252, 0.5);
@@ -151,7 +151,7 @@
 }
 
 /* Fade and rotate out the sun when dark */
-.dark .theme-slider .sun-icon {
+:is(.dark, .pink-dark) .theme-slider .sun-icon {
     opacity: 0;
     transform: rotate(-90deg);
 }
@@ -162,7 +162,7 @@
 }
 
 /* Fade and rotate in the moon when dark */
-.dark .theme-slider .moon-icon {
+:is(.dark, .pink-dark) .theme-slider .moon-icon {
     opacity: 1;
     transform: rotate(0deg);
 }
@@ -172,7 +172,11 @@
     transform: rotate(90deg);
 }
 
-/* Pink mode (#765): a light theme, so the slider keeps the sun side. */
+/* Pink modes (#765): blush day sky, deep-rose night sky. */
 .pink .theme-slider .sunny-bg {
     background: #f6c4d9;
+}
+
+.pink-dark .theme-slider {
+    background-color: #3d1a26;
 }
