@@ -30,7 +30,7 @@ import {
     DEFAULT_CALENDAR_DAY_START_TIME,
 } from "@/api-shared/types/settings/schedule";
 import { StudentEvent } from "@/api-shared/types/student-view";
-import { ThemeControls } from "@/components/header/ThemeSelector";
+import { ThemeSelectorIcon } from "@/components/header/ThemeSelector";
 import { CalendarSkeleton } from "@/components/schedule/calendar/CalendarSkeleton";
 import { createNoOverlapLayout } from "@/components/student-view/no-overlap-layout";
 import {
@@ -301,7 +301,7 @@ export function StudentDayBoard({ date }: { date?: string }) {
                     </IconButton>
                 </Tooltip>
 
-                <ThemeControls />
+                <ThemeSelectorIcon />
             </Box>
 
             <Box

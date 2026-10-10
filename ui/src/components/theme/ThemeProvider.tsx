@@ -24,7 +24,7 @@ import { createThemeOptions, focusRing } from "@/components/theme/CreateFromPale
 
 // Build every color scheme once at module level — MUI CSS variables + the
 // "class" selector switch the active palette without any JS re-render.
-const muiTheme = createTheme({ ...createThemeOptions(), direction: "rtl" });
+export const muiTheme = createTheme({ ...createThemeOptions(), direction: "rtl" });
 
 // Pink and pink-dark are light and dark in brightness, but they are separate
 // colour schemes, so MUI would skip them for applyStyles("light" | "dark").

@@ -344,11 +344,10 @@ describe("StudentDayBoard chrome", () => {
         await waitFor(() => expect(screen.getByText("הרצאה בוקר")).toBeDefined());
     });
 
-    it("carries the theme toggles, so the board has light, dark and pink", async () => {
+    it("carries the theme toggle, so the board has light and dark", async () => {
         await renderBoard();
 
         expect(screen.getByLabelText("החלפת ערכת נושא")).toBeDefined();
-        expect(screen.getByLabelText("מצב ורוד")).toBeDefined();
     });
 
     it("takes over the viewport in fullscreen, and leaves on Escape", async () => {

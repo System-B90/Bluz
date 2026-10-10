@@ -1,7 +1,7 @@
 import { createTheme, getContrastRatio } from "@mui/material/styles";
 import { describe, expect, it } from "vitest";
 
-import { createThemeOptions, PINK_PALETTE } from "@/components/theme/CreateFromPalette";
+import { createThemeOptions, PINK_DARK_PALETTE, PINK_PALETTE } from "@/components/theme/CreateFromPalette";
 
 /**
  * Pink modes (#765): pink and pink-dark, next to light and dark. The pink
@@ -44,5 +44,32 @@ describe("pink colour scheme", () => {
         expect(r).toBe(max); // a red-family hue
         // Aurora rose #E0629A sits at 0.56; neon pinks like #FF1493 are 0.92.
         expect(saturationHsv).toBeLessThan(0.6);
+    });
+});
+
+describe("pink-dark colour scheme", () => {
+    const theme = createTheme({ ...createThemeOptions(), direction: "rtl" });
+
+    it("is registered as a dark scheme with its own palette", () => {
+        expect(theme.colorSchemes["pink-dark"]?.palette.mode).toBe("dark");
+        expect(theme.colorSchemes["pink-dark"]?.palette.primary.main).toBe(PINK_DARK_PALETTE.primary.main);
+    });
+
+    it("emits its CSS variables under the `.pink-dark` class next-themes sets", () => {
+        const css = JSON.stringify(theme.generateStyleSheets());
+        expect(css).toContain(".pink-dark");
+        expect(css).toContain(PINK_DARK_PALETTE.background.default);
+    });
+
+    it("keeps button and chip labels readable", () => {
+        for (const c of [ PINK_DARK_PALETTE.primary, PINK_DARK_PALETTE.secondary, PINK_DARK_PALETTE.info ]) {
+            expect(getContrastRatio(c.contrastText, c.main)).toBeGreaterThanOrEqual(4.5);
+        }
+    });
+
+    it("is rose, not plum: the page background leans red rather than blue", () => {
+        const hex = PINK_DARK_PALETTE.background.default.slice(1);
+        const [ r, , b ] = [ 0, 2, 4 ].map((i) => parseInt(hex.slice(i, i + 2), 16));
+        expect(r).toBeGreaterThan(b * 1.4);
     });
 });
